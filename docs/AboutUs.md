@@ -35,7 +35,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 <img src="images/shir0-kage.png" width="200px">
 
-[[github](https://github.com/Shir0-Kage)] [[portfolio](team/johndoe.md)]
+[[github](https://github.com/Shir0-Kage)]
 
 * Role: Developer
 * Responsibilities: Data
