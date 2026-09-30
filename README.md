@@ -2,6 +2,10 @@
 
 ![Ui](docs/images/Ui.png)
 
+LeBake is a desktop application for tech-savvy independent home bakers who handle high volumes of seasonal pre-orders
+on their own. It helps them keep track of orders and customer delivery addresses in one place, reducing the hassle of 
+juggling customer information. LeBake is designed for bakers who prefer a CLI-focused workflow.
+
 * This is **a sample project for Software Engineering (SE) students**.<br>
   Example usages:
   * as a starting point of a course project (as opposed to writing everything from scratch)
