@@ -274,6 +274,7 @@ _{Explain here how the data archiving feature will be implemented}_
 * manages a high volume of seasonal pre-orders
 * handles customer and order management independently
 * wants to spend less time on administrative tasks and more time baking
+* is reasonably comfortable using CLI apps
 
 **Value proposition**: LeBake helps solo home bakers manage seasonal pre-orders efficiently, so they can spend less time juggling customers and more time baking.
 
