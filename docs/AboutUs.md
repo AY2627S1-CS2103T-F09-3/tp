@@ -19,12 +19,11 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Developer
 
-### Jane Doe
+### Wong Chee Yew
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/chee-yew.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](http://github.com/chee-yew)]
 
 * Role: Team Lead
 * Responsibilities: UI
