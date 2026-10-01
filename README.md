@@ -4,7 +4,12 @@
 
 LeBake is a desktop application for tech-savvy independent home bakers who handle high volumes of seasonal pre-orders
 on their own. It helps them keep track of orders and customer delivery addresses in one place, reducing the hassle of 
-juggling customer information. LeBake is designed for bakers who prefer a CLI-focused workflow.
+juggling customer information. LeBake's planned pre-order features will associate each customer's current order and
+fulfilment status with their contact details, allowing home bakers to quickly identify orders requiring their attention,
+whilst retaining customer information for future seasons.
+
+LeBake is designed for bakers who prefer a CLI-focused workflow, with its text-based commands allowing for quick entry,
+retrieval and updates.
 
 * This is **a sample project for Software Engineering (SE) students**.<br>
   Example usages:
