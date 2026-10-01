@@ -296,30 +296,129 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
-
-**Use case: Delete a person**
-
+**Use case: U1. Add a customer**\
+**System: LeBake**\
+**Actor: User**\
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1. User requests to add a customer.
+2. LeBake adds the customer.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 1a. The given input is invalid.
+
+    * 1a1. LeBake shows an error message.
+
+      Use case resumes at step 1.
+
+* 1b. The customer already exists in LeBake.
+
+    * 1b1. LeBake shows an error message.
+
+      Use case resumes at step 1.
+
+**Use case: U2. Find a customer**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
+
+1. User searches for a customer.
+2. LeBake shows a list of matching customers.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. No customers match the search.
+
+    * 1a1. LeBake shows an empty list.
+
+      Use case ends.
+
+* 2a. The search returns other customers, but not the one the user wants.
 
   Use case ends.
 
-* 3a. The given index is invalid.
+**Use case: U3. Delete a customer**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
 
-    * 3a1. AddressBook shows an error message.
+1. User finds a customer (<u>U2. Find a customer</u>).
+2. User requests to delete that customer from the displayed list.
+3. LeBake deletes the customer.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The intended customer is not found.
+
+  Use case ends.
+
+* 2a. The customer selection is invalid.
+
+    * 2a1. LeBake shows an error message.
 
       Use case resumes at step 2.
+
+**Use case: U4. Record a customer's pre-order**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
+
+1. User finds a customer (<u>U2. Find a customer</u>).
+2. User selects a customer and requests to record a pre-order with order details and a fulfilment status.
+3. LeBake records and displays the pre-order.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The intended customer is not found.
+
+  Use case ends.
+
+* 2a. The customer selection or order information is invalid.
+
+    * 2a1. LeBake shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. The customer already has a pre-order.
+
+    * 2b1. LeBake updates and displays the existing pre-order.
+
+      Use case ends.
+
+**Use case: U5. Update a pre-order's fulfilment status**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
+
+1. User requests to view pre-orders with a chosen fulfilment status.
+2. LeBake shows customers with pre-orders in that status.
+3. User selects a customer and requests to change the pre-order to a valid fulfilment status.
+4. LeBake updates and displays the pre-order's fulfilment status.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. No pre-orders match the chosen status.
+
+    * 1a1. LeBake shows an empty list.
+
+      Use case ends.
+
+* 3a. The customer selection is invalid.
+
+    * 3a1. LeBake shows an error message.
+
+      Use case resumes at step 3.
 
 *{More to be added}*
 
