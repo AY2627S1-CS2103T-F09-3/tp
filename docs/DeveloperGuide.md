@@ -326,8 +326,13 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
+2.  Should support storing up to 1,000 customer details.
+3.  Should display the result or an error message within 3 seconds of submitting a command.
+4.  User with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
+5.  All core customer and pre-order management functionalities should remain available without an internet connection.
+6.  Invalid commands should produce a message identifying the error and explaining the correct syntax or accepted values. 
+7.  If changes cannot be saved, LeBake should clearly inform the user that those changes have not been saved. 
+8.  Commands operating on the same customer fields should use consistent parameter names and field formats, unless a difference is explicitly documented.
 
 *{More to be added}*
 
