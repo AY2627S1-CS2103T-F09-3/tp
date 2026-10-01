@@ -1,7 +1,6 @@
 {
   "baseUrl": "",
   "titlePrefix": "LeBake",
-  "titleSuffix": "LeBake",
   "style": {
     "codeTheme": "light"
   },
