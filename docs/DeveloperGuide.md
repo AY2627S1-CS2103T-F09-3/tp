@@ -283,16 +283,61 @@ _{Explain here how the data archiving feature will be implemented}_
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
-
-*{More to be added}*
+| Priority | As a …                                               | I want to …                                                                       | So that I can …                                                     |
+|----------|------------------------------------------------------|-----------------------------------------------------------------------------------|---------------------------------------------------------------------|
+| `* * *`  | first-time home baker                                | view usage instructions                                                           | learn how to manage my customer contacts                            |
+| `* * *`  | home baker                                           | add a customer with their name, phone number, email address, and delivery address | keep their essential contact information in one place               |
+| `* * *`  | home baker                                           | list all saved customers                                                          | see everyone in my customer address book                            |
+| `* * *`  | home baker                                           | view a customer’s complete profile                                                | retrieve their contact details when needed                          |
+| `* * *`  | home baker                                           | edit a customer’s details                                                         | keep their contact information accurate                             |
+| `* * *`  | home baker                                           | find customers by name                                                            | retrieve a customer without scanning the entire address book        |
+| `* * *`  | home baker                                           | delete a customer profile                                                         | remove records I no longer need                                     |
+| `* * *`  | home baker                                           | clear all customer records                                                        | start again with an empty address book when necessary               |
+| `* * *`  | home baker                                           | assign tags to customers                                                          | organise contacts into meaningful groups                            |
+| `* * *`  | busy home baker                                      | have my changes saved automatically                                               | keep my customer information after closing the application         |
+| `* * *`  | returning home baker                                 | retrieve my previously saved contacts after reopening LeBake                      | continue where I left off                                           |
+| `* * *`  | keyboard-oriented home baker                         | exit LeBake using a command                                                       | complete my workflow without using a mouse                          |
+| `* * *`  | home baker                                           | add or remove tags from an existing customer                                      | keep the customer’s classifications current                         |
+| `* * *`  | home baker entering contacts quickly                 | be warned about possible duplicate profiles                                       | avoid recording the same customer twice                             |
+| `* * *`  | home baker                                           | record a concise seasonal pre-order summary in a customer’s profile               | keep the order connected to the correct customer                    |
+| `* * *`  | home baker                                           | update a customer’s current pre-order requirements                                | record later changes accurately                                     |
+| `* * *`  | home baker preparing an order                        | view its requirements together with the customer’s contact and address details    | avoid searching in separate places                                  |
+| `* * *`  | home baker                                           | record a customer’s fulfilment status                                             | know whether their order is pending, prepared, or completed         |
+| `* * *`  | home baker during a busy season                      | filter customer profiles by fulfilment status                                     | focus on customers requiring the same next action                   |
+| `* * *`  | home baker                                           | view only customers with active pre-orders                                        | focus on active orders without distraction from inactive contacts   |
+| `* * *`  | keyboard-oriented home baker                         | perform common customer-management tasks without using a mouse                    | work efficiently through the CLI                                    |
+| `* * *`  | home baker with a large customer base                | receive search and update results promptly                                        | keep using LeBake efficiently during peak periods                   |
+| `* *`    | home baker                                           | find a customer by phone number                                                   | identify someone who contacts me by phone                           |
+| `* *`    | home baker                                           | find a customer by email address                                                  | identify someone from an email enquiry                              |
+| `* *`    | home baker who remembers only part of a name         | search using partial and case-insensitive text                                    | still locate the correct customer                                   |
+| `* *`    | home baker with many customers                       | sort customer profiles alphabetically                                             | browse them predictably                                             |
+| `* *`    | home baker                                           | filter customers by tag                                                           | focus on a relevant group of contacts                               |
+| `* *`    | home baker                                           | record notes about a customer                                                     | remember information relevant to serving them                       |
+| `* *`    | home baker serving repeat customers                  | record their contact and delivery preferences                                     | provide consistent service                                          |
+| `* *`    | home baker                                           | archive an inactive customer without deleting them                                | keep my active address book free of old contacts                    |
+| `* *`    | home baker                                           | restore an archived customer                                                      | serve a returning customer without re-entering their details        |
+| `* *`    | home baker                                           | identify customer profiles with missing essential information                     | complete them before fulfilment begins                              |
+| `* *`    | home baker migrating from another system             | import existing customer contacts                                                 | avoid re-entering every profile manually                            |
+| `* *`    | home baker                                           | export my customer contacts                                                       | keep a backup or use them outside LeBake                            |
+| `* *`    | home baker                                           | record delivery instructions with an address                                      | remember access details such as gate codes or drop-off directions   |
+| `* *`    | home baker preparing deliveries                      | mark an address as verified or unverified                                         | identify addresses that still require confirmation                  |
+| `* *`    | home baker                                           | find customers using an address or postal-code keyword                            | retrieve contacts based on delivery location                        |
+| `* *`    | home baker planning deliveries                       | filter customers by neighbourhood or postal area                                  | focus on customers in the same vicinity                             |
+| `* *`    | home baker preparing a seasonal delivery run         | view customers who do not have a delivery address                                 | obtain the missing information in advance                           |
+| `* *`    | home baker                                           | group customer contacts by delivery area                                          | organise delivery batches efficiently                               |
+| `* *`    | home baker making deliveries                         | produce a list containing selected customers’ names, phone numbers, and addresses | have the necessary contact information on hand during delivery      |
+| `* *`    | home baker                                           | record customer-provided special requirements with their pre-order                | refer to them while fulfilling it                                   |
+| `* *`    | home baker                                           | associate customers with a seasonal campaign                                      | distinguish orders from different occasions                         |
+| `* *`    | home baker serving a repeat customer                 | view their previous seasonal order summaries                                      | understand their past preferences                                   |
+| `*`      | home baker                                           | store an alternative contact number for a customer                                | reach them another way if necessary                                 |
+| `*`      | home baker who makes occasional input mistakes       | undo my most recent change                                                        | recover quickly without reconstructing the original profile         |
+| `*`      | home baker serving customers at different locations  | store multiple addresses for a customer                                           | retain their commonly used delivery destinations                    |
+| `*`      | home baker                                           | mark one address as a customer’s preferred delivery address                       | know which address to use by default                                |
+| `*`      | home baker planning deliveries                       | sort customers by postal area                                                     | see nearby addresses together                                       |
+| `*`      | home baker processing many contacts                  | add multiple customer profiles in one batch                                       | spend less time on initial data entry                               |
+| `*`      | home baker managing a seasonal campaign              | apply or remove a tag from multiple customers at once                             | organise large groups efficiently                                   |
+| `*`      | experienced LeBake user                              | reuse previously entered commands                                                 | repeat common operations with fewer keystrokes                      |
+| `*`      | experienced LeBake user                              | use short forms for frequently used operations                                    | do repetitive customer-management work faster                       |
 
 ### Use cases
 
