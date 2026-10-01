@@ -333,8 +333,16 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Glossary
 
+* **Active order**: A pre-order whose fulfilment status is `PENDING` or `PREPARED`
+* **Archived customer**: A customer hidden from the active customer list but kept, so that it can be restored for a future seasonal campaign
+* **Customer**: A person whose contact and delivery details are stored in LeBake, represented by the `Person` class in the code
+* **Duplicate customer**: A customer with the same name as an existing customer, ignoring case and extra spaces (phone number, email and address are not compared)
+* **Fulfilment status**: The stage a pre-order has reached, which is `PENDING` (recorded but not ready), `PREPARED` (ready for collection or delivery), or `COMPLETED` (collected or delivered)
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
+* **Postal area**: A group of nearby addresses that share the same leading digits of their postal code, used to group deliveries
+* **Pre-order**: An order placed in advance for a later collection or delivery, with each customer having at most one current pre-order
 * **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Seasonal campaign**: A period of high order demand tied to an occasion, such as Chinese New Year or Christmas
 
 --------------------------------------------------------------------------------------------------------------------
 
