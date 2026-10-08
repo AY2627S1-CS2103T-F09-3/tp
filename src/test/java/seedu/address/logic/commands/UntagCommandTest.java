@@ -1,5 +1,8 @@
 package seedu.address.logic.commands;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
@@ -101,5 +104,38 @@ public class UntagCommandTest {
 
         assertCommandFailure(new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends")), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+    }
+
+    @Test
+    public void equals() {
+        UntagCommand command = new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends"));
+
+        // same object -> returns true
+        assertTrue(command.equals(command));
+
+        // same values -> returns true
+        assertTrue(command.equals(new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends"))));
+
+        // different types -> returns false
+        assertFalse(command.equals(1));
+
+        // null -> returns false
+        assertFalse(command.equals(null));
+
+        // different index -> returns false
+        assertFalse(command.equals(new UntagCommand(INDEX_SECOND_PERSON, new Tag("friends"))));
+
+        // different tag -> returns false
+        assertFalse(command.equals(new UntagCommand(INDEX_FIRST_PERSON, new Tag("VIP"))));
+    }
+
+    @Test
+    public void toStringMethod() {
+        Tag tag = new Tag("friends");
+        UntagCommand command = new UntagCommand(INDEX_FIRST_PERSON, tag);
+        String expected = UntagCommand.class.getCanonicalName() + "{index=" + INDEX_FIRST_PERSON
+                + ", tag=" + tag + "}";
+
+        assertEquals(expected, command.toString());
     }
 }
