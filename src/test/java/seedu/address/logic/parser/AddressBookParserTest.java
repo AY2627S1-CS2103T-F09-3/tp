@@ -25,6 +25,7 @@ import seedu.address.logic.commands.UntagCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.tag.Tag;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -90,7 +91,8 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_untag() throws Exception {
-        assertTrue(parser.parseCommand(UntagCommand.COMMAND_WORD + " 1 t/friends") instanceof UntagCommand);
+        assertEquals(new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends")),
+                parser.parseCommand(UntagCommand.COMMAND_WORD + " 1 t/friends"));
     }
 
     @Test
