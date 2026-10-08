@@ -1,12 +1,18 @@
 package seedu.address.logic.commands;
 
+import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.person.Person;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -21,7 +27,11 @@ public class UntagCommand extends Command {
             + "Parameters: INDEX (must be a positive integer) " + PREFIX_TAG + "TAG\n"
             + "Example: " + COMMAND_WORD + " 1 " + PREFIX_TAG + "friends";
 
-    public static final String MESSAGE_NOT_IMPLEMENTED_YET = "Untag command not implemented yet";
+    public static final String MESSAGE_UNTAG_PERSON_SUCCESS = "Removed tag(s) %1$s from %2$s";
+    public static final String MESSAGE_TAG_NOT_FOUND = "%1$s does not have tag %2$s";
+    public static final String MESSAGE_INVALID_INDEX =
+            "Invalid index! Please enter a positive integer index between 1 and %1$d";
+    public static final String MESSAGE_EMPTY_LIST = "Invalid index! The currently displayed list is empty.";
 
     private final Index index;
     private final Tag tag;
@@ -37,7 +47,43 @@ public class UntagCommand extends Command {
 
     @Override
     public CommandResult execute(Model model) throws CommandException {
-        throw new CommandException(MESSAGE_NOT_IMPLEMENTED_YET);
+        requireNonNull(model);
+        Person personToUntag = getPersonToUntag(model.getFilteredPersonList());
+        Person untaggedPerson = createUntaggedPerson(personToUntag);
+
+        model.setPerson(personToUntag, untaggedPerson);
+        return new CommandResult(String.format(MESSAGE_UNTAG_PERSON_SUCCESS, tag, personToUntag.getName()));
+    }
+
+    /**
+     * Returns the person at the requested index in the currently displayed list.
+     *
+     * @throws CommandException If the index is outside the displayed list.
+     */
+    private Person getPersonToUntag(List<Person> lastShownList) throws CommandException {
+        if (lastShownList.isEmpty()) {
+            throw new CommandException(MESSAGE_EMPTY_LIST);
+        }
+        if (index.getZeroBased() >= lastShownList.size()) {
+            throw new CommandException(String.format(MESSAGE_INVALID_INDEX, lastShownList.size()));
+        }
+        return lastShownList.get(index.getZeroBased());
+    }
+
+    /**
+     * Copies the person with all case-insensitive matches of the requested tag removed.
+     *
+     * @throws CommandException If the person does not have the requested tag.
+     */
+    private Person createUntaggedPerson(Person personToUntag) throws CommandException {
+        Set<Tag> updatedTags = new HashSet<>(personToUntag.getTags());
+        boolean isTagRemoved = updatedTags.removeIf(existingTag -> existingTag.tagName.equalsIgnoreCase(tag.tagName));
+        if (!isTagRemoved) {
+            throw new CommandException(String.format(MESSAGE_TAG_NOT_FOUND, personToUntag.getName(), tag));
+        }
+
+        return new Person(personToUntag.getName(), personToUntag.getPhone(), personToUntag.getEmail(),
+                personToUntag.getAddress(), updatedTags);
     }
 
     @Override
