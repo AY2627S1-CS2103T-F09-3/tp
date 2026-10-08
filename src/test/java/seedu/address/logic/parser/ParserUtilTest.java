@@ -75,7 +75,10 @@ public class ParserUtilTest {
 
     @Test
     public void parseName_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseName(INVALID_NAME));
+        for (String invalidName : new String[]{INVALID_NAME, "John2", " ", "John\tTan", "-", "'", " - ' ",
+            "José Tan"}) {
+            assertThrows(ParseException.class, Name.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseName(invalidName));
+        }
     }
 
     @Test
@@ -89,6 +92,12 @@ public class ParserUtilTest {
         String nameWithWhitespace = WHITESPACE + VALID_NAME + WHITESPACE;
         Name expectedName = new Name(VALID_NAME);
         assertEquals(expectedName, ParserUtil.parseName(nameWithWhitespace));
+    }
+
+    @Test
+    public void parseName_commonNameWithExtraSpaces_returnsNormalizedName() throws Exception {
+        Name parsedName = ParserUtil.parseName("  Mary-Jane   O'Brien  ");
+        assertEquals("Mary-Jane O'Brien", parsedName.fullName);
     }
 
     @Test

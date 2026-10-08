@@ -5,11 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_MARY_JANE_WITH_EXTRA_SPACES;
+import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_MARY_JANE;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
@@ -19,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
+import seedu.address.logic.parser.EditCommandParser;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -98,6 +103,70 @@ public class EditCommandTest {
         expectedModel.setPerson(model.getFilteredPersonList().get(0), editedPerson);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_nameWithPunctuationAndExtraSpaces_success() throws Exception {
+        Person personToEdit = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person editedPerson = new PersonBuilder(personToEdit).withName(VALID_NAME_MARY_JANE).build();
+        EditCommand command = new EditCommandParser().parse("1" + NAME_DESC_MARY_JANE_WITH_EXTRA_SPACES);
+
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.setPerson(personToEdit, editedPerson);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)), expectedModel);
+        assertEquals(VALID_NAME_MARY_JANE, model.getAddressBook().getPersonList().getFirst().getName().fullName);
+    }
+
+    @Test
+    public void execute_unchangedNameWithOtherChanges_success() throws Exception {
+        Person personToEdit = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person editedPerson = new PersonBuilder(personToEdit).withPhone(VALID_PHONE_BOB).build();
+        EditCommand command = new EditCommandParser().parse("1 " + PREFIX_NAME + personToEdit.getName().fullName
+                + PHONE_DESC_BOB);
+
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.setPerson(personToEdit, editedPerson);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)), expectedModel);
+    }
+
+    @Test
+    public void execute_ownNameWithCaseAndSpacingChangesFilteredList_success() throws Exception {
+        showPersonAtIndex(model, INDEX_FIRST_PERSON);
+
+        Person personToEdit = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person editedPerson = new PersonBuilder(personToEdit).withName("aLiCe PaUlInE").build();
+        EditCommand command = new EditCommandParser().parse("1 " + PREFIX_NAME + "  aLiCe   PaUlInE  ");
+
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.setPerson(personToEdit, editedPerson);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)), expectedModel);
+        assertEquals("aLiCe PaUlInE", model.getAddressBook().getPersonList().getFirst().getName().fullName);
+    }
+
+    @Test
+    public void execute_nameDuplicatesAnotherPersonUnfilteredList_failure() throws Exception {
+        for (String nameVariant : new String[]{"alice pauline", "  Alice   Pauline  ", "  aLiCe   pAuLiNe  "}) {
+            EditCommand command = new EditCommandParser().parse("2 " + PREFIX_NAME + nameVariant + PHONE_DESC_BOB);
+
+            assertCommandFailure(command, model, EditCommand.MESSAGE_DUPLICATE_PERSON);
+        }
+    }
+
+    @Test
+    public void execute_nameDuplicatesHiddenPersonFilteredList_failure() throws Exception {
+        showPersonAtIndex(model, INDEX_FIRST_PERSON);
+
+        for (String nameVariant : new String[]{"benson meier", "  Benson   Meier  ", "  bEnSoN   mEiEr  "}) {
+            EditCommand command = new EditCommandParser().parse("1 " + PREFIX_NAME + nameVariant);
+
+            assertCommandFailure(command, model, EditCommand.MESSAGE_DUPLICATE_PERSON);
+        }
     }
 
     @Test
