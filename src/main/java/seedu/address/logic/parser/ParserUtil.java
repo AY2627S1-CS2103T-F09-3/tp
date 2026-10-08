@@ -1,6 +1,8 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -120,5 +122,39 @@ public class ParserUtil {
             tagSet.add(parseTag(tagName));
         }
         return tagSet;
+    }
+
+    /**
+     * Parses the preamble of {@code argMultimap} into an {@code Index}.
+     *
+     * @param messageUsage usage message of the command, shown when the index is missing or invalid
+     * @throws ParseException if the preamble is not a single positive integer
+     */
+    public static Index parsePreambleIndex(ArgumentMultimap argMultimap, String messageUsage)
+            throws ParseException {
+        requireNonNull(argMultimap);
+        requireNonNull(messageUsage);
+        try {
+            return parseIndex(argMultimap.getPreamble());
+        } catch (ParseException pe) {
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, messageUsage), pe);
+        }
+    }
+
+    /**
+     * Parses the single {@code t/TAG} value in {@code argMultimap} into a {@code Tag}.
+     *
+     * @param messageUsage usage message of the command, shown when the tag prefix is missing
+     * @throws ParseException if the tag prefix is missing or repeated, or the tag is invalid
+     */
+    public static Tag parseSingleTag(ArgumentMultimap argMultimap, String messageUsage) throws ParseException {
+        requireNonNull(argMultimap);
+        requireNonNull(messageUsage);
+        if (argMultimap.getValue(PREFIX_TAG).isEmpty()) {
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, messageUsage));
+        }
+
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_TAG);
+        return parseTag(argMultimap.getValue(PREFIX_TAG).get());
     }
 }
