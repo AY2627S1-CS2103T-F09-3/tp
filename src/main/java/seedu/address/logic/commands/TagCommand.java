@@ -72,7 +72,7 @@ public class TagCommand extends Command {
         updatedTags.add(tag);
 
         return new Person(personToTag.getName(), personToTag.getPhone(), personToTag.getEmail(),
-                personToTag.getAddress(), updatedTags);
+                personToTag.getAddress(), updatedTags, personToTag.getPreorder());
     }
 
     @Override

@@ -21,6 +21,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.PreorderStatus;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
@@ -47,6 +48,26 @@ public class TagCommandTest {
         expectedModel.setPerson(personToTag, taggedPerson);
 
         assertCommandSuccess(tagCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_personWithPreorder_preorderKept() {
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person personWithPreorder = new PersonBuilder(firstPerson)
+                .withPreorder("2 chocolate cakes", PreorderStatus.PENDING).build();
+        model.setPerson(firstPerson, personWithPreorder);
+
+        Person taggedPerson = new PersonBuilder(personWithPreorder)
+                .withTags(EXISTING_TAG_OF_FIRST_PERSON, VALID_TAG_HUSBAND).build();
+        TagCommand tagCommand = new TagCommand(INDEX_FIRST_PERSON, TAG_HUSBAND);
+
+        String expectedMessage = String.format(TagCommand.MESSAGE_TAG_PERSON_SUCCESS, Messages.format(taggedPerson));
+
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.setPerson(personWithPreorder, taggedPerson);
+
+        assertCommandSuccess(tagCommand, model, expectedMessage, expectedModel);
+        assertEquals(personWithPreorder.getPreorder(), model.getFilteredPersonList().get(0).getPreorder());
     }
 
     @Test
