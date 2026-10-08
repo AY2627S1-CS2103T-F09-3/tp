@@ -16,6 +16,8 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.preorder.PreorderDetails;
+import seedu.address.model.preorder.PreorderStatus;
 import seedu.address.model.tag.Tag;
 
 public class ParserUtilTest {
@@ -24,6 +26,8 @@ public class ParserUtilTest {
     private static final String INVALID_ADDRESS = " ";
     private static final String INVALID_EMAIL = "example.com";
     private static final String INVALID_TAG = "#friend";
+    private static final String INVALID_PREORDER_DETAILS = "2 chocolate cakes\nno nuts"; // more than one line
+    private static final String INVALID_PREORDER_STATUS = "done";
 
     private static final String VALID_NAME = "Rachel Walker";
     private static final String VALID_PHONE = "91234567";
@@ -31,6 +35,7 @@ public class ParserUtilTest {
     private static final String VALID_EMAIL = "rachel@example.com";
     private static final String VALID_TAG_1 = "friend";
     private static final String VALID_TAG_2 = "neighbour";
+    private static final String VALID_PREORDER_DETAILS = "2 chocolate cakes, no nuts";
 
     private static final String WHITESPACE = " \t\r\n";
 
@@ -213,5 +218,52 @@ public class ParserUtilTest {
         Set<Tag> expectedTagSet = Set.of(new Tag(VALID_TAG_1), new Tag(VALID_TAG_2));
 
         assertEquals(expectedTagSet, actualTagSet);
+    }
+
+    @Test
+    public void parsePreorderDetails_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parsePreorderDetails(null));
+    }
+
+    @Test
+    public void parsePreorderDetails_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, PreorderDetails.MESSAGE_CONSTRAINTS, ()
+            -> ParserUtil.parsePreorderDetails(INVALID_PREORDER_DETAILS));
+        assertThrows(ParseException.class, () -> ParserUtil.parsePreorderDetails(WHITESPACE));
+        assertThrows(ParseException.class, () -> ParserUtil.parsePreorderDetails(
+                "a".repeat(PreorderDetails.MAX_LENGTH + 1)));
+    }
+
+    @Test
+    public void parsePreorderDetails_validValueWithWhitespace_returnsTrimmedDetails() throws Exception {
+        String detailsWithWhitespace = WHITESPACE + VALID_PREORDER_DETAILS + WHITESPACE;
+        PreorderDetails expectedDetails = new PreorderDetails(VALID_PREORDER_DETAILS);
+        assertEquals(expectedDetails, ParserUtil.parsePreorderDetails(detailsWithWhitespace));
+    }
+
+    @Test
+    public void parsePreorderDetails_maxLengthAfterTrimming_returnsDetails() throws Exception {
+        String longestDetails = "a".repeat(PreorderDetails.MAX_LENGTH);
+        assertEquals(new PreorderDetails(longestDetails), ParserUtil.parsePreorderDetails(" " + longestDetails + " "));
+    }
+
+    @Test
+    public void parsePreorderStatus_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parsePreorderStatus(null));
+    }
+
+    @Test
+    public void parsePreorderStatus_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, PreorderStatus.MESSAGE_CONSTRAINTS, ()
+            -> ParserUtil.parsePreorderStatus(INVALID_PREORDER_STATUS));
+        assertThrows(ParseException.class, () -> ParserUtil.parsePreorderStatus(WHITESPACE));
+    }
+
+    @Test
+    public void parsePreorderStatus_anyLetterCase_returnsStatus() throws Exception {
+        assertEquals(PreorderStatus.PENDING, ParserUtil.parsePreorderStatus("PENDING"));
+        assertEquals(PreorderStatus.PENDING, ParserUtil.parsePreorderStatus("pending"));
+        assertEquals(PreorderStatus.PREPARED, ParserUtil.parsePreorderStatus("Prepared"));
+        assertEquals(PreorderStatus.COMPLETED, ParserUtil.parsePreorderStatus(WHITESPACE + "completed" + WHITESPACE));
     }
 }

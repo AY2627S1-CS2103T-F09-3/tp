@@ -12,8 +12,11 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.preorder.PreorderStatus;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonTest {
@@ -22,6 +25,26 @@ public class PersonTest {
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
         Person person = new PersonBuilder().build();
         assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));
+    }
+
+    @Test
+    public void constructor_nullPreorder_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone(),
+                ALICE.getEmail(), ALICE.getAddress(), ALICE.getTags(), null));
+    }
+
+    @Test
+    public void getPreorder_createdWithoutPreorder_returnsEmpty() {
+        Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                ALICE.getTags());
+        assertEquals(Optional.empty(), person.getPreorder());
+    }
+
+    @Test
+    public void getPreorder_createdWithPreorder_returnsPreorder() {
+        Person person = new PersonBuilder(ALICE).withPreorder("2 chocolate cakes", PreorderStatus.PENDING).build();
+        assertEquals("2 chocolate cakes", person.getPreorder().get().getDetails().value);
+        assertEquals(PreorderStatus.PENDING, person.getPreorder().get().getStatus());
     }
 
     @Test
@@ -110,12 +133,32 @@ public class PersonTest {
         // different tags -> returns false
         editedAlice = new PersonBuilder(ALICE).withTags(VALID_TAG_HUSBAND).build();
         assertFalse(ALICE.equals(editedAlice));
+
+        // one has a preorder, the other does not -> returns false
+        Person aliceWithPreorder = new PersonBuilder(ALICE).withPreorder("2 chocolate cakes", PreorderStatus.PENDING)
+                .build();
+        assertFalse(ALICE.equals(aliceWithPreorder));
+
+        // same preorder -> returns true
+        assertTrue(aliceWithPreorder.equals(new PersonBuilder(aliceWithPreorder).build()));
+
+        // different preorder status -> returns false
+        editedAlice = new PersonBuilder(ALICE).withPreorder("2 chocolate cakes", PreorderStatus.COMPLETED).build();
+        assertFalse(aliceWithPreorder.equals(editedAlice));
+    }
+
+    @Test
+    public void hashCode_equalPersonsWithPreorder_sameHashCode() {
+        Person aliceWithPreorder = new PersonBuilder(ALICE).withPreorder("2 chocolate cakes", PreorderStatus.PENDING)
+                .build();
+        assertEquals(aliceWithPreorder.hashCode(), new PersonBuilder(aliceWithPreorder).build().hashCode());
     }
 
     @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
-                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags() + "}";
+                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags()
+                + ", preorder=" + ALICE.getPreorder() + "}";
         assertEquals(expected, ALICE.toString());
     }
 }

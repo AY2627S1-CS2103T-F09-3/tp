@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import seedu.address.commons.core.index.Index;
@@ -14,6 +15,8 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.preorder.PreorderDetails;
+import seedu.address.model.preorder.PreorderStatus;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -157,5 +160,36 @@ public class ParserUtil {
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_TAG);
         return parseTag(argMultimap.getValue(PREFIX_TAG).get());
+    }
+
+    /**
+     * Parses a {@code String details} into a {@code PreorderDetails}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code details} is invalid.
+     */
+    public static PreorderDetails parsePreorderDetails(String details) throws ParseException {
+        requireNonNull(details);
+        String trimmedDetails = details.trim();
+        if (!PreorderDetails.isValidDetails(trimmedDetails)) {
+            throw new ParseException(PreorderDetails.MESSAGE_CONSTRAINTS);
+        }
+        return new PreorderDetails(trimmedDetails);
+    }
+
+    /**
+     * Parses a {@code String status} into a {@code PreorderStatus}.
+     * Leading and trailing whitespaces will be trimmed, and letter case is ignored,
+     * so {@code "pending"} and {@code "Pending"} both give {@code PENDING}.
+     *
+     * @throws ParseException if the given {@code status} is invalid.
+     */
+    public static PreorderStatus parsePreorderStatus(String status) throws ParseException {
+        requireNonNull(status);
+        String normalizedStatus = status.trim().toUpperCase(Locale.ROOT);
+        if (!PreorderStatus.isValidStatus(normalizedStatus)) {
+            throw new ParseException(PreorderStatus.MESSAGE_CONSTRAINTS);
+        }
+        return PreorderStatus.valueOf(normalizedStatus);
     }
 }
