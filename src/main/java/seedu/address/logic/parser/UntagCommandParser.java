@@ -1,7 +1,6 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import seedu.address.commons.core.index.Index;
@@ -14,6 +13,12 @@ import seedu.address.model.tag.Tag;
  */
 public class UntagCommandParser implements Parser<UntagCommand> {
 
+    public static final String MESSAGE_INVALID_FORMAT =
+            "Format error. Input format: untag INDEX t/TAG. Example: untag 1 t/friends";
+    public static final String MESSAGE_INVALID_INDEX =
+            "Invalid index! Please enter a positive integer index between 1 and the size of the current list.";
+    public static final String MESSAGE_INVALID_TAG = "Tags should be alphanumeric with no spaces.";
+
     /**
      * Parses the given {@code String} of arguments in the context of the UntagCommand
      * and returns an UntagCommand object for execution.
@@ -24,13 +29,13 @@ public class UntagCommandParser implements Parser<UntagCommand> {
         requireNonNull(args);
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_TAG);
 
-        Index index = parseIndex(argMultimap);
         Tag tag = parseTag(argMultimap);
+        Index index = parseIndex(argMultimap);
         return new UntagCommand(index, tag);
     }
 
     /**
-     * Parses the displayed person index, including command usage in errors for invalid input.
+     * Parses the displayed person index, reporting the index requirements for invalid input.
      *
      * @throws ParseException If the index is missing or is not a positive integer within the supported integer range.
      */
@@ -38,7 +43,7 @@ public class UntagCommandParser implements Parser<UntagCommand> {
         try {
             return ParserUtil.parseIndex(argMultimap.getPreamble());
         } catch (ParseException pe) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, UntagCommand.MESSAGE_USAGE), pe);
+            throw new ParseException(MESSAGE_INVALID_INDEX, pe);
         }
     }
 
@@ -49,9 +54,13 @@ public class UntagCommandParser implements Parser<UntagCommand> {
      */
     private Tag parseTag(ArgumentMultimap argMultimap) throws ParseException {
         if (argMultimap.getValue(PREFIX_TAG).isEmpty()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, UntagCommand.MESSAGE_USAGE));
+            throw new ParseException(MESSAGE_INVALID_FORMAT);
         }
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_TAG);
-        return ParserUtil.parseTag(argMultimap.getValue(PREFIX_TAG).get());
+        try {
+            return ParserUtil.parseTag(argMultimap.getValue(PREFIX_TAG).get());
+        } catch (ParseException pe) {
+            throw new ParseException(MESSAGE_INVALID_TAG, pe);
+        }
     }
 }
