@@ -61,7 +61,8 @@ public class ParserUtilTest {
 
     @Test
     public void parseName_invalidValue_throwsParseException() {
-        for (String invalidName : new String[]{INVALID_NAME, "John2", " ", "John\tTan"}) {
+        for (String invalidName : new String[]{INVALID_NAME, "John2", " ", "John\tTan", "-", "'", " - ' ",
+            "José Tan"}) {
             assertThrows(ParseException.class, Name.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseName(invalidName));
         }
     }

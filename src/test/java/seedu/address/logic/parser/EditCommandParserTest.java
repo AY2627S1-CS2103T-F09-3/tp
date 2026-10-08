@@ -100,7 +100,8 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_invalidNames_failure() {
-        for (String invalidName : new String[]{"", "   ", "John2", "John@Tan", "John\tTan"}) {
+        for (String invalidName : new String[]{"", "   ", "John2", "John@Tan", "John\tTan", "-", "'", " - ' ",
+            "José Tan"}) {
             assertParseFailure(parser, "1 " + PREFIX_NAME + invalidName, Name.MESSAGE_CONSTRAINTS);
         }
     }

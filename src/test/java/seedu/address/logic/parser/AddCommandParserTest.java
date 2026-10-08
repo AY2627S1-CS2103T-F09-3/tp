@@ -66,7 +66,8 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_invalidNames_failure() {
-        for (String invalidName : new String[]{"", "   ", "John2", "John@Tan", "John\tTan"}) {
+        for (String invalidName : new String[]{"", "   ", "John2", "John@Tan", "John\tTan", "-", "'", " - ' ",
+            "José Tan"}) {
             assertParseFailure(parser, " " + PREFIX_NAME + invalidName + PHONE_DESC_BOB + EMAIL_DESC_BOB
                     + ADDRESS_DESC_BOB, Name.MESSAGE_CONSTRAINTS);
         }
