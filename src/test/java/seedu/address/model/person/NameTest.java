@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -15,8 +16,21 @@ public class NameTest {
 
     @Test
     public void constructor_invalidName_throwsIllegalArgumentException() {
-        String invalidName = "";
-        assertThrows(IllegalArgumentException.class, () -> new Name(invalidName));
+        for (String invalidName : new String[]{"", " ", "John2", "John@Tan", "John\tTan"}) {
+            assertThrows(IllegalArgumentException.class, Name.MESSAGE_CONSTRAINTS, () -> new Name(invalidName));
+        }
+    }
+
+    @Test
+    public void constructor_extraSpaces_normalizesName() {
+        Name name = new Name("  Mary-Jane   O'Brien  ");
+        assertEquals("Mary-Jane O'Brien", name.fullName);
+        assertEquals("Mary-Jane O'Brien", name.toString());
+    }
+
+    @Test
+    public void constructor_mixedCase_preservesCapitalization() {
+        assertEquals("mArY-JaNe O'BRIEN", new Name(" mArY-JaNe  O'BRIEN ").fullName);
     }
 
     @Test
@@ -27,15 +41,22 @@ public class NameTest {
         // invalid name
         assertFalse(Name.isValidName("")); // empty string
         assertFalse(Name.isValidName(" ")); // spaces only
-        assertFalse(Name.isValidName("^")); // only non-alphanumeric characters
-        assertFalse(Name.isValidName("peter*")); // contains non-alphanumeric characters
+        assertFalse(Name.isValidName("\t\r\n")); // whitespace only
+        assertFalse(Name.isValidName("^")); // unsupported symbol
+        assertFalse(Name.isValidName("peter*")); // contains an unsupported symbol
+        assertFalse(Name.isValidName("12345")); // numbers only
+        assertFalse(Name.isValidName("peter the 2nd")); // contains numbers
+        assertFalse(Name.isValidName("John\tTan")); // internal tab
+        assertFalse(Name.isValidName("John\nTan")); // internal newline
 
         // valid name
         assertTrue(Name.isValidName("peter jack")); // alphabets only
-        assertTrue(Name.isValidName("12345")); // numbers only
-        assertTrue(Name.isValidName("peter the 2nd")); // alphanumeric characters
         assertTrue(Name.isValidName("Capital Tan")); // with capital letters
-        assertTrue(Name.isValidName("David Roger Jackson Ray Jr 2nd")); // long names
+        assertTrue(Name.isValidName("David Roger Jackson Ray Junior")); // long names
+        assertTrue(Name.isValidName("O'Brien")); // apostrophe
+        assertTrue(Name.isValidName("Mary-Jane")); // hyphen
+        assertTrue(Name.isValidName("José Tan")); // Unicode letters
+        assertTrue(Name.isValidName("  Mary-Jane   O'Brien  ")); // extra spaces
     }
 
     @Test
@@ -44,6 +65,12 @@ public class NameTest {
 
         // same values -> returns true
         assertTrue(name.equals(new Name("Valid Name")));
+
+        // same normalized values -> returns true
+        assertTrue(name.equals(new Name("  Valid   Name  ")));
+
+        // different capitalization -> returns false
+        assertFalse(name.equals(new Name("valid name")));
 
         // same object -> returns true
         assertTrue(name.equals(name));
@@ -56,5 +83,10 @@ public class NameTest {
 
         // different values -> returns false
         assertFalse(name.equals(new Name("Other Valid Name")));
+    }
+
+    @Test
+    public void hashCode_sameNormalizedName_returnsSameHashCode() {
+        assertEquals(new Name("Valid Name").hashCode(), new Name("  Valid   Name  ").hashCode());
     }
 }

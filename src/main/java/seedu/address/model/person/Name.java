@@ -5,37 +5,36 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 
 /**
  * Represents a Person's name in the address book.
- * Guarantees: immutable; is valid as declared in {@link #isValidName(String)}
+ * Guarantees: immutable; is valid as declared in {@link #isValidName(String)};
+ * has no leading, trailing or consecutive spaces; preserves capitalization.
  */
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should only contain alphanumeric characters and spaces, and should not be blank";
+            "Names should only contain letters, spaces, apostrophes and hyphens, and should not be blank";
 
-    /*
-     * The first character of the name must not be a whitespace,
-     * otherwise " " (a blank string) becomes a valid input.
-     */
-    public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} ]*";
+    public static final String VALIDATION_REGEX = "[\\p{L} '-]+";
 
     public final String fullName;
 
     /**
-     * Constructs a {@code Name}.
+     * Constructs a {@code Name}, trimming surrounding whitespace and collapsing consecutive spaces.
+     * Capitalization is preserved.
      *
      * @param name A valid name.
      */
     public Name(String name) {
         requireNonNull(name);
         checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
-        fullName = name;
+        fullName = name.trim().replaceAll(" +", " ");
     }
 
     /**
-     * Returns true if a given string is a valid name.
+     * Returns true if a given string is a valid, nonblank name after trimming surrounding whitespace.
      */
     public static boolean isValidName(String test) {
-        return test.matches(VALIDATION_REGEX);
+        String trimmedName = test.trim();
+        return !trimmedName.isEmpty() && trimmedName.matches(VALIDATION_REGEX);
     }
 
 
