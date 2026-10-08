@@ -40,6 +40,20 @@ public class ParserUtilTest {
     private static final String WHITESPACE = " \t\r\n";
 
     @Test
+    public void parsePreambleIndex_invalidIndex_usesSuppliedMessage() {
+        ArgumentMultimap args = ArgumentTokenizer.tokenize("0 t/VIP", CliSyntax.PREFIX_TAG);
+        assertThrows(ParseException.class, "Expected a positive index", ()
+            -> ParserUtil.parsePreambleIndex(args, "Expected a positive index"));
+    }
+
+    @Test
+    public void parseSingleTag_missingPrefix_usesSuppliedMessage() {
+        ArgumentMultimap args = ArgumentTokenizer.tokenize("1", CliSyntax.PREFIX_TAG);
+        assertThrows(ParseException.class, "Expected t/TAG", ()
+            -> ParserUtil.parseSingleTag(args, "Expected t/TAG"));
+    }
+
+    @Test
     public void parseIndex_invalidInput_throwsParseException() {
         assertThrows(ParseException.class, () -> ParserUtil.parseIndex("10 a"));
     }
