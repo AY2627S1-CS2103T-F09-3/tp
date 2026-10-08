@@ -83,7 +83,7 @@ public class UntagCommand extends Command {
         }
 
         return new Person(personToUntag.getName(), personToUntag.getPhone(), personToUntag.getEmail(),
-                personToUntag.getAddress(), updatedTags);
+                personToUntag.getAddress(), updatedTags, personToUntag.getPreorder());
     }
 
     @Override

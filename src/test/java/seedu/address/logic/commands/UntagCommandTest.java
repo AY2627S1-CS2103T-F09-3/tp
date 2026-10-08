@@ -18,6 +18,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.PreorderStatus;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
@@ -37,6 +38,22 @@ public class UntagCommandTest {
 
         assertCommandSuccess(new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends")), model,
                 "Removed tag(s) [friends] from " + original.getName(), expectedModel);
+    }
+
+    @Test
+    public void execute_personWithPreorder_preorderKept() {
+        Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person withPreorder = new PersonBuilder(original)
+                .withPreorder("2 chocolate cakes", PreorderStatus.PREPARED).build();
+        model.setPerson(original, withPreorder);
+
+        Person expectedPerson = new PersonBuilder(withPreorder).withTags().build();
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.setPerson(withPreorder, expectedPerson);
+
+        assertCommandSuccess(new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends")), model,
+                "Removed tag(s) [friends] from " + original.getName(), expectedModel);
+        assertEquals(withPreorder.getPreorder(), model.getFilteredPersonList().get(0).getPreorder());
     }
 
     @Test
