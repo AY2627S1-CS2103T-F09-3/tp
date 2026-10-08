@@ -54,6 +54,13 @@ public class NameContainsKeywordsPredicateTest {
         // Mixed-case keywords
         predicate = new NameContainsKeywordsPredicate(List.of("aLIce", "bOB"));
         assertTrue(predicate.test(new PersonBuilder().withName("Alice Bob").build()));
+
+        predicate = new NameContainsKeywordsPredicate(List.of("an"));
+        assertTrue(predicate.test(new PersonBuilder().withName("Tan").build()));
+        assertTrue(predicate.test(new PersonBuilder().withName("Anita").build()));
+
+        predicate = new NameContainsKeywordsPredicate(List.of("A."));
+        assertFalse(predicate.test(new PersonBuilder().withName("Alice").build()));
     }
 
     @Test
@@ -64,6 +71,9 @@ public class NameContainsKeywordsPredicateTest {
 
         // Non-matching keyword
         predicate = new NameContainsKeywordsPredicate(List.of("Carol"));
+        assertFalse(predicate.test(new PersonBuilder().withName("Alice Bob").build()));
+
+        predicate = new NameContainsKeywordsPredicate(List.of("xyz", "carol"));
         assertFalse(predicate.test(new PersonBuilder().withName("Alice Bob").build()));
 
         // Keywords match phone, email and address, but do not match name
