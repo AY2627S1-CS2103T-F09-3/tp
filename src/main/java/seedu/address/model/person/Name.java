@@ -11,7 +11,7 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should only contain letters, spaces, apostrophes and hyphens, and should not be blank";
+            "Invalid name! Names must contain only letters, spaces, apostrophes or hyphens.";
 
     public static final String VALIDATION_REGEX = "[\\p{L} '-]+";
 
