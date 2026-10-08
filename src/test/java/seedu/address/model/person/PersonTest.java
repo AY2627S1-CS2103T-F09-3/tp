@@ -126,6 +126,13 @@ public class PersonTest {
     }
 
     @Test
+    public void hashCode_equalPersonsWithPreorder_sameHashCode() {
+        Person aliceWithPreorder = new PersonBuilder(ALICE).withPreorder("2 chocolate cakes", PreorderStatus.PENDING)
+                .build();
+        assertEquals(aliceWithPreorder.hashCode(), new PersonBuilder(aliceWithPreorder).build().hashCode());
+    }
+
+    @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
                 + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags()
