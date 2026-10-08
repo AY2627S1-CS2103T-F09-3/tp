@@ -11,16 +11,22 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
+    private static final Path NAME_TEST_DATA_FOLDER =
+            Paths.get("src", "test", "data", "JsonSerializableAddressBookTest");
 
     @TempDir
     public Path testFolder;
@@ -58,6 +64,39 @@ public class JsonAddressBookStorageTest {
     @Test
     public void readAddressBook_invalidAndValidPersonAddressBook_throwDataLoadingException() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("invalidAndValidPersonAddressBook.json"));
+    }
+
+    @Test
+    public void readAddressBook_nameWithDigits_throwsDataLoadingException() {
+        Path filePath = NAME_TEST_DATA_FOLDER.resolve("invalidNameAddressBook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+    }
+
+    @Test
+    public void readAddressBook_caseAndSpacingDuplicateNames_throwsDataLoadingException() {
+        Path filePath = NAME_TEST_DATA_FOLDER.resolve("caseAndSpacingDuplicatePersonAddressBook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+    }
+
+    @Test
+    public void readAndSaveAddressBook_namesWithExtraSpaces_success() throws Exception {
+        Path sourcePath = NAME_TEST_DATA_FOLDER.resolve("namesWithExtraSpacesAddressBook.json");
+        ReadOnlyAddressBook loaded = new JsonAddressBookStorage(sourcePath).readAddressBook().get();
+        assertEquals(List.of("mArY-JaNe O'BrIeN", "Jose Tan"), loaded.getPersonList().stream()
+                .map(person -> person.getName().fullName).toList());
+
+        Path savedPath = testFolder.resolve("NormalizedNamesAddressBook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(savedPath);
+        storage.saveAddressBook(loaded);
+
+        JsonNode savedJson = JsonUtil.readJsonFile(savedPath, JsonNode.class).get();
+        assertEquals("mArY-JaNe O'BrIeN", savedJson.get("persons").get(0).get("name").asText());
+        assertEquals("Jose Tan", savedJson.get("persons").get(1).get("name").asText());
+        assertEquals(loaded, storage.readAddressBook().get());
     }
 
     @Test
