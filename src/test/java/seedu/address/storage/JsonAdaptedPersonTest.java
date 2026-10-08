@@ -15,7 +15,9 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
     private static final String INVALID_NAME = "R@chel";
@@ -39,11 +41,23 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_nameWithPunctuationAndExtraSpaces_returnsNormalizedPerson() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson("  mArY-JaNe   O'BrIeN  ", VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, VALID_TAGS);
+        Person convertedPerson = person.toModelType();
+        Person expectedPerson = new PersonBuilder(BENSON).withName("mArY-JaNe O'BrIeN").build();
+
+        assertEquals(expectedPerson, convertedPerson);
+        assertEquals("mArY-JaNe O'BrIeN", convertedPerson.getName().fullName);
+    }
+
+    @Test
     public void toModelType_invalidName_throwsIllegalValueException() {
-        JsonAdaptedPerson person =
-                new JsonAdaptedPerson(INVALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_TAGS);
-        String expectedMessage = Name.MESSAGE_CONSTRAINTS;
-        assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+        for (String invalidName : new String[]{INVALID_NAME, "", "   ", "John2", "John\tTan"}) {
+            JsonAdaptedPerson person =
+                    new JsonAdaptedPerson(invalidName, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_TAGS);
+            assertThrows(IllegalValueException.class, Name.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
     }
 
     @Test
