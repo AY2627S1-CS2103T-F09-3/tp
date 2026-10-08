@@ -11,9 +11,10 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Invalid name! Names must contain only letters, spaces, apostrophes or hyphens.";
+            "Invalid name! Names must contain at least one English letter and only English letters, spaces, "
+                    + "apostrophes or hyphens.";
 
-    public static final String VALIDATION_REGEX = "[\\p{L} '-]+";
+    public static final String VALIDATION_REGEX = "(?=.*[A-Za-z])[A-Za-z '-]+";
 
     public final String fullName;
 
@@ -30,7 +31,8 @@ public class Name {
     }
 
     /**
-     * Returns true if a given string is a valid, nonblank name after trimming surrounding whitespace.
+     * Returns true if a given string contains at least one English letter and only English letters,
+     * spaces, apostrophes or hyphens after trimming surrounding whitespace.
      */
     public static boolean isValidName(String test) {
         String trimmedName = test.trim();

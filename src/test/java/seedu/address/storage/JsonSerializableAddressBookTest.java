@@ -44,7 +44,7 @@ public class JsonSerializableAddressBookTest {
                 JsonSerializableAddressBook.class).get();
         AddressBook expectedAddressBook = new AddressBook();
         expectedAddressBook.addPerson(new PersonBuilder(ALICE).withName("mArY-JaNe O'BrIeN").build());
-        expectedAddressBook.addPerson(new PersonBuilder(BENSON).withName("José Tan").build());
+        expectedAddressBook.addPerson(new PersonBuilder(BENSON).withName("Jose Tan").build());
 
         assertEquals(expectedAddressBook, dataFromFile.toModelType());
     }

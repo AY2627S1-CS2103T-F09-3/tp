@@ -86,7 +86,7 @@ public class JsonAddressBookStorageTest {
     public void readAndSaveAddressBook_namesWithExtraSpaces_success() throws Exception {
         Path sourcePath = NAME_TEST_DATA_FOLDER.resolve("namesWithExtraSpacesAddressBook.json");
         ReadOnlyAddressBook loaded = new JsonAddressBookStorage(sourcePath).readAddressBook().get();
-        assertEquals(List.of("mArY-JaNe O'BrIeN", "José Tan"), loaded.getPersonList().stream()
+        assertEquals(List.of("mArY-JaNe O'BrIeN", "Jose Tan"), loaded.getPersonList().stream()
                 .map(person -> person.getName().fullName).toList());
 
         Path savedPath = testFolder.resolve("NormalizedNamesAddressBook.json");
@@ -95,7 +95,7 @@ public class JsonAddressBookStorageTest {
 
         JsonNode savedJson = JsonUtil.readJsonFile(savedPath, JsonNode.class).get();
         assertEquals("mArY-JaNe O'BrIeN", savedJson.get("persons").get(0).get("name").asText());
-        assertEquals("José Tan", savedJson.get("persons").get(1).get("name").asText());
+        assertEquals("Jose Tan", savedJson.get("persons").get(1).get("name").asText());
         assertEquals(loaded, storage.readAddressBook().get());
     }
 

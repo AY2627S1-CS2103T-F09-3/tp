@@ -16,7 +16,8 @@ public class NameTest {
 
     @Test
     public void constructor_invalidName_throwsIllegalArgumentException() {
-        for (String invalidName : new String[]{"", " ", "John2", "John@Tan", "John\tTan"}) {
+        for (String invalidName : new String[]{"", " ", "John2", "John@Tan", "John\tTan", "-", "'", " - ' ",
+            "José Tan"}) {
             assertThrows(IllegalArgumentException.class, Name.MESSAGE_CONSTRAINTS, () -> new Name(invalidName));
         }
     }
@@ -55,8 +56,25 @@ public class NameTest {
         assertTrue(Name.isValidName("David Roger Jackson Ray Junior")); // long names
         assertTrue(Name.isValidName("O'Brien")); // apostrophe
         assertTrue(Name.isValidName("Mary-Jane")); // hyphen
-        assertTrue(Name.isValidName("José Tan")); // Unicode letters
         assertTrue(Name.isValidName("  Mary-Jane   O'Brien  ")); // extra spaces
+        assertTrue(Name.isValidName("A")); // one letter
+        assertTrue(Name.isValidName("Al")); // short name
+        assertTrue(Name.isValidName("Jo")); // short name
+        assertTrue(Name.isValidName("'A-")); // no additional punctuation-placement restriction
+    }
+
+    @Test
+    public void isValidName_punctuationOnly_returnsFalse() {
+        for (String name : new String[]{"-", "'", "---", "'''", " - ' "}) {
+            assertFalse(Name.isValidName(name));
+        }
+    }
+
+    @Test
+    public void isValidName_nonEnglishLetters_returnsFalse() {
+        for (String name : new String[]{"José Tan", "Аlex", "Ｊohn"}) {
+            assertFalse(Name.isValidName(name));
+        }
     }
 
     @Test
