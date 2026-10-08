@@ -10,6 +10,7 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -83,7 +84,7 @@ public class UntagCommandTest {
         int listSize = model.getFilteredPersonList().size();
         UntagCommand command = new UntagCommand(Index.fromOneBased(listSize + 1), new Tag("friends"));
 
-        assertCommandFailure(command, model, String.format(UntagCommand.MESSAGE_INVALID_INDEX, listSize));
+        assertCommandFailure(command, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
@@ -91,7 +92,7 @@ public class UntagCommandTest {
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
 
         assertCommandFailure(new UntagCommand(INDEX_SECOND_PERSON, new Tag("friends")), model,
-                String.format(UntagCommand.MESSAGE_INVALID_INDEX, 1));
+                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
@@ -99,6 +100,6 @@ public class UntagCommandTest {
         model.updateFilteredPersonList(person -> false);
 
         assertCommandFailure(new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends")), model,
-                UntagCommand.MESSAGE_EMPTY_LIST);
+                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 }

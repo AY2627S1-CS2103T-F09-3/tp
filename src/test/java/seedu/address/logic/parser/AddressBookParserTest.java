@@ -97,7 +97,7 @@ public class AddressBookParserTest {
         assertEquals(new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends")),
                 parser.parseCommand(UntagCommand.COMMAND_WORD + " 1 t/friends"));
     }
-    
+
     @Test
     public void parseCommand_tag() throws Exception {
         TagCommand command = (TagCommand) parser.parseCommand(TagCommand.COMMAND_WORD + " "

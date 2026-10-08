@@ -1,7 +1,6 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Collection;
@@ -127,31 +126,33 @@ public class ParserUtil {
     /**
      * Parses the preamble of {@code argMultimap} into an {@code Index}.
      *
-     * @param messageUsage usage message of the command, shown when the index is missing or invalid
-     * @throws ParseException if the preamble is not a single positive integer
+     * @param argMultimap Tokenized arguments containing the index in the preamble.
+     * @param errorMessage Complete error message shown when the index is missing or invalid.
+     * @throws ParseException If the preamble is not a positive integer within the supported integer range.
      */
-    public static Index parsePreambleIndex(ArgumentMultimap argMultimap, String messageUsage)
+    public static Index parsePreambleIndex(ArgumentMultimap argMultimap, String errorMessage)
             throws ParseException {
         requireNonNull(argMultimap);
-        requireNonNull(messageUsage);
+        requireNonNull(errorMessage);
         try {
             return parseIndex(argMultimap.getPreamble());
         } catch (ParseException pe) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, messageUsage), pe);
+            throw new ParseException(errorMessage, pe);
         }
     }
 
     /**
      * Parses the single {@code t/TAG} value in {@code argMultimap} into a {@code Tag}.
      *
-     * @param messageUsage usage message of the command, shown when the tag prefix is missing
-     * @throws ParseException if the tag prefix is missing or repeated, or the tag is invalid
+     * @param argMultimap Tokenized arguments containing the tag prefix and value.
+     * @param errorMessage Complete error message shown when the tag prefix is missing.
+     * @throws ParseException If the tag prefix is missing or repeated, or the tag is invalid.
      */
-    public static Tag parseSingleTag(ArgumentMultimap argMultimap, String messageUsage) throws ParseException {
+    public static Tag parseSingleTag(ArgumentMultimap argMultimap, String errorMessage) throws ParseException {
         requireNonNull(argMultimap);
-        requireNonNull(messageUsage);
+        requireNonNull(errorMessage);
         if (argMultimap.getValue(PREFIX_TAG).isEmpty()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, messageUsage));
+            throw new ParseException(errorMessage);
         }
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_TAG);

@@ -10,6 +10,7 @@ import java.util.Set;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
@@ -27,11 +28,13 @@ public class UntagCommand extends Command {
             + "Parameters: INDEX (must be a positive integer) " + PREFIX_TAG + "TAG\n"
             + "Example: " + COMMAND_WORD + " 1 " + PREFIX_TAG + "friends";
 
+    public static final String MESSAGE_INVALID_FORMAT =
+            "Format error. Input format: untag INDEX t/TAG. Example: untag 1 t/friends";
+    public static final String MESSAGE_INVALID_INDEX_FORMAT =
+            "Invalid index! Please enter a positive integer index between 1 and the size of the current list.";
+
     public static final String MESSAGE_UNTAG_PERSON_SUCCESS = "Removed tag(s) %1$s from %2$s";
     public static final String MESSAGE_TAG_NOT_FOUND = "%1$s does not have tag %2$s";
-    public static final String MESSAGE_INVALID_INDEX =
-            "Invalid index! Please enter a positive integer index between 1 and %1$d";
-    public static final String MESSAGE_EMPTY_LIST = "Invalid index! The currently displayed list is empty.";
 
     private final Index index;
     private final Tag tag;
@@ -61,11 +64,8 @@ public class UntagCommand extends Command {
      * @throws CommandException If the index is outside the displayed list.
      */
     private Person getPersonToUntag(List<Person> lastShownList) throws CommandException {
-        if (lastShownList.isEmpty()) {
-            throw new CommandException(MESSAGE_EMPTY_LIST);
-        }
         if (index.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(String.format(MESSAGE_INVALID_INDEX, lastShownList.size()));
+            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         }
         return lastShownList.get(index.getZeroBased());
     }
