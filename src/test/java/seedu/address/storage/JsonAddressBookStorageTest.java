@@ -30,6 +30,8 @@ public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
     private static final Path NAME_TEST_DATA_FOLDER =
             Paths.get("src", "test", "data", "JsonSerializableAddressBookTest");
+    private static final Path PREORDER_TEST_DATA_FOLDER =
+            Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
 
     @TempDir
     public Path testFolder;
@@ -83,6 +85,30 @@ public class JsonAddressBookStorageTest {
         JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
 
         assertThrows(DataLoadingException.class, storage::readAddressBook);
+    }
+
+    @Test
+    public void readAddressBook_missingPreorderDetails_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, () -> readPreorderFixture("missingPreorderDetails.json"));
+    }
+
+    @Test
+    public void readAddressBook_missingPreorderStatus_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, () -> readPreorderFixture("missingPreorderStatus.json"));
+    }
+
+    @Test
+    public void readAddressBook_invalidPreorderDetails_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, () -> readPreorderFixture("invalidPreorderDetails.json"));
+    }
+
+    @Test
+    public void readAddressBook_invalidPreorderStatus_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, () -> readPreorderFixture("invalidPreorderStatus.json"));
+    }
+
+    private void readPreorderFixture(String fileName) throws Exception {
+        new JsonAddressBookStorage(PREORDER_TEST_DATA_FOLDER.resolve(fileName)).readAddressBook();
     }
 
     @Test
