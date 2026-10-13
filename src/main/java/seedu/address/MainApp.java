@@ -50,7 +50,7 @@ public class MainApp extends Application {
      * When running from a JAR, the code source is the JAR file; when running
      * from classes, it is the classes directory.
      */
-    private static Path getAddressBookFilePath() {
+    static Path getAddressBookFilePath() {
         try {
             Path codeSource = Paths.get(MainApp.class.getProtectionDomain()
                     .getCodeSource().getLocation().toURI());
