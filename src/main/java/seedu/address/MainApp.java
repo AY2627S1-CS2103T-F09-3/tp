@@ -1,8 +1,6 @@
 package seedu.address;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -38,30 +36,12 @@ public class MainApp extends Application {
 
     private static final Logger logger = LogsCenter.getLogger(MainApp.class);
     private static final Path USER_PREFS_FILE_PATH = Paths.get("preferences.json");
-    private static final Path ADDRESS_BOOK_FILE_PATH = getAddressBookFilePath();
+    private static final Path ADDRESS_BOOK_FILE_PATH = Paths.get("data", "addressbook.json");
 
     protected Ui ui;
     protected Logic logic;
     protected Storage storage;
     protected Model model;
-
-    /**
-     * Returns the address book path relative to the application location.
-     * When running from a JAR, the code source is the JAR file; when running
-     * from classes, it is the classes directory.
-     */
-    static Path getAddressBookFilePath() {
-        try {
-            Path codeSource = Paths.get(MainApp.class.getProtectionDomain()
-                    .getCodeSource().getLocation().toURI());
-            Path applicationDirectory = Files.isDirectory(codeSource)
-                    ? codeSource : codeSource.getParent();
-            return applicationDirectory.resolve("data").resolve("addressbook.json");
-        } catch (URISyntaxException | NullPointerException e) {
-            logger.warning("Unable to determine application location; using working directory.");
-            return Paths.get("data", "addressbook.json").toAbsolutePath();
-        }
-    }
 
     @Override
     public void init() throws Exception {
