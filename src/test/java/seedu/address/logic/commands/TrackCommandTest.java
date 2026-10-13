@@ -138,6 +138,42 @@ public class TrackCommandTest {
     }
 
     @Test
+    public void execute_noStatus_updatesListWhenPreorderStatusesChange() {
+        Model model = createMixedModel();
+        assertTrackResult(new TrackCommand(Optional.empty()), model, "3 order(s) listed!",
+                List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
+
+        Person preparedBenson = new PersonBuilder(PENDING_BENSON)
+                .withPreorder("2 chocolate cakes", PREPARED).build();
+        model.setPerson(PENDING_BENSON, preparedBenson);
+        assertEquals(List.of(PENDING_ELLE, PREPARED_CARL, preparedBenson), model.getFilteredPersonList());
+
+        Person completedCarl = new PersonBuilder(PREPARED_CARL).withPreorder("12 cupcakes", COMPLETED).build();
+        model.setPerson(PREPARED_CARL, completedCarl);
+        assertEquals(List.of(PENDING_ELLE, preparedBenson), model.getFilteredPersonList());
+
+        Person pendingDaniel = new PersonBuilder(COMPLETED_DANIEL)
+                .withPreorder("50 pineapple tarts", PENDING).build();
+        model.setPerson(COMPLETED_DANIEL, pendingDaniel);
+        assertEquals(List.of(pendingDaniel, PENDING_ELLE, preparedBenson), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_explicitStatus_updatesListWhenPreorderStatusesChange() {
+        Model model = createMixedModel();
+        assertTrackResult(new TrackCommand(Optional.of(PENDING)), model,
+                "2 order(s) for PENDING listed!", List.of(PENDING_ELLE, PENDING_BENSON));
+
+        Person preparedElle = new PersonBuilder(PENDING_ELLE).withPreorder("1 strawberry cake", PREPARED).build();
+        model.setPerson(PENDING_ELLE, preparedElle);
+        assertEquals(List.of(PENDING_BENSON), model.getFilteredPersonList());
+
+        Person pendingCarl = new PersonBuilder(PREPARED_CARL).withPreorder("12 cupcakes", PENDING).build();
+        model.setPerson(PREPARED_CARL, pendingCarl);
+        assertEquals(List.of(pendingCarl, PENDING_BENSON), model.getFilteredPersonList());
+    }
+
+    @Test
     public void equals() {
         TrackCommand activeCommand = new TrackCommand(Optional.empty());
         TrackCommand pendingCommand = new TrackCommand(Optional.of(PENDING));
