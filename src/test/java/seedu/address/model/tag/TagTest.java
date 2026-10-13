@@ -36,7 +36,7 @@ public class TagTest {
         // same values -> returns true
         assertTrue(tag.equals(new Tag("vip")));
 
-        // difference case -> returns true
+        // different case -> returns true
         assertTrue(tag.equals(new Tag("VIP")));
 
         // different types -> returns false
