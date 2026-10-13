@@ -29,6 +29,7 @@ public class TagCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1 " + PREFIX_TAG + "regular";
 
     public static final String MESSAGE_TAG_PERSON_SUCCESS = "Tagged person: %1$s";
+    public static final String MESSAGE_DUPLICATE_TAG = "%1$s already has tag %2$s. No changes made.";
 
     private final Index index;
     private final Tag tag;
@@ -54,6 +55,10 @@ public class TagCommand extends Command {
         }
 
         Person personToTag = lastShownList.get(index.getZeroBased());
+        if (personToTag.getTags().contains(tag)) {
+            return new CommandResult(String.format(MESSAGE_DUPLICATE_TAG, personToTag.getName(), tag));
+        }
+
         Person taggedPerson = createTaggedPerson(personToTag, tag);
 
         model.setPerson(personToTag, taggedPerson);
