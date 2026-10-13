@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 
 import java.util.Optional;
 import java.util.Set;
@@ -19,8 +20,8 @@ public class TrackCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Displays customers with orders, optionally filtered by fulfilment status.\n"
-            + "Parameters: [s/STATUS]\n"
-            + "Example: " + COMMAND_WORD + " s/PENDING";
+            + "Parameters: [" + PREFIX_STATUS + "STATUS]\n"
+            + "Example: " + COMMAND_WORD + " " + PREFIX_STATUS + "PENDING";
 
     public static final String MESSAGE_ORDERS_LISTED_OVERVIEW = "%1$d order(s) listed!";
     public static final String MESSAGE_ORDERS_BY_STATUS_LISTED_OVERVIEW = "%1$d order(s) for %2$s listed!";

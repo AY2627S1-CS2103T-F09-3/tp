@@ -10,6 +10,8 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -24,10 +26,12 @@ import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.TagCommand;
+import seedu.address.logic.commands.TrackCommand;
 import seedu.address.logic.commands.UntagCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.PreorderStatus;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -90,6 +94,46 @@ public class AddressBookParserTest {
     public void parseCommand_list() throws Exception {
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD + " 3") instanceof ListCommand);
+    }
+
+    @Test
+    public void parseCommand_track() throws Exception {
+        assertEquals(new TrackCommand(Optional.empty()), parser.parseCommand("track"));
+        assertEquals(new TrackCommand(Optional.empty()), parser.parseCommand("  track  "));
+    }
+
+    @Test
+    public void parseCommand_trackWithStatus() throws Exception {
+        for (PreorderStatus status : PreorderStatus.values()) {
+            TrackCommand expectedCommand = new TrackCommand(Optional.of(status));
+            assertEquals(expectedCommand, parser.parseCommand("track s/" + status));
+            assertEquals(expectedCommand, parser.parseCommand("track s/" + status.name().toLowerCase(Locale.ROOT)));
+        }
+        assertEquals(new TrackCommand(Optional.of(PreorderStatus.PENDING)),
+                parser.parseCommand("  track\t s/ Pending  "));
+    }
+
+    @Test
+    public void parseCommand_invalidTrackFormat_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, TrackCommand.MESSAGE_USAGE);
+        String[] invalidCommands = {"track PENDING", "track 1 s/PENDING", "track S/PENDING", "track t/vip"};
+        for (String command : invalidCommands) {
+            assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(command));
+        }
+    }
+
+    @Test
+    public void parseCommand_invalidTrackStatus_throwsParseException() {
+        String[] invalidCommands = {"track s/", "track s/DONE", "track s/PENDING t/vip"};
+        for (String command : invalidCommands) {
+            assertThrows(ParseException.class, PreorderStatus.MESSAGE_CONSTRAINTS, () -> parser.parseCommand(command));
+        }
+    }
+
+    @Test
+    public void parseCommand_repeatedTrackStatus_throwsParseException() {
+        String expectedMessage = "Multiple values specified for the following single-valued field(s): s/";
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("track s/PENDING s/PREPARED"));
     }
 
     @Test
