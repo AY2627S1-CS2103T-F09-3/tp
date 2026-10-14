@@ -17,10 +17,10 @@ import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.OrderCommand;
 import seedu.address.logic.commands.TagCommand;
 import seedu.address.logic.commands.TrackCommand;
 import seedu.address.logic.commands.UntagCommand;
-import seedu.address.logic.commands.OrderCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
 /**

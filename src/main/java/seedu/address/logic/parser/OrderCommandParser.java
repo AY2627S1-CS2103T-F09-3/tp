@@ -7,6 +7,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ORDER_STATUS;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.OrderCommand;
+import seedu.address.logic.commands.OrderCommand.EditPreorderDescriptor;
 import seedu.address.logic.parser.exceptions.ParseException;
 
 public class OrderCommandParser implements Parser<OrderCommand> {
@@ -16,10 +17,12 @@ public class OrderCommandParser implements Parser<OrderCommand> {
      * and returns an OrderCommand object for execution.
      * @throws ParseException if the user input does not conform to the expected format
      */
+    @Override
     public OrderCommand parse(String userInput) throws ParseException {
         requireNonNull(userInput);
 
-        ArgumentMultimap argumentMultimap = ArgumentTokenizer.tokenize(userInput, PREFIX_ORDER_DETAILS, PREFIX_ORDER_STATUS);
+        ArgumentMultimap argumentMultimap =
+                ArgumentTokenizer.tokenize(userInput, PREFIX_ORDER_DETAILS, PREFIX_ORDER_STATUS);
 
         Index index;
 
@@ -31,10 +34,15 @@ public class OrderCommandParser implements Parser<OrderCommand> {
 
         argumentMultimap.verifyNoDuplicatePrefixesFor(PREFIX_ORDER_DETAILS, PREFIX_ORDER_STATUS);
 
-        String preorderDetailInput = argumentMultimap.getValue(PREFIX_ORDER_DETAILS).orElse("");
-        String preorderStatusInput = argumentMultimap.getValue(PREFIX_ORDER_STATUS).orElse("");
+        EditPreorderDescriptor descriptor = new EditPreorderDescriptor();
+        if (argumentMultimap.getValue(PREFIX_ORDER_DETAILS).isPresent()) {
+            descriptor.setDetails(ParserUtil.parsePreorderDetails(argumentMultimap.getValue(PREFIX_ORDER_DETAILS).get()));
+        }
+        if (argumentMultimap.getValue(PREFIX_ORDER_STATUS).isPresent()) {
+            descriptor.setStatus(ParserUtil.parsePreorderStatus(argumentMultimap.getValue(PREFIX_ORDER_STATUS).get()));
+        }
 
-        return new OrderCommand(index, preorderDetailInput, preorderStatusInput);
+        return new OrderCommand(index, descriptor);
     }
 
 }

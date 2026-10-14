@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ORDER_STATUS;
 import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import seedu.address.commons.core.index.Index;
@@ -19,9 +20,9 @@ import seedu.address.model.preorder.PreorderStatus;
 
 public class OrderCommand extends Command {
     public static final String COMMAND_WORD = "order";
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds or edits the preorder details of the person identified"
-            + "by the index number used in the last person listing."
-            + "Existing preorder details will be overwritten by the input. \n"
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds or edits the preorder details of the person identified "
+            + "by the index number used in the last person listing. "
+            + "Only supplied preorder fields will be updated. Both fields are required for a new preorder.\n"
             + "Parameters: INDEX (must be a positive integer) "
             + "[" + PREFIX_ORDER_DETAILS + "DETAILS] "
             + "[" + PREFIX_ORDER_STATUS + "STATUS]\n"
@@ -31,21 +32,16 @@ public class OrderCommand extends Command {
             + " preorder details and preorder status";
     public static final String MESSAGE_ADD_ORDER_SUCCESS = "Added preorder to Person: %1$s";
     public static final String MESSAGE_EDIT_ORDER_SUCCESS = "Edited preorder of Person: %1$s";
+    public static final String MESSAGE_NOT_EDITED = "No preorder changes specified.";
 
-    public final Index index;
-    public final String preorderDetailString;
-    public final String predorderStatusString;
+    private final Index index;
+    private final EditPreorderDescriptor editPreorderDescriptor;
 
-    /**
-     * Creates an OrderCommand to add/edit {@code preorder} from the person at {@code index} in the filtered person list.
-     */
-    public OrderCommand(Index index, String preorderDetailString, String preorderStatusString) {
+    public OrderCommand(Index index, EditPreorderDescriptor editPreorderDescriptor) {
         requireNonNull(index);
-        requireNonNull(preorderDetailString);
-        requireNonNull(preorderStatusString);
+        requireNonNull(editPreorderDescriptor);
         this.index = index;
-        this.preorderDetailString = preorderDetailString;
-        this.predorderStatusString = preorderStatusString;
+        this.editPreorderDescriptor = new EditPreorderDescriptor(editPreorderDescriptor);
     }
 
     @Override
@@ -53,13 +49,16 @@ public class OrderCommand extends Command {
         requireNonNull(model);
         List<Person> lastShownList = model.getFilteredPersonList();
         Person identifiedPerson = getIdentifiedPerson(lastShownList);
-        Person personWithUpdatedOrder = createUpdatedOrderPerson(identifiedPerson, this.preorderDetailString,
-                this.predorderStatusString);
+        if (identifiedPerson.getPreorder().isPresent()
+                && editPreorderDescriptor.getDetails().isEmpty() && editPreorderDescriptor.getStatus().isEmpty()) {
+            return new CommandResult(MESSAGE_NOT_EDITED);
+        }
+        Person personWithUpdatedOrder = createUpdatedOrderPerson(identifiedPerson);
 
         model.setPerson(identifiedPerson, personWithUpdatedOrder);
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
 
-        return new CommandResult(generateSuccessMessage(personWithUpdatedOrder));
+        return new CommandResult(generateSuccessMessage(identifiedPerson, personWithUpdatedOrder));
     }
 
     private Person getIdentifiedPerson(List<Person> lastShownList) throws CommandException {
@@ -69,56 +68,28 @@ public class OrderCommand extends Command {
         return lastShownList.get(this.index.getZeroBased());
     }
 
-    private static Person createUpdatedOrderPerson(Person personToUpdateOrder, String preorderDetailString,
-                                                  String preorderStatusString) throws CommandException {
-        assert personToUpdateOrder != null;
-        assert preorderDetailString != null;
-        assert preorderStatusString != null;
+    private Person createUpdatedOrderPerson(Person personToUpdate) throws CommandException {
+        Optional<Preorder> existingPreorder = personToUpdate.getPreorder();
+        Optional<PreorderDetails> suppliedDetails = editPreorderDescriptor.getDetails();
+        Optional<PreorderStatus> suppliedStatus = editPreorderDescriptor.getStatus();
 
-        Optional<Preorder> existingPreorder = personToUpdateOrder.getPreorder();
-        Preorder newPreorder;
-        PreorderStatus newPreorderStatus;
-        PreorderDetails newPreorderDetails;
-
-        if (!existingPreorder.isEmpty()) {
-            Preorder oldPreorder = existingPreorder.get();
-            PreorderDetails oldPreorderDetails = oldPreorder.getDetails();
-            PreorderStatus oldPreorderStatus = oldPreorder.getStatus();
-            if (preorderDetailString.isEmpty() && !preorderStatusString.isEmpty()) {
-                newPreorderStatus = PreorderStatus.valueOf(preorderStatusString);
-                newPreorder = new Preorder(oldPreorderDetails, newPreorderStatus);
-                return new Person(personToUpdateOrder.getName(), personToUpdateOrder.getPhone(),
-                        personToUpdateOrder.getEmail(), personToUpdateOrder.getAddress(), personToUpdateOrder.getTags(),
-                        Optional.of(newPreorder));
-            } else if (!preorderDetailString.isEmpty() && preorderStatusString.isEmpty()) {
-                newPreorderDetails = new PreorderDetails(preorderDetailString);
-                newPreorder = new Preorder(newPreorderDetails, oldPreorderStatus);
-                return new Person(personToUpdateOrder.getName(), personToUpdateOrder.getPhone(),
-                        personToUpdateOrder.getEmail(), personToUpdateOrder.getAddress(), personToUpdateOrder.getTags(),
-                        Optional.of(newPreorder));
-            }
-        }
-
-        if (isArgumentsEmpty(preorderDetailString, preorderStatusString)) {
+        if (existingPreorder.isEmpty() && (suppliedDetails.isEmpty() || suppliedStatus.isEmpty())) {
             throw new CommandException(MESSAGE_NO_ORDER_YET);
         }
 
-        newPreorderDetails = new PreorderDetails(preorderDetailString);
-        newPreorderStatus = PreorderStatus.valueOf(preorderStatusString);
-        newPreorder = new Preorder(newPreorderDetails, newPreorderStatus);
-
-        return new Person(personToUpdateOrder.getName(), personToUpdateOrder.getPhone(), personToUpdateOrder.getEmail(),
-                personToUpdateOrder.getAddress(), personToUpdateOrder.getTags(), Optional.of(newPreorder));
+        PreorderDetails details = suppliedDetails
+                .orElseGet(() -> existingPreorder.orElseThrow().getDetails());
+        PreorderStatus status = suppliedStatus
+                .orElseGet(() -> existingPreorder.orElseThrow().getStatus());
+        Preorder updatedPreorder = new Preorder(details, status);
+        return new Person(personToUpdate.getName(), personToUpdate.getPhone(), personToUpdate.getEmail(),
+                personToUpdate.getAddress(), personToUpdate.getTags(), Optional.of(updatedPreorder));
     }
 
-    private static boolean isArgumentsEmpty(String preorderDetailString, String predorderStatusString) {
-        return preorderDetailString.isEmpty() || predorderStatusString.isEmpty();
-    }
-
-    private String generateSuccessMessage(Person personToUpdateOrder) {
-        String messageFormat = (preorderDetailString.isEmpty() && predorderStatusString.isEmpty())
-                ? MESSAGE_ADD_ORDER_SUCCESS : MESSAGE_EDIT_ORDER_SUCCESS;
-        return String.format(messageFormat, Messages.format(personToUpdateOrder));
+    private String generateSuccessMessage(Person originalPerson, Person updatedPerson) {
+        String messageFormat = originalPerson.getPreorder().isEmpty() ? MESSAGE_ADD_ORDER_SUCCESS
+                : MESSAGE_EDIT_ORDER_SUCCESS;
+        return String.format(messageFormat, Messages.format(updatedPerson));
     }
 
     @Override
@@ -127,15 +98,52 @@ public class OrderCommand extends Command {
             return true;
         }
 
-        // instanceof handles nulls
-        if (!(other instanceof OrderCommand)) {
+        if (!(other instanceof OrderCommand otherOrderCommand)) {
             return false;
         }
 
-        OrderCommand e = (OrderCommand) other;
-        return this.index.equals(e.index)
-                && this.preorderDetailString.equals(e.preorderDetailString)
-                && this.predorderStatusString.equals(e.predorderStatusString);
+        return index.equals(otherOrderCommand.index)
+                && editPreorderDescriptor.equals(otherOrderCommand.editPreorderDescriptor);
     }
 
+    public static class EditPreorderDescriptor {
+        private PreorderDetails details;
+        private PreorderStatus status;
+
+        public EditPreorderDescriptor() {}
+
+        public EditPreorderDescriptor(EditPreorderDescriptor toCopy) {
+            details = toCopy.details;
+            status = toCopy.status;
+        }
+
+        public void setDetails(PreorderDetails details) {
+            this.details = details;
+        }
+
+        public Optional<PreorderDetails> getDetails() {
+            return Optional.ofNullable(details);
+        }
+
+        public void setStatus(PreorderStatus status) {
+            this.status = status;
+        }
+
+        public Optional<PreorderStatus> getStatus() {
+            return Optional.ofNullable(status);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other == this) {
+                return true;
+            }
+
+            if (!(other instanceof EditPreorderDescriptor otherDescriptor)) {
+                return false;
+            }
+
+            return Objects.equals(details, otherDescriptor.details) && status == otherDescriptor.status;
+        }
+    }
 }
