@@ -28,6 +28,9 @@ public class TagCommand extends Command {
             + "Parameters: INDEX (must be a positive integer) " + PREFIX_TAG + "TAG\n"
             + "Example: " + COMMAND_WORD + " 1 " + PREFIX_TAG + "regular";
 
+    public static final String MESSAGE_INVALID_FORMAT =
+            "Format error. Input format: tag INDEX t/TAG. Example: tag 1 t/regular";
+
     public static final String MESSAGE_TAG_PERSON_SUCCESS = "Tagged person: %1$s";
     public static final String MESSAGE_DUPLICATE_TAG = "%1$s already has tag %2$s. No changes made.";
 

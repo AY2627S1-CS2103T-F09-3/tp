@@ -1,7 +1,7 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.Messages.MESSAGE_INVALID_INDEX_FORMAT;
 import static seedu.address.logic.commands.UntagCommand.MESSAGE_INVALID_FORMAT;
-import static seedu.address.logic.commands.UntagCommand.MESSAGE_INVALID_INDEX_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;

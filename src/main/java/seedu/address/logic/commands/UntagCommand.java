@@ -30,8 +30,6 @@ public class UntagCommand extends Command {
 
     public static final String MESSAGE_INVALID_FORMAT =
             "Format error. Input format: untag INDEX t/TAG. Example: untag 1 t/friends";
-    public static final String MESSAGE_INVALID_INDEX_FORMAT =
-            "Invalid index! Please enter a positive integer index between 1 and the size of the current list.";
 
     public static final String MESSAGE_UNTAG_PERSON_SUCCESS = "Removed tag(s) %1$s from %2$s";
     public static final String MESSAGE_TAG_NOT_FOUND = "%1$s does not have tag %2$s";

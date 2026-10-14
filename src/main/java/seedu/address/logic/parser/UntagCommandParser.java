@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.UntagCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.tag.Tag;
@@ -24,7 +25,7 @@ public class UntagCommandParser implements Parser<UntagCommand> {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_TAG);
 
         Tag tag = ParserUtil.parseSingleTag(argMultimap, UntagCommand.MESSAGE_INVALID_FORMAT);
-        Index index = ParserUtil.parsePreambleIndex(argMultimap, UntagCommand.MESSAGE_INVALID_INDEX_FORMAT);
+        Index index = ParserUtil.parsePreambleIndex(argMultimap, Messages.MESSAGE_INVALID_INDEX_FORMAT);
         return new UntagCommand(index, tag);
     }
 }
