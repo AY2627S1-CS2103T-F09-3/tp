@@ -58,7 +58,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 * Items followed by `...` can appear zero or more times.<br>
   For example, `[MORE_KEYWORDS]...` may be omitted, or written as `Mary` or `Mary Jane`.
 
-* Parameters can be in any order.<br>
+* Prefixed parameters can be in any order, unless stated otherwise. A positional `INDEX` must appear before them.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
@@ -119,6 +119,38 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`, preserving all other details and tags.
 *  `edit 1 n/JOHN DOE` Changes the capitalization of the 1st person's name if they are already named `John Doe`.
+
+### Removing a person's tag: `untag`
+
+Removes an existing tag from a person in the currently displayed list.
+
+Format: `untag INDEX t/TAG`
+
+* `INDEX` must be a positive integer shown in the current list. After a `find` command, use the index shown in its search results.
+* Supply exactly one `t/TAG`, after the index. The tag must not be blank and must contain only English letters (`A-Z`, `a-z`) and digits (`0-9`). Internal spaces and special characters are not allowed. Leading and trailing spaces are ignored.
+* Matching is case-insensitive. For example, `t/vip` removes an existing `VIP` tag.
+* Other tags, contact details, and any preorder remain unchanged. Removing the last tag leaves the person with no tags.
+* The current list filter is preserved, and the change is saved automatically.
+* If the command fails, no person's data is changed.
+
+Examples:
+
+* `untag 3 t/wholesale` removes the `wholesale` tag from the third person shown, provided they have that tag.
+* `find Bernice` followed by `untag 1 t/friends` removes the `friends` tag from the first search result, provided that person has the tag.
+* If Alex Yeoh is displayed at index 1 and has the tag `VIP`, `untag 1 t/vip` removes it and displays `Removed tag(s) [vip] from Alex Yeoh`.
+
+Common errors:
+
+| Input or situation | Feedback |
+| --- | --- |
+| `untag 0 t/VIP`, `untag -1 t/VIP`, or `untag abc t/VIP` | `Invalid command format!` followed by the untag usage instructions. |
+| `untag`, `untag t/VIP`, or `untag 1` | `Invalid command format!` followed by the untag usage instructions. |
+| `untag 1 t/`, `untag 1 t/close friends`, or `untag 1 t/VIP!` | `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.` |
+| `untag 1 t/VIP t/friends` | `Multiple values specified for the following single-valued field(s): t/` |
+| `untag 5 t/VIP` when fewer than five persons are displayed, or any valid index when the list is empty | `The person index provided is invalid.` |
+| `untag 1 t/VIP` when the first person is Alex Yeoh and has no `VIP` tag | `Alex Yeoh does not have tag [VIP]` |
+
+If several inputs are invalid, only the first detected error is shown. The index format is checked before the tag input; whether the index exists in the displayed list is checked after both inputs are valid.
 
 ### Locating persons by name: `find`
 
@@ -210,4 +242,5 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
+**Untag**  | `untag INDEX t/TAG`<br> e.g., `untag 1 t/friends`
 **Help**   | `help`
