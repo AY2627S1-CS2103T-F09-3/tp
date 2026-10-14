@@ -87,7 +87,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS`
 * Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
 * A person is a duplicate if their name matches an existing person's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
 * Duplicate checks include all persons in the address book, even those hidden by a `find` command.
-* New persons are added without tags.
+* New persons are added without tags or a preorder.
 
 Examples:
 
@@ -112,7 +112,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS]`
 * Fields you provide replace their existing values. Fields you omit remain unchanged.
 * The name validation and spacing rules described for `add` also apply to `edit`.
 * You can retain a person's own name or change its capitalization or spacing while editing. A name matching another person's name is rejected, including persons hidden by a `find` command. Other contact details do not affect this duplicate check.
-* Existing tags are always preserved.
+* Existing tags and preorders are always preserved.
 
 Examples:
 
@@ -136,6 +136,51 @@ Examples:
 * `find John` returns `john` and `John Doe`
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
+
+### Adding or updating a preorder: `order`
+
+Records or updates a customer's current preorder. Each customer can have at most one current preorder.
+
+Format: `order INDEX [d/DETAILS] [s/STATUS]`
+
+* `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
+* For a customer **without a preorder**, both `d/DETAILS` and `s/STATUS` are required.
+* For a customer **with a preorder**, supply either field or both. Supplied fields replace their existing values; omitted fields remain unchanged. Contact details and tags are preserved.
+* `DETAILS` must be non-blank, on a single line, and at most 200 characters long. Leading and trailing whitespace is removed.
+* `STATUS` must be `PENDING`, `PREPARED`, or `COMPLETED`. Status input is case-insensitive, so `s/pending`, `s/Prepared`, and `s/COMPLETED` are all accepted.
+* A supplied prefix must have a value. For example, `order 1 d/` is invalid.
+* Each prefix may appear at most once and may appear in any order
+* Put a space before each prefix.
+* `order INDEX` without either field leaves an existing preorder unchanged and reports `No preorder changes specified.` For a customer without a preorder, it reports that both fields are required.
+* Adding or updating an order preserves the current filter. If a status change means the customer no longer matches a `track` filter, their card disappears from that view. Check the displayed indices again before your next command. Use `list` to show all customers. A command with neither field leaves the current list unchanged.
+
+The customer's card shows an order box with `Order:` and a coloured status badge on the first row, followed by the details as plain text. Customers without preorders have no order box.
+
+![Customer cards showing preorder details and colour-coded status badges](images/uiWithPreorderBox.png)
+
+Status | Meaning | Badge colour
+-------|---------|-------------
+`PENDING` | Recorded but not ready | Red
+`PREPARED` | Ready for collection or delivery | Amber
+`COMPLETED` | Collected or delivered | Green
+
+You can change a preorder to any of these statuses. Completing an order keeps its details; updating it later replaces the supplied fields rather than creating an order history.
+
+Examples (assuming customer 1 exists):
+
+* `order 1 d/2 chocolate cakes, no nuts s/PENDING` creates a preorder, or replaces both fields of an existing preorder.
+* `order 1 d/3 chocolate cakes, no nuts` changes only the details of an existing preorder.
+* `order 1 s/PREPARED` changes only the status of an existing preorder.
+* `order 1 s/COMPLETED` marks the existing preorder as completed.
+
+### Viewing preorders: `track`
+
+Format: `track [s/STATUS]`
+
+* `track` shows customers with active preorders (`PENDING` or `PREPARED`).
+* `track s/COMPLETED` shows customers with completed preorders. You can also filter by `PENDING` or `PREPARED`; status input is case-insensitive.
+* Customers without preorders are excluded. Use `list` to show all customers again.
+* To update a result, use its displayed index with `order`. The current filter is preserved; customers whose updated status no longer matches it disappear from the view.
 
 ### Deleting a person: `delete`
 
@@ -165,13 +210,24 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+AddressBook automatically saves data after every successful command. Customer preorders, including their details and statuses, are saved with the contact data and restored when you reopen the app. You do not need to save manually.
 
 ### Editing the data file
 
 AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
 
 Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
+
+A customer without a preorder may omit the `preorder` field or have `"preorder": null`. Older files without this field still load. A present preorder must contain both `preorderDetails` and `preorderStatus`, for example:
+
+```json
+"preorder": {
+  "preorderDetails": "2 chocolate cakes, no nuts",
+  "preorderStatus": "PENDING"
+}
+```
+
+In the data file, statuses must use the exact uppercase names above. Details must satisfy the same length and single-line restrictions as the command, without leading or trailing whitespace. Missing or invalid fields within a preorder prevent the data file from loading.
 
 <box type="warning" seamless>
 
@@ -209,5 +265,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
+**Order**  | `order INDEX [d/DETAILS] [s/STATUS]` (both fields required for a new preorder)<br> e.g., `order 1 d/2 chocolate cakes s/PENDING`
+**Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
 **Help**   | `help`
