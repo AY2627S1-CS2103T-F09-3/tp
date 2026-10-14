@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.PreorderDetails;
 import seedu.address.model.preorder.PreorderStatus;
@@ -63,13 +65,56 @@ public class OrderCommandTest {
     }
 
     @Test
-    public void execute_filteredList_updatesDisplayedPersonAndShowsAll() throws Exception {
+    public void execute_filteredList_updatesDisplayedPersonAndPreservesFilter() throws Exception {
         Model model = createModel(BENSON, ORDERED_ALICE);
-        model.updateFilteredPersonList(person -> person.equals(ORDERED_ALICE));
+        model.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
         command(1, null, COMPLETED).execute(model);
         Person expected = new PersonBuilder(ALICE).withPreorder("Cake", COMPLETED).build();
         assertEquals(List.of(BENSON, expected), model.getAddressBook().getPersonList());
-        assertEquals(List.of(BENSON, expected), model.getFilteredPersonList());
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_newPreorder_preservesNameFilter() throws Exception {
+        Model model = createModel(BENSON, ALICE);
+        model.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+        command(1, "Cake", PENDING).execute(model);
+        assertEquals(List.of(ORDERED_ALICE), model.getFilteredPersonList());
+        assertEquals(List.of(BENSON, ORDERED_ALICE), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_statusChange_removesOrderFromPendingView() throws Exception {
+        Person orderedBenson = new PersonBuilder(BENSON).withPreorder("Tarts", PENDING).build();
+        Model model = createModel(ORDERED_ALICE, orderedBenson);
+        new TrackCommand(Optional.of(PENDING)).execute(model);
+        command(1, null, COMPLETED).execute(model);
+        Person completedAlice = new PersonBuilder(ALICE).withPreorder("Cake", COMPLETED).build();
+        assertEquals(List.of(orderedBenson), model.getFilteredPersonList());
+        assertEquals(List.of(completedAlice, orderedBenson), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_detailsChange_preservesStatusFilter() throws Exception {
+        Model model = createModel(BENSON, ORDERED_ALICE);
+        new TrackCommand(Optional.of(PENDING)).execute(model);
+        command(1, "Cookies", null).execute(model);
+        Person expected = new PersonBuilder(ALICE).withPreorder("Cookies", PENDING).build();
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+        assertEquals(List.of(BENSON, expected), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_completeLastActiveOrder_leavesEmptyFilteredView() throws Exception {
+        Model model = createModel(BENSON, ORDERED_ALICE);
+        new TrackCommand(Optional.empty()).execute(model);
+        command(1, null, PreorderStatus.PREPARED).execute(model);
+        assertEquals(List.of(new PersonBuilder(ALICE).withPreorder("Cake", PreorderStatus.PREPARED).build()),
+                model.getFilteredPersonList());
+        command(1, null, COMPLETED).execute(model);
+        assertEquals(List.of(), model.getFilteredPersonList());
+        assertEquals(List.of(BENSON, new PersonBuilder(ALICE).withPreorder("Cake", COMPLETED).build()),
+                model.getAddressBook().getPersonList());
     }
 
     @Test
