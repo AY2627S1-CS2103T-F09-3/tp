@@ -1,7 +1,9 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.model.preorder.PreorderStatus.COMPLETED;
 import static seedu.address.model.preorder.PreorderStatus.PENDING;
@@ -143,14 +145,65 @@ public class OrderCommandTest {
     @Test
     public void equalsAndHashCode_compareIndexAndSuppliedFields() {
         OrderCommand command = command(1, "Cake", PENDING);
+        assertTrue(command.equals(command));
         assertEquals(command, command(1, "Cake", PENDING));
         assertEquals(command.hashCode(), command(1, "Cake", PENDING).hashCode());
         assertNotEquals(command, command(2, "Cake", PENDING));
         assertNotEquals(command, command(1, "Tarts", PENDING));
         assertNotEquals(command, command(1, "Cake", COMPLETED));
         assertNotEquals(command, command(1, null, PENDING));
+        assertNotEquals(command, command(1, "Cake", null));
+        assertEquals(command(1, null, null), command(1, null, null));
         assertNotEquals(command, null);
         assertNotEquals(command, "order");
+    }
+
+    @Test
+    public void toString_includesIndexAndDescriptor() {
+        String prefix = OrderCommand.class.getCanonicalName() + "{index="
+                + Index.class.getCanonicalName() + "{zeroBasedIndex=0}, editPreorderDescriptor="
+                + EditPreorderDescriptor.class.getCanonicalName();
+        assertEquals(prefix + "{details=Cake, status=PENDING}}", command(1, "Cake", PENDING).toString());
+        assertEquals(prefix + "{details=null, status=null}}", command(1, null, null).toString());
+        assertEquals(prefix + "{details=Cake, status=null}}", command(1, "Cake", null).toString());
+        assertEquals(prefix + "{details=null, status=PENDING}}", command(1, null, PENDING).toString());
+    }
+
+    @Test
+    public void descriptorEquals_comparesSuppliedFields() {
+        EditPreorderDescriptor descriptor = new EditPreorderDescriptor();
+        descriptor.setDetails(new PreorderDetails("Cake"));
+        descriptor.setStatus(PENDING);
+        EditPreorderDescriptor copy = new EditPreorderDescriptor(descriptor);
+
+        assertTrue(descriptor.equals(descriptor));
+        assertTrue(descriptor.equals(copy));
+        assertTrue(copy.equals(descriptor));
+        assertFalse(descriptor.equals(null));
+        assertFalse(descriptor.equals("order"));
+        assertFalse(descriptor.equals(new EditPreorderDescriptor()));
+        assertEquals(new EditPreorderDescriptor(), new EditPreorderDescriptor());
+
+        copy.setDetails(new PreorderDetails("Tarts"));
+        assertFalse(descriptor.equals(copy));
+        copy.setDetails(new PreorderDetails("Cake"));
+        copy.setStatus(COMPLETED);
+        assertFalse(descriptor.equals(copy));
+        copy.setStatus(null);
+        assertFalse(descriptor.equals(copy));
+    }
+
+    @Test
+    public void descriptorToString_includesSuppliedAndOmittedFields() {
+        EditPreorderDescriptor descriptor = new EditPreorderDescriptor();
+        String prefix = EditPreorderDescriptor.class.getCanonicalName();
+        assertEquals(prefix + "{details=null, status=null}", descriptor.toString());
+        descriptor.setDetails(new PreorderDetails("Cake"));
+        assertEquals(prefix + "{details=Cake, status=null}", descriptor.toString());
+        descriptor.setStatus(PENDING);
+        assertEquals(prefix + "{details=Cake, status=PENDING}", descriptor.toString());
+        descriptor.setDetails(null);
+        assertEquals(prefix + "{details=null, status=PENDING}", descriptor.toString());
     }
 
     private void assertUpdate(String details, PreorderStatus status, String expectedDetails,
