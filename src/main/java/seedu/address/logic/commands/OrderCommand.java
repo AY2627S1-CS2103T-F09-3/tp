@@ -133,7 +133,7 @@ public class OrderCommand extends Command {
 
     @Override
     public int hashCode() {
-        return Objects.hash(index, editPreorderDescriptor);
+        return Objects.hash(index.getZeroBased(), editPreorderDescriptor);
     }
 
     @Override
