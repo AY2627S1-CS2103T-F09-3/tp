@@ -12,7 +12,8 @@ import java.util.Locale;
  */
 public class Tag {
 
-    public static final String MESSAGE_CONSTRAINTS = "Tag names should be alphanumeric";
+    public static final String MESSAGE_CONSTRAINTS = "Tags must be one word of English letters and digits only "
+            + "(A-Z, a-z, 0-9), with no spaces or symbols, and must not be empty. Example: regular";
     public static final String VALIDATION_REGEX = "\\p{Alnum}+";
 
     public final String tagName;
