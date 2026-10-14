@@ -62,14 +62,21 @@ public class PersonCard extends UiPart<Region> {
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+        initializePreorderBox();
+    }
+
+    /**
+     * Displays the preorder details and status, or removes the box from the layout when absent.
+     */
+    private void initializePreorderBox() {
         preorderBox.setVisible(person.getPreorder().isPresent());
         preorderBox.setManaged(person.getPreorder().isPresent());
         person.getPreorder().ifPresent(preorder -> {
             preorderStatus.setText(preorder.getStatus().name());
             preorderStatus.getStyleClass().add(switch (preorder.getStatus()) {
-            case PENDING -> "preorder-status-pending";
-            case PREPARED -> "preorder-status-prepared";
-            case COMPLETED -> "preorder-status-completed";
+                case PENDING -> "preorder-status-pending";
+                case PREPARED -> "preorder-status-prepared";
+                case COMPLETED -> "preorder-status-completed";
             });
             preorderDetails.setText(preorder.getDetails().value);
         });

@@ -10,11 +10,16 @@ import seedu.address.logic.commands.OrderCommand;
 import seedu.address.logic.commands.OrderCommand.EditPreorderDescriptor;
 import seedu.address.logic.parser.exceptions.ParseException;
 
+/**
+ * Parses a displayed person index and optional preorder fields into an {@link OrderCommand}.
+ * Whether both fields are required is checked during execution, using the person's existing preorder.
+ */
 public class OrderCommandParser implements Parser<OrderCommand> {
 
     /**
      * Parses the given {@code String} of arguments in the context of the OrderCommand
      * and returns an OrderCommand object for execution.
+     *
      * @throws ParseException if the user input does not conform to the expected format
      */
     @Override
@@ -36,7 +41,8 @@ public class OrderCommandParser implements Parser<OrderCommand> {
 
         EditPreorderDescriptor descriptor = new EditPreorderDescriptor();
         if (argumentMultimap.getValue(PREFIX_ORDER_DETAILS).isPresent()) {
-            descriptor.setDetails(ParserUtil.parsePreorderDetails(argumentMultimap.getValue(PREFIX_ORDER_DETAILS).get()));
+            descriptor.setDetails(
+                    ParserUtil.parsePreorderDetails(argumentMultimap.getValue(PREFIX_ORDER_DETAILS).get()));
         }
         if (argumentMultimap.getValue(PREFIX_ORDER_STATUS).isPresent()) {
             descriptor.setStatus(ParserUtil.parsePreorderStatus(argumentMultimap.getValue(PREFIX_ORDER_STATUS).get()));
