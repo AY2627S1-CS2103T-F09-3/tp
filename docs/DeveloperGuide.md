@@ -553,15 +553,24 @@ testers are expected to do more *exploratory* testing.
       Expected: The person's tags are unchanged. The status message shows `Alex Yeoh already has tag [FRIENDS]. No changes made.`
 
    1. Test case: `tag 1 t/gluten-free`<br>
-      Expected: No tag is added. The status message shows `Tag names should be alphanumeric`.
+      Expected: No tag is added. The status message shows `Tags must be one word of English letters and digits only (A-Z, a-z, 0-9), with no spaces or symbols, and must not be empty. Example: regular`.
+
+   1. Other incorrect tags to try: `tag 1 t/`, `tag 1 t/vip 1`<br>
+      Expected: Similar to previous.
 
    1. Test case: `tag 1 t/vip t/regular`<br>
       Expected: No tag is added. The status message shows `Multiple values specified for the following single-valued field(s): t/`.
 
    1. Test case: `tag 0 t/vip`<br>
-      Expected: No tag is added. The status message shows an invalid command format error, followed by the correct format of the `tag` command.
+      Expected: No tag is added. The status message shows `Invalid index! Please enter a positive integer index between 1 and the size of the current list.`
 
-   1. Other incorrect tag commands to try: `tag`, `tag 1`, `tag t/vip`, `tag x t/vip`<br>
+   1. Other incorrect indexes to try: `tag t/vip`, `tag x t/vip`, `tag -1 t/vip`<br>
+      Expected: Similar to previous.
+
+   1. Test case: `tag 1`<br>
+      Expected: No tag is added. The status message shows `Format error. Input format: tag INDEX t/TAG. Example: tag 1 t/regular`
+
+   1. Other incorrect tag commands to try: `tag`, `tag 1 vip`<br>
       Expected: Similar to previous.
 
    1. Test case: `tag 100 t/vip` (where 100 is larger than the list size)<br>
