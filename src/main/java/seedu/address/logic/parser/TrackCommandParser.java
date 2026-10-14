@@ -2,7 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ORDER_STATUS;
 
 import java.util.Optional;
 
@@ -24,18 +24,18 @@ public class TrackCommandParser implements Parser<TrackCommand> {
     @Override
     public TrackCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" " + args.trim(), PREFIX_STATUS);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" " + args.trim(), PREFIX_ORDER_STATUS);
 
         if (!argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, TrackCommand.MESSAGE_USAGE));
         }
 
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STATUS);
-        if (argMultimap.getValue(PREFIX_STATUS).isEmpty()) {
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_ORDER_STATUS);
+        if (argMultimap.getValue(PREFIX_ORDER_STATUS).isEmpty()) {
             return new TrackCommand(Optional.empty());
         }
 
-        PreorderStatus status = ParserUtil.parsePreorderStatus(argMultimap.getValue(PREFIX_STATUS).get());
+        PreorderStatus status = ParserUtil.parsePreorderStatus(argMultimap.getValue(PREFIX_ORDER_STATUS).get());
         return new TrackCommand(Optional.of(status));
     }
 }
