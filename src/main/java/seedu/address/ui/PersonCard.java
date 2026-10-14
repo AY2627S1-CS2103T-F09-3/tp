@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import seedu.address.model.person.Person;
 
 /**
@@ -40,6 +41,12 @@ public class PersonCard extends UiPart<Region> {
     private Label email;
     @FXML
     private FlowPane tags;
+    @FXML
+    private VBox preorderBox;
+    @FXML
+    private Label preorderStatus;
+    @FXML
+    private Label preorderDetails;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -55,5 +62,16 @@ public class PersonCard extends UiPart<Region> {
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+        preorderBox.setVisible(person.getPreorder().isPresent());
+        preorderBox.setManaged(person.getPreorder().isPresent());
+        person.getPreorder().ifPresent(preorder -> {
+            preorderStatus.setText(preorder.getStatus().name());
+            preorderStatus.getStyleClass().add(switch (preorder.getStatus()) {
+            case PENDING -> "preorder-status-pending";
+            case PREPARED -> "preorder-status-prepared";
+            case COMPLETED -> "preorder-status-completed";
+            });
+            preorderDetails.setText(preorder.getDetails().value);
+        });
     }
 }

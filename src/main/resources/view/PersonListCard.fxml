@@ -31,6 +31,18 @@
       <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
       <Label fx:id="address" styleClass="cell_small_label" text="\$address" />
       <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
+      <Region VBox.vgrow="ALWAYS" visible="${preorderBox.visible}" managed="${preorderBox.managed}" />
+      <VBox fx:id="preorderBox" styleClass="preorder-box" spacing="6" visible="false" managed="false">
+        <VBox.margin>
+          <Insets top="8" />
+        </VBox.margin>
+        <HBox alignment="CENTER_LEFT" spacing="6">
+          <Label text="Order:" styleClass="cell_small_label" />
+          <Label fx:id="preorderStatus" styleClass="preorder-status" />
+        </HBox>
+        <Label fx:id="preorderDetails" styleClass="cell_small_label" wrapText="true"
+               minWidth="0" maxWidth="Infinity" />
+      </VBox>
     </VBox>
   </GridPane>
 </HBox>

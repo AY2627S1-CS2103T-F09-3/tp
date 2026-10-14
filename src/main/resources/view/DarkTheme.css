@@ -136,6 +136,36 @@
      -fx-background-color: derive(#1d1d1d, 20%);
 }
 
+.preorder-box {
+    -fx-background-color: #33383d;
+    -fx-border-color: #70777e;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-padding: 10;
+}
+
+.preorder-status {
+    -fx-padding: 3 8;
+    -fx-background-radius: 3;
+    -fx-font-size: 11px;
+    -fx-opacity: 1;
+}
+
+.list-cell .preorder-status-pending {
+    -fx-background-color: #f29b9b;
+    -fx-text-fill: #4a1010;
+}
+
+.list-cell .preorder-status-prepared {
+    -fx-background-color: #f4c66a;
+    -fx-text-fill: #332400;
+}
+
+.list-cell .preorder-status-completed {
+    -fx-background-color: #97d5ad;
+    -fx-text-fill: #153823;
+}
+
 .pane-with-border {
      -fx-background-color: derive(#1d1d1d, 20%);
      -fx-border-color: derive(#1d1d1d, 10%);
