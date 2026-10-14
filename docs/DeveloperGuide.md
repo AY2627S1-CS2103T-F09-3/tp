@@ -562,8 +562,6 @@ Use a test copy of the data file. Add a uniquely named customer, for example `ad
    Expected: An invalid displayed-index error, even if the full address book has more customers.
 1. Supply a long description of up to 200 characters and resize the window.<br>
    Expected: Details wrap inside the order box. All three status labels remain readable. A customer without a preorder has no order box or space reserved for it.
-1. Exit and relaunch from the same application folder, then find the test customer.<br>
-   Expected: The latest preorder details and status are restored.
 
 ### Saving data
 

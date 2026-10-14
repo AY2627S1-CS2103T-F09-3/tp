@@ -210,24 +210,13 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every successful command. Customer preorders, including their details and statuses, are saved with the contact data and restored when you reopen the app. You do not need to save manually.
+AddressBook automatically saves data after every successful command. You do not need to save manually.
 
 ### Editing the data file
 
 AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
 
 Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
-
-A customer without a preorder may omit the `preorder` field or have `"preorder": null`. Older files without this field still load. A present preorder must contain both `preorderDetails` and `preorderStatus`, for example:
-
-```json
-"preorder": {
-  "preorderDetails": "2 chocolate cakes, no nuts",
-  "preorderStatus": "PENDING"
-}
-```
-
-In the data file, statuses must use the exact uppercase names above. Details must satisfy the same length and single-line restrictions as the command, without leading or trailing whitespace. Missing or invalid fields within a preorder prevent the data file from loading.
 
 <box type="warning" seamless>
 
