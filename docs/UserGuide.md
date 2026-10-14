@@ -171,6 +171,26 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
 * `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
+### Deleting a preorder: `deleteorder`
+
+Deletes a customer's current preorder, for example when the customer cancels, while keeping them as a customer.
+
+Format: `deleteorder INDEX`
+
+* `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
+* Only the preorder is removed. The customer's name, phone number, email, address and tags are not changed.
+* If the customer has no preorder, nothing is changed and the app shows `NAME has no preorder to delete.`, for example `Alex Yeoh has no preorder to delete.`
+* If `INDEX` is larger than the displayed list, the app shows `The person index provided is invalid.`
+* A deleted preorder cannot be restored. To record it again, use `order`.
+* Deleting a preorder keeps the current filter. After `track`, the customer no longer has a preorder, so they disappear from that view. Check the displayed indices again before your next command. Use `list` to show all customers.
+
+On success, the app shows the deleted preorder, for example `Deleted preorder for Alex Yeoh: 2 chocolate cakes (PENDING)`.
+
+Examples:
+
+* `track` followed by `deleteorder 1` deletes the preorder of the 1st customer in the results of the `track` command.
+* `find Bernice` followed by `deleteorder 1` deletes the preorder of the 1st customer in the results of the `find` command.
+
 ### Clearing all entries: `clear`
 
 Clears all entries from the address book.
@@ -227,6 +247,7 @@ Action     | Format, Examples
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS` <br> e.g., `add n/James Ho p/92224444 e/jamesho@example.com a/123, Clementi Rd, 1234665`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
