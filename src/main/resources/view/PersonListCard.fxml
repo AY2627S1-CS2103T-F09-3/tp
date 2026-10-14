@@ -31,6 +31,22 @@
       <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
       <Label fx:id="address" styleClass="cell_small_label" text="\$address" />
       <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
+      <VBox fx:id="preorder" spacing="3">
+        <padding>
+          <Insets top="4" />
+        </padding>
+        <!-- maxWidth keeps each chip only as wide as its text, like the tags; long details wrap -->
+        <Label fx:id="preorderDetails" wrapText="true" styleClass="preorder-details">
+          <maxWidth>
+            <Region fx:constant="USE_PREF_SIZE" />
+          </maxWidth>
+        </Label>
+        <Label fx:id="preorderStatus" styleClass="preorder-status">
+          <maxWidth>
+            <Region fx:constant="USE_PREF_SIZE" />
+          </maxWidth>
+        </Label>
+      </VBox>
     </VBox>
   </GridPane>
 </HBox>
