@@ -10,6 +10,9 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
+import static seedu.address.model.preorder.PreorderStatus.COMPLETED;
+import static seedu.address.model.preorder.PreorderStatus.PENDING;
+import static seedu.address.model.preorder.PreorderStatus.PREPARED;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +44,16 @@ public class TypicalPersons {
             .withEmail("lydia@example.com").withAddress("little tokyo").build();
     public static final Person GEORGE = new PersonBuilder().withName("George Best").withPhone("94824422")
             .withEmail("anna@example.com").withAddress("4th street").build();
+
+    // Customers with preorders
+    public static final Person PENDING_BENSON =
+            new PersonBuilder(BENSON).withPreorder("2 chocolate cakes", PENDING).build();
+    public static final Person PREPARED_CARL =
+            new PersonBuilder(CARL).withPreorder("12 cupcakes", PREPARED).build();
+    public static final Person COMPLETED_DANIEL =
+            new PersonBuilder(DANIEL).withPreorder("50 pineapple tarts", COMPLETED).build();
+    public static final Person PENDING_ELLE =
+            new PersonBuilder(ELLE).withPreorder("1 strawberry cake", PENDING).build();
 
     // Manually added
     public static final Person HOON = new PersonBuilder().withName("Hoon Meier").withPhone("84824244")
