@@ -89,15 +89,13 @@ public class TagCommandTest {
     }
 
     @Test
-    public void execute_existingTag_success() {
-        Person personToTag = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-        TagCommand tagCommand = new TagCommand(INDEX_FIRST_PERSON, new Tag(EXISTING_TAG_OF_FIRST_PERSON));
+    public void execute_existingTag_noChange() {
+        assertTagAlreadyPresent(EXISTING_TAG_OF_FIRST_PERSON);
+    }
 
-        String expectedMessage = String.format(TagCommand.MESSAGE_TAG_PERSON_SUCCESS, Messages.format(personToTag));
-
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-
-        assertCommandSuccess(tagCommand, model, expectedMessage, expectedModel);
+    @Test
+    public void execute_existingTagDifferentCase_noChange() {
+        assertTagAlreadyPresent(EXISTING_TAG_OF_FIRST_PERSON.toUpperCase());
     }
 
     @Test
@@ -150,5 +148,18 @@ public class TagCommandTest {
         String expected = TagCommand.class.getCanonicalName() + "{index=" + INDEX_FIRST_PERSON
                 + ", tag=" + TAG_HUSBAND + "}";
         assertEquals(expected, tagCommand.toString());
+    }
+
+    /**
+     * Asserts that tagging the first person with {@code tagName}, which they already have,
+     * reports the duplicate and leaves the model unchanged.
+     */
+    private void assertTagAlreadyPresent(String tagName) {
+        Person personToTag = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Tag tag = new Tag(tagName);
+        String expectedMessage = String.format(TagCommand.MESSAGE_DUPLICATE_TAG, personToTag.getName(), tag);
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+
+        assertCommandSuccess(new TagCommand(INDEX_FIRST_PERSON, tag), model, expectedMessage, expectedModel);
     }
 }
