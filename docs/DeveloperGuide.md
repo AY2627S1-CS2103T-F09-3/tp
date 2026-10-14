@@ -540,6 +540,40 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases … }_
 
+### Tagging a person
+
+1. Tagging a person while all persons are being shown
+
+   1. Prerequisites: Start with the sample data. List all persons using the `list` command. The first person is `Alex Yeoh`, who has the tag `friends`.
+
+   1. Test case: `tag 1 t/regular`<br>
+      Expected: `regular` is added to the first person's tags. The status message shows the person's details, including the new tag.
+
+   1. Test case: `tag 1 t/FRIENDS`<br>
+      Expected: The person's tags are unchanged. The status message shows `Alex Yeoh already has tag [FRIENDS]. No changes made.`
+
+   1. Test case: `tag 1 t/gluten-free`<br>
+      Expected: No tag is added. The status message shows `Tag names should be alphanumeric`.
+
+   1. Test case: `tag 1 t/vip t/regular`<br>
+      Expected: No tag is added. The status message shows `Multiple values specified for the following single-valued field(s): t/`.
+
+   1. Test case: `tag 0 t/vip`<br>
+      Expected: No tag is added. The status message shows an invalid command format error, followed by the correct format of the `tag` command.
+
+   1. Other incorrect tag commands to try: `tag`, `tag 1`, `tag t/vip`, `tag x t/vip`<br>
+      Expected: Similar to previous.
+
+   1. Test case: `tag 100 t/vip` (where 100 is larger than the list size)<br>
+      Expected: No tag is added. The status message shows `The person index provided is invalid.`
+
+1. Tagging a person in a filtered list
+
+   1. Prerequisites: Find a person using `find Bernice`. Only `Bernice Yu` is shown.
+
+   1. Test case: `tag 1 t/vip`<br>
+      Expected: `vip` is added to `Bernice Yu`'s tags. The full person list is shown again.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files
