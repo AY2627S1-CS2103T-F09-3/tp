@@ -574,6 +574,23 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `tag 1 t/vip`<br>
       Expected: `vip` is added to `Bernice Yu`'s tags. The full person list is shown again.
 
+### Deleting a preorder
+
+Start with the sample data. List all customers using the `list` command. The first customer is `Alex Yeoh`.
+
+1. Run `order 1 d/2 chocolate cakes s/PENDING`.<br>
+   Expected: `Alex Yeoh` now has a `PENDING` preorder for `2 chocolate cakes`.
+1. Run `deleteorder 1`.<br>
+   Expected: The status message shows `Deleted preorder for Alex Yeoh: 2 chocolate cakes (PENDING)`. The order box disappears from the card. The name, phone number, email, address and tags are unchanged.
+1. Run `deleteorder 1` again.<br>
+   Expected: The status message shows `Alex Yeoh has no preorder to delete.` Nothing changes.
+1. Try `deleteorder 0`, `deleteorder` and `deleteorder 1 2`.<br>
+   Expected: Nothing changes. The status message shows an invalid command format error, followed by the correct format of the `deleteorder` command.
+1. Run `deleteorder 100` (where 100 is larger than the list size).<br>
+   Expected: Nothing changes. The status message shows `The person index provided is invalid.`
+1. Run `order 1 d/2 chocolate cakes s/PENDING`, then `track`, then `deleteorder 1`, using the displayed index of `Alex Yeoh` in place of `1` if it differs.<br>
+   Expected: The status message shows `Deleted preorder for Alex Yeoh: 2 chocolate cakes (PENDING)`. `Alex Yeoh` disappears from the tracked view, while other customers with active preorders remain. Run `list` to confirm that `Alex Yeoh` is still a customer, with no order box.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files
