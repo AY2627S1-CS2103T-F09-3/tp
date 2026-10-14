@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.HOON;
@@ -22,6 +23,8 @@ import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.testutil.PersonBuilder;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
@@ -83,6 +86,30 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void readAddressBook_missingPreorderDetails_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, () -> readPreorderFixture("missingPreorderDetails.json"));
+    }
+
+    @Test
+    public void readAddressBook_missingPreorderStatus_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, () -> readPreorderFixture("missingPreorderStatus.json"));
+    }
+
+    @Test
+    public void readAddressBook_invalidPreorderDetails_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, () -> readPreorderFixture("invalidPreorderDetails.json"));
+    }
+
+    @Test
+    public void readAddressBook_invalidPreorderStatus_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, () -> readPreorderFixture("invalidPreorderStatus.json"));
+    }
+
+    private void readPreorderFixture(String fileName) throws Exception {
+        new JsonAddressBookStorage(TEST_DATA_FOLDER.resolve(fileName)).readAddressBook();
+    }
+
+    @Test
     public void readAndSaveAddressBook_namesWithExtraSpaces_success() throws Exception {
         Path sourcePath = NAME_TEST_DATA_FOLDER.resolve("namesWithExtraSpacesAddressBook.json");
         ReadOnlyAddressBook loaded = new JsonAddressBookStorage(sourcePath).readAddressBook().get();
@@ -123,6 +150,62 @@ public class JsonAddressBookStorageTest {
         readBack = jsonAddressBookStorage.readAddressBook().get(); // file path not specified
         assertEquals(original, new AddressBook(readBack));
 
+    }
+
+    @Test
+    public void readAndSaveAddressBook_preorder_success() throws Exception {
+        AddressBook original = new AddressBook();
+        original.addPerson(new PersonBuilder(ALICE)
+                .withPreorder("2 chocolate cakes", PreorderStatus.COMPLETED).build());
+
+        Path filePath = testFolder.resolve("nested").resolve("preorders.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        storage.saveAddressBook(original);
+
+        ReadOnlyAddressBook readBack = storage.readAddressBook().get();
+        assertEquals(original, new AddressBook(readBack));
+        JsonNode savedJson = JsonUtil.readJsonFile(filePath, JsonNode.class).get();
+        assertEquals("2 chocolate cakes", savedJson.get("persons").get(0)
+                .get("preorder").get("details").asText());
+        assertEquals("COMPLETED", savedJson.get("persons").get(0)
+                .get("preorder").get("status").asText());
+    }
+
+    @Test
+    public void readAndSaveAddressBook_updateAndDeletePreorder_success() throws Exception {
+        Path filePath = testFolder.resolve("preorder-lifecycle.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        AddressBook withPendingPreorder = new AddressBook();
+        withPendingPreorder.addPerson(new PersonBuilder(ALICE)
+                .withPreorder("2 chocolate cakes", PreorderStatus.PENDING).build());
+        storage.saveAddressBook(withPendingPreorder);
+
+        AddressBook withCompletedPreorder = new AddressBook();
+        withCompletedPreorder.addPerson(new PersonBuilder(ALICE)
+                .withPreorder("2 chocolate cakes", PreorderStatus.COMPLETED).build());
+        storage.saveAddressBook(withCompletedPreorder);
+        assertEquals(withCompletedPreorder, new AddressBook(storage.readAddressBook().get()));
+
+        AddressBook withoutPreorder = new AddressBook();
+        withoutPreorder.addPerson(new PersonBuilder(ALICE).build());
+        storage.saveAddressBook(withoutPreorder);
+        assertEquals(withoutPreorder, new AddressBook(storage.readAddressBook().get()));
+    }
+
+    @Test
+    public void readAndSaveAddressBook_customerWithoutPreorder_preservesLegacyShape() throws Exception {
+        AddressBook original = new AddressBook();
+        original.addPerson(ALICE);
+        Path filePath = testFolder.resolve("without-preorder.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        storage.saveAddressBook(original);
+
+        JsonNode personJson = JsonUtil.readJsonFile(filePath, JsonNode.class).get()
+                .get("persons").get(0);
+        assertTrue(personJson.get("preorder") == null || personJson.get("preorder").isNull());
+        assertEquals(original, new AddressBook(storage.readAddressBook().get()));
     }
 
     @Test
