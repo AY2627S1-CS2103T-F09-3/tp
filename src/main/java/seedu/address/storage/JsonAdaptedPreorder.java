@@ -18,6 +18,12 @@ class JsonAdaptedPreorder {
     private final String details;
     private final String status;
 
+    /**
+     * Constructs a {@code JsonAdaptedPreorder} with the given preorder details and status.
+     *
+     * @param details the details of the preorder.
+     * @param status the status of the preorder.
+     */
     @JsonCreator
     public JsonAdaptedPreorder(@JsonProperty("details") String details,
             @JsonProperty("status") String status) {

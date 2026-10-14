@@ -30,8 +30,6 @@ public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
     private static final Path NAME_TEST_DATA_FOLDER =
             Paths.get("src", "test", "data", "JsonSerializableAddressBookTest");
-    private static final Path PREORDER_TEST_DATA_FOLDER =
-            Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
 
     @TempDir
     public Path testFolder;
@@ -108,7 +106,7 @@ public class JsonAddressBookStorageTest {
     }
 
     private void readPreorderFixture(String fileName) throws Exception {
-        new JsonAddressBookStorage(PREORDER_TEST_DATA_FOLDER.resolve(fileName)).readAddressBook();
+        new JsonAddressBookStorage(TEST_DATA_FOLDER.resolve(fileName)).readAddressBook();
     }
 
     @Test
