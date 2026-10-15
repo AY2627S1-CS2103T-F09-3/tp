@@ -58,9 +58,9 @@ public class OrderCommandParserTest {
     @Test
     public void parse_duplicatePrefixes_failure() {
         assertParseFailure(parser, " 1 d/Cake d/Tarts", Messages.getErrorMessageForDuplicatePrefixes(
-                CliSyntax.PREFIX_ORDER_DETAILS));
+                CliSyntax.PREFIX_DETAILS));
         assertParseFailure(parser, " 1 s/PENDING s/PENDING", Messages.getErrorMessageForDuplicatePrefixes(
-                CliSyntax.PREFIX_ORDER_STATUS));
+                CliSyntax.PREFIX_STATUS));
     }
 
     @Test

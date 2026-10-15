@@ -2,8 +2,8 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_ORDER_DETAILS;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_ORDER_STATUS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.OrderCommand;
@@ -27,7 +27,7 @@ public class OrderCommandParser implements Parser<OrderCommand> {
         requireNonNull(userInput);
 
         ArgumentMultimap argumentMultimap =
-                ArgumentTokenizer.tokenize(userInput, PREFIX_ORDER_DETAILS, PREFIX_ORDER_STATUS);
+                ArgumentTokenizer.tokenize(userInput, PREFIX_DETAILS, PREFIX_STATUS);
 
         Index index;
 
@@ -37,15 +37,15 @@ public class OrderCommandParser implements Parser<OrderCommand> {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, OrderCommand.MESSAGE_USAGE), pe);
         }
 
-        argumentMultimap.verifyNoDuplicatePrefixesFor(PREFIX_ORDER_DETAILS, PREFIX_ORDER_STATUS);
+        argumentMultimap.verifyNoDuplicatePrefixesFor(PREFIX_DETAILS, PREFIX_STATUS);
 
         EditPreorderDescriptor descriptor = new EditPreorderDescriptor();
-        if (argumentMultimap.getValue(PREFIX_ORDER_DETAILS).isPresent()) {
+        if (argumentMultimap.getValue(PREFIX_DETAILS).isPresent()) {
             descriptor.setDetails(
-                    ParserUtil.parsePreorderDetails(argumentMultimap.getValue(PREFIX_ORDER_DETAILS).get()));
+                    ParserUtil.parsePreorderDetails(argumentMultimap.getValue(PREFIX_DETAILS).get()));
         }
-        if (argumentMultimap.getValue(PREFIX_ORDER_STATUS).isPresent()) {
-            descriptor.setStatus(ParserUtil.parsePreorderStatus(argumentMultimap.getValue(PREFIX_ORDER_STATUS).get()));
+        if (argumentMultimap.getValue(PREFIX_STATUS).isPresent()) {
+            descriptor.setStatus(ParserUtil.parsePreorderStatus(argumentMultimap.getValue(PREFIX_STATUS).get()));
         }
 
         return new OrderCommand(index, descriptor);

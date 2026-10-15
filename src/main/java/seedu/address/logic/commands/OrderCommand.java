@@ -1,8 +1,8 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_ORDER_DETAILS;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_ORDER_STATUS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 
 import java.util.List;
 import java.util.Objects;
@@ -29,10 +29,10 @@ public class OrderCommand extends Command {
             + "by the index number used in the last person listing. "
             + "Only supplied preorder fields will be updated. Both fields are required for a new preorder.\n"
             + "Parameters: INDEX (must be a positive integer) "
-            + "[" + PREFIX_ORDER_DETAILS + "DETAILS] "
-            + "[" + PREFIX_ORDER_STATUS + "STATUS]\n"
-            + "Example: " + COMMAND_WORD + " 1 " + PREFIX_ORDER_DETAILS + "1 Chocolate Cake "
-            + PREFIX_ORDER_STATUS + "PENDING";
+            + "[" + PREFIX_DETAILS + "DETAILS] "
+            + "[" + PREFIX_STATUS + "STATUS]\n"
+            + "Example: " + COMMAND_WORD + " 1 " + PREFIX_DETAILS + "1 Chocolate Cake "
+            + PREFIX_STATUS + "PENDING";
     public static final String MESSAGE_NO_ORDER_YET = "Identified person has no existing preorder. Please specify"
             + " preorder details and preorder status";
     public static final String MESSAGE_ADD_ORDER_SUCCESS = "Added preorder to %1$s: %2$s (%3$s)";
