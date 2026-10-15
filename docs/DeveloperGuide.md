@@ -540,6 +540,29 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases … }_
 
+### Managing customer preorders
+
+Use a test copy of the data file. Add a uniquely named customer, for example `add n/Order Tester p/91234567 e/order@example.com a/123 Baker Street`, then run `find Order Tester` before each operation below so the test customer is at index 1.
+
+1. Run `order 1 s/PENDING` before the customer has a preorder.<br>
+   Expected: An error requesting both fields; no preorder chips appear.
+1. Run `order 1 d/2 chocolate cakes s/pending`.<br>
+   Expected: “Added” feedback, an order details chip and an amber `Status: PENDING` chip, and only the test customer still displayed.
+1. Find the test customer again and run `order 1 d/3 chocolate cakes`.<br>
+   Expected: “Edited” feedback; the details change and the status stays `PENDING`.
+1. Find the customer again and run `order 1 s/PREPARED`, then repeat with `order 1 s/COMPLETED`.<br>
+   Expected: Blue and then green status chips; details stay unchanged.
+1. Run `track s/COMPLETED`, locate the test customer's displayed index, and run `order INDEX s/PENDING` using that index.<br>
+   Expected: The test customer disappears from the completed view, while other completed customers remain. If there are none, the view is empty. Run `find Order Tester` to confirm the preorder now has an amber `Status: PENDING` chip.
+1. Find the customer again and run `order 1`.<br>
+   Expected: `No preorder changes specified.` The order and filtered list remain unchanged.
+1. Try `order 1 d/`, `order 1 s/DONE`, and `order 1 s/PENDING s/COMPLETED`.<br>
+   Expected: Validation errors; the existing preorder remains unchanged.
+1. With only the test customer displayed, run `order 2 s/PENDING`.<br>
+   Expected: An invalid displayed-index error, even if the full address book has more customers.
+1. Supply a long description of up to 200 characters and resize the window.<br>
+   Expected: Details wrap inside the order details chip. All three status labels remain readable. A customer without a preorder has no preorder chips or space reserved for them.
+
 ### Tagging a person
 
 1. Tagging a person while all persons are being shown
