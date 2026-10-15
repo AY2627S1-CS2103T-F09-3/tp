@@ -553,24 +553,15 @@ testers are expected to do more *exploratory* testing.
       Expected: The person's tags are unchanged. The status message shows `Alex Yeoh already has tag [FRIENDS]. No changes made.`
 
    1. Test case: `tag 1 t/gluten-free`<br>
-      Expected: No tag is added. The status message shows `Tags must be one word of English letters and digits only (A-Z, a-z, 0-9), with no spaces or symbols, and must not be empty. Example: regular`.
-
-   1. Other incorrect tags to try: `tag 1 t/`, `tag 1 t/vip 1`<br>
-      Expected: Similar to previous.
+      Expected: No tag is added. The status message shows `Tag names should be alphanumeric`.
 
    1. Test case: `tag 1 t/vip t/regular`<br>
       Expected: No tag is added. The status message shows `Multiple values specified for the following single-valued field(s): t/`.
 
    1. Test case: `tag 0 t/vip`<br>
-      Expected: No tag is added. The status message shows `Invalid index! Please enter a positive integer index between 1 and the size of the current list.`
+      Expected: No tag is added. The status message shows an invalid command format error, followed by the correct format of the `tag` command.
 
-   1. Other incorrect indexes to try: `tag t/vip`, `tag x t/vip`, `tag -1 t/vip`<br>
-      Expected: Similar to previous.
-
-   1. Test case: `tag 1`<br>
-      Expected: No tag is added. The status message shows `Format error. Input format: tag INDEX t/TAG. Example: tag 1 t/regular`
-
-   1. Other incorrect tag commands to try: `tag`, `tag 1 vip`<br>
+   1. Other incorrect tag commands to try: `tag`, `tag 1`, `tag t/vip`, `tag x t/vip`<br>
       Expected: Similar to previous.
 
    1. Test case: `tag 100 t/vip` (where 100 is larger than the list size)<br>
@@ -582,6 +573,111 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `tag 1 t/vip`<br>
       Expected: `vip` is added to `Bernice Yu`'s tags. The full person list is shown again.
+
+### Untagging a person
+
+Run each group below independently, starting with the sample data unless stated otherwise. Within a group, run the test cases in order. For every rejected command, verify that all persons' tags, contact details, preorders, and the displayed list remain unchanged.
+
+1. Removing tags while all persons are being shown
+
+   1. Prerequisites: Run `list`. The first person is `Alex Yeoh`, who has the tag `friends`. Run `tag 1 t/regular` to give Alex a second tag.
+
+   1. Test case: `untag 1 t/FRIENDS`<br>
+      Expected: The `friends` tag is removed despite the different capitalization. The `regular` tag and Alex's contact details remain unchanged. The status message shows `Removed tag(s) [FRIENDS] from Alex Yeoh`.
+
+   1. Test case: `untag 1 t/regular`<br>
+      Expected: Alex has no tags left, but remains in the list with the same contact details. The status message shows `Removed tag(s) [regular] from Alex Yeoh`.
+
+   1. Test case: Repeat `untag 1 t/regular`.<br>
+      Expected: No data is changed. The status message shows `Alex Yeoh does not have tag [regular]`.
+
+1. Rejecting invalid input
+
+   1. Prerequisites: Run `list` with the sample persons displayed.
+
+   1. Test cases: `untag 0 t/friends`, `untag -1 t/friends`, `untag abc t/friends`<br>
+      Expected: Each command shows `Invalid command format!`, followed by the usage instructions for `untag`.
+
+   1. Test cases: `untag`, `untag t/friends`, `untag 1`<br>
+      Expected: Each command shows the same format error and usage instructions.
+
+   1. Test cases: `untag 1 t/`, `untag 1 t/close friends`, `untag 1 t/gluten-free`<br>
+      Expected: Each command shows `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.`
+
+   1. Test case: `untag 1 t/friends t/regular`<br>
+      Expected: The status message shows `Multiple values specified for the following single-valued field(s): t/`.
+
+   1. Test case: `untag 0 t/!`<br>
+      Expected: The index format error and usage instructions are shown, rather than the tag constraint message, because the index format is checked first.
+
+   1. Test case: `untag 100 t/friends` (where 100 is larger than the displayed list size)<br>
+      Expected: The status message shows `The person index provided is invalid.`
+
+1. Removing a tag in a filtered list
+
+   1. Prerequisites: Run `find Bernice`. Only `Bernice Yu` is shown, at index 1, with the tags `colleagues` and `friends`.
+
+   1. Test case: `untag 2 t/friends`<br>
+      Expected: The status message shows `The person index provided is invalid.`, even though the full address book contains more than one person.
+
+   1. Test case: `untag 1 t/FRIENDS`<br>
+      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag(s) [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other persons are unchanged.
+
+   1. Test case: `untag 1 t/FRIENDS` again.<br>
+      Expected: The status message shows `Bernice Yu does not have tag [FRIENDS]`. Only Bernice remains displayed.
+
+   1. Test case: Run `find NoMatchingCustomer`, confirm that the displayed list is empty, then run `untag 1 t/friends`.<br>
+      Expected: The status message shows `The person index provided is invalid.` The list remains empty and no data is changed.
+
+1. Preserving a preorder and saving tag removal
+
+   1. Prerequisites: Use a saved customer with a preorder. Run `list`, note their displayed index as `INDEX`, and record their contact details, preorder details, and fulfilment status. Run `tag INDEX t/untagtest`, replacing `INDEX` with that number.
+
+   1. Test case: `untag INDEX t/untagtest`<br>
+      Expected: Only `untagtest` is removed. Other tags, contact details, preorder details, and fulfilment status are unchanged.
+
+   1. Test case: Close and relaunch the application, then locate the same customer.<br>
+      Expected: The removed tag remains absent. The customer's other tags, contact details, and preorder are preserved.
+
+### Managing customer preorders
+
+Use a test copy of the data file. Add a uniquely named customer, for example `add n/Order Tester p/91234567 e/order@example.com a/123 Baker Street`, then run `find Order Tester` before each operation below so the test customer is at index 1.
+
+1. Run `order 1 s/PENDING` before the customer has a preorder.<br>
+   Expected: An error requesting both fields; no preorder chips appear.
+1. Run `order 1 d/2 chocolate cakes s/pending`.<br>
+   Expected: “Added” feedback, an order details chip and an amber `Status: PENDING` chip, and only the test customer still displayed.
+1. Find the test customer again and run `order 1 d/3 chocolate cakes`.<br>
+   Expected: “Edited” feedback; the details change and the status stays `PENDING`.
+1. Find the customer again and run `order 1 s/PREPARED`, then repeat with `order 1 s/COMPLETED`.<br>
+   Expected: Blue and then green status chips; details stay unchanged.
+1. Run `track s/COMPLETED`, locate the test customer's displayed index, and run `order INDEX s/PENDING` using that index.<br>
+   Expected: The test customer disappears from the completed view, while other completed customers remain. If there are none, the view is empty. Run `find Order Tester` to confirm the preorder now has an amber `Status: PENDING` chip.
+1. Find the customer again and run `order 1`.<br>
+   Expected: `No preorder changes specified.` The order and filtered list remain unchanged.
+1. Try `order 1 d/`, `order 1 s/DONE`, and `order 1 s/PENDING s/COMPLETED`.<br>
+   Expected: Validation errors; the existing preorder remains unchanged.
+1. With only the test customer displayed, run `order 2 s/PENDING`.<br>
+   Expected: An invalid displayed-index error, even if the full address book has more customers.
+1. Supply a long description of up to 200 characters and resize the window.<br>
+   Expected: Details wrap inside the order details chip. All three status labels remain readable. A customer without a preorder has no preorder chips or space reserved for them.
+
+### Deleting a preorder
+
+Start with the sample data. List all customers using the `list` command. The first customer is `Alex Yeoh`.
+
+1. Run `order 1 d/2 chocolate cakes s/PENDING`.<br>
+   Expected: `Alex Yeoh` now has a `PENDING` preorder for `2 chocolate cakes`.
+1. Run `deleteorder 1`.<br>
+   Expected: The status message shows `Deleted preorder for Alex Yeoh: 2 chocolate cakes (PENDING)`. The order box disappears from the card. The name, phone number, email, address and tags are unchanged.
+1. Run `deleteorder 1` again.<br>
+   Expected: The status message shows `Alex Yeoh has no preorder to delete.` Nothing changes.
+1. Try `deleteorder 0`, `deleteorder` and `deleteorder 1 2`.<br>
+   Expected: Nothing changes. The status message shows an invalid command format error, followed by the correct format of the `deleteorder` command.
+1. Run `deleteorder 100` (where 100 is larger than the list size).<br>
+   Expected: Nothing changes. The status message shows `The person index provided is invalid.`
+1. Run `order 1 d/2 chocolate cakes s/PENDING`, then `track`, then `deleteorder 1`, using the displayed index of `Alex Yeoh` in place of `1` if it differs.<br>
+   Expected: The status message shows `Deleted preorder for Alex Yeoh: 2 chocolate cakes (PENDING)`. `Alex Yeoh` disappears from the tracked view, while other customers with active preorders remain. Run `list` to confirm that `Alex Yeoh` is still a customer, with no order box.
 
 ### Saving data
 

@@ -58,7 +58,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 * Items followed by `...` can appear zero or more times.<br>
   For example, `[MORE_KEYWORDS]...` may be omitted, or written as `Mary` or `Mary Jane`.
 
-* Parameters can be in any order.<br>
+* Prefixed parameters can be in any order, unless stated otherwise. A positional `INDEX` must appear before them.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
@@ -87,7 +87,8 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS`
 * Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
 * A person is a duplicate if their name matches an existing person's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
 * Duplicate checks include all persons in the address book, even those hidden by a `find` command.
-* New persons are added without tags. Use [`tag`](#tagging-a-person-tag) to add tags afterwards.
+* New persons are added without tags or a preorder. Use [`tag`](#tagging-a-person-tag) and [`order`](#adding-or-updating-a-preorder-order) to add tags or orders afterwards.
+
 
 Examples:
 
@@ -112,7 +113,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS]`
 * Fields you provide replace their existing values. Fields you omit remain unchanged.
 * The name validation and spacing rules described for `add` also apply to `edit`.
 * You can retain a person's own name or change its capitalization or spacing while editing. A name matching another person's name is rejected, including persons hidden by a `find` command. Other contact details do not affect this duplicate check.
-* Existing tags are always preserved.
+* Existing tags and preorders are always preserved.
 
 Examples:
 
@@ -140,6 +141,38 @@ Examples:
 * `find Bernice` followed by `tag 1 t/vip` adds the tag `vip` to the 1st person in the results of the `find` command.
 * `tag 1 t/FRIENDS` when the 1st person already has the tag `friends` shows a message that they already have the tag, and leaves their tags unchanged.
 
+### Removing a person's tag: `untag`
+
+Removes an existing tag from a person in the currently displayed list.
+
+Format: `untag INDEX t/TAG`
+
+* `INDEX` must be a positive integer shown in the current list. After a `find` command, use the index shown in its search results.
+* Supply exactly one `t/TAG`, after the index. The tag must not be blank and must contain only English letters (`A-Z`, `a-z`) and digits (`0-9`). Internal spaces and special characters are not allowed. Leading and trailing spaces are ignored.
+* Matching is case-insensitive. For example, `t/vip` removes an existing `VIP` tag.
+* Other tags, contact details, and any preorder remain unchanged. Removing the last tag leaves the person with no tags.
+* The current list filter is preserved, and the change is saved automatically.
+* If the command is rejected due to invalid or missing tags, no person's data is changed.
+
+Examples:
+
+* `untag 3 t/wholesale` removes the `wholesale` tag from the third person shown, provided they have that tag.
+* `find Bernice` followed by `untag 1 t/friends` removes the `friends` tag from the first search result, provided that person has the tag.
+* If Alex Yeoh is displayed at index 1 and has the tag `VIP`, `untag 1 t/vip` removes it and displays `Removed tag(s) [vip] from Alex Yeoh`.
+
+Common errors:
+
+| Input or situation | Feedback |
+| --- | --- |
+| `untag 0 t/VIP`, `untag -1 t/VIP`, or `untag abc t/VIP` | `Invalid command format!` followed by the untag usage instructions. |
+| `untag`, `untag t/VIP`, or `untag 1` | `Invalid command format!` followed by the untag usage instructions. |
+| `untag 1 t/`, `untag 1 t/close friends`, or `untag 1 t/VIP!` | `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.` |
+| `untag 1 t/VIP t/friends` | `Multiple values specified for the following single-valued field(s): t/` |
+| `untag 5 t/VIP` when fewer than five persons are displayed, or any valid index when the list is empty | `The person index provided is invalid.` |
+| `untag 1 t/VIP` when the first person is Alex Yeoh and has no `VIP` tag | `Alex Yeoh does not have tag [VIP]` |
+
+If several inputs are invalid, only the first detected error is shown. The index format is checked before the tag input; whether the index exists in the displayed list is checked after both inputs are valid.
+
 ### Locating persons by name: `find`
 
 Finds persons whose names contain any of the given keywords.
@@ -157,6 +190,49 @@ Examples:
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 
+### Adding or updating a preorder: `order`
+
+Records or updates a customer's current preorder. Each customer can have at most one current preorder.
+
+Format: `order INDEX [d/DETAILS] [s/STATUS]`
+
+* `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
+* For a customer **without a preorder**, both `d/DETAILS` and `s/STATUS` are required.
+* For a customer **with a preorder**, supply either field or both. Supplied fields replace their existing values; omitted fields remain unchanged. Contact details and tags are preserved.
+* `DETAILS` must be non-blank, on a single line, and at most 200 characters long. Leading and trailing whitespace is removed.
+* `STATUS` must be `PENDING`, `PREPARED`, or `COMPLETED`. Status input is case-insensitive, so `s/pending`, `s/Prepared`, and `s/COMPLETED` are all accepted.
+* A supplied prefix must have a value. For example, `order 1 d/` is invalid.
+* Each prefix may appear at most once and may appear in any order
+* Put a space before each prefix.
+* `order INDEX` without either field leaves an existing preorder unchanged and reports `No preorder changes specified.` For a customer without a preorder, it reports that both fields are required.
+* Adding or updating an order preserves the current filter. If a status change means the customer no longer matches a `track` filter, their card disappears from that view. Check the displayed indices again before your next command. Use `list` to show all customers. A command with neither field leaves the current list unchanged.
+
+The customer's card shows an `Order: DETAILS` chip followed by a coloured `Status: STATUS` chip. Customers without preorders have no preorder chips.
+
+Status | Meaning | Badge colour
+-------|---------|-------------
+`PENDING` | Recorded but not ready | Amber
+`PREPARED` | Ready for collection or delivery | Blue
+`COMPLETED` | Collected or delivered | Green
+
+You can change a preorder to any of these statuses. Completing an order keeps its details; updating it later replaces the supplied fields rather than creating an order history.
+
+Examples (assuming customer 1 exists):
+
+* `order 1 d/2 chocolate cakes, no nuts s/PENDING` creates a preorder, or replaces both fields of an existing preorder.
+* `order 1 d/3 chocolate cakes, no nuts` changes only the details of an existing preorder.
+* `order 1 s/PREPARED` changes only the status of an existing preorder.
+* `order 1 s/COMPLETED` marks the existing preorder as completed.
+
+### Viewing preorders: `track`
+
+Format: `track [s/STATUS]`
+
+* `track` shows customers with active preorders (`PENDING` or `PREPARED`).
+* `track s/COMPLETED` shows customers with completed preorders. You can also filter by `PENDING` or `PREPARED`; status input is case-insensitive.
+* Customers without preorders are excluded. Use `list` to show all customers again.
+* To update a result, use its displayed index with `order`. The current filter is preserved; customers whose updated status no longer matches it disappear from the view.
+
 ### Deleting a person: `delete`
 
 Deletes the specified person from the address book.
@@ -170,6 +246,26 @@ Format: `delete INDEX`
 Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
 * `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+
+### Deleting a preorder: `deleteorder`
+
+Deletes a customer's current preorder, for example when the customer cancels, while keeping them as a customer.
+
+Format: `deleteorder INDEX`
+
+* `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
+* Only the preorder is removed. The customer's name, phone number, email, address and tags are not changed.
+* If the customer has no preorder, nothing is changed and the app shows `NAME has no preorder to delete.`, for example `Alex Yeoh has no preorder to delete.`
+* If `INDEX` is larger than the displayed list, the app shows `The person index provided is invalid.`
+* A deleted preorder cannot be restored. To record it again, use `order`.
+* Deleting a preorder keeps the current filter. After `track`, the customer no longer has a preorder, so they disappear from that view. Check the displayed indices again before your next command. Use `list` to show all customers.
+
+On success, the app shows the deleted preorder, for example `Deleted preorder for Alex Yeoh: 2 chocolate cakes (PENDING)`.
+
+Examples:
+
+* `track` followed by `deleteorder 1` deletes the preorder of the 1st customer in the results of the `track` command.
+* `find Bernice` followed by `deleteorder 1` deletes the preorder of the 1st customer in the results of the `find` command.
 
 ### Clearing all entries: `clear`
 
@@ -185,7 +281,7 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+AddressBook automatically saves data after every successful command. You do not need to save manually.
 
 ### Editing the data file
 
@@ -227,8 +323,12 @@ Action     | Format, Examples
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS` <br> e.g., `add n/James Ho p/92224444 e/jamesho@example.com a/123, Clementi Rd, 1234665`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
+**Order**  | `order INDEX [d/DETAILS] [s/STATUS]` (both fields required for a new preorder)<br> e.g., `order 1 d/2 chocolate cakes s/PENDING`
+**Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
 **Tag**    | `tag INDEX t/TAG`<br> e.g., `tag 1 t/regular`
+**Untag**  | `untag INDEX t/TAG`<br> e.g., `untag 1 t/friends`
 **Help**   | `help`

@@ -1,7 +1,6 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_INDEX_FORMAT;
-import static seedu.address.logic.commands.UntagCommand.MESSAGE_INVALID_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -15,6 +14,9 @@ import seedu.address.model.tag.Tag;
 
 public class UntagCommandParserTest {
 
+    private static final String MESSAGE_INVALID_FORMAT =
+            String.format(MESSAGE_INVALID_COMMAND_FORMAT, UntagCommand.MESSAGE_USAGE);
+
     private final UntagCommandParser parser = new UntagCommandParser();
 
     @Test
@@ -27,7 +29,7 @@ public class UntagCommandParserTest {
     @Test
     public void parse_missingParts_failure() {
         assertParseFailure(parser, "", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " t/friends", MESSAGE_INVALID_INDEX_FORMAT);
+        assertParseFailure(parser, " t/friends", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, "1", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, "1 friends", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, "1 /t friends", MESSAGE_INVALID_FORMAT);
@@ -35,12 +37,18 @@ public class UntagCommandParserTest {
 
     @Test
     public void parse_invalidIndex_failure() {
-        assertParseFailure(parser, "0 t/friends", MESSAGE_INVALID_INDEX_FORMAT);
-        assertParseFailure(parser, "-1 t/friends", MESSAGE_INVALID_INDEX_FORMAT);
-        assertParseFailure(parser, "a t/friends", MESSAGE_INVALID_INDEX_FORMAT);
-        assertParseFailure(parser, "1.5 t/friends", MESSAGE_INVALID_INDEX_FORMAT);
-        assertParseFailure(parser, "2147483648 t/friends", MESSAGE_INVALID_INDEX_FORMAT);
-        assertParseFailure(parser, "1 extra t/friends", MESSAGE_INVALID_INDEX_FORMAT);
+        assertParseFailure(parser, "0 t/friends", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "-1 t/friends", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "a t/friends", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1.5 t/friends", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "2147483648 t/friends", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1 extra t/friends", MESSAGE_INVALID_FORMAT);
+    }
+
+    @Test
+    public void parse_invalidIndexAndTag_reportsIndexErrorFirst() {
+        assertParseFailure(parser, "0 t/!", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "0 t/friends t/VIP", MESSAGE_INVALID_FORMAT);
     }
 
     @Test

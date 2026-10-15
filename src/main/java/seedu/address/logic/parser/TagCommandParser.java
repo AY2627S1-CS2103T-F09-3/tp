@@ -1,7 +1,7 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_INDEX_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import seedu.address.commons.core.index.Index;
@@ -23,8 +23,9 @@ public class TagCommandParser implements Parser<TagCommand> {
         requireNonNull(args);
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_TAG);
 
-        Tag tag = ParserUtil.parseSingleTag(argMultimap, TagCommand.MESSAGE_INVALID_FORMAT);
-        Index index = ParserUtil.parsePreambleIndex(argMultimap, MESSAGE_INVALID_INDEX_FORMAT);
+        String formatErrorMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, TagCommand.MESSAGE_USAGE);
+        Index index = ParserUtil.parsePreambleIndex(argMultimap, formatErrorMessage);
+        Tag tag = ParserUtil.parseSingleTag(argMultimap, formatErrorMessage);
 
         return new TagCommand(index, tag);
     }
