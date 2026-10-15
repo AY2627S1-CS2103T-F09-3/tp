@@ -2,7 +2,6 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
-import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 
 import java.util.HashSet;
 import java.util.List;
@@ -28,7 +27,7 @@ public class TagCommand extends Command {
             + "Parameters: INDEX (must be a positive integer) " + PREFIX_TAG + "TAG\n"
             + "Example: " + COMMAND_WORD + " 1 " + PREFIX_TAG + "regular";
 
-    public static final String MESSAGE_TAG_PERSON_SUCCESS = "Tagged person: %1$s";
+    public static final String MESSAGE_TAG_PERSON_SUCCESS = "Added tag(s) %1$s to %2$s";
     public static final String MESSAGE_DUPLICATE_TAG = "%1$s already has tag %2$s. No changes made.";
 
     private final Index index;
@@ -62,8 +61,7 @@ public class TagCommand extends Command {
         Person taggedPerson = createTaggedPerson(personToTag, tag);
 
         model.setPerson(personToTag, taggedPerson);
-        model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
-        return new CommandResult(String.format(MESSAGE_TAG_PERSON_SUCCESS, Messages.format(taggedPerson)));
+        return new CommandResult(String.format(MESSAGE_TAG_PERSON_SUCCESS, tag, personToTag.getName()));
     }
 
     /**

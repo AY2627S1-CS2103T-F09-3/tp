@@ -42,12 +42,10 @@ public class TagCommandTest {
                 .withTags(EXISTING_TAG_OF_FIRST_PERSON, VALID_TAG_HUSBAND).build();
         TagCommand tagCommand = new TagCommand(INDEX_FIRST_PERSON, TAG_HUSBAND);
 
-        String expectedMessage = String.format(TagCommand.MESSAGE_TAG_PERSON_SUCCESS, Messages.format(taggedPerson));
-
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(personToTag, taggedPerson);
 
-        assertCommandSuccess(tagCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(tagCommand, model, getSuccessMessage(personToTag), expectedModel);
     }
 
     @Test
@@ -61,17 +59,15 @@ public class TagCommandTest {
                 .withTags(EXISTING_TAG_OF_FIRST_PERSON, VALID_TAG_HUSBAND).build();
         TagCommand tagCommand = new TagCommand(INDEX_FIRST_PERSON, TAG_HUSBAND);
 
-        String expectedMessage = String.format(TagCommand.MESSAGE_TAG_PERSON_SUCCESS, Messages.format(taggedPerson));
-
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(personWithPreorder, taggedPerson);
 
-        assertCommandSuccess(tagCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(tagCommand, model, getSuccessMessage(personWithPreorder), expectedModel);
         assertEquals(personWithPreorder.getPreorder(), model.getFilteredPersonList().get(0).getPreorder());
     }
 
     @Test
-    public void execute_validIndexFilteredList_success() {
+    public void execute_validIndexFilteredList_successAndFilterKept() {
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
 
         Person personToTag = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
@@ -79,13 +75,11 @@ public class TagCommandTest {
                 .withTags(EXISTING_TAG_OF_FIRST_PERSON, VALID_TAG_HUSBAND).build();
         TagCommand tagCommand = new TagCommand(INDEX_FIRST_PERSON, TAG_HUSBAND);
 
-        String expectedMessage = String.format(TagCommand.MESSAGE_TAG_PERSON_SUCCESS, Messages.format(taggedPerson));
-
-        // expected model shows all persons, as the command resets the filter
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(personToTag, taggedPerson);
+        showPersonAtIndex(expectedModel, INDEX_FIRST_PERSON);
 
-        assertCommandSuccess(tagCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(tagCommand, model, getSuccessMessage(personToTag), expectedModel);
     }
 
     @Test
@@ -148,6 +142,13 @@ public class TagCommandTest {
         String expected = TagCommand.class.getCanonicalName() + "{index=" + INDEX_FIRST_PERSON
                 + ", tag=" + TAG_HUSBAND + "}";
         assertEquals(expected, tagCommand.toString());
+    }
+
+    /**
+     * Returns the success message for adding {@code TAG_HUSBAND} to {@code personToTag}.
+     */
+    private static String getSuccessMessage(Person personToTag) {
+        return String.format(TagCommand.MESSAGE_TAG_PERSON_SUCCESS, TAG_HUSBAND, personToTag.getName());
     }
 
     /**

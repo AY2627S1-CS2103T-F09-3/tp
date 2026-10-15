@@ -133,13 +133,27 @@ Format: `tag INDEX t/TAG`
 * Tags are case-insensitive: `VIP`, `Vip` and `vip` are the same tag. A tag keeps the capitalization it had when it was first added.
 * If the person already has the tag, in any capitalization, their tags are left unchanged and a message tells you so.
 * The person's other details, including their preorder, are not changed.
-* After a tag is added, the full person list is shown.
+* The current list filter is preserved, and the change is saved automatically.
 
 Examples:
 
 * `tag 1 t/regular` adds the tag `regular` to the 1st person.
 * `find Bernice` followed by `tag 1 t/vip` adds the tag `vip` to the 1st person in the results of the `find` command.
 * `tag 1 t/FRIENDS` when the 1st person already has the tag `friends` shows a message that they already have the tag, and leaves their tags unchanged.
+* If Alex Yeoh is displayed at index 1 and does not have the tag `VIP`, `tag 1 t/VIP` adds it and displays `Added tag(s) [VIP] to Alex Yeoh`.
+
+Common errors:
+
+| Input or situation | Feedback |
+| --- | --- |
+| `tag 0 t/VIP`, `tag -1 t/VIP`, or `tag abc t/VIP` | `Invalid command format!` followed by the tag usage instructions. |
+| `tag`, `tag t/VIP`, or `tag 1` | `Invalid command format!` followed by the tag usage instructions. |
+| `tag 1 t/`, `tag 1 t/big order`, or `tag 1 t/gluten-free` | `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.` |
+| `tag 1 t/VIP t/regular` | `Multiple values specified for the following single-valued field(s): t/` |
+| `tag 5 t/VIP` when fewer than five persons are displayed, or any valid index when the list is empty | `The person index provided is invalid.` |
+| `tag 1 t/VIP` when the first person is Alex Yeoh and already has the tag `vip` | `Alex Yeoh already has tag [VIP]. No changes made.` |
+
+If several inputs are invalid, only the first detected error is shown. The index format is checked before the tag input; whether the index exists in the displayed list is checked after both inputs are valid.
 
 ### Removing a person's tag: `untag`
 
