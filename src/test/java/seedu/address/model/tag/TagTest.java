@@ -17,13 +17,32 @@ public class TagTest {
     @Test
     public void constructor_invalidTagName_throwsIllegalArgumentException() {
         String invalidTagName = "";
-        assertThrows(IllegalArgumentException.class, () -> new Tag(invalidTagName));
+        assertThrows(IllegalArgumentException.class, Tag.MESSAGE_CONSTRAINTS, () -> new Tag(invalidTagName));
     }
 
     @Test
     public void isValidTagName() {
         // null tag name
         assertThrows(NullPointerException.class, () -> Tag.isValidTagName(null));
+
+        // blank names
+        assertFalse(Tag.isValidTagName(""));
+        assertFalse(Tag.isValidTagName(" "));
+
+        // spaces and special characters
+        assertFalse(Tag.isValidTagName("close friends"));
+        assertFalse(Tag.isValidTagName(" VIP "));
+        assertFalse(Tag.isValidTagName("VIP!"));
+        assertFalse(Tag.isValidTagName("regular_customer"));
+
+        // non-ASCII letters
+        assertFalse(Tag.isValidTagName("caf\u00e9"));
+
+        // letters, digits, and combinations
+        assertTrue(Tag.isValidTagName("VIP"));
+        assertTrue(Tag.isValidTagName("friends"));
+        assertTrue(Tag.isValidTagName("123"));
+        assertTrue(Tag.isValidTagName("regular123"));
     }
 
     @Test

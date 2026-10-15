@@ -12,7 +12,9 @@ import java.util.Locale;
  */
 public class Tag {
 
-    public static final String MESSAGE_CONSTRAINTS = "Tag names should be alphanumeric";
+    public static final String MESSAGE_CONSTRAINTS = "Tag names must not be blank and must contain only "
+            + "letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. "
+            + "Examples: VIP, friends, regular123.";
     public static final String VALIDATION_REGEX = "\\p{Alnum}+";
 
     public final String tagName;
@@ -21,6 +23,8 @@ public class Tag {
      * Constructs a {@code Tag}.
      *
      * @param tagName A valid tag name.
+     * @throws NullPointerException If {@code tagName} is null.
+     * @throws IllegalArgumentException If {@code tagName} does not satisfy the tag constraints.
      */
     public Tag(String tagName) {
         requireNonNull(tagName);
@@ -29,7 +33,10 @@ public class Tag {
     }
 
     /**
-     * Returns true if a given string is a valid tag name.
+     * Returns true if the string contains one or more ASCII letters or digits only.
+     * Whitespace is not trimmed before validation.
+     *
+     * @throws NullPointerException If {@code test} is null.
      */
     public static boolean isValidTagName(String test) {
         return test.matches(VALIDATION_REGEX);
