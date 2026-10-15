@@ -87,7 +87,8 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS`
 * Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
 * A person is a duplicate if their name matches an existing person's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
 * Duplicate checks include all persons in the address book, even those hidden by a `find` command.
-* New persons are added without tags or a preorder.
+* New persons are added without tags or a preorder. Use [`tag`](#tagging-a-person-tag) and [`order`](#adding-or-updating-a-preorder-order) to add tags or orders afterwards.
+
 
 Examples:
 
@@ -119,6 +120,26 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`, preserving all other details and tags.
 *  `edit 1 n/JOHN DOE` Changes the capitalization of the 1st person's name if they are already named `John Doe`.
+
+### Tagging a person: `tag`
+
+Adds a tag to an existing person, so you can group your customers (for example, `regular` or `vip`).
+
+Format: `tag INDEX t/TAG`
+
+* Adds the tag to the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
+* Only one tag can be added per command.
+* A tag must be a single word made up of English letters and digits only (`A-Z`, `a-z`, `0-9`). Spaces, hyphens and other symbols are rejected. For example, `vip` and `Christmas2026` are valid; `gluten-free` and `big order` are invalid.
+* Tags are case-insensitive: `VIP`, `Vip` and `vip` are the same tag. A tag keeps the capitalization it had when it was first added.
+* If the person already has the tag, in any capitalization, their tags are left unchanged and a message tells you so.
+* The person's other details, including their preorder, are not changed.
+* After a tag is added, the full person list is shown.
+
+Examples:
+
+* `tag 1 t/regular` adds the tag `regular` to the 1st person.
+* `find Bernice` followed by `tag 1 t/vip` adds the tag `vip` to the 1st person in the results of the `find` command.
+* `tag 1 t/FRIENDS` when the 1st person already has the tag `friends` shows a message that they already have the tag, and leaves their tags unchanged.
 
 ### Locating persons by name: `find`
 
@@ -154,14 +175,12 @@ Format: `order INDEX [d/DETAILS] [s/STATUS]`
 * `order INDEX` without either field leaves an existing preorder unchanged and reports `No preorder changes specified.` For a customer without a preorder, it reports that both fields are required.
 * Adding or updating an order preserves the current filter. If a status change means the customer no longer matches a `track` filter, their card disappears from that view. Check the displayed indices again before your next command. Use `list` to show all customers. A command with neither field leaves the current list unchanged.
 
-The customer's card shows an order box with `Order:` and a coloured status badge on the first row, followed by the details as plain text. Customers without preorders have no order box.
-
-![Customer cards showing preorder details and colour-coded status badges](images/uiWithPreorderBox.png)
+The customer's card shows an `Order: DETAILS` chip followed by a coloured `Status: STATUS` chip. Customers without preorders have no preorder chips.
 
 Status | Meaning | Badge colour
 -------|---------|-------------
-`PENDING` | Recorded but not ready | Red
-`PREPARED` | Ready for collection or delivery | Amber
+`PENDING` | Recorded but not ready | Amber
+`PREPARED` | Ready for collection or delivery | Blue
 `COMPLETED` | Collected or delivered | Green
 
 You can change a preorder to any of these statuses. Completing an order keeps its details; updating it later replaces the supplied fields rather than creating an order history.
@@ -257,4 +276,5 @@ Action     | Format, Examples
 **Order**  | `order INDEX [d/DETAILS] [s/STATUS]` (both fields required for a new preorder)<br> e.g., `order 1 d/2 chocolate cakes s/PENDING`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
+**Tag**    | `tag INDEX t/TAG`<br> e.g., `tag 1 t/regular`
 **Help**   | `help`

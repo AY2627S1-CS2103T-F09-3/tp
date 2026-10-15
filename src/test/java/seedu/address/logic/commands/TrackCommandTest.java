@@ -9,9 +9,10 @@ import static seedu.address.model.preorder.PreorderStatus.PREPARED;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
-import static seedu.address.testutil.TypicalPersons.CARL;
-import static seedu.address.testutil.TypicalPersons.DANIEL;
-import static seedu.address.testutil.TypicalPersons.ELLE;
+import static seedu.address.testutil.TypicalPersons.COMPLETED_DANIEL;
+import static seedu.address.testutil.TypicalPersons.PENDING_BENSON;
+import static seedu.address.testutil.TypicalPersons.PENDING_ELLE;
+import static seedu.address.testutil.TypicalPersons.PREPARED_CARL;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,15 +33,6 @@ import seedu.address.testutil.PersonBuilder;
  * Tests track command execution with the Model and command value semantics.
  */
 public class TrackCommandTest {
-
-    private static final Person PENDING_BENSON =
-            new PersonBuilder(BENSON).withPreorder("2 chocolate cakes", PENDING).build();
-    private static final Person PREPARED_CARL =
-            new PersonBuilder(CARL).withPreorder("12 cupcakes", PREPARED).build();
-    private static final Person COMPLETED_DANIEL =
-            new PersonBuilder(DANIEL).withPreorder("50 pineapple tarts", COMPLETED).build();
-    private static final Person PENDING_ELLE =
-            new PersonBuilder(ELLE).withPreorder("1 strawberry cake", PENDING).build();
 
     @Test
     public void constructor_nullStatus_throwsNullPointerException() {

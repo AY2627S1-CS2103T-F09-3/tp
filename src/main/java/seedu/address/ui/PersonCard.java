@@ -9,6 +9,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.Preorder;
 
 /**
  * A UI component that displays information of a {@code Person}.
@@ -42,11 +43,11 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private FlowPane tags;
     @FXML
-    private VBox preorderBox;
-    @FXML
-    private Label preorderStatus;
+    private VBox preorder;
     @FXML
     private Label preorderDetails;
+    @FXML
+    private Label preorderStatus;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -62,23 +63,21 @@ public class PersonCard extends UiPart<Region> {
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
-        initializePreorderBox();
+        person.getPreorder().ifPresentOrElse(this::showPreorder, this::hidePreorder);
+    }
+
+    private void showPreorder(Preorder preorder) {
+        preorderDetails.setText(PreorderDisplay.formatDetails(preorder));
+        preorderStatus.setText(PreorderDisplay.formatStatus(preorder));
+        preorderStatus.getStyleClass().add(PreorderDisplay.getStatusStyleClass(preorder.getStatus()));
     }
 
     /**
-     * Displays the preorder details and status, or removes the box from the layout when absent.
+     * Removes the preorder section from the layout, so a customer without a preorder
+     * shows no empty chips or blank gap.
      */
-    private void initializePreorderBox() {
-        preorderBox.setVisible(person.getPreorder().isPresent());
-        preorderBox.setManaged(person.getPreorder().isPresent());
-        person.getPreorder().ifPresent(preorder -> {
-            preorderStatus.setText(preorder.getStatus().name());
-            preorderStatus.getStyleClass().add(switch (preorder.getStatus()) {
-                case PENDING -> "preorder-status-pending";
-                case PREPARED -> "preorder-status-prepared";
-                case COMPLETED -> "preorder-status-completed";
-            });
-            preorderDetails.setText(preorder.getDetails().value);
-        });
+    private void hidePreorder() {
+        preorder.setVisible(false);
+        preorder.setManaged(false);
     }
 }

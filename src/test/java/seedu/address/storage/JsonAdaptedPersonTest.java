@@ -1,6 +1,7 @@
 package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.storage.JsonAdaptedPerson.MISSING_FIELD_MESSAGE_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.BENSON;
@@ -17,6 +18,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.preorder.PreorderStatus;
 import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
@@ -38,6 +40,44 @@ public class JsonAdaptedPersonTest {
     public void toModelType_validPersonDetails_returnsPerson() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(BENSON);
         assertEquals(BENSON, person.toModelType());
+    }
+
+    @Test
+    public void toModelType_personWithPreorder_returnsPersonWithPreorder() throws Exception {
+        Person expected = new PersonBuilder(BENSON)
+                .withPreorder("2 chocolate cakes", PreorderStatus.PREPARED).build();
+
+        JsonAdaptedPerson adapted = new JsonAdaptedPerson(expected);
+
+        assertEquals(expected, adapted.toModelType());
+        assertTrue(adapted.toModelType().getPreorder().isPresent());
+    }
+
+    @Test
+    public void toModelType_personWithEachPreorderStatus_preservesStatus() throws Exception {
+        for (PreorderStatus status : PreorderStatus.values()) {
+            Person expected = new PersonBuilder(BENSON)
+                    .withPreorder("2 chocolate cakes", status).build();
+            assertEquals(expected, new JsonAdaptedPerson(expected).toModelType());
+        }
+    }
+
+    @Test
+    public void toModelType_missingPreorderFields_throwsIllegalValueException() {
+        JsonAdaptedPreorder missingDetails = new JsonAdaptedPreorder(null, "PENDING");
+        JsonAdaptedPreorder missingStatus = new JsonAdaptedPreorder("2 cakes", null);
+
+        assertThrows(IllegalValueException.class, missingDetails::toModelType);
+        assertThrows(IllegalValueException.class, missingStatus::toModelType);
+    }
+
+    @Test
+    public void toModelType_invalidPreorderFields_throwsIllegalValueException() {
+        JsonAdaptedPreorder invalidDetails = new JsonAdaptedPreorder(" ", "PENDING");
+        JsonAdaptedPreorder invalidStatus = new JsonAdaptedPreorder("2 cakes", "DONE");
+
+        assertThrows(IllegalValueException.class, invalidDetails::toModelType);
+        assertThrows(IllegalValueException.class, invalidStatus::toModelType);
     }
 
     @Test

@@ -545,15 +545,15 @@ testers are expected to do more *exploratory* testing.
 Use a test copy of the data file. Add a uniquely named customer, for example `add n/Order Tester p/91234567 e/order@example.com a/123 Baker Street`, then run `find Order Tester` before each operation below so the test customer is at index 1.
 
 1. Run `order 1 s/PENDING` before the customer has a preorder.<br>
-   Expected: An error requesting both fields; no order box appears.
+   Expected: An error requesting both fields; no preorder chips appear.
 1. Run `order 1 d/2 chocolate cakes s/pending`.<br>
-   Expected: “Added” feedback, an order box with a red `PENDING` badge and the details, and only the test customer still displayed.
+   Expected: “Added” feedback, an order details chip and an amber `Status: PENDING` chip, and only the test customer still displayed.
 1. Find the test customer again and run `order 1 d/3 chocolate cakes`.<br>
    Expected: “Edited” feedback; the details change and the status stays `PENDING`.
 1. Find the customer again and run `order 1 s/PREPARED`, then repeat with `order 1 s/COMPLETED`.<br>
-   Expected: Amber and then green badges; details stay unchanged.
+   Expected: Blue and then green status chips; details stay unchanged.
 1. Run `track s/COMPLETED`, locate the test customer's displayed index, and run `order INDEX s/PENDING` using that index.<br>
-   Expected: The test customer disappears from the completed view, while other completed customers remain. If there are none, the view is empty. Run `find Order Tester` to confirm the preorder now has a red `PENDING` badge.
+   Expected: The test customer disappears from the completed view, while other completed customers remain. If there are none, the view is empty. Run `find Order Tester` to confirm the preorder now has an amber `Status: PENDING` chip.
 1. Find the customer again and run `order 1`.<br>
    Expected: `No preorder changes specified.` The order and filtered list remain unchanged.
 1. Try `order 1 d/`, `order 1 s/DONE`, and `order 1 s/PENDING s/COMPLETED`.<br>
@@ -561,7 +561,41 @@ Use a test copy of the data file. Add a uniquely named customer, for example `ad
 1. With only the test customer displayed, run `order 2 s/PENDING`.<br>
    Expected: An invalid displayed-index error, even if the full address book has more customers.
 1. Supply a long description of up to 200 characters and resize the window.<br>
-   Expected: Details wrap inside the order box. All three status labels remain readable. A customer without a preorder has no order box or space reserved for it.
+   Expected: Details wrap inside the order details chip. All three status labels remain readable. A customer without a preorder has no preorder chips or space reserved for them.
+
+### Tagging a person
+
+1. Tagging a person while all persons are being shown
+
+   1. Prerequisites: Start with the sample data. List all persons using the `list` command. The first person is `Alex Yeoh`, who has the tag `friends`.
+
+   1. Test case: `tag 1 t/regular`<br>
+      Expected: `regular` is added to the first person's tags. The status message shows the person's details, including the new tag.
+
+   1. Test case: `tag 1 t/FRIENDS`<br>
+      Expected: The person's tags are unchanged. The status message shows `Alex Yeoh already has tag [FRIENDS]. No changes made.`
+
+   1. Test case: `tag 1 t/gluten-free`<br>
+      Expected: No tag is added. The status message shows `Tag names should be alphanumeric`.
+
+   1. Test case: `tag 1 t/vip t/regular`<br>
+      Expected: No tag is added. The status message shows `Multiple values specified for the following single-valued field(s): t/`.
+
+   1. Test case: `tag 0 t/vip`<br>
+      Expected: No tag is added. The status message shows an invalid command format error, followed by the correct format of the `tag` command.
+
+   1. Other incorrect tag commands to try: `tag`, `tag 1`, `tag t/vip`, `tag x t/vip`<br>
+      Expected: Similar to previous.
+
+   1. Test case: `tag 100 t/vip` (where 100 is larger than the list size)<br>
+      Expected: No tag is added. The status message shows `The person index provided is invalid.`
+
+1. Tagging a person in a filtered list
+
+   1. Prerequisites: Find a person using `find Bernice`. Only `Bernice Yu` is shown.
+
+   1. Test case: `tag 1 t/vip`<br>
+      Expected: `vip` is added to `Bernice Yu`'s tags. The full person list is shown again.
 
 ### Saving data
 
