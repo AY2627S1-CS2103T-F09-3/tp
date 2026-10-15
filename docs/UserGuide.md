@@ -131,7 +131,7 @@ Format: `untag INDEX t/TAG`
 * Matching is case-insensitive. For example, `t/vip` removes an existing `VIP` tag.
 * Other tags, contact details, and any preorder remain unchanged. Removing the last tag leaves the person with no tags.
 * The current list filter is preserved, and the change is saved automatically.
-* If the command fails, no person's data is changed.
+* If the command is rejected due to invalid or missing tags, no person's data is changed.
 
 Examples:
 
