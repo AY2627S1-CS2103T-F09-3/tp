@@ -45,7 +45,8 @@ public class TypicalPersons {
     public static final Person GEORGE = new PersonBuilder().withName("George Best").withPhone("94824422")
             .withEmail("anna@example.com").withAddress("4th street").build();
 
-    // Customers with preorders
+    // Customers with preorders, built from the typical persons above. Not included in
+    // getTypicalPersons(); swap one into a test model, e.g. model.setPerson(BENSON, PENDING_BENSON).
     public static final Person PENDING_BENSON =
             new PersonBuilder(BENSON).withPreorder("2 chocolate cakes", PENDING).build();
     public static final Person PREPARED_CARL =
