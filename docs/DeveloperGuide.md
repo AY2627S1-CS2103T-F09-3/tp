@@ -553,16 +553,19 @@ testers are expected to do more *exploratory* testing.
       Expected: The person's tags are unchanged. The status message shows `Alex Yeoh already has tag [FRIENDS]. No changes made.`
 
    1. Test case: `tag 1 t/gluten-free`<br>
-      Expected: No tag is added. The status message shows `Tag names should be alphanumeric`.
+      Expected: No tag is added. The status message shows `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.`
 
    1. Test case: `tag 1 t/vip t/regular`<br>
       Expected: No tag is added. The status message shows `Multiple values specified for the following single-valued field(s): t/`.
 
    1. Test case: `tag 0 t/vip`<br>
-      Expected: No tag is added. The status message shows an invalid command format error, followed by the correct format of the `tag` command.
+      Expected: No tag is added. The status message shows `Invalid command format!`, followed by the usage instructions for `tag`.
 
    1. Other incorrect tag commands to try: `tag`, `tag 1`, `tag t/vip`, `tag x t/vip`<br>
       Expected: Similar to previous.
+
+   1. Test case: `tag 0 t/!`<br>
+      Expected: No tag is added. The index format error and usage instructions are shown, rather than the tag constraint message, because the index format is checked first.
 
    1. Test case: `tag 100 t/vip` (where 100 is larger than the list size)<br>
       Expected: No tag is added. The status message shows `The person index provided is invalid.`
