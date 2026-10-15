@@ -4,9 +4,15 @@
   pageNav: 3
 ---
 
-# AB-3 User Guide
+# LeBake User Guide
 
-AddressBook Level 3 (AB3) is a **desktop application for managing contacts, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). If you type quickly, AB3 can help you manage contacts faster than traditional GUI applications.
+LeBake is a **desktop application for independent home bakers to manage customers and seasonal preorders**.
+It keeps customer contact details, delivery addresses, and each customer's current preorder and fulfilment status
+in one place.
+
+LeBake is optimized for use through a **Command Line Interface (CLI)** while retaining the benefits of a
+Graphical User Interface (GUI). Its text-based commands let you quickly add, find, and update customer and preorder
+information.
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -18,9 +24,9 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 1. Ensure that Java `25` or later is installed on your computer.<br>
    **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
 
-1. Download the latest `.jar` file from [here](https://github.com/se-edu/addressbook-level3/releases).
+1. Download the latest `.jar` file from the [LeBake releases page](https://github.com/AY2627S1-CS2103T-F09-3/tp/releases).
 
-1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
+1. Copy the file to the folder you want to use as the _home folder_ for LeBake.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
