@@ -574,6 +574,71 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `tag 1 t/vip`<br>
       Expected: `vip` is added to `Bernice Yu`'s tags. The full person list is shown again.
 
+### Untagging a person
+
+Run each group below independently, starting with the sample data unless stated otherwise. Within a group, run the test cases in order. For every rejected command, verify that all persons' tags, contact details, preorders, and the displayed list remain unchanged.
+
+1. Removing tags while all persons are being shown
+
+   1. Prerequisites: Run `list`. The first person is `Alex Yeoh`, who has the tag `friends`. Run `tag 1 t/regular` to give Alex a second tag.
+
+   1. Test case: `untag 1 t/FRIENDS`<br>
+      Expected: The `friends` tag is removed despite the different capitalization. The `regular` tag and Alex's contact details remain unchanged. The status message shows `Removed tag(s) [FRIENDS] from Alex Yeoh`.
+
+   1. Test case: `untag 1 t/regular`<br>
+      Expected: Alex has no tags left, but remains in the list with the same contact details. The status message shows `Removed tag(s) [regular] from Alex Yeoh`.
+
+   1. Test case: Repeat `untag 1 t/regular`.<br>
+      Expected: No data is changed. The status message shows `Alex Yeoh does not have tag [regular]`.
+
+1. Rejecting invalid input
+
+   1. Prerequisites: Run `list` with the sample persons displayed.
+
+   1. Test cases: `untag 0 t/friends`, `untag -1 t/friends`, `untag abc t/friends`<br>
+      Expected: Each command shows `Invalid command format!`, followed by the usage instructions for `untag`.
+
+   1. Test cases: `untag`, `untag t/friends`, `untag 1`<br>
+      Expected: Each command shows the same format error and usage instructions.
+
+   1. Test cases: `untag 1 t/`, `untag 1 t/close friends`, `untag 1 t/gluten-free`<br>
+      Expected: Each command shows `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.`
+
+   1. Test case: `untag 1 t/friends t/regular`<br>
+      Expected: The status message shows `Multiple values specified for the following single-valued field(s): t/`.
+
+   1. Test case: `untag 0 t/!`<br>
+      Expected: The index format error and usage instructions are shown, rather than the tag constraint message, because the index format is checked first.
+
+   1. Test case: `untag 100 t/friends` (where 100 is larger than the displayed list size)<br>
+      Expected: The status message shows `The person index provided is invalid.`
+
+1. Removing a tag in a filtered list
+
+   1. Prerequisites: Run `find Bernice`. Only `Bernice Yu` is shown, at index 1, with the tags `colleagues` and `friends`.
+
+   1. Test case: `untag 2 t/friends`<br>
+      Expected: The status message shows `The person index provided is invalid.`, even though the full address book contains more than one person.
+
+   1. Test case: `untag 1 t/FRIENDS`<br>
+      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag(s) [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other persons are unchanged.
+
+   1. Test case: `untag 1 t/FRIENDS` again.<br>
+      Expected: The status message shows `Bernice Yu does not have tag [FRIENDS]`. Only Bernice remains displayed.
+
+   1. Test case: Run `find NoMatchingCustomer`, confirm that the displayed list is empty, then run `untag 1 t/friends`.<br>
+      Expected: The status message shows `The person index provided is invalid.` The list remains empty and no data is changed.
+
+1. Preserving a preorder and saving tag removal
+
+   1. Prerequisites: Use a saved customer with a preorder. Run `list`, note their displayed index as `INDEX`, and record their contact details, preorder details, and fulfilment status. Run `tag INDEX t/untagtest`, replacing `INDEX` with that number.
+
+   1. Test case: `untag INDEX t/untagtest`<br>
+      Expected: Only `untagtest` is removed. Other tags, contact details, preorder details, and fulfilment status are unchanged.
+
+   1. Test case: Close and relaunch the application, then locate the same customer.<br>
+      Expected: The removed tag remains absent. The customer's other tags, contact details, and preorder are preserved.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files
