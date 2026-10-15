@@ -8,16 +8,13 @@ import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
-import static seedu.address.model.preorder.PreorderStatus.COMPLETED;
-import static seedu.address.model.preorder.PreorderStatus.PENDING;
-import static seedu.address.model.preorder.PreorderStatus.PREPARED;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.AMY;
-import static seedu.address.testutil.TypicalPersons.BENSON;
-import static seedu.address.testutil.TypicalPersons.CARL;
-import static seedu.address.testutil.TypicalPersons.DANIEL;
-import static seedu.address.testutil.TypicalPersons.ELLE;
+import static seedu.address.testutil.TypicalPersons.COMPLETED_DANIEL;
+import static seedu.address.testutil.TypicalPersons.PENDING_BENSON;
+import static seedu.address.testutil.TypicalPersons.PENDING_ELLE;
+import static seedu.address.testutil.TypicalPersons.PREPARED_CARL;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -51,15 +48,6 @@ import seedu.address.testutil.PersonBuilder;
 public class LogicManagerTest {
     private static final IOException DUMMY_IO_EXCEPTION = new IOException("dummy IO exception");
     private static final IOException DUMMY_AD_EXCEPTION = new AccessDeniedException("dummy access denied exception");
-
-    private static final Person PENDING_BENSON =
-            new PersonBuilder(BENSON).withPreorder("2 chocolate cakes", PENDING).build();
-    private static final Person PREPARED_CARL =
-            new PersonBuilder(CARL).withPreorder("12 cupcakes", PREPARED).build();
-    private static final Person COMPLETED_DANIEL =
-            new PersonBuilder(DANIEL).withPreorder("50 pineapple tarts", COMPLETED).build();
-    private static final Person PENDING_ELLE =
-            new PersonBuilder(ELLE).withPreorder("1 strawberry cake", PENDING).build();
 
     @TempDir
     public Path temporaryFolder;
