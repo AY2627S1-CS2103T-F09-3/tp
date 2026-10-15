@@ -37,7 +37,7 @@ public class OrderCommandTest {
         Model model = createModel(ALICE);
         Person expected = new PersonBuilder(ALICE).withPreorder("Tarts", COMPLETED).build();
         assertEquals(new CommandResult(String.format(OrderCommand.MESSAGE_ADD_ORDER_SUCCESS,
-                Messages.format(expected))),
+                ALICE.getName(), "Tarts", COMPLETED)),
                 command(1, "Tarts", COMPLETED).execute(model));
         assertEquals(List.of(expected), model.getAddressBook().getPersonList());
     }
@@ -211,7 +211,7 @@ public class OrderCommandTest {
         Model model = createModel(ORDERED_ALICE);
         Person expected = new PersonBuilder(ALICE).withPreorder(expectedDetails, expectedStatus).build();
         assertEquals(new CommandResult(String.format(OrderCommand.MESSAGE_EDIT_ORDER_SUCCESS,
-                Messages.format(expected))), command(1, details, status).execute(model));
+                ALICE.getName(), expectedDetails, expectedStatus)), command(1, details, status).execute(model));
         assertEquals(List.of(expected), model.getAddressBook().getPersonList());
     }
 

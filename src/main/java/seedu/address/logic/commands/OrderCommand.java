@@ -35,8 +35,8 @@ public class OrderCommand extends Command {
             + PREFIX_ORDER_STATUS + "PENDING";
     public static final String MESSAGE_NO_ORDER_YET = "Identified person has no existing preorder. Please specify"
             + " preorder details and preorder status";
-    public static final String MESSAGE_ADD_ORDER_SUCCESS = "Added preorder to Person: %1$s";
-    public static final String MESSAGE_EDIT_ORDER_SUCCESS = "Edited preorder of Person: %1$s";
+    public static final String MESSAGE_ADD_ORDER_SUCCESS = "Added preorder to %1$s: %2$s (%3$s)";
+    public static final String MESSAGE_EDIT_ORDER_SUCCESS = "Edited preorder of %1$s: %2$s (%3$s)";
     public static final String MESSAGE_NOT_EDITED = "No preorder changes specified.";
 
     private final Index index;
@@ -64,8 +64,8 @@ public class OrderCommand extends Command {
                 && !editPreorderDescriptor.isAnyFieldEdited()) {
             return new CommandResult(MESSAGE_NOT_EDITED);
         }
-        Person personWithUpdatedOrder = createUpdatedOrderPerson(identifiedPerson);
 
+        Person personWithUpdatedOrder = createUpdatedOrderPerson(identifiedPerson);
         model.setPerson(identifiedPerson, personWithUpdatedOrder);
 
         return new CommandResult(generateSuccessMessage(identifiedPerson, personWithUpdatedOrder));
@@ -110,9 +110,13 @@ public class OrderCommand extends Command {
      * Formats feedback according to whether the original person already had a preorder.
      */
     private String generateSuccessMessage(Person originalPerson, Person updatedPerson) {
+        assert updatedPerson.getPreorder().isPresent();
+
         String messageFormat = originalPerson.getPreorder().isEmpty() ? MESSAGE_ADD_ORDER_SUCCESS
                 : MESSAGE_EDIT_ORDER_SUCCESS;
-        return String.format(messageFormat, Messages.format(updatedPerson));
+        Preorder currPreorder = updatedPerson.getPreorder().get();
+        return String.format(messageFormat, updatedPerson.getName(),
+                currPreorder.getDetails(), currPreorder.getStatus());
     }
 
     @Override
