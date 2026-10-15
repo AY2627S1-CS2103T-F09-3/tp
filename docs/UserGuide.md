@@ -133,7 +133,7 @@ Format: `tag INDEX t/TAG`
 * Tags are case-insensitive: `VIP`, `Vip` and `vip` are the same tag. A tag keeps the capitalization it had when it was first added.
 * If the person already has the tag, in any capitalization, their tags are left unchanged and a message tells you so.
 * The person's other details, including their preorder, are not changed.
-* After a tag is added, the full person list is shown.
+* The current list filter is preserved, and the change is saved automatically.
 
 Examples:
 

@@ -575,7 +575,7 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Find a person using `find Bernice`. Only `Bernice Yu` is shown.
 
    1. Test case: `tag 1 t/vip`<br>
-      Expected: `vip` is added to `Bernice Yu`'s tags. The full person list is shown again.
+      Expected: `vip` is added to `Bernice Yu`'s tags. Only `Bernice Yu` remains displayed; the filter is preserved.
 
 ### Untagging a person
 
