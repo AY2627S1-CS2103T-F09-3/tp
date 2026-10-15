@@ -547,7 +547,7 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Start with the sample data. List all persons using the `list` command. The first person is `Alex Yeoh`, who has the tag `friends`.
 
    1. Test case: `tag 1 t/regular`<br>
-      Expected: `regular` is added to the first person's tags. The status message shows the person's details, including the new tag.
+      Expected: `regular` is added to the first person's tags. The status message shows `Added tag(s) [regular] to Alex Yeoh`.
 
    1. Test case: `tag 1 t/FRIENDS`<br>
       Expected: The person's tags are unchanged. The status message shows `Alex Yeoh already has tag [FRIENDS]. No changes made.`
@@ -575,7 +575,7 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Find a person using `find Bernice`. Only `Bernice Yu` is shown.
 
    1. Test case: `tag 1 t/vip`<br>
-      Expected: `vip` is added to `Bernice Yu`'s tags. Only `Bernice Yu` remains displayed; the filter is preserved.
+      Expected: `vip` is added to `Bernice Yu`'s tags. The status message shows `Added tag(s) [vip] to Bernice Yu`. Only `Bernice Yu` remains displayed; the filter is preserved.
 
 ### Untagging a person
 
