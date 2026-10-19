@@ -26,6 +26,7 @@ class JsonAdaptedPerson {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Person's %s field is missing!";
     public static final String MESSAGE_TOO_MANY_PREORDERS = "Person has more than one preorder!";
+    public static final String MESSAGE_NULL_PREORDER = "Person's preorder list contains a null entry!";
 
     private final String name;
     private final String phone;
@@ -125,6 +126,9 @@ class JsonAdaptedPerson {
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
 
+        if (preorders.contains(null)) {
+            throw new IllegalValueException(MESSAGE_NULL_PREORDER);
+        }
         if (preorders.size() > 1) {
             throw new IllegalValueException(MESSAGE_TOO_MANY_PREORDERS);
         }

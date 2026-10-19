@@ -107,6 +107,16 @@ public class JsonAddressBookStorageTest {
         assertThrows(DataLoadingException.class, () -> readPreorderFixture("invalidItemStatus.json"));
     }
 
+    @Test
+    public void readAddressBook_nullPreorder_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, () -> readPreorderFixture("nullPreorder.json"));
+    }
+
+    @Test
+    public void readAddressBook_nullItem_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, () -> readPreorderFixture("nullItem.json"));
+    }
+
     private void readPreorderFixture(String fileName) throws Exception {
         new JsonAddressBookStorage(TEST_DATA_FOLDER.resolve(fileName)).readAddressBook();
     }

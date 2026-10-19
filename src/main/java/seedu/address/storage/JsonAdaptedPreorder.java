@@ -15,6 +15,8 @@ import seedu.address.model.preorder.Preorder;
  */
 class JsonAdaptedPreorder {
 
+    public static final String MESSAGE_NULL_ITEM = "Preorder's item list contains a null entry!";
+
     private final List<JsonAdaptedItem> items = new ArrayList<>();
 
     /**
@@ -39,11 +41,14 @@ class JsonAdaptedPreorder {
     /**
      * Converts this Jackson-friendly adapted preorder object into the model's {@code Preorder} object.
      *
-     * @throws IllegalValueException if any of the adapted items violates a data constraint.
+     * @throws IllegalValueException if an item is null or violates a data constraint.
      */
     public Preorder toModelType() throws IllegalValueException {
         final List<Item> modelItems = new ArrayList<>();
         for (JsonAdaptedItem item : items) {
+            if (item == null) {
+                throw new IllegalValueException(MESSAGE_NULL_ITEM);
+            }
             modelItems.add(item.toModelType());
         }
         return new Preorder(modelItems);

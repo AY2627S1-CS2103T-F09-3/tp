@@ -7,6 +7,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -100,6 +101,21 @@ public class JsonAdaptedPersonTest {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
                 VALID_TAGS, List.of(preorder, preorder), null);
         assertThrows(IllegalValueException.class, JsonAdaptedPerson.MESSAGE_TOO_MANY_PREORDERS, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullPreorder_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS, Arrays.asList((JsonAdaptedPreorder) null), null);
+        assertThrows(IllegalValueException.class, JsonAdaptedPerson.MESSAGE_NULL_PREORDER, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullItem_throwsIllegalValueException() {
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(Arrays.asList((JsonAdaptedItem) null));
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS, List.of(preorder), null);
+        assertThrows(IllegalValueException.class, JsonAdaptedPreorder.MESSAGE_NULL_ITEM, person::toModelType);
     }
 
     @Test
