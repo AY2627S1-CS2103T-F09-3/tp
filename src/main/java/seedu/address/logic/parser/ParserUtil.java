@@ -15,7 +15,6 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
-import seedu.address.model.preorder.PreorderDetails;
 import seedu.address.model.preorder.PreorderStatus;
 import seedu.address.model.tag.Tag;
 
@@ -160,21 +159,6 @@ public class ParserUtil {
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_TAG);
         return parseTag(argMultimap.getValue(PREFIX_TAG).get());
-    }
-
-    /**
-     * Parses a {@code String details} into a {@code PreorderDetails}.
-     * Leading and trailing whitespaces will be trimmed.
-     *
-     * @throws ParseException if the given {@code details} is invalid.
-     */
-    public static PreorderDetails parsePreorderDetails(String details) throws ParseException {
-        requireNonNull(details);
-        String trimmedDetails = details.trim();
-        if (!PreorderDetails.isValidDetails(trimmedDetails)) {
-            throw new ParseException(PreorderDetails.MESSAGE_CONSTRAINTS);
-        }
-        return new PreorderDetails(trimmedDetails);
     }
 
     /**
