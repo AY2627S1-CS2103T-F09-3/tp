@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.PreorderStatus;
@@ -21,10 +22,11 @@ public class PreorderDisplay {
      * e.g. {@code 1. Pineapple Tarts - Quantity 2 - PENDING - "Less sugar"}.
      *
      * @param itemNumber The item's position in the preorder, starting from 1.
+     * @throws IllegalArgumentException if {@code itemNumber} is less than 1.
      */
     public static String formatItem(int itemNumber, Item item) {
         requireNonNull(item);
-        assert itemNumber > 0;
+        checkArgument(itemNumber > 0);
 
         String text = itemNumber + ". " + item.getName() + " - Quantity " + item.getQuantity()
                 + " - " + item.getStatus().name();

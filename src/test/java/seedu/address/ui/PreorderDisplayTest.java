@@ -36,6 +36,12 @@ public class PreorderDisplayTest {
     }
 
     @Test
+    public void formatItem_itemNumberBelowOne_throwsIllegalArgumentException() {
+        Item item = new ItemBuilder().build();
+        assertThrows(IllegalArgumentException.class, () -> PreorderDisplay.formatItem(0, item));
+    }
+
+    @Test
     public void getStatusStyleClass_eachStatus_returnsMatchingClass() {
         assertEquals("status-pending", PreorderDisplay.getStatusStyleClass(PreorderStatus.PENDING));
         assertEquals("status-prepared", PreorderDisplay.getStatusStyleClass(PreorderStatus.PREPARED));
