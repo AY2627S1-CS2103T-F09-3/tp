@@ -26,6 +26,14 @@ public class SampleDataUtilTest {
     }
 
     @Test
+    public void getSamplePersons_preorderWithoutItems_present() {
+        assertTrue(Arrays.stream(SampleDataUtil.getSamplePersons())
+                .anyMatch(person -> person.getPreorder()
+                        .map(preorder -> preorder.getItems().isEmpty())
+                        .orElse(false)));
+    }
+
+    @Test
     public void getSamplePersons_preorderWithSeveralItems_present() {
         assertTrue(Arrays.stream(SampleDataUtil.getSamplePersons())
                 .anyMatch(person -> person.getPreorder()
