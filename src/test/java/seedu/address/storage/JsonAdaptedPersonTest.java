@@ -39,6 +39,13 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_missingPostalCode_returnsPersonWithoutPostalCode() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS);
+        assertEquals(null, person.toModelType().getPostalCode());
+    }
+
+    @Test
     public void toModelType_invalidName_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(INVALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_TAGS);

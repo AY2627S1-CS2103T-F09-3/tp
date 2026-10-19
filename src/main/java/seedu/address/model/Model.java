@@ -1,6 +1,7 @@
 package seedu.address.model;
 
 import java.util.function.Predicate;
+import java.util.Comparator;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
@@ -68,4 +69,9 @@ public interface Model {
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredPersonList(Predicate<Person> predicate);
+
+    /** Updates the display ordering without changing persisted address-book order. */
+    default void updatePersonListComparator(Comparator<Person> comparator) {
+        // Models that support display ordering may override this method.
+    }
 }
