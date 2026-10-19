@@ -55,4 +55,12 @@ public class TagCriterionTest {
         TagCriterion criterion = new TagCriterion(new Tag("regular"));
         assertEquals(criterion.hashCode(), new TagCriterion(new Tag("REGULAR")).hashCode());
     }
+
+    @Test
+    public void toStringMethod() {
+        TagCriterion criterion = new TagCriterion(new Tag("regular"));
+        String expected = TagCriterion.class.getCanonicalName() + "{tag=[regular]}";
+
+        assertEquals(expected, criterion.toString());
+    }
 }
