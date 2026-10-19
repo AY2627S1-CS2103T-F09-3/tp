@@ -16,6 +16,7 @@ import static seedu.address.model.search.TextContainsCriterion.Field.PHONE;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.AMY;
+import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.COMPLETED_DANIEL;
 import static seedu.address.testutil.TypicalPersons.PENDING_BENSON;
 import static seedu.address.testutil.TypicalPersons.PENDING_ELLE;
@@ -145,6 +146,91 @@ public class LogicManagerTest {
 
         assertEquals(SEARCH_CRITERIA_SHOW_ALL_PERSONS, logic.getActiveSearchCriteria());
         assertEquals(model.getAddressBook().getPersonList(), logic.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_editLeavesCombinedSearch_nextEditUsesUpdatedDisplayedIndex() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("find n/Meier t/friends", "2 person(s) listed!",
+                List.of(COMPLETED_DANIEL, PENDING_BENSON));
+        SearchCriteria criteria = logic.getActiveSearchCriteria();
+        Person editedDaniel = new PersonBuilder(COMPLETED_DANIEL).withName("Daniel Wong").build();
+
+        logic.execute("edit 1 n/Daniel Wong");
+
+        assertEquals(List.of(PENDING_BENSON), logic.getFilteredPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        assertCommandFailurePreservesFilteredList("edit 2 p/81234567", CommandException.class,
+                MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+
+        logic.execute("edit 1 p/81234567");
+
+        Person editedBenson = new PersonBuilder(PENDING_BENSON).withPhone("81234567").build();
+        assertEquals(List.of(editedBenson), logic.getFilteredPersonList());
+        assertEquals(List.of(editedDaniel, PENDING_ELLE, ALICE, PREPARED_CARL, editedBenson),
+                model.getAddressBook().getPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+    }
+
+    @Test
+    public void execute_customerAndPreorderChanges_preservesTrackingCriteriaAndRefreshesResults() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("track s/pending", "2 order(s) for PENDING listed!",
+                List.of(PENDING_ELLE, PENDING_BENSON));
+        SearchCriteria criteria = logic.getActiveSearchCriteria();
+        List<SearchCriteria> observedCriteria = new ArrayList<>();
+        logic.activeSearchCriteriaProperty().addListener((observable, oldCriteria, newCriteria) ->
+                observedCriteria.add(newCriteria));
+        Person newPerson = new PersonBuilder().withName("Nora Lee").withPhone("81112222")
+                .withEmail("nora@example.com").withAddress("12 Sample Road").build();
+
+        logic.execute("add n/Nora Lee p/81112222 e/nora@example.com a/12 Sample Road");
+
+        assertEquals(List.of(PENDING_ELLE, PENDING_BENSON), logic.getFilteredPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+
+        logic.execute("edit 1 n/Elle Wong p/81234567");
+
+        Person editedElle = new PersonBuilder(PENDING_ELLE).withName("Elle Wong").withPhone("81234567").build();
+        assertEquals(List.of(editedElle, PENDING_BENSON), logic.getFilteredPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+
+        logic.execute("order 1 s/completed");
+
+        assertEquals(List.of(PENDING_BENSON), logic.getFilteredPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+
+        logic.execute("deleteorder 1");
+
+        Person completedElle = new PersonBuilder(editedElle).withPreorder("1 strawberry cake",
+                PreorderStatus.COMPLETED).build();
+        assertEquals(List.of(COMPLETED_DANIEL, completedElle, ALICE, PREPARED_CARL, BENSON, newPerson),
+                model.getAddressBook().getPersonList());
+        assertEquals(List.of(), logic.getFilteredPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        assertEquals(List.of(), observedCriteria);
+    }
+
+    @Test
+    public void execute_tagChanges_preservesCriteriaAndRefreshesDisplayedIndexes() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("find t/friends", "3 person(s) listed!",
+                List.of(COMPLETED_DANIEL, ALICE, PENDING_BENSON));
+        SearchCriteria criteria = logic.getActiveSearchCriteria();
+
+        logic.execute("untag 1 t/friends");
+
+        assertEquals(List.of(ALICE, PENDING_BENSON), logic.getFilteredPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+
+        logic.execute("tag 1 t/VIP");
+
+        Person untaggedDaniel = new PersonBuilder(COMPLETED_DANIEL).withTags().build();
+        Person taggedAlice = new PersonBuilder(ALICE).withTags("friends", "VIP").build();
+        assertEquals(List.of(taggedAlice, PENDING_BENSON), logic.getFilteredPersonList());
+        assertEquals(List.of(untaggedDaniel, PENDING_ELLE, taggedAlice, PREPARED_CARL, PENDING_BENSON),
+                model.getAddressBook().getPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
     }
 
     @Test

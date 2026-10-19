@@ -70,6 +70,28 @@ information.
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
+### How searches and updates affect the list
+
+Search criteria determine which customers are displayed. Keeping the criteria preserves the search; the results still refresh when customer or preorder data changes.
+
+| Commands | Effect on the current search |
+|----------|------------------------------|
+| `find`, `track` | Each successful command replaces the previous criteria and searches all stored customers. |
+| `add`, `edit`, `delete`, `tag`, `untag`, `order`, `deleteorder` | Preserve the active criteria and refresh the matching results. |
+| `list` | Clears the criteria and shows all customers. |
+
+During a session, use `list` to explicitly return to an unfiltered view. A `find` that happens to match every customer still has active criteria. Empty results do not clear the criteria either. Updates and deletions can change the displayed indexes, so check them before your next command.
+
+Examples, using the customer's current displayed `INDEX`:
+
+| Search and update | Result |
+|-------------------|--------|
+| `track s/pending`, then `order INDEX s/completed` | The customer disappears from the pending results. |
+| `track`, then `deleteorder INDEX` | The customer disappears from tracking because they no longer have a preorder. Their customer record remains saved. |
+| `find n/Alice`, then `deleteorder INDEX` | Alice remains visible because her name still matches the search. |
+
+Search criteria are not saved. Restarting the app begins with all saved customers displayed.
+
 ### Viewing help: `help`
 
 Shows a window containing the [LeBake User Guide URL](https://ay2627s1-cs2103t-f09-3.github.io/tp/UserGuide.html).
@@ -92,6 +114,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS`
 * A person is a duplicate if their name matches an existing person's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
 * Duplicate checks include all persons in the address book, even those hidden by a `find` command.
 * New persons are added without tags or a preorder. Use [`tag`](#tagging-a-person-tag) and [`order`](#adding-or-updating-a-preorder-order) to add tags or orders afterwards.
+* Adding preserves the current search criteria. The new person appears only if they match. For example, they stay hidden after a tag search or `track` because they have no tags or preorder yet. Use `list` to show all customers.
 
 
 Examples:
@@ -118,6 +141,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS]`
 * The name validation and spacing rules described for `add` also apply to `edit`.
 * You can retain a person's own name or change its capitalization or spacing while editing. A name matching another person's name is rejected, including persons hidden by a `find` command. Other contact details do not affect this duplicate check.
 * Existing tags and preorders are always preserved.
+* Editing preserves the current search criteria. A person disappears from the results if their edited details no longer match. Check the displayed indexes again before your next command, or use `list` to show all customers.
 
 Examples:
 
@@ -311,6 +335,7 @@ Format: `delete INDEX`
 * Deletes the person at the specified `INDEX`.
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
+* Deleting preserves the active search criteria. The remaining results refresh, and their displayed indexes may change.
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.

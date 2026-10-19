@@ -18,6 +18,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -30,6 +32,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.search.SearchCriteria;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -110,8 +113,9 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_filteredList_success() {
+    public void execute_editedPersonNoLongerMatches_preservesCriteria() {
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
+        SearchCriteria criteria = model.getActiveSearchCriteria();
 
         Person personInFilteredList = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person editedPerson = new PersonBuilder(personInFilteredList).withName(VALID_NAME_BOB).build();
@@ -121,9 +125,12 @@ public class EditCommandTest {
         String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.updateFilteredPersonList(criteria);
         expectedModel.setPerson(model.getFilteredPersonList().get(0), editedPerson);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertEquals(criteria, model.getActiveSearchCriteria());
+        assertTrue(model.getFilteredPersonList().isEmpty());
     }
 
     @Test
@@ -157,17 +164,21 @@ public class EditCommandTest {
     @Test
     public void execute_ownNameWithCaseAndSpacingChangesFilteredList_success() throws Exception {
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
+        SearchCriteria criteria = model.getActiveSearchCriteria();
 
         Person personToEdit = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person editedPerson = new PersonBuilder(personToEdit).withName("aLiCe PaUlInE").build();
         EditCommand command = new EditCommandParser().parse("1 " + PREFIX_NAME + "  aLiCe   PaUlInE  ");
 
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.updateFilteredPersonList(criteria);
         expectedModel.setPerson(personToEdit, editedPerson);
 
         assertCommandSuccess(command, model,
                 String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)), expectedModel);
         assertEquals("aLiCe PaUlInE", model.getAddressBook().getPersonList().getFirst().getName().fullName);
+        assertEquals(criteria, model.getActiveSearchCriteria());
+        assertEquals(List.of(editedPerson), model.getFilteredPersonList());
     }
 
     @Test

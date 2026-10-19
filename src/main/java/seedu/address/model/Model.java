@@ -52,6 +52,7 @@ public interface Model {
     /**
      * Adds the given person.
      * {@code person} must not already exist in the address book.
+     * Preserves the active criteria; the person is displayed only if they match.
      */
     void addPerson(Person person);
 
@@ -59,6 +60,7 @@ public interface Model {
      * Replaces the given person {@code target} with {@code editedPerson}.
      * {@code target} must exist in the address book.
      * The person identity of {@code editedPerson} must not be the same as another existing person in the address book.
+     * Preserves the active criteria and re-evaluates whether the edited person matches.
      */
     void setPerson(Person target, Person editedPerson);
 
