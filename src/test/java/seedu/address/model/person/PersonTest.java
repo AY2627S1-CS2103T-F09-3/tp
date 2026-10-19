@@ -12,11 +12,15 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.preorder.Item;
+import seedu.address.model.preorder.Preorder;
 import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonTest {
@@ -42,9 +46,9 @@ public class PersonTest {
 
     @Test
     public void getPreorder_createdWithPreorder_returnsPreorder() {
-        Person person = new PersonBuilder(ALICE).withPreorder("2 chocolate cakes", PreorderStatus.PENDING).build();
-        assertEquals("2 chocolate cakes", person.getPreorder().get().getDetails().value);
-        assertEquals(PreorderStatus.PENDING, person.getPreorder().get().getStatus());
+        Item tarts = new ItemBuilder().build();
+        Person person = new PersonBuilder(ALICE).withPreorder(tarts).build();
+        assertEquals(Optional.of(new Preorder(List.of(tarts))), person.getPreorder());
     }
 
     @Test

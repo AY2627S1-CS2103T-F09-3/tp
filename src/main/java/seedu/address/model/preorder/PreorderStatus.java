@@ -5,15 +5,15 @@ import static java.util.Objects.requireNonNull;
 import java.util.Arrays;
 
 /**
- * Represents how far a customer's pre-order has progressed.
+ * Represents how far an item in a customer's preorder has progressed.
  * A fixed set of values prevents variations such as "done" and "complete" from becoming different statuses.
  */
 public enum PreorderStatus {
-    /** The order has been recorded but is not ready yet. */
+    /** The item has been ordered but is not ready yet. */
     PENDING,
-    /** The order is ready for collection or delivery. */
+    /** The item is ready for collection or delivery. */
     PREPARED,
-    /** The order has been collected or delivered. */
+    /** The item has been collected or delivered. */
     COMPLETED;
 
     public static final String MESSAGE_CONSTRAINTS =

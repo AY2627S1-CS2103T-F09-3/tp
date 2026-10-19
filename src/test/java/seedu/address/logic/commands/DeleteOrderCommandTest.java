@@ -21,7 +21,9 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.preorder.Preorder;
+import seedu.address.model.person.Person;
+import seedu.address.testutil.ItemBuilder;
+import seedu.address.testutil.PersonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) and unit tests for
@@ -30,10 +32,8 @@ import seedu.address.model.preorder.Preorder;
 public class DeleteOrderCommandTest {
 
     private static final Index INDEX_BENSON = INDEX_SECOND_PERSON;
-    private static final Preorder BENSON_PREORDER = PENDING_BENSON.getPreorder().get();
     private static final String EXPECTED_SUCCESS_MESSAGE = String.format(
-            DeleteOrderCommand.MESSAGE_DELETE_ORDER_SUCCESS, BENSON.getName(), BENSON_PREORDER.getDetails(),
-            BENSON_PREORDER.getStatus());
+            DeleteOrderCommand.MESSAGE_DELETE_ORDER_SUCCESS, BENSON.getName());
 
     private Model model;
 
@@ -50,6 +50,18 @@ public class DeleteOrderCommandTest {
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
         assertCommandSuccess(deleteOrderCommand, model, EXPECTED_SUCCESS_MESSAGE, expectedModel);
+    }
+
+    @Test
+    public void execute_preorderWithSeveralItems_deletesWholePreorder() {
+        Person bensonWithItems = new PersonBuilder(BENSON).withPreorder(
+                new ItemBuilder().withName("Pineapple Tarts").build(),
+                new ItemBuilder().withName("Almond Cookies").build()).build();
+        model.setPerson(PENDING_BENSON, bensonWithItems);
+
+        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+        assertCommandSuccess(new DeleteOrderCommand(INDEX_BENSON), model, EXPECTED_SUCCESS_MESSAGE, expectedModel);
     }
 
     @Test

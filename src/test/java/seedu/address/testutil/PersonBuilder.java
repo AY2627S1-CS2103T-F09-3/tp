@@ -1,6 +1,7 @@
 package seedu.address.testutil;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -9,7 +10,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
-import seedu.address.model.preorder.ItemName;
+import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.Preorder;
 import seedu.address.model.preorder.PreorderStatus;
 import seedu.address.model.tag.Tag;
@@ -97,10 +98,18 @@ public class PersonBuilder {
     }
 
     /**
-     * Sets the {@code Preorder} of the {@code Person} that we are building.
+     * Sets the {@code Preorder} of the {@code Person} that we are building to a single item with quantity 1.
      */
-    public PersonBuilder withPreorder(String details, PreorderStatus status) {
-        this.preorder = Optional.of(new Preorder(new ItemName(details), status));
+    public PersonBuilder withPreorder(String itemName, PreorderStatus status) {
+        return withPreorder(new ItemBuilder().withName(itemName).withQuantity("1").withStatus(status).build());
+    }
+
+    /**
+     * Sets the {@code Preorder} of the {@code Person} that we are building to contain {@code items}.
+     * With no arguments, the preorder has no items yet.
+     */
+    public PersonBuilder withPreorder(Item... items) {
+        this.preorder = Optional.of(new Preorder(List.of(items)));
         return this;
     }
 

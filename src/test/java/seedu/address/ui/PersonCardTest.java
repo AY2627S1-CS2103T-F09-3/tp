@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -14,8 +15,11 @@ import org.junit.jupiter.api.Test;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -34,24 +38,36 @@ public class PersonCardTest {
     }
 
     @Test
-    public void constructor_personWithPreorder_showsOrderAndStatusChips() throws Exception {
-        Person person = new PersonBuilder(ALICE).withPreorder("2 chocolate cakes", PreorderStatus.PENDING).build();
-        PersonCard card = createCard(person);
+    public void constructor_personWithItems_showsOneChipPerItem() throws Exception {
+        Item tarts = new ItemBuilder().withName("Pineapple Tarts").withRemark("Less sugar").build();
+        Item cookies = new ItemBuilder().withName("Almond Cookies").withQuantity("1")
+                .withStatus(PreorderStatus.PREPARED).build();
+        PersonCard card = createCard(new PersonBuilder(ALICE).withPreorder(tarts, cookies).build());
 
         assertTrue(lookup(card, "#preorder").isVisible());
         assertTrue(lookup(card, "#preorder").isManaged());
-        assertEquals("Order: 2 chocolate cakes", ((Label) lookup(card, "#preorderDetails")).getText());
-        assertEquals("Status: PENDING", ((Label) lookup(card, "#preorderStatus")).getText());
+        assertEquals(List.of(PreorderDisplay.formatItem(1, tarts), PreorderDisplay.formatItem(2, cookies)),
+                getChips(card).stream().map(Label::getText).toList());
     }
 
     @Test
     public void constructor_eachStatus_usesMatchingColourClass() throws Exception {
         for (PreorderStatus status : PreorderStatus.values()) {
-            Person person = new PersonBuilder(ALICE).withPreorder("2 chocolate cakes", status).build();
-            Node statusChip = lookup(createCard(person), "#preorderStatus");
+            Item item = new ItemBuilder().withStatus(status).build();
+            Label chip = getChips(createCard(new PersonBuilder(ALICE).withPreorder(item).build())).get(0);
 
-            assertTrue(statusChip.getStyleClass().contains(PreorderDisplay.getStatusStyleClass(status)));
+            assertTrue(chip.getStyleClass().contains(PreorderDisplay.getStatusStyleClass(status)));
         }
+    }
+
+    @Test
+    public void constructor_preorderWithoutItems_showsNoItemsChip() throws Exception {
+        PersonCard card = createCard(new PersonBuilder(ALICE).withPreorder().build());
+
+        List<Label> chips = getChips(card);
+        assertEquals(1, chips.size());
+        assertEquals(PreorderDisplay.NO_ITEMS_TEXT, chips.get(0).getText());
+        assertTrue(chips.get(0).getStyleClass().contains(PreorderDisplay.NO_ITEMS_STYLE_CLASS));
     }
 
     @Test
@@ -87,6 +103,13 @@ public class PersonCardTest {
             }
         });
         return card.get(10, TimeUnit.SECONDS);
+    }
+
+    private static List<Label> getChips(PersonCard card) {
+        VBox preorder = (VBox) lookup(card, "#preorder");
+        return preorder.getChildren().stream()
+                .map(chip -> (Label) chip)
+                .toList();
     }
 
     private static Node lookup(PersonCard card, String selector) {

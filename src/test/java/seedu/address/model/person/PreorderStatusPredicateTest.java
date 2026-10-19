@@ -14,6 +14,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 
 public class PreorderStatusPredicateTest {
@@ -61,6 +62,23 @@ public class PreorderStatusPredicateTest {
     public void test_personWithoutPreorder_returnsFalse() {
         PreorderStatusPredicate predicate = new PreorderStatusPredicate(Set.of(PENDING, PREPARED, COMPLETED));
         assertFalse(predicate.test(PERSON_WITHOUT_PREORDER));
+    }
+
+    @Test
+    public void test_preorderWithoutItems_returnsFalse() {
+        PreorderStatusPredicate predicate = new PreorderStatusPredicate(Set.of(PENDING, PREPARED, COMPLETED));
+        assertFalse(predicate.test(new PersonBuilder().withPreorder().build()));
+    }
+
+    @Test
+    public void test_itemsWithDifferentStatuses_matchesIfAnyItemMatches() {
+        Person person = new PersonBuilder().withPreorder(
+                new ItemBuilder().withName("Pineapple Tarts").withStatus(COMPLETED).build(),
+                new ItemBuilder().withName("Almond Cookies").withStatus(PREPARED).build()).build();
+
+        assertTrue(new PreorderStatusPredicate(Set.of(PREPARED)).test(person));
+        assertTrue(new PreorderStatusPredicate(Set.of(COMPLETED)).test(person));
+        assertFalse(new PreorderStatusPredicate(Set.of(PENDING)).test(person));
     }
 
     @Test

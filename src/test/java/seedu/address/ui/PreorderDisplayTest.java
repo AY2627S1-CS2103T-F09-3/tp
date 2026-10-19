@@ -6,34 +6,33 @@ import static seedu.address.testutil.Assert.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemName;
-import seedu.address.model.preorder.Preorder;
 import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.testutil.ItemBuilder;
 
 public class PreorderDisplayTest {
 
-    private static final Preorder CAKES = new Preorder(new ItemName("2 chocolate cakes"),
-            PreorderStatus.PENDING);
-
     @Test
-    public void formatDetails_validPreorder_prefixesDetails() {
-        assertEquals("Order: 2 chocolate cakes", PreorderDisplay.formatDetails(CAKES));
+    public void formatItem_itemWithRemark_showsRemarkLast() {
+        Item tarts = new ItemBuilder().withName("Pineapple Tarts").withQuantity("2")
+                .withStatus(PreorderStatus.PENDING).withRemark("Less sugar").build();
+        assertEquals("1. Pineapple Tarts - Quantity 2 - PENDING - \"Less sugar\"",
+                PreorderDisplay.formatItem(1, tarts));
     }
 
     @Test
-    public void formatDetails_longestDetails_keepsFullText() {
+    public void formatItem_itemWithoutRemark_endsWithStatus() {
+        Item cookies = new ItemBuilder().withName("Almond Cookies").withQuantity("1")
+                .withStatus(PreorderStatus.PREPARED).build();
+        assertEquals("2. Almond Cookies - Quantity 1 - PREPARED", PreorderDisplay.formatItem(2, cookies));
+    }
+
+    @Test
+    public void formatItem_longestName_keepsFullText() {
         String longest = "a".repeat(ItemName.MAX_LENGTH);
-        Preorder preorder = new Preorder(new ItemName(longest), PreorderStatus.PENDING);
-
-        assertEquals(PreorderDisplay.DETAILS_PREFIX + longest, PreorderDisplay.formatDetails(preorder));
-    }
-
-    @Test
-    public void formatStatus_eachStatus_showsStatusName() {
-        for (PreorderStatus status : PreorderStatus.values()) {
-            Preorder preorder = new Preorder(new ItemName("2 chocolate cakes"), status);
-            assertEquals("Status: " + status.name(), PreorderDisplay.formatStatus(preorder));
-        }
+        Item item = new ItemBuilder().withName(longest).withQuantity("3").build();
+        assertEquals("1. " + longest + " - Quantity 3 - PENDING", PreorderDisplay.formatItem(1, item));
     }
 
     @Test
@@ -53,8 +52,7 @@ public class PreorderDisplayTest {
 
     @Test
     public void nullInputs_throwNullPointerException() {
-        assertThrows(NullPointerException.class, () -> PreorderDisplay.formatDetails(null));
-        assertThrows(NullPointerException.class, () -> PreorderDisplay.formatStatus(null));
+        assertThrows(NullPointerException.class, () -> PreorderDisplay.formatItem(1, null));
         assertThrows(NullPointerException.class, () -> PreorderDisplay.getStatusStyleClass(null));
     }
 }

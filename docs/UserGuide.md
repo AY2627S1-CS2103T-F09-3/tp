@@ -215,11 +215,11 @@ Examples:
 
 Format: `track [s/STATUS]`
 
-* `track` shows customers with active preorders (`PENDING` or `PREPARED`).
-* `track s/COMPLETED` shows customers with completed preorders. You can also filter by `PENDING` or `PREPARED`; status input is case-insensitive.
-* Customers without preorders are excluded. Use `list` to show all customers again.
+* `track` shows customers with at least one active item (`PENDING` or `PREPARED`) in their preorder.
+* `track s/COMPLETED` shows customers with at least one `COMPLETED` item. You can also filter by `PENDING` or `PREPARED`; status input is case-insensitive.
+* Customers without preorders, or whose preorder has no items yet, are excluded. Use `list` to show all customers again.
 
-Each preorder has one of these statuses, shown in its colour on the customer's card:
+Each item in a preorder appears on the customer's card on its own line, for example `1. Pineapple Tarts - Quantity 2 - PENDING - "Less sugar"`. Its colour shows its status:
 
 Status | Meaning | Badge colour
 -------|---------|-------------
@@ -234,13 +234,13 @@ Deletes a customer's current preorder, for example when the customer cancels, wh
 Format: `deleteorder INDEX`
 
 * `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
-* Only the preorder is removed. The customer's name, phone number, email, address and tags are not changed.
+* The whole preorder is removed, including all its items. The customer's name, phone number, email, address and tags are not changed.
 * If the customer has no preorder, nothing is changed and the app shows `NAME has no preorder to delete.`, for example `Alex Yeoh has no preorder to delete.`
 * If `INDEX` is larger than the displayed list, the app shows `The person index provided is invalid.`
 * A deleted preorder cannot be restored.
 * Deleting a preorder keeps the current filter. After `track`, the customer no longer has a preorder, so they disappear from that view. Check the displayed indices again before your next command. Use `list` to show all customers.
 
-On success, the app shows the deleted preorder, for example `Deleted preorder for Alex Yeoh: 2 chocolate cakes (PENDING)`.
+On success, the app shows whose preorder was deleted, for example `Deleted preorder for Alex Yeoh`.
 
 Examples:
 

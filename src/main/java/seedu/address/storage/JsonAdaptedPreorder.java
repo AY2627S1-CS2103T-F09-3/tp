@@ -1,60 +1,51 @@
 package seedu.address.storage;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
-import seedu.address.model.preorder.ItemName;
+import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.Preorder;
-import seedu.address.model.preorder.PreorderStatus;
 
 /**
  * Jackson-friendly version of {@link Preorder}.
  */
 class JsonAdaptedPreorder {
 
-    public static final String MISSING_FIELD_MESSAGE_FORMAT = "Preorder's %s field is missing!";
-
-    private final String details;
-    private final String status;
+    private final List<JsonAdaptedItem> items = new ArrayList<>();
 
     /**
-     * Constructs a {@code JsonAdaptedPreorder} with the given preorder details and status.
-     *
-     * @param details the details of the preorder.
-     * @param status the status of the preorder.
+     * Constructs a {@code JsonAdaptedPreorder} with the given items.
      */
     @JsonCreator
-    public JsonAdaptedPreorder(@JsonProperty("details") String details,
-            @JsonProperty("status") String status) {
-        this.details = details;
-        this.status = status;
+    public JsonAdaptedPreorder(@JsonProperty("items") List<JsonAdaptedItem> items) {
+        if (items != null) {
+            this.items.addAll(items);
+        }
     }
 
-    /** Converts a model preorder into this Jackson-friendly format. */
+    /**
+     * Converts a given {@code Preorder} into this class for Jackson use.
+     */
     public JsonAdaptedPreorder(Preorder source) {
-        details = source.getDetails().value;
-        status = source.getStatus().name();
+        items.addAll(source.getItems().stream()
+                .map(JsonAdaptedItem::new)
+                .toList());
     }
 
-    /** Converts this Jackson-friendly preorder into the model type. */
+    /**
+     * Converts this Jackson-friendly adapted preorder object into the model's {@code Preorder} object.
+     *
+     * @throws IllegalValueException if any of the adapted items violates a data constraint.
+     */
     public Preorder toModelType() throws IllegalValueException {
-        if (details == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
-                    ItemName.class.getSimpleName()));
+        final List<Item> modelItems = new ArrayList<>();
+        for (JsonAdaptedItem item : items) {
+            modelItems.add(item.toModelType());
         }
-        if (!ItemName.isValidItemName(details)) {
-            throw new IllegalValueException(ItemName.MESSAGE_CONSTRAINTS);
-        }
-
-        if (status == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
-                    PreorderStatus.class.getSimpleName()));
-        }
-        if (!PreorderStatus.isValidStatus(status)) {
-            throw new IllegalValueException(PreorderStatus.MESSAGE_CONSTRAINTS);
-        }
-
-        return new Preorder(new ItemName(details), PreorderStatus.valueOf(status));
+        return new Preorder(modelItems);
     }
 }

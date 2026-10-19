@@ -2,15 +2,17 @@ package seedu.address.model.person;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.preorder.Preorder;
 import seedu.address.model.preorder.PreorderStatus;
 
 /**
- * Tests that a {@code Person} has a preorder with one of the accepted statuses.
- * Persons without a preorder never match.
+ * Tests that a {@code Person} has a preorder item with one of the accepted statuses.
+ * Persons without a preorder, or whose preorder has no items, never match.
  */
 public class PreorderStatusPredicate implements Predicate<Person> {
     private final Set<PreorderStatus> statuses;
@@ -30,8 +32,10 @@ public class PreorderStatusPredicate implements Predicate<Person> {
     public boolean test(Person person) {
         requireNonNull(person);
         return person.getPreorder()
-                .map(preorder -> statuses.contains(preorder.getStatus()))
-                .orElse(false);
+                .map(Preorder::getItems)
+                .orElse(List.of())
+                .stream()
+                .anyMatch(item -> statuses.contains(item.getStatus()));
     }
 
     @Override

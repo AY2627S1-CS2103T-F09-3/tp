@@ -351,7 +351,7 @@
     -fx-font-size: 11;
 }
 
-/* Preorder chips. Order is brown and each status has its own colour, so they stand apart from the tags. */
+/* Preorder chips. Each item takes its status colour, so items stand apart from the tags. */
 #preorder .label {
     -fx-text-fill: white;
     -fx-padding: 1 3 1 3;
@@ -360,7 +360,7 @@
     -fx-font-size: 12;
 }
 
-#preorder .preorder-details {
+#preorder .preorder-empty {
     -fx-background-color: #7a5640;
 }
 

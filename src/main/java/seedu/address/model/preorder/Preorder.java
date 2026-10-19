@@ -1,35 +1,35 @@
 package seedu.address.model.preorder;
 
-import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
+import static java.util.Objects.requireNonNull;
 
-import java.util.Objects;
+import java.util.List;
 
 import seedu.address.commons.util.ToStringBuilder;
 
 /**
- * Represents a customer's current pre-order: what was ordered and how far it has progressed.
- * Guarantees: details are present and not null, field values are validated, immutable.
+ * Represents a customer's current preorder, made up of the items they ordered.
+ * Guarantees: immutable; items are not null and keep the order they were added in.
  */
 public class Preorder {
 
-    private final ItemName details;
-    private final PreorderStatus status;
+    private final List<Item> items;
 
     /**
-     * Every field must be present and not null.
+     * Creates a preorder with the given items. A preorder may have no items yet.
+     *
+     * @throws NullPointerException if {@code items} or any of its elements is null.
      */
-    public Preorder(ItemName details, PreorderStatus status) {
-        requireAllNonNull(details, status);
-        this.details = details;
-        this.status = status;
+    public Preorder(List<Item> items) {
+        requireNonNull(items);
+        this.items = List.copyOf(items);
     }
 
-    public ItemName getDetails() {
-        return details;
-    }
-
-    public PreorderStatus getStatus() {
-        return status;
+    /**
+     * Returns an immutable list of the items, which throws {@code UnsupportedOperationException}
+     * if modification is attempted.
+     */
+    public List<Item> getItems() {
+        return items;
     }
 
     @Override
@@ -43,20 +43,18 @@ public class Preorder {
             return false;
         }
 
-        return details.equals(otherPreorder.details)
-                && status == otherPreorder.status;
+        return items.equals(otherPreorder.items);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(details, status);
+        return items.hashCode();
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .add("details", details)
-                .add("status", status)
+                .add("items", items)
                 .toString();
     }
 
