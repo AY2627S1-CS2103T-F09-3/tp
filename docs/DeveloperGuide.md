@@ -138,6 +138,42 @@ The `Model` component,
 </box>
 
 
+#### Customer search criteria foundation
+
+The `seedu.address.model.search` package provides reusable search predicates. This foundation is not yet connected to
+`FindCommandParser` or `FindCommand`; the existing command syntax and behavior remain in place until parser integration.
+
+`SearchCriteria` implements `Predicate<Person>` and combines `PersonCriterion` objects using **AND**. A customer must
+match every criterion. An empty search matches every customer. The constructor defensively copies its criteria into an
+immutable set, so changing the source collection cannot change an existing search. Criterion order and duplicate
+conditions do not affect matching or equality; rejecting repeated CLI prefixes is the parser's responsibility.
+
+For example, the following predicate matches customers whose name contains `Alice Tan` and who have the tag `regular`:
+
+```java
+SearchCriteria criteria = new SearchCriteria(List.of(
+        new TextContainsCriterion(TextContainsCriterion.Field.NAME, "Alice Tan"),
+        new TagCriterion(new Tag("regular"))));
+```
+
+`TextContainsCriterion` supports name, phone, email and address fields. It strips surrounding query whitespace and
+matches the entire query as a case-insensitive substring using locale-independent case normalization. Internal spacing
+and punctuation remain significant. Queries must be nonblank, but may be fragments such as `8123` or `example.com`;
+they do not use the validation rules for creating complete contact fields. `TagCriterion` accepts a validated `Tag` and
+uses its complete, case-insensitive equality rule.
+
+To add a search condition with different matching rules, implement `PersonCriterion` and include it in a
+`SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
+CLI prefixes belong in the parser, not in the criteria. A subsequent parser integration can pass `SearchCriteria`
+directly to `Model.updateFilteredPersonList`, which replaces the predicate on the list backed by the full address book.
+There is no need to filter the previous search's results or execute another search command as an intermediate step.
+
+For future multi-item searches, product and status conditions must be grouped inside **one** `PersonCriterion` that
+checks whether any single item satisfies both conditions. Separate customer predicates for "has this product" and
+"has this status" could incorrectly match different items. Date/method and postal conditions can be separate criteria,
+because they describe the preorder or customer rather than an individual item. These extensions, shared tracking
+rules and active-search UI/state are not implemented by this foundation.
+
 ### Storage component
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/storage/Storage.java)
