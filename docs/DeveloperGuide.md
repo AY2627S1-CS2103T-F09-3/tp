@@ -642,45 +642,20 @@ Run each group below independently, starting with the sample data unless stated 
    1. Test case: Close and relaunch the application, then locate the same customer.<br>
       Expected: The removed tag remains absent. The customer's other tags, contact details, and preorder are preserved.
 
-### Managing customer preorders
-
-Use a test copy of the data file. Add a uniquely named customer, for example `add n/Order Tester p/91234567 e/order@example.com a/123 Baker Street`, then run `find Order Tester` before each operation below so the test customer is at index 1.
-
-1. Run `order 1 s/PENDING` before the customer has a preorder.<br>
-   Expected: An error requesting both fields; no preorder chips appear.
-1. Run `order 1 d/2 chocolate cakes s/pending`.<br>
-   Expected: “Added” feedback, an order details chip and an amber `Status: PENDING` chip, and only the test customer still displayed.
-1. Find the test customer again and run `order 1 d/3 chocolate cakes`.<br>
-   Expected: “Edited” feedback; the details change and the status stays `PENDING`.
-1. Find the customer again and run `order 1 s/PREPARED`, then repeat with `order 1 s/COMPLETED`.<br>
-   Expected: Blue and then green status chips; details stay unchanged.
-1. Run `track s/COMPLETED`, locate the test customer's displayed index, and run `order INDEX s/PENDING` using that index.<br>
-   Expected: The test customer disappears from the completed view, while other completed customers remain. If there are none, the view is empty. Run `find Order Tester` to confirm the preorder now has an amber `Status: PENDING` chip.
-1. Find the customer again and run `order 1`.<br>
-   Expected: `No preorder changes specified.` The order and filtered list remain unchanged.
-1. Try `order 1 d/`, `order 1 s/DONE`, and `order 1 s/PENDING s/COMPLETED`.<br>
-   Expected: Validation errors; the existing preorder remains unchanged.
-1. With only the test customer displayed, run `order 2 s/PENDING`.<br>
-   Expected: An invalid displayed-index error, even if the full address book has more customers.
-1. Supply a long description of up to 200 characters and resize the window.<br>
-   Expected: Details wrap inside the order details chip. All three status labels remain readable. A customer without a preorder has no preorder chips or space reserved for them.
-
 ### Deleting a preorder
 
-Start with the sample data. List all customers using the `list` command. The first customer is `Alex Yeoh`.
+Start with the sample data. List all customers using the `list` command. The first customer is `Alex Yeoh`, whose preorder has two items.
 
-1. Run `order 1 d/2 chocolate cakes s/PENDING`.<br>
-   Expected: `Alex Yeoh` now has a `PENDING` preorder for `2 chocolate cakes`.
 1. Run `deleteorder 1`.<br>
-   Expected: The status message shows `Deleted preorder for Alex Yeoh: 2 chocolate cakes (PENDING)`. The `Order:` and `Status:` preorder chips disappear from the card. The name, phone number, email, address and tags are unchanged.
+   Expected: The status message shows `Deleted preorder for Alex Yeoh`. Both item chips disappear from the card. The name, phone number, email, address and tags are unchanged.
 1. Run `deleteorder 1` again.<br>
    Expected: The status message shows `Alex Yeoh has no preorder to delete.` Nothing changes.
 1. Try `deleteorder 0`, `deleteorder` and `deleteorder 1 2`.<br>
    Expected: Nothing changes. The status message shows an invalid command format error, followed by the correct format of the `deleteorder` command.
 1. Run `deleteorder 100` (where 100 is larger than the list size).<br>
    Expected: Nothing changes. The status message shows `The person index provided is invalid.`
-1. Run `order 1 d/2 chocolate cakes s/PENDING`, then `track`, then `deleteorder 1`, using the displayed index of `Alex Yeoh` in place of `1` if it differs.<br>
-   Expected: The status message shows `Deleted preorder for Alex Yeoh: 2 chocolate cakes (PENDING)`. `Alex Yeoh` disappears from the tracked view, while other customers with active preorders remain. Run `list` to confirm that `Alex Yeoh` is still a customer, with no preorder chips.
+1. Run `track`, then `deleteorder` with the displayed index of `Charlotte Oliveiro`.<br>
+   Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder chips.
 
 ### Saving data
 
