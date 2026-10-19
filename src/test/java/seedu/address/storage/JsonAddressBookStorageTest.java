@@ -23,6 +23,7 @@ import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.PreorderStatus;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -108,6 +109,24 @@ public class JsonAddressBookStorageTest {
 
     private void readPreorderFixture(String fileName) throws Exception {
         new JsonAddressBookStorage(TEST_DATA_FOLDER.resolve(fileName)).readAddressBook();
+    }
+
+    @Test
+    public void readAndSaveAddressBook_legacyPreorder_savedAsOneItem() throws Exception {
+        ReadOnlyAddressBook loaded = new JsonAddressBookStorage(TEST_DATA_FOLDER.resolve("legacyPreorder.json"))
+                .readAddressBook().get();
+
+        Item convertedItem = new ItemBuilder().withName("2 chocolate cakes, no nuts").withQuantity("1")
+                .withStatus(PreorderStatus.PENDING).build();
+        AddressBook expected = new AddressBook();
+        expected.addPerson(new PersonBuilder(ALICE).withPreorder(convertedItem).build());
+        assertEquals(expected, new AddressBook(loaded));
+
+        Path savedPath = testFolder.resolve("legacyPreorderSaved.json");
+        new JsonAddressBookStorage(savedPath).saveAddressBook(loaded);
+        JsonNode personJson = JsonUtil.readJsonFile(savedPath, JsonNode.class).get().get("persons").get(0);
+        assertTrue(personJson.get("preorder") == null);
+        assertEquals("1", personJson.get("preorders").get(0).get("items").get(0).get("quantity").asText());
     }
 
     @Test
