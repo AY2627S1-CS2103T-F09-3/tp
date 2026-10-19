@@ -13,6 +13,7 @@ import seedu.address.model.preorder.PreorderStatus;
 public class PreorderDisplay {
 
     public static final String NO_ITEMS_TEXT = "Preorder: no items yet";
+    public static final String MISSING_QUANTITY_TEXT = "Quantity needed";
     public static final String NO_ITEMS_STYLE_CLASS = "preorder-empty";
 
     private PreorderDisplay() {} // prevents instantiation
@@ -28,8 +29,10 @@ public class PreorderDisplay {
         requireNonNull(item);
         checkArgument(itemNumber > 0);
 
-        String text = itemNumber + ". " + item.getName() + " - Quantity " + item.getQuantity()
-                + " - " + item.getStatus().name();
+        String quantity = item.getQuantity()
+                .map(itemQuantity -> "Quantity " + itemQuantity)
+                .orElse(MISSING_QUANTITY_TEXT);
+        String text = itemNumber + ". " + item.getName() + " - " + quantity + " - " + item.getStatus().name();
         return item.getRemark()
                 .map(remark -> text + " - \"" + remark + "\"")
                 .orElse(text);

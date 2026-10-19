@@ -11,9 +11,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 class JsonAdaptedLegacyPreorder {
 
-    // v1.3 preorders did not record a quantity
-    public static final String DEFAULT_QUANTITY = "1";
-
     private final String details;
     private final String status;
 
@@ -28,11 +25,12 @@ class JsonAdaptedLegacyPreorder {
     }
 
     /**
-     * Returns this preorder in the current format: one item named after the details, with quantity 1.
+     * Returns this preorder in the current format: one item named after the details.
+     * The quantity is left empty, as v1.3 did not record one and guessing it from the details could be wrong.
      * The item is checked later, when the returned preorder is converted to the model type.
      */
     public JsonAdaptedPreorder toJsonAdaptedPreorder() {
-        JsonAdaptedItem item = new JsonAdaptedItem(details, DEFAULT_QUANTITY, status, null);
+        JsonAdaptedItem item = new JsonAdaptedItem(details, null, status, null);
         return new JsonAdaptedPreorder(List.of(item));
     }
 }

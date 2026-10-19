@@ -29,6 +29,14 @@ public class PreorderDisplayTest {
     }
 
     @Test
+    public void formatItem_itemWithoutQuantity_saysQuantityNeeded() {
+        Item cakes = new ItemBuilder().withName("2 chocolate cakes").withoutQuantity()
+                .withStatus(PreorderStatus.PENDING).build();
+        assertEquals("1. 2 chocolate cakes - " + PreorderDisplay.MISSING_QUANTITY_TEXT + " - PENDING",
+                PreorderDisplay.formatItem(1, cakes));
+    }
+
+    @Test
     public void formatItem_longestName_keepsFullText() {
         String longest = "a".repeat(ItemName.MAX_LENGTH);
         Item item = new ItemBuilder().withName(longest).withQuantity("3").build();

@@ -47,10 +47,9 @@ public class JsonAdaptedItemTest {
     }
 
     @Test
-    public void toModelType_nullQuantity_throwsIllegalValueException() {
-        JsonAdaptedItem item = new JsonAdaptedItem(VALID_NAME, null, VALID_STATUS, VALID_REMARK);
-        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Quantity.class.getSimpleName());
-        assertThrows(IllegalValueException.class, expectedMessage, item::toModelType);
+    public void toModelType_itemWithoutQuantity_returnsItem() throws Exception {
+        Item item = new ItemBuilder().withoutQuantity().build();
+        assertEquals(item, new JsonAdaptedItem(item).toModelType());
     }
 
     @Test

@@ -122,11 +122,11 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
-    public void readAndSaveAddressBook_legacyPreorder_savedAsOneItem() throws Exception {
+    public void readAndSaveAddressBook_legacyPreorder_savedAsOneItemWithoutQuantity() throws Exception {
         ReadOnlyAddressBook loaded = new JsonAddressBookStorage(TEST_DATA_FOLDER.resolve("legacyPreorder.json"))
                 .readAddressBook().get();
 
-        Item convertedItem = new ItemBuilder().withName("2 chocolate cakes, no nuts").withQuantity("1")
+        Item convertedItem = new ItemBuilder().withName("2 chocolate cakes, no nuts").withoutQuantity()
                 .withStatus(PreorderStatus.PENDING).build();
         AddressBook expected = new AddressBook();
         expected.addPerson(new PersonBuilder(ALICE).withPreorder(convertedItem).build());
@@ -136,7 +136,9 @@ public class JsonAddressBookStorageTest {
         new JsonAddressBookStorage(savedPath).saveAddressBook(loaded);
         JsonNode personJson = JsonUtil.readJsonFile(savedPath, JsonNode.class).get().get("persons").get(0);
         assertTrue(personJson.get("preorder") == null);
-        assertEquals("1", personJson.get("preorders").get(0).get("items").get(0).get("quantity").asText());
+        assertTrue(personJson.get("preorders").get(0).get("items").get(0).get("quantity").isNull());
+        assertEquals(new AddressBook(loaded), new AddressBook(new JsonAddressBookStorage(savedPath)
+                .readAddressBook().get()));
     }
 
     @Test

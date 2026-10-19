@@ -119,12 +119,12 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_legacyPreorder_returnsPreorderWithOneItem() throws Exception {
+    public void toModelType_legacyPreorder_returnsOneItemWithoutQuantity() throws Exception {
         JsonAdaptedLegacyPreorder legacyPreorder = new JsonAdaptedLegacyPreorder("2 chocolate cakes", "PREPARED");
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
                 VALID_TAGS, null, legacyPreorder);
 
-        Item expectedItem = new ItemBuilder().withName("2 chocolate cakes").withQuantity("1")
+        Item expectedItem = new ItemBuilder().withName("2 chocolate cakes").withoutQuantity()
                 .withStatus(PreorderStatus.PREPARED).build();
         assertEquals(new PersonBuilder(BENSON).withPreorder(expectedItem).build(), person.toModelType());
     }

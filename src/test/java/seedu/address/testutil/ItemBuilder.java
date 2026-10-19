@@ -18,7 +18,7 @@ public class ItemBuilder {
     public static final PreorderStatus DEFAULT_STATUS = PreorderStatus.PENDING;
 
     private ItemName name;
-    private Quantity quantity;
+    private Optional<Quantity> quantity;
     private PreorderStatus status;
     private Optional<Remark> remark;
 
@@ -27,7 +27,7 @@ public class ItemBuilder {
      */
     public ItemBuilder() {
         name = new ItemName(DEFAULT_NAME);
-        quantity = new Quantity(DEFAULT_QUANTITY);
+        quantity = Optional.of(new Quantity(DEFAULT_QUANTITY));
         status = DEFAULT_STATUS;
         remark = Optional.empty();
     }
@@ -54,7 +54,15 @@ public class ItemBuilder {
      * Sets the {@code Quantity} of the {@code Item} that we are building.
      */
     public ItemBuilder withQuantity(String quantity) {
-        this.quantity = new Quantity(quantity);
+        this.quantity = Optional.of(new Quantity(quantity));
+        return this;
+    }
+
+    /**
+     * Removes the {@code Quantity} of the {@code Item} that we are building, like an item converted from v1.3.
+     */
+    public ItemBuilder withoutQuantity() {
+        this.quantity = Optional.empty();
         return this;
     }
 

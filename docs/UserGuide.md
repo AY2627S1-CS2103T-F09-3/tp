@@ -227,6 +227,8 @@ Status | Meaning | Badge colour
 `PREPARED` | Ready for collection or delivery | Blue
 `COMPLETED` | Collected or delivered | Green
 
+If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Quantity needed` instead of a quantity.
+
 ### Deleting a preorder: `deleteorder`
 
 Deletes a customer's current preorder, for example when the customer cancels, while keeping them as a customer.

@@ -14,7 +14,7 @@ import seedu.address.testutil.ItemBuilder;
 public class ItemTest {
 
     private static final ItemName TARTS = new ItemName("Pineapple Tarts");
-    private static final Quantity TWO = new Quantity("2");
+    private static final Optional<Quantity> TWO = Optional.of(new Quantity("2"));
 
     @Test
     public void constructor_null_throwsNullPointerException() {
@@ -34,6 +34,11 @@ public class ItemTest {
         assertEquals(TWO, item.getQuantity());
         assertEquals(PreorderStatus.PREPARED, item.getStatus());
         assertEquals(Optional.of(lessSugar), item.getRemark());
+    }
+
+    @Test
+    public void getQuantity_convertedWithoutQuantity_returnsEmpty() {
+        assertEquals(Optional.empty(), new ItemBuilder().withoutQuantity().build().getQuantity());
     }
 
     @Test
@@ -62,6 +67,9 @@ public class ItemTest {
 
         // different quantity -> returns false
         assertFalse(item.equals(new ItemBuilder(item).withQuantity("3").build()));
+
+        // no quantity -> returns false
+        assertFalse(item.equals(new ItemBuilder(item).withoutQuantity().build()));
 
         // different status -> returns false
         assertFalse(item.equals(new ItemBuilder(item).withStatus(PreorderStatus.COMPLETED).build()));

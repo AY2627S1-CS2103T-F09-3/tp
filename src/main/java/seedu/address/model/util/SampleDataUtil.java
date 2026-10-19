@@ -69,11 +69,12 @@ public class SampleDataUtil {
     }
 
     private static Item getItem(String name, String quantity, PreorderStatus status) {
-        return new Item(new ItemName(name), new Quantity(quantity), status, Optional.empty());
+        return new Item(new ItemName(name), Optional.of(new Quantity(quantity)), status, Optional.empty());
     }
 
     private static Item getItem(String name, String quantity, PreorderStatus status, String remark) {
-        return new Item(new ItemName(name), new Quantity(quantity), status, Optional.of(new Remark(remark)));
+        return new Item(new ItemName(name), Optional.of(new Quantity(quantity)), status,
+                Optional.of(new Remark(remark)));
     }
 
     /**
