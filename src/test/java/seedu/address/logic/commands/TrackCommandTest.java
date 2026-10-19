@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.model.preorder.PreorderStatus.COMPLETED;
 import static seedu.address.model.preorder.PreorderStatus.PENDING;
 import static seedu.address.model.preorder.PreorderStatus.PREPARED;
+import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
@@ -16,6 +17,7 @@ import static seedu.address.testutil.TypicalPersons.PREPARED_CARL;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -23,9 +25,11 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.PreorderStatusPredicate;
 import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.search.SearchCriteria;
+import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.testutil.AddressBookBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -47,8 +51,11 @@ public class TrackCommandTest {
 
     @Test
     public void execute_noStatus_listsActivePreordersInOriginalOrder() {
-        assertTrackResult(new TrackCommand(Optional.empty()), createMixedModel(), "3 order(s) listed!",
+        Model model = createMixedModel();
+        assertTrackResult(new TrackCommand(Optional.empty()), model, "3 order(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
+        assertEquals(new SearchCriteria(List.of(new PreorderStatusPredicate(Set.of(PENDING, PREPARED)))),
+                model.getActiveSearchCriteria());
     }
 
     @Test
@@ -101,7 +108,7 @@ public class TrackCommandTest {
     @Test
     public void execute_noStatus_replacesExistingFilter() {
         Model model = createMixedModel();
-        model.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+        model.updateFilteredPersonList(new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Alice"))));
         assertEquals(List.of(ALICE), model.getFilteredPersonList());
 
         assertTrackResult(new TrackCommand(Optional.empty()), model, "3 order(s) listed!",
@@ -111,7 +118,7 @@ public class TrackCommandTest {
     @Test
     public void execute_explicitStatus_replacesExistingFilter() {
         Model model = createMixedModel();
-        model.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Carl")));
+        model.updateFilteredPersonList(new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Carl"))));
         assertEquals(List.of(PREPARED_CARL), model.getFilteredPersonList());
 
         assertTrackResult(new TrackCommand(Optional.of(PENDING)), model,

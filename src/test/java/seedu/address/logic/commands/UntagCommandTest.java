@@ -6,9 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
+import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +22,8 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.search.SearchCriteria;
+import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
@@ -117,7 +122,7 @@ public class UntagCommandTest {
 
     @Test
     public void execute_emptyDisplayedList_failureWithoutChanges() {
-        model.updateFilteredPersonList(person -> false);
+        model.updateFilteredPersonList(new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Nobody"))));
 
         assertCommandFailure(new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends")), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);

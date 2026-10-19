@@ -143,6 +143,18 @@ The `Model` component,
 The `seedu.address.model.search` package provides reusable search predicates. `FindCommandParser` constructs a
 `SearchCriteria` from prefixed customer fields, and `FindCommand` applies it through the existing model filtering API.
 
+`ModelManager` keeps the active `SearchCriteria` in a `ReadOnlyObjectWrapper`. The filtered list's predicate is bound
+to this value, so replacing the criteria updates both the search state and the results. All filtering calls supply
+structured `SearchCriteria`, rather than an arbitrary predicate. `getActiveSearchCriteria()` returns the current
+immutable value, while `activeSearchCriteriaProperty()` exposes read-only observation through both `Model` and
+`Logic`. Observers can detect a different search even when its results are identical. This state is kept in memory
+and is not saved with customer data.
+
+Each successful `find` or `track` replaces the active criteria. `list` applies `SEARCH_CRITERIA_SHOW_ALL_PERSONS`,
+an empty search, to reset the state and show every customer. Rejected commands leave the active criteria unchanged.
+`track` wraps the existing immutable `PreorderStatusPredicate` as a `PersonCriterion`, preserving its current matching
+rules. Adding or editing a customer still resets the search; preserving criteria during those operations is deferred.
+
 `SearchCriteria` implements `Predicate<Person>` and combines `PersonCriterion` objects using **AND**. A customer must
 match every criterion. An empty search matches every customer. The constructor defensively copies its criteria into an
 immutable set, so changing the source collection cannot change an existing search. Criterion order and duplicate
@@ -168,14 +180,14 @@ CLI prefixes belong in the parser, not in the criteria. Add the prefix to `FindC
 and construct its criterion there. The parser accepts each supported prefix once, rejects bare preambles and blank or
 unsupported parameters, and validates tags using `ParserUtil.parseTag`. It recognizes prefixes at whitespace boundaries
 without collapsing internal query spacing. `FindCommand` passes `SearchCriteria` directly to
-`Model.updateFilteredPersonList`, which replaces the predicate on the list backed by the full address book.
+`Model.updateFilteredPersonList`, which replaces the active criteria on the list backed by the full address book.
 There is no need to filter the previous search's results or execute another search command as an intermediate step.
 
 For future multi-item searches, product and status conditions must be grouped inside **one** `PersonCriterion` that
 checks whether any single item satisfies both conditions. Separate customer predicates for "has this product" and
 "has this status" could incorrectly match different items. Date/method and postal conditions can be separate criteria,
-because they describe the preorder or customer rather than an individual item. These extensions, shared tracking
-rules and active-search UI/state are not implemented by this foundation.
+because they describe the preorder or customer rather than an individual item. These extensions, `find s/` support,
+final multi-item tracking rules and the active-criteria display remain deferred.
 
 ### Storage component
 

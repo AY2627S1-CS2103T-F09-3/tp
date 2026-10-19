@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.model.preorder.PreorderStatus.COMPLETED;
 import static seedu.address.model.preorder.PreorderStatus.PENDING;
+import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
@@ -22,10 +23,11 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.PreorderDetails;
 import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.search.SearchCriteria;
+import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.testutil.AddressBookBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -59,7 +61,8 @@ public class OrderCommandTest {
     @Test
     public void execute_noFields_preservesPreorderAndFilter() throws Exception {
         Model model = createModel(BENSON, ORDERED_ALICE);
-        model.updateFilteredPersonList(person -> person.equals(ORDERED_ALICE));
+        model.updateFilteredPersonList(new SearchCriteria(List.of(
+                new TextContainsCriterion(NAME, ORDERED_ALICE.getName().fullName))));
         AddressBook before = new AddressBook(model.getAddressBook());
         assertEquals(new CommandResult(OrderCommand.MESSAGE_NOT_EDITED), command(1, null, null).execute(model));
         assertEquals(before, model.getAddressBook());
@@ -69,7 +72,7 @@ public class OrderCommandTest {
     @Test
     public void execute_filteredList_updatesDisplayedPersonAndPreservesFilter() throws Exception {
         Model model = createModel(BENSON, ORDERED_ALICE);
-        model.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+        model.updateFilteredPersonList(new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Alice"))));
         command(1, null, COMPLETED).execute(model);
         Person expected = new PersonBuilder(ALICE).withPreorder("Cake", COMPLETED).build();
         assertEquals(List.of(BENSON, expected), model.getAddressBook().getPersonList());
@@ -79,7 +82,7 @@ public class OrderCommandTest {
     @Test
     public void execute_newPreorder_preservesNameFilter() throws Exception {
         Model model = createModel(BENSON, ALICE);
-        model.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+        model.updateFilteredPersonList(new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Alice"))));
         command(1, "Cake", PENDING).execute(model);
         assertEquals(List.of(ORDERED_ALICE), model.getFilteredPersonList());
         assertEquals(List.of(BENSON, ORDERED_ALICE), model.getAddressBook().getPersonList());
@@ -122,7 +125,8 @@ public class OrderCommandTest {
     @Test
     public void execute_invalidDisplayedIndex_failureWithoutMutation() {
         Model model = createModel(BENSON, ORDERED_ALICE);
-        model.updateFilteredPersonList(person -> person.equals(ORDERED_ALICE));
+        model.updateFilteredPersonList(new SearchCriteria(List.of(
+                new TextContainsCriterion(NAME, ORDERED_ALICE.getName().fullName))));
         assertCommandFailure(command(2, "Tarts", COMPLETED), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         assertCommandFailure(command(1, "Tarts", COMPLETED), createModel(),

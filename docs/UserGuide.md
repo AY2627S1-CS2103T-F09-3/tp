@@ -102,7 +102,7 @@ Examples:
 
 ### Listing all persons: `list`
 
-Shows a list of all persons in the address book.
+Clears the current search criteria and shows all persons in the address book.
 
 Format: `list`
 
@@ -236,7 +236,7 @@ Examples:
 | `find t/regular t/vip` | `Multiple values specified for the following single-valued field(s): t/` |
 | `find t/regular customer` or `find t/VIP!` | The tag constraint message is shown. |
 
-Rejected searches leave the current results unchanged. If no customers match a valid search, the list is empty and the feedback reports `0 person(s) listed!`.
+Rejected searches leave the current criteria and results unchanged. If no customers match a valid search, the list is empty and the feedback reports `0 person(s) listed!`. Use `list` to clear the search.
 
 ### Adding or updating a preorder: `order`
 
@@ -278,6 +278,7 @@ Format: `track [s/STATUS]`
 
 * `track` shows customers with active preorders (`PENDING` or `PREPARED`).
 * `track s/COMPLETED` shows customers with completed preorders. You can also filter by `PENDING` or `PREPARED`; status input is case-insensitive.
+* Each successful `track` searches all customers and replaces the previous `find` or `track` criteria. Rejected commands preserve the current criteria and results.
 * Customers without preorders are excluded. Use `list` to show all customers again.
 * To update a result, use its displayed index with `order`. The current filter is preserved; customers whose updated status no longer matches it disappear from the view.
 

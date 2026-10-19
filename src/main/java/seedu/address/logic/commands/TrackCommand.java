@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -10,6 +11,7 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.Model;
 import seedu.address.model.person.PreorderStatusPredicate;
 import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.search.SearchCriteria;
 
 /**
  * Lists customers with active preorders, or with preorders matching a specified fulfillment status.
@@ -41,7 +43,7 @@ public class TrackCommand extends Command {
         requireNonNull(model);
         Set<PreorderStatus> statuses = status.map(Set::of)
                 .orElse(Set.of(PreorderStatus.PENDING, PreorderStatus.PREPARED));
-        model.updateFilteredPersonList(new PreorderStatusPredicate(statuses));
+        model.updateFilteredPersonList(new SearchCriteria(List.of(new PreorderStatusPredicate(statuses))));
 
         int orderCount = model.getFilteredPersonList().size();
         String feedback = String.format(MESSAGE_ORDERS_LISTED_OVERVIEW, orderCount);

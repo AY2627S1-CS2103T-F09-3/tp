@@ -9,6 +9,10 @@ import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
+import static seedu.address.model.Model.SEARCH_CRITERIA_SHOW_ALL_PERSONS;
+import static seedu.address.model.preorder.PreorderStatus.PENDING;
+import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
+import static seedu.address.model.search.TextContainsCriterion.Field.PHONE;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.AMY;
@@ -20,7 +24,9 @@ import static seedu.address.testutil.TypicalPersons.PREPARED_CARL;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +46,11 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.PreorderStatusPredicate;
 import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.search.SearchCriteria;
+import seedu.address.model.search.TagCriterion;
+import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.model.tag.Tag;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -83,6 +93,58 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_searchCommands_updatesObservableCriteriaAndResetsOnList() throws Exception {
+        setUpTrackPersons();
+        assertEquals(SEARCH_CRITERIA_SHOW_ALL_PERSONS, logic.getActiveSearchCriteria());
+        List<SearchCriteria> observedCriteria = new ArrayList<>();
+        logic.activeSearchCriteriaProperty().addListener((observable, oldCriteria, newCriteria) ->
+                observedCriteria.add(newCriteria));
+        SearchCriteria findCriteria = new SearchCriteria(List.of(
+                new TextContainsCriterion(NAME, "Alice"), new TagCriterion(new Tag("friends"))));
+        SearchCriteria trackCriteria = new SearchCriteria(List.of(new PreorderStatusPredicate(Set.of(PENDING))));
+
+        assertFilteringCommandSuccess("find n/Alice t/friends", "1 person(s) listed!", List.of(ALICE));
+        assertEquals(findCriteria, logic.getActiveSearchCriteria());
+
+        assertFilteringCommandSuccess("track s/pending", "2 order(s) for PENDING listed!",
+                List.of(PENDING_ELLE, PENDING_BENSON));
+        assertEquals(trackCriteria, logic.getActiveSearchCriteria());
+
+        assertFilteringCommandSuccess("list", ListCommand.MESSAGE_SUCCESS,
+                List.of(COMPLETED_DANIEL, PENDING_ELLE, ALICE, PREPARED_CARL, PENDING_BENSON));
+        assertEquals(SEARCH_CRITERIA_SHOW_ALL_PERSONS, logic.getActiveSearchCriteria());
+        assertEquals(List.of(findCriteria, trackCriteria, SEARCH_CRITERIA_SHOW_ALL_PERSONS), observedCriteria);
+    }
+
+    @Test
+    public void execute_sameResultsDifferentSearch_updatesActiveCriteria() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
+        SearchCriteria phoneCriteria = new SearchCriteria(List.of(new TextContainsCriterion(PHONE, "9435")));
+
+        assertFilteringCommandSuccess("find p/9435", "1 person(s) listed!", List.of(ALICE));
+
+        assertEquals(phoneCriteria, logic.getActiveSearchCriteria());
+        assertEquals(phoneCriteria, logic.activeSearchCriteriaProperty().get());
+    }
+
+    @Test
+    public void execute_findWithoutMatches_retainsCriteriaUntilList() throws Exception {
+        setUpTrackPersons();
+        SearchCriteria criteria = new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Nobody")));
+
+        assertFilteringCommandSuccess("find n/Nobody", "0 person(s) listed!", List.of());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        assertCommandFailurePreservesFilteredList("delete 1", CommandException.class,
+                MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+
+        logic.execute("list");
+
+        assertEquals(SEARCH_CRITERIA_SHOW_ALL_PERSONS, logic.getActiveSearchCriteria());
+        assertEquals(model.getAddressBook().getPersonList(), logic.getFilteredPersonList());
     }
 
     @Test
@@ -295,10 +357,13 @@ public class LogicManagerTest {
             Class<? extends Throwable> expectedException, String expectedMessage) {
         AddressBook originalAddressBook = new AddressBook(model.getAddressBook());
         List<Person> originalFilteredPersons = List.copyOf(logic.getFilteredPersonList());
+        SearchCriteria originalCriteria = logic.getActiveSearchCriteria();
 
         assertThrows(expectedException, expectedMessage, () -> logic.execute(inputCommand));
         assertEquals(originalAddressBook, model.getAddressBook());
         assertEquals(originalFilteredPersons, logic.getFilteredPersonList());
+        assertEquals(originalCriteria, logic.getActiveSearchCriteria());
+        assertEquals(originalCriteria, logic.activeSearchCriteriaProperty().get());
     }
 
     /**
@@ -338,6 +403,7 @@ public class LogicManagerTest {
     private void assertCommandFailure(String inputCommand, Class<? extends Throwable> expectedException,
             String expectedMessage) {
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.updateFilteredPersonList(model.getActiveSearchCriteria());
         assertCommandFailure(inputCommand, expectedException, expectedMessage, expectedModel);
     }
 
