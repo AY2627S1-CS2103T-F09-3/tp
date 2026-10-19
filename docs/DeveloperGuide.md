@@ -138,10 +138,10 @@ The `Model` component,
 </box>
 
 
-#### Customer search criteria foundation
+#### Customer search criteria
 
-The `seedu.address.model.search` package provides reusable search predicates. This foundation is not yet connected to
-`FindCommandParser` or `FindCommand`; the existing command syntax and behavior remain in place until parser integration.
+The `seedu.address.model.search` package provides reusable search predicates. `FindCommandParser` constructs a
+`SearchCriteria` from prefixed customer fields, and `FindCommand` applies it through the existing model filtering API.
 
 `SearchCriteria` implements `Predicate<Person>` and combines `PersonCriterion` objects using **AND**. A customer must
 match every criterion. An empty search matches every customer. The constructor defensively copies its criteria into an
@@ -164,8 +164,11 @@ uses its complete, case-insensitive equality rule.
 
 To add a search condition with different matching rules, implement `PersonCriterion` and include it in a
 `SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
-CLI prefixes belong in the parser, not in the criteria. A subsequent parser integration can pass `SearchCriteria`
-directly to `Model.updateFilteredPersonList`, which replaces the predicate on the list backed by the full address book.
+CLI prefixes belong in the parser, not in the criteria. Add the prefix to `FindCommandParser`'s supported-prefix list
+and construct its criterion there. The parser accepts each supported prefix once, rejects bare preambles and blank or
+unsupported parameters, and validates tags using `ParserUtil.parseTag`. It recognizes prefixes at whitespace boundaries
+without collapsing internal query spacing. `FindCommand` passes `SearchCriteria` directly to
+`Model.updateFilteredPersonList`, which replaces the predicate on the list backed by the full address book.
 There is no need to filter the previous search's results or execute another search command as an intermediate step.
 
 For future multi-item searches, product and status conditions must be grouped inside **one** `PersonCriterion` that
@@ -608,7 +611,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Tagging a person in a filtered list
 
-   1. Prerequisites: Find a person using `find Bernice`. Only `Bernice Yu` is shown.
+   1. Prerequisites: Find a person using `find n/Bernice`. Only `Bernice Yu` is shown.
 
    1. Test case: `tag 1 t/vip`<br>
       Expected: `vip` is added to `Bernice Yu`'s tags. The status message shows `Added tag(s) [vip] to Bernice Yu`. Only `Bernice Yu` remains displayed; the filter is preserved.
@@ -654,7 +657,7 @@ Run each group below independently, starting with the sample data unless stated 
 
 1. Removing a tag in a filtered list
 
-   1. Prerequisites: Run `find Bernice`. Only `Bernice Yu` is shown, at index 1, with the tags `colleagues` and `friends`.
+   1. Prerequisites: Run `find n/Bernice`. Only `Bernice Yu` is shown, at index 1, with the tags `colleagues` and `friends`.
 
    1. Test case: `untag 2 t/friends`<br>
       Expected: The status message shows `The person index provided is invalid.`, even though the full address book contains more than one person.
@@ -665,7 +668,7 @@ Run each group below independently, starting with the sample data unless stated 
    1. Test case: `untag 1 t/FRIENDS` again.<br>
       Expected: The status message shows `Bernice Yu does not have tag [FRIENDS]`. Only Bernice remains displayed.
 
-   1. Test case: Run `find NoMatchingCustomer`, confirm that the displayed list is empty, then run `untag 1 t/friends`.<br>
+   1. Test case: Run `find n/NoMatchingCustomer`, confirm that the displayed list is empty, then run `untag 1 t/friends`.<br>
       Expected: The status message shows `The person index provided is invalid.` The list remains empty and no data is changed.
 
 1. Preserving a preorder and saving tag removal
@@ -680,7 +683,7 @@ Run each group below independently, starting with the sample data unless stated 
 
 ### Managing customer preorders
 
-Use a test copy of the data file. Add a uniquely named customer, for example `add n/Order Tester p/91234567 e/order@example.com a/123 Baker Street`, then run `find Order Tester` before each operation below so the test customer is at index 1.
+Use a test copy of the data file. Add a uniquely named customer, for example `add n/Order Tester p/91234567 e/order@example.com a/123 Baker Street`, then run `find n/Order Tester` before each operation below so the test customer is at index 1.
 
 1. Run `order 1 s/PENDING` before the customer has a preorder.<br>
    Expected: An error requesting both fields; no preorder chips appear.
@@ -691,7 +694,7 @@ Use a test copy of the data file. Add a uniquely named customer, for example `ad
 1. Find the customer again and run `order 1 s/PREPARED`, then repeat with `order 1 s/COMPLETED`.<br>
    Expected: Blue and then green status chips; details stay unchanged.
 1. Run `track s/COMPLETED`, locate the test customer's displayed index, and run `order INDEX s/PENDING` using that index.<br>
-   Expected: The test customer disappears from the completed view, while other completed customers remain. If there are none, the view is empty. Run `find Order Tester` to confirm the preorder now has an amber `Status: PENDING` chip.
+   Expected: The test customer disappears from the completed view, while other completed customers remain. If there are none, the view is empty. Run `find n/Order Tester` to confirm the preorder now has an amber `Status: PENDING` chip.
 1. Find the customer again and run `order 1`.<br>
    Expected: `No preorder changes specified.` The order and filtered list remain unchanged.
 1. Try `order 1 d/`, `order 1 s/DONE`, and `order 1 s/PENDING s/COMPLETED`.<br>

@@ -61,9 +61,6 @@ information.
 * Items in square brackets are optional.<br>
   For example, `edit INDEX [n/NAME] [p/PHONE_NUMBER]` can be used as `edit 1 n/John Doe` or as `edit 1 p/91234567`.
 
-* Items followed by `...` can appear zero or more times.<br>
-  For example, `[MORE_KEYWORDS]...` may be omitted, or written as `Mary` or `Mary Jane`.
-
 * Prefixed parameters can be in any order, unless stated otherwise. A positional `INDEX` must appear before them.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
@@ -145,7 +142,7 @@ Format: `tag INDEX t/TAG`
 Examples:
 
 * `tag 1 t/regular` adds the tag `regular` to the 1st person.
-* `find Bernice` followed by `tag 1 t/vip` adds the tag `vip` to the 1st person in the results of the `find` command.
+* `find n/Bernice` followed by `tag 1 t/vip` adds the tag `vip` to the 1st person in the results of the `find` command.
 * `tag 1 t/FRIENDS` when the 1st person already has the tag `friends` shows a message that they already have the tag, and leaves their tags unchanged.
 * If Alex Yeoh is displayed at index 1 and does not have the tag `VIP`, `tag 1 t/VIP` adds it and displays `Added tag(s) [VIP] to Alex Yeoh`.
 
@@ -178,7 +175,7 @@ Format: `untag INDEX t/TAG`
 Examples:
 
 * `untag 3 t/wholesale` removes the `wholesale` tag from the third person shown, provided they have that tag.
-* `find Bernice` followed by `untag 1 t/friends` removes the `friends` tag from the first search result, provided that person has the tag.
+* `find n/Bernice` followed by `untag 1 t/friends` removes the `friends` tag from the first search result, provided that person has the tag.
 * If Alex Yeoh is displayed at index 1 and has the tag `VIP`, `untag 1 t/vip` removes it and displays `Removed tag(s) [vip] from Alex Yeoh`.
 
 Common errors:
@@ -194,22 +191,52 @@ Common errors:
 
 If several inputs are invalid, only the first detected error is shown. The index format is checked before the tag input; whether the index exists in the displayed list is checked after both inputs are valid.
 
-### Locating persons by name: `find`
+### Finding customers by their attributes: `find`
 
-Finds persons whose names contain any of the given keywords.
+Finds customers matching **every** supplied criterion.
 
-Format: `find KEYWORD [MORE_KEYWORDS]`
+Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]`
 
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search considers only names.
-* Only full words match; for example, `Han` does not match `Hans`.
-* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
+Supply at least one criterion. Each prefix may appear at most once, in any order.
+
+| Prefix | Searches | Matching rule |
+|--------|----------|---------------|
+| `n/` | Customer name | Case-insensitive substring |
+| `p/` | Phone number | Substring |
+| `e/` | Email | Case-insensitive substring |
+| `a/` | Address | Case-insensitive substring |
+| `t/` | Tag | Complete tag name, ignoring case |
+
+* Different criteria combine using **AND**. For example, `find n/Alice t/regular` requires both a matching name and the complete tag `regular`.
+* Names support partial matching: `find n/Han` can match `Hans Gruber`.
+* Multiword text is one substring: `find n/Alice Tan` can match `Alice Tanaka`, but does not match `Alice Lim` or `Tan Alice`.
+* Surrounding whitespace is ignored. Internal spacing and punctuation remain significant.
+* Phone and email fragments are accepted: `p/8123` and `e/example.com` need not be complete contact details.
+* Tags must be single alphanumeric words. `t/reg` does not match a tag named `regular`.
+* Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
+* Results use the current displayed indices. Use `list` to show all customers again.
+* Use lowercase prefixes. A prefix starts at the beginning of the arguments or after whitespace. Unknown letter-based prefixes such as `x/` are rejected; embedded slashes such as `#04/08` remain ordinary text.
+* Bare-name searches are no longer accepted: use `find n/Alice` instead of `find Alice`.
 
 Examples:
-* `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
+
+* `find n/Alice Tan` finds names containing the phrase `Alice Tan`.
+* `find p/8123` finds phone numbers containing `8123`.
+* `find e/example.com` finds emails containing `example.com`.
+* `find a/Hougang t/regular` finds regular customers whose addresses contain `Hougang`.
+* `find n/Alice p/8123 t/regular` requires all three criteria to match.
+
+**Invalid inputs**
+
+| Input | Result |
+|-------|--------|
+| `find`, `find Alice`, or `find Alice t/regular` | Invalid command format, followed by usage instructions. |
+| `find n/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
+| `find x/Alice` or `find n/Alice s/pending` | Invalid command format; only the five prefixes above are supported. |
+| `find t/regular t/vip` | `Multiple values specified for the following single-valued field(s): t/` |
+| `find t/regular customer` or `find t/VIP!` | The tag constraint message is shown. |
+
+Rejected searches leave the current results unchanged. If no customers match a valid search, the list is empty and the feedback reports `0 person(s) listed!`.
 
 ### Adding or updating a preorder: `order`
 
@@ -272,7 +299,7 @@ On success, the app shows the deleted preorder, for example `Deleted preorder fo
 Examples:
 
 * `track` followed by `deleteorder 1` deletes the preorder of the 1st customer in the results of the `track` command.
-* `find Bernice` followed by `deleteorder 1` deletes the preorder of the 1st customer in the results of the `find` command.
+* `find n/Bernice` followed by `deleteorder 1` deletes the preorder of the 1st customer in the results of the `find` command.
 
 ### Deleting a person: `delete`
 
@@ -286,7 +313,7 @@ Format: `delete INDEX`
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+* `find n/Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
 ### Clearing all entries: `clear`
 
@@ -346,7 +373,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
+**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]` (at least one criterion)<br> e.g., `find n/James t/regular`
 **Order**  | `order INDEX [d/DETAILS] [s/STATUS]` (both fields required for a new preorder)<br> e.g., `order 1 d/2 chocolate cakes s/PENDING`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
