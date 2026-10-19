@@ -16,7 +16,10 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.Quantity;
+import seedu.address.model.preorder.Remark;
 import seedu.address.model.tag.Tag;
 
 public class ParserUtilTest {
@@ -25,6 +28,9 @@ public class ParserUtilTest {
     private static final String INVALID_ADDRESS = " ";
     private static final String INVALID_EMAIL = "example.com";
     private static final String INVALID_TAG = "#friend";
+    private static final String INVALID_ITEM_NAME = "Pineapple Tarts\nAlmond Cookies"; // more than one line
+    private static final String INVALID_QUANTITY = "0";
+    private static final String INVALID_REMARK = "Less sugar\nNo nuts"; // more than one line
     private static final String INVALID_PREORDER_STATUS = "done";
 
     private static final String VALID_NAME = "Rachel Walker";
@@ -33,6 +39,9 @@ public class ParserUtilTest {
     private static final String VALID_EMAIL = "rachel@example.com";
     private static final String VALID_TAG_1 = "friend";
     private static final String VALID_TAG_2 = "neighbour";
+    private static final String VALID_ITEM_NAME = "Pineapple Tarts";
+    private static final String VALID_QUANTITY = "12";
+    private static final String VALID_REMARK = "Less sugar";
 
     private static final String WHITESPACE = " \t\r\n";
 
@@ -215,6 +224,69 @@ public class ParserUtilTest {
         Set<Tag> expectedTagSet = Set.of(new Tag(VALID_TAG_1), new Tag(VALID_TAG_2));
 
         assertEquals(expectedTagSet, actualTagSet);
+    }
+
+    @Test
+    public void parseItemName_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseItemName(null));
+    }
+
+    @Test
+    public void parseItemName_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, ItemName.MESSAGE_CONSTRAINTS, ()
+            -> ParserUtil.parseItemName(INVALID_ITEM_NAME));
+        assertThrows(ParseException.class, () -> ParserUtil.parseItemName(WHITESPACE));
+        assertThrows(ParseException.class, () -> ParserUtil.parseItemName("a".repeat(ItemName.MAX_LENGTH + 1)));
+    }
+
+    @Test
+    public void parseItemName_validValueWithWhitespace_returnsTrimmedItemName() throws Exception {
+        String nameWithWhitespace = WHITESPACE + VALID_ITEM_NAME + WHITESPACE;
+        assertEquals(new ItemName(VALID_ITEM_NAME), ParserUtil.parseItemName(nameWithWhitespace));
+    }
+
+    @Test
+    public void parseItemName_maxLengthAfterTrimming_returnsItemName() throws Exception {
+        String longestName = "a".repeat(ItemName.MAX_LENGTH);
+        assertEquals(new ItemName(longestName), ParserUtil.parseItemName(" " + longestName + " "));
+    }
+
+    @Test
+    public void parseQuantity_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseQuantity(null));
+    }
+
+    @Test
+    public void parseQuantity_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Quantity.MESSAGE_CONSTRAINTS, ()
+            -> ParserUtil.parseQuantity(INVALID_QUANTITY));
+        assertThrows(ParseException.class, () -> ParserUtil.parseQuantity(WHITESPACE));
+        assertThrows(ParseException.class, () -> ParserUtil.parseQuantity("1 2"));
+    }
+
+    @Test
+    public void parseQuantity_validValueWithWhitespace_returnsTrimmedQuantity() throws Exception {
+        String quantityWithWhitespace = WHITESPACE + VALID_QUANTITY + WHITESPACE;
+        assertEquals(new Quantity(VALID_QUANTITY), ParserUtil.parseQuantity(quantityWithWhitespace));
+    }
+
+    @Test
+    public void parseRemark_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseRemark(null));
+    }
+
+    @Test
+    public void parseRemark_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Remark.MESSAGE_CONSTRAINTS, ()
+            -> ParserUtil.parseRemark(INVALID_REMARK));
+        assertThrows(ParseException.class, () -> ParserUtil.parseRemark(WHITESPACE));
+        assertThrows(ParseException.class, () -> ParserUtil.parseRemark("a".repeat(Remark.MAX_LENGTH + 1)));
+    }
+
+    @Test
+    public void parseRemark_validValueWithWhitespace_returnsTrimmedRemark() throws Exception {
+        String remarkWithWhitespace = WHITESPACE + VALID_REMARK + WHITESPACE;
+        assertEquals(new Remark(VALID_REMARK), ParserUtil.parseRemark(remarkWithWhitespace));
     }
 
     @Test
