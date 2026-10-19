@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test;
 
 public class PreorderTest {
 
-    private static final PreorderDetails CAKES = new PreorderDetails("2 chocolate cakes");
-    private static final PreorderDetails TARTS = new PreorderDetails("50 pineapple tarts");
+    private static final ItemName CAKES = new ItemName("2 chocolate cakes");
+    private static final ItemName TARTS = new ItemName("50 pineapple tarts");
 
     @Test
     public void constructor_null_throwsNullPointerException() {
@@ -30,7 +30,7 @@ public class PreorderTest {
         Preorder preorder = new Preorder(CAKES, PreorderStatus.PENDING);
 
         // same values -> returns true
-        assertTrue(preorder.equals(new Preorder(new PreorderDetails("2 chocolate cakes"), PreorderStatus.PENDING)));
+        assertTrue(preorder.equals(new Preorder(new ItemName("2 chocolate cakes"), PreorderStatus.PENDING)));
 
         // same object -> returns true
         assertTrue(preorder.equals(preorder));

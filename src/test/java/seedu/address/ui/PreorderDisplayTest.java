@@ -6,13 +6,13 @@ import static seedu.address.testutil.Assert.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.Preorder;
-import seedu.address.model.preorder.PreorderDetails;
 import seedu.address.model.preorder.PreorderStatus;
 
 public class PreorderDisplayTest {
 
-    private static final Preorder CAKES = new Preorder(new PreorderDetails("2 chocolate cakes"),
+    private static final Preorder CAKES = new Preorder(new ItemName("2 chocolate cakes"),
             PreorderStatus.PENDING);
 
     @Test
@@ -22,8 +22,8 @@ public class PreorderDisplayTest {
 
     @Test
     public void formatDetails_longestDetails_keepsFullText() {
-        String longest = "a".repeat(PreorderDetails.MAX_LENGTH);
-        Preorder preorder = new Preorder(new PreorderDetails(longest), PreorderStatus.PENDING);
+        String longest = "a".repeat(ItemName.MAX_LENGTH);
+        Preorder preorder = new Preorder(new ItemName(longest), PreorderStatus.PENDING);
 
         assertEquals(PreorderDisplay.DETAILS_PREFIX + longest, PreorderDisplay.formatDetails(preorder));
     }
@@ -31,7 +31,7 @@ public class PreorderDisplayTest {
     @Test
     public void formatStatus_eachStatus_showsStatusName() {
         for (PreorderStatus status : PreorderStatus.values()) {
-            Preorder preorder = new Preorder(new PreorderDetails("2 chocolate cakes"), status);
+            Preorder preorder = new Preorder(new ItemName("2 chocolate cakes"), status);
             assertEquals("Status: " + status.name(), PreorderDisplay.formatStatus(preorder));
         }
     }

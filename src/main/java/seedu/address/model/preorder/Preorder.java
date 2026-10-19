@@ -12,19 +12,19 @@ import seedu.address.commons.util.ToStringBuilder;
  */
 public class Preorder {
 
-    private final PreorderDetails details;
+    private final ItemName details;
     private final PreorderStatus status;
 
     /**
      * Every field must be present and not null.
      */
-    public Preorder(PreorderDetails details, PreorderStatus status) {
+    public Preorder(ItemName details, PreorderStatus status) {
         requireAllNonNull(details, status);
         this.details = details;
         this.status = status;
     }
 
-    public PreorderDetails getDetails() {
+    public ItemName getDetails() {
         return details;
     }
 
