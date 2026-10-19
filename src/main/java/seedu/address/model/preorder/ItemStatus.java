@@ -8,7 +8,7 @@ import java.util.Arrays;
  * Represents how far an item in a customer's preorder has progressed.
  * A fixed set of values prevents variations such as "done" and "complete" from becoming different statuses.
  */
-public enum PreorderStatus {
+public enum ItemStatus {
     /** The item has been ordered but is not ready yet. */
     PENDING,
     /** The item is ready for collection or delivery. */

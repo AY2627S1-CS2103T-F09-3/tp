@@ -15,7 +15,7 @@ public class Item {
 
     private final ItemName name;
     private final Quantity quantity; // null only for items converted from v1.3, which had no quantity
-    private final PreorderStatus status;
+    private final ItemStatus status;
     private final Remark remark; // null when the customer made no special request
 
     /**
@@ -24,7 +24,7 @@ public class Item {
      * New items must have a quantity; {@code Optional.empty()} as {@code quantity} is only for
      * items converted from a v1.3 preorder, which did not record one.
      */
-    public Item(ItemName name, Optional<Quantity> quantity, PreorderStatus status, Optional<Remark> remark) {
+    public Item(ItemName name, Optional<Quantity> quantity, ItemStatus status, Optional<Remark> remark) {
         requireAllNonNull(name, quantity, status, remark);
         this.name = name;
         this.quantity = quantity.orElse(null);
@@ -43,7 +43,7 @@ public class Item {
         return Optional.ofNullable(quantity);
     }
 
-    public PreorderStatus getStatus() {
+    public ItemStatus getStatus() {
         return status;
     }
 

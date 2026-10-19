@@ -7,15 +7,15 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Preorder;
-import seedu.address.model.preorder.PreorderStatus;
 
 /**
  * Tests that a {@code Person} has a preorder item with one of the accepted statuses.
  * Persons without a preorder, or whose preorder has no items, never match.
  */
 public class PreorderStatusPredicate implements Predicate<Person> {
-    private final Set<PreorderStatus> statuses;
+    private final Set<ItemStatus> statuses;
 
     /**
      * Creates a predicate with an immutable copy of the accepted {@code statuses}.
@@ -23,7 +23,7 @@ public class PreorderStatusPredicate implements Predicate<Person> {
      *
      * @throws NullPointerException If {@code statuses} or any of its elements is null.
      */
-    public PreorderStatusPredicate(Set<PreorderStatus> statuses) {
+    public PreorderStatusPredicate(Set<ItemStatus> statuses) {
         requireNonNull(statuses);
         this.statuses = Set.copyOf(statuses);
     }

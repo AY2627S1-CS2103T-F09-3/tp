@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemName;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
 import seedu.address.model.preorder.Remark;
 import seedu.address.testutil.ItemBuilder;
@@ -29,7 +29,7 @@ public class JsonAdaptedItemTest {
 
     @Test
     public void toModelType_itemWithoutRemark_returnsItem() throws Exception {
-        Item item = new ItemBuilder().withStatus(PreorderStatus.COMPLETED).build();
+        Item item = new ItemBuilder().withStatus(ItemStatus.COMPLETED).build();
         assertEquals(item, new JsonAdaptedItem(item).toModelType());
     }
 
@@ -61,14 +61,14 @@ public class JsonAdaptedItemTest {
     @Test
     public void toModelType_nullStatus_throwsIllegalValueException() {
         JsonAdaptedItem item = new JsonAdaptedItem(VALID_NAME, VALID_QUANTITY, null, VALID_REMARK);
-        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, PreorderStatus.class.getSimpleName());
+        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, ItemStatus.class.getSimpleName());
         assertThrows(IllegalValueException.class, expectedMessage, item::toModelType);
     }
 
     @Test
     public void toModelType_invalidStatus_throwsIllegalValueException() {
         JsonAdaptedItem item = new JsonAdaptedItem(VALID_NAME, VALID_QUANTITY, "DONE", VALID_REMARK);
-        assertThrows(IllegalValueException.class, PreorderStatus.MESSAGE_CONSTRAINTS, item::toModelType);
+        assertThrows(IllegalValueException.class, ItemStatus.MESSAGE_CONSTRAINTS, item::toModelType);
     }
 
     @Test

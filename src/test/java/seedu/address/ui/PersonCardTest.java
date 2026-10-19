@@ -18,7 +18,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.Item;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -41,7 +41,7 @@ public class PersonCardTest {
     public void constructor_personWithItems_showsOneChipPerItem() throws Exception {
         Item tarts = new ItemBuilder().withName("Pineapple Tarts").withRemark("Less sugar").build();
         Item cookies = new ItemBuilder().withName("Almond Cookies").withQuantity("1")
-                .withStatus(PreorderStatus.PREPARED).build();
+                .withStatus(ItemStatus.PREPARED).build();
         PersonCard card = createCard(new PersonBuilder(ALICE).withPreorder(tarts, cookies).build());
 
         assertTrue(lookup(card, "#preorder").isVisible());
@@ -52,7 +52,7 @@ public class PersonCardTest {
 
     @Test
     public void constructor_eachStatus_usesMatchingColourClass() throws Exception {
-        for (PreorderStatus status : PreorderStatus.values()) {
+        for (ItemStatus status : ItemStatus.values()) {
             Item item = new ItemBuilder().withStatus(status).build();
             Label chip = getChips(createCard(new PersonBuilder(ALICE).withPreorder(item).build())).get(0);
 

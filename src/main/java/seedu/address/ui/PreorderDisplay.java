@@ -4,7 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import seedu.address.model.preorder.Item;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 
 /**
  * Formats a customer's preorder for display on their card.
@@ -41,7 +41,7 @@ public class PreorderDisplay {
     /**
      * Returns the CSS style class that gives each status its own colour.
      */
-    public static String getStatusStyleClass(PreorderStatus status) {
+    public static String getStatusStyleClass(ItemStatus status) {
         requireNonNull(status);
         return switch (status) {
             case PENDING -> "status-pending";

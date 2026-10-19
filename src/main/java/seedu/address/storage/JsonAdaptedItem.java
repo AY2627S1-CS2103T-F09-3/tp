@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemName;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
 import seedu.address.model.preorder.Remark;
 
@@ -66,10 +66,10 @@ class JsonAdaptedItem {
 
         if (status == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
-                    PreorderStatus.class.getSimpleName()));
+                    ItemStatus.class.getSimpleName()));
         }
-        if (!PreorderStatus.isValidStatus(status)) {
-            throw new IllegalValueException(PreorderStatus.MESSAGE_CONSTRAINTS);
+        if (!ItemStatus.isValidStatus(status)) {
+            throw new IllegalValueException(ItemStatus.MESSAGE_CONSTRAINTS);
         }
 
         if (remark != null && !Remark.isValidRemark(remark)) {
@@ -77,6 +77,6 @@ class JsonAdaptedItem {
         }
 
         return new Item(new ItemName(name), Optional.ofNullable(quantity).map(Quantity::new),
-                PreorderStatus.valueOf(status), Optional.ofNullable(remark).map(Remark::new));
+                ItemStatus.valueOf(status), Optional.ofNullable(remark).map(Remark::new));
     }
 }

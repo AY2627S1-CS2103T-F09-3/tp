@@ -24,7 +24,7 @@ import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.preorder.Item;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -127,7 +127,7 @@ public class JsonAddressBookStorageTest {
                 .readAddressBook().get();
 
         Item convertedItem = new ItemBuilder().withName("2 chocolate cakes, no nuts").withoutQuantity()
-                .withStatus(PreorderStatus.PENDING).build();
+                .withStatus(ItemStatus.PENDING).build();
         AddressBook expected = new AddressBook();
         expected.addPerson(new PersonBuilder(ALICE).withPreorder(convertedItem).build());
         assertEquals(expected, new AddressBook(loaded));
@@ -190,7 +190,7 @@ public class JsonAddressBookStorageTest {
         original.addPerson(new PersonBuilder(ALICE).withPreorder(
                 new ItemBuilder().withName("Pineapple Tarts").withRemark("Less sugar").build(),
                 new ItemBuilder().withName("Almond Cookies").withQuantity("1")
-                        .withStatus(PreorderStatus.COMPLETED).build()).build());
+                        .withStatus(ItemStatus.COMPLETED).build()).build());
 
         Path filePath = testFolder.resolve("nested").resolve("preorders.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
@@ -217,12 +217,12 @@ public class JsonAddressBookStorageTest {
 
         AddressBook withPendingPreorder = new AddressBook();
         withPendingPreorder.addPerson(new PersonBuilder(ALICE)
-                .withPreorder("2 chocolate cakes", PreorderStatus.PENDING).build());
+                .withPreorder("2 chocolate cakes", ItemStatus.PENDING).build());
         storage.saveAddressBook(withPendingPreorder);
 
         AddressBook withCompletedPreorder = new AddressBook();
         withCompletedPreorder.addPerson(new PersonBuilder(ALICE)
-                .withPreorder("2 chocolate cakes", PreorderStatus.COMPLETED).build());
+                .withPreorder("2 chocolate cakes", ItemStatus.COMPLETED).build());
         storage.saveAddressBook(withCompletedPreorder);
         assertEquals(withCompletedPreorder, new AddressBook(storage.readAddressBook().get()));
 

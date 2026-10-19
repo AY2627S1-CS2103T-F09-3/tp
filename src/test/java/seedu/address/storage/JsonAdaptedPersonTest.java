@@ -20,7 +20,7 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.preorder.Item;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -49,7 +49,7 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_personWithPreorder_returnsPersonWithPreorder() throws Exception {
         Person expected = new PersonBuilder(BENSON)
-                .withPreorder("2 chocolate cakes", PreorderStatus.PREPARED).build();
+                .withPreorder("2 chocolate cakes", ItemStatus.PREPARED).build();
 
         JsonAdaptedPerson adapted = new JsonAdaptedPerson(expected);
 
@@ -58,8 +58,8 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_personWithEachPreorderStatus_preservesStatus() throws Exception {
-        for (PreorderStatus status : PreorderStatus.values()) {
+    public void toModelType_personWithEachItemStatus_preservesStatus() throws Exception {
+        for (ItemStatus status : ItemStatus.values()) {
             Person expected = new PersonBuilder(BENSON)
                     .withPreorder("2 chocolate cakes", status).build();
             assertEquals(expected, new JsonAdaptedPerson(expected).toModelType());
@@ -125,7 +125,7 @@ public class JsonAdaptedPersonTest {
                 VALID_TAGS, null, legacyPreorder);
 
         Item expectedItem = new ItemBuilder().withName("2 chocolate cakes").withoutQuantity()
-                .withStatus(PreorderStatus.PREPARED).build();
+                .withStatus(ItemStatus.PREPARED).build();
         assertEquals(new PersonBuilder(BENSON).withPreorder(expectedItem).build(), person.toModelType());
     }
 
@@ -134,7 +134,7 @@ public class JsonAdaptedPersonTest {
         JsonAdaptedLegacyPreorder legacyPreorder = new JsonAdaptedLegacyPreorder("2 chocolate cakes", "DONE");
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
                 VALID_TAGS, null, legacyPreorder);
-        assertThrows(IllegalValueException.class, PreorderStatus.MESSAGE_CONSTRAINTS, person::toModelType);
+        assertThrows(IllegalValueException.class, ItemStatus.MESSAGE_CONSTRAINTS, person::toModelType);
     }
 
     @Test

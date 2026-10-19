@@ -19,20 +19,20 @@ public class ItemTest {
     @Test
     public void constructor_null_throwsNullPointerException() {
         Optional<Remark> noRemark = Optional.empty();
-        assertThrows(NullPointerException.class, () -> new Item(null, TWO, PreorderStatus.PENDING, noRemark));
-        assertThrows(NullPointerException.class, () -> new Item(TARTS, null, PreorderStatus.PENDING, noRemark));
+        assertThrows(NullPointerException.class, () -> new Item(null, TWO, ItemStatus.PENDING, noRemark));
+        assertThrows(NullPointerException.class, () -> new Item(TARTS, null, ItemStatus.PENDING, noRemark));
         assertThrows(NullPointerException.class, () -> new Item(TARTS, TWO, null, noRemark));
-        assertThrows(NullPointerException.class, () -> new Item(TARTS, TWO, PreorderStatus.PENDING, null));
+        assertThrows(NullPointerException.class, () -> new Item(TARTS, TWO, ItemStatus.PENDING, null));
     }
 
     @Test
     public void getters_returnGivenValues() {
         Remark lessSugar = new Remark("Less sugar");
-        Item item = new Item(TARTS, TWO, PreorderStatus.PREPARED, Optional.of(lessSugar));
+        Item item = new Item(TARTS, TWO, ItemStatus.PREPARED, Optional.of(lessSugar));
 
         assertEquals(TARTS, item.getName());
         assertEquals(TWO, item.getQuantity());
-        assertEquals(PreorderStatus.PREPARED, item.getStatus());
+        assertEquals(ItemStatus.PREPARED, item.getStatus());
         assertEquals(Optional.of(lessSugar), item.getRemark());
     }
 
@@ -72,7 +72,7 @@ public class ItemTest {
         assertFalse(item.equals(new ItemBuilder(item).withoutQuantity().build()));
 
         // different status -> returns false
-        assertFalse(item.equals(new ItemBuilder(item).withStatus(PreorderStatus.COMPLETED).build()));
+        assertFalse(item.equals(new ItemBuilder(item).withStatus(ItemStatus.COMPLETED).build()));
 
         // different remark -> returns false
         assertFalse(item.equals(new ItemBuilder(item).withRemark("Separate packaging").build()));

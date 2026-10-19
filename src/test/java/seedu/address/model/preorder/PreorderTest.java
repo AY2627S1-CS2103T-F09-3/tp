@@ -17,7 +17,7 @@ public class PreorderTest {
 
     private static final Item TARTS = new ItemBuilder().withName("Pineapple Tarts").build();
     private static final Item COOKIES = new ItemBuilder().withName("Almond Cookies").withQuantity("1")
-            .withStatus(PreorderStatus.PREPARED).build();
+            .withStatus(ItemStatus.PREPARED).build();
 
     @Test
     public void constructor_null_throwsNullPointerException() {

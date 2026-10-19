@@ -17,7 +17,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.preorder.ItemName;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
 import seedu.address.model.preorder.Remark;
 import seedu.address.model.tag.Tag;
@@ -31,7 +31,7 @@ public class ParserUtilTest {
     private static final String INVALID_ITEM_NAME = "Pineapple Tarts\nAlmond Cookies"; // more than one line
     private static final String INVALID_QUANTITY = "0";
     private static final String INVALID_REMARK = "Less sugar\nNo nuts"; // more than one line
-    private static final String INVALID_PREORDER_STATUS = "done";
+    private static final String INVALID_ITEM_STATUS = "done";
 
     private static final String VALID_NAME = "Rachel Walker";
     private static final String VALID_PHONE = "91234567";
@@ -290,22 +290,22 @@ public class ParserUtilTest {
     }
 
     @Test
-    public void parsePreorderStatus_null_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> ParserUtil.parsePreorderStatus(null));
+    public void parseItemStatus_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseItemStatus(null));
     }
 
     @Test
-    public void parsePreorderStatus_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, PreorderStatus.MESSAGE_CONSTRAINTS, ()
-            -> ParserUtil.parsePreorderStatus(INVALID_PREORDER_STATUS));
-        assertThrows(ParseException.class, () -> ParserUtil.parsePreorderStatus(WHITESPACE));
+    public void parseItemStatus_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, ItemStatus.MESSAGE_CONSTRAINTS, ()
+            -> ParserUtil.parseItemStatus(INVALID_ITEM_STATUS));
+        assertThrows(ParseException.class, () -> ParserUtil.parseItemStatus(WHITESPACE));
     }
 
     @Test
-    public void parsePreorderStatus_anyLetterCase_returnsStatus() throws Exception {
-        assertEquals(PreorderStatus.PENDING, ParserUtil.parsePreorderStatus("PENDING"));
-        assertEquals(PreorderStatus.PENDING, ParserUtil.parsePreorderStatus("pending"));
-        assertEquals(PreorderStatus.PREPARED, ParserUtil.parsePreorderStatus("Prepared"));
-        assertEquals(PreorderStatus.COMPLETED, ParserUtil.parsePreorderStatus(WHITESPACE + "completed" + WHITESPACE));
+    public void parseItemStatus_anyLetterCase_returnsStatus() throws Exception {
+        assertEquals(ItemStatus.PENDING, ParserUtil.parseItemStatus("PENDING"));
+        assertEquals(ItemStatus.PENDING, ParserUtil.parseItemStatus("pending"));
+        assertEquals(ItemStatus.PREPARED, ParserUtil.parseItemStatus("Prepared"));
+        assertEquals(ItemStatus.COMPLETED, ParserUtil.parseItemStatus(WHITESPACE + "completed" + WHITESPACE));
     }
 }

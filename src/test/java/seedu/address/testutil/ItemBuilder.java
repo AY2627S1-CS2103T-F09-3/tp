@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemName;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
 import seedu.address.model.preorder.Remark;
 
@@ -15,11 +15,11 @@ public class ItemBuilder {
 
     public static final String DEFAULT_NAME = "Pineapple Tarts";
     public static final String DEFAULT_QUANTITY = "2";
-    public static final PreorderStatus DEFAULT_STATUS = PreorderStatus.PENDING;
+    public static final ItemStatus DEFAULT_STATUS = ItemStatus.PENDING;
 
     private ItemName name;
     private Optional<Quantity> quantity;
-    private PreorderStatus status;
+    private ItemStatus status;
     private Optional<Remark> remark;
 
     /**
@@ -67,9 +67,9 @@ public class ItemBuilder {
     }
 
     /**
-     * Sets the {@code PreorderStatus} of the {@code Item} that we are building.
+     * Sets the {@code ItemStatus} of the {@code Item} that we are building.
      */
-    public ItemBuilder withStatus(PreorderStatus status) {
+    public ItemBuilder withStatus(ItemStatus status) {
         this.status = status;
         return this;
     }

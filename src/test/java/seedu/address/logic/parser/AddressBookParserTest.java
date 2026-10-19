@@ -32,7 +32,7 @@ import seedu.address.logic.commands.UntagCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -112,12 +112,12 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_trackWithStatus() throws Exception {
-        for (PreorderStatus status : PreorderStatus.values()) {
+        for (ItemStatus status : ItemStatus.values()) {
             TrackCommand expectedCommand = new TrackCommand(Optional.of(status));
             assertEquals(expectedCommand, parser.parseCommand("track s/" + status));
             assertEquals(expectedCommand, parser.parseCommand("track s/" + status.name().toLowerCase(Locale.ROOT)));
         }
-        assertEquals(new TrackCommand(Optional.of(PreorderStatus.PENDING)),
+        assertEquals(new TrackCommand(Optional.of(ItemStatus.PENDING)),
                 parser.parseCommand("  track\t s/ Pending  "));
     }
 
@@ -134,7 +134,7 @@ public class AddressBookParserTest {
     public void parseCommand_invalidTrackStatus_throwsParseException() {
         String[] invalidCommands = {"track s/", "track s/DONE", "track s/PENDING t/vip"};
         for (String command : invalidCommands) {
-            assertThrows(ParseException.class, PreorderStatus.MESSAGE_CONSTRAINTS, () -> parser.parseCommand(command));
+            assertThrows(ParseException.class, ItemStatus.MESSAGE_CONSTRAINTS, () -> parser.parseCommand(command));
         }
     }
 

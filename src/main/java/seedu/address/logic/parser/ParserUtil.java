@@ -16,7 +16,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.preorder.ItemName;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
 import seedu.address.model.preorder.Remark;
 import seedu.address.model.tag.Tag;
@@ -210,18 +210,18 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a {@code String status} into a {@code PreorderStatus}.
+     * Parses a {@code String status} into a {@code ItemStatus}.
      * Leading and trailing whitespaces will be trimmed, and letter case is ignored,
      * so {@code "pending"} and {@code "Pending"} both give {@code PENDING}.
      *
      * @throws ParseException if the given {@code status} is invalid.
      */
-    public static PreorderStatus parsePreorderStatus(String status) throws ParseException {
+    public static ItemStatus parseItemStatus(String status) throws ParseException {
         requireNonNull(status);
         String normalizedStatus = status.trim().toUpperCase(Locale.ROOT);
-        if (!PreorderStatus.isValidStatus(normalizedStatus)) {
-            throw new ParseException(PreorderStatus.MESSAGE_CONSTRAINTS);
+        if (!ItemStatus.isValidStatus(normalizedStatus)) {
+            throw new ParseException(ItemStatus.MESSAGE_CONSTRAINTS);
         }
-        return PreorderStatus.valueOf(normalizedStatus);
+        return ItemStatus.valueOf(normalizedStatus);
     }
 }
