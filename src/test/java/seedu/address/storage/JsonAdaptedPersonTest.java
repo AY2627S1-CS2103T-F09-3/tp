@@ -80,6 +80,13 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_preorderWithoutItemsField_returnsPersonWithEmptyPreorder() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS, List.of(new JsonAdaptedPreorder((List<JsonAdaptedItem>) null)), null);
+        assertEquals(new PersonBuilder(BENSON).withPreorder().build(), person.toModelType());
+    }
+
+    @Test
     public void toModelType_invalidItem_throwsIllegalValueException() {
         JsonAdaptedItem invalidItem = new JsonAdaptedItem("Pineapple Tarts", "0", "PENDING", null);
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
