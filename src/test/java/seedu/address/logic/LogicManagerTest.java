@@ -8,6 +8,7 @@ import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.AMY;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.TrackCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -39,6 +41,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.tag.Tag;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -85,7 +88,7 @@ public class LogicManagerTest {
     @Test
     public void execute_findThenTrack_listsActivePreordersFromAllCustomers() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("find Alice", "1 person(s) listed!", List.of(ALICE));
+        assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
 
         assertFilteringCommandSuccess("track", "3 order(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
@@ -94,10 +97,84 @@ public class LogicManagerTest {
     @Test
     public void execute_findThenTrackStatus_listsMatchingPreordersFromAllCustomers() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("find Carl", "1 person(s) listed!", List.of(PREPARED_CARL));
+        assertFilteringCommandSuccess("find n/Carl", "1 person(s) listed!", List.of(PREPARED_CARL));
 
         assertFilteringCommandSuccess("track s/pending", "2 order(s) for PENDING listed!",
                 List.of(PENDING_ELLE, PENDING_BENSON));
+    }
+
+    @Test
+    public void execute_combinedCustomerSearch_requiresAllCriteria() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("find t/FRIENDS a/jurong", "1 person(s) listed!", List.of(ALICE));
+        assertFilteringCommandSuccess("find p/9876 e/EXAMPLE.COM", "1 person(s) listed!", List.of(PENDING_BENSON));
+        assertFilteringCommandSuccess("find n/Alice t/owesMoney", "0 person(s) listed!", List.of());
+    }
+
+    @Test
+    public void execute_successiveFindCommands_replacesPreviousFilter() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
+        assertFilteringCommandSuccess("find t/friends", "3 person(s) listed!",
+                List.of(COMPLETED_DANIEL, ALICE, PENDING_BENSON));
+    }
+
+    @Test
+    public void execute_trackThenFind_searchesAllCustomers() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("track s/completed", "1 order(s) for COMPLETED listed!",
+                List.of(COMPLETED_DANIEL));
+        assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
+    }
+
+    @Test
+    public void execute_findThenList_restoresAllCustomers() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("find a/Jurong t/friends", "1 person(s) listed!", List.of(ALICE));
+        assertFilteringCommandSuccess("list", ListCommand.MESSAGE_SUCCESS,
+                List.of(COMPLETED_DANIEL, PENDING_ELLE, ALICE, PREPARED_CARL, PENDING_BENSON));
+    }
+
+    @Test
+    public void execute_invalidFindFormat_preservesDataAndFilteredList() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+
+        for (String input : List.of("find", "find Alice", "find Alice t/friends", "find n/",
+                "find n/Alice p/", "find n/Alice x/value", "find s/pending", "find n/Alice\ts/pending")) {
+            assertCommandFailurePreservesFilteredList(input, ParseException.class, expectedMessage);
+        }
+    }
+
+    @Test
+    public void execute_duplicateFindPrefix_preservesDataAndFilteredList() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
+        assertCommandFailurePreservesFilteredList("find t/friends t/owesMoney", ParseException.class,
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_TAG));
+    }
+
+    @Test
+    public void execute_invalidFindTag_preservesDataAndFilteredList() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
+        assertCommandFailurePreservesFilteredList("find t/regular customer", ParseException.class,
+                Tag.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void execute_combinedFindThenDelete_targetsDisplayedIndex() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("find a/Jurong t/friends", "1 person(s) listed!", List.of(ALICE));
+
+        CommandResult result = logic.execute("delete 1");
+
+        assertEquals(new CommandResult(String.format(DeleteCommand.MESSAGE_DELETE_PERSON_SUCCESS,
+                Messages.format(ALICE))), result);
+        assertEquals(List.of(COMPLETED_DANIEL, PENDING_ELLE, PREPARED_CARL, PENDING_BENSON),
+                model.getAddressBook().getPersonList());
+        assertEquals(List.of(), logic.getFilteredPersonList());
     }
 
     @Test
