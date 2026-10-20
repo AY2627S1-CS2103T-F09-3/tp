@@ -21,6 +21,12 @@ public class PostalCode {
         value = postalCode;
     }
 
+    /**
+     * Returns true if the given string is a valid six-digit postal code.
+     *
+     * @param test The non-null string to validate.
+     * @return {@code true} if {@code test} contains exactly six digits; {@code false} otherwise.
+     */
     public static boolean isValidPostalCode(String test) {
         return test.matches(VALIDATION_REGEX);
     }
