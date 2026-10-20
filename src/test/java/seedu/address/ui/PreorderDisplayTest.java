@@ -6,55 +6,67 @@ import static seedu.address.testutil.Assert.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.address.model.preorder.Preorder;
-import seedu.address.model.preorder.PreorderDetails;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.Item;
+import seedu.address.model.preorder.ItemName;
+import seedu.address.model.preorder.ItemStatus;
+import seedu.address.testutil.ItemBuilder;
 
 public class PreorderDisplayTest {
 
-    private static final Preorder CAKES = new Preorder(new PreorderDetails("2 chocolate cakes"),
-            PreorderStatus.PENDING);
-
     @Test
-    public void formatDetails_validPreorder_prefixesDetails() {
-        assertEquals("Order: 2 chocolate cakes", PreorderDisplay.formatDetails(CAKES));
+    public void formatItem_itemWithRemark_showsRemarkLast() {
+        Item tarts = new ItemBuilder().withName("Pineapple Tarts").withQuantity("2")
+                .withStatus(ItemStatus.PENDING).withRemark("Less sugar").build();
+        assertEquals("1. Pineapple Tarts - Quantity 2 - PENDING - \"Less sugar\"",
+                PreorderDisplay.formatItem(1, tarts));
     }
 
     @Test
-    public void formatDetails_longestDetails_keepsFullText() {
-        String longest = "a".repeat(PreorderDetails.MAX_LENGTH);
-        Preorder preorder = new Preorder(new PreorderDetails(longest), PreorderStatus.PENDING);
-
-        assertEquals(PreorderDisplay.DETAILS_PREFIX + longest, PreorderDisplay.formatDetails(preorder));
+    public void formatItem_itemWithoutRemark_endsWithStatus() {
+        Item cookies = new ItemBuilder().withName("Almond Cookies").withQuantity("1")
+                .withStatus(ItemStatus.PREPARED).build();
+        assertEquals("2. Almond Cookies - Quantity 1 - PREPARED", PreorderDisplay.formatItem(2, cookies));
     }
 
     @Test
-    public void formatStatus_eachStatus_showsStatusName() {
-        for (PreorderStatus status : PreorderStatus.values()) {
-            Preorder preorder = new Preorder(new PreorderDetails("2 chocolate cakes"), status);
-            assertEquals("Status: " + status.name(), PreorderDisplay.formatStatus(preorder));
-        }
+    public void formatItem_itemWithoutQuantity_saysQuantityNeeded() {
+        Item cakes = new ItemBuilder().withName("2 chocolate cakes").withoutQuantity()
+                .withStatus(ItemStatus.PENDING).build();
+        assertEquals("1. 2 chocolate cakes - " + PreorderDisplay.MISSING_QUANTITY_TEXT + " - PENDING",
+                PreorderDisplay.formatItem(1, cakes));
+    }
+
+    @Test
+    public void formatItem_longestName_keepsFullText() {
+        String longest = "a".repeat(ItemName.MAX_LENGTH);
+        Item item = new ItemBuilder().withName(longest).withQuantity("3").build();
+        assertEquals("1. " + longest + " - Quantity 3 - PENDING", PreorderDisplay.formatItem(1, item));
+    }
+
+    @Test
+    public void formatItem_itemNumberBelowOne_throwsIllegalArgumentException() {
+        Item item = new ItemBuilder().build();
+        assertThrows(IllegalArgumentException.class, () -> PreorderDisplay.formatItem(0, item));
     }
 
     @Test
     public void getStatusStyleClass_eachStatus_returnsMatchingClass() {
-        assertEquals("status-pending", PreorderDisplay.getStatusStyleClass(PreorderStatus.PENDING));
-        assertEquals("status-prepared", PreorderDisplay.getStatusStyleClass(PreorderStatus.PREPARED));
-        assertEquals("status-completed", PreorderDisplay.getStatusStyleClass(PreorderStatus.COMPLETED));
+        assertEquals("status-pending", PreorderDisplay.getStatusStyleClass(ItemStatus.PENDING));
+        assertEquals("status-prepared", PreorderDisplay.getStatusStyleClass(ItemStatus.PREPARED));
+        assertEquals("status-completed", PreorderDisplay.getStatusStyleClass(ItemStatus.COMPLETED));
     }
 
     @Test
     public void getStatusStyleClass_differentStatuses_differentClasses() {
-        assertNotEquals(PreorderDisplay.getStatusStyleClass(PreorderStatus.PENDING),
-                PreorderDisplay.getStatusStyleClass(PreorderStatus.PREPARED));
-        assertNotEquals(PreorderDisplay.getStatusStyleClass(PreorderStatus.PREPARED),
-                PreorderDisplay.getStatusStyleClass(PreorderStatus.COMPLETED));
+        assertNotEquals(PreorderDisplay.getStatusStyleClass(ItemStatus.PENDING),
+                PreorderDisplay.getStatusStyleClass(ItemStatus.PREPARED));
+        assertNotEquals(PreorderDisplay.getStatusStyleClass(ItemStatus.PREPARED),
+                PreorderDisplay.getStatusStyleClass(ItemStatus.COMPLETED));
     }
 
     @Test
     public void nullInputs_throwNullPointerException() {
-        assertThrows(NullPointerException.class, () -> PreorderDisplay.formatDetails(null));
-        assertThrows(NullPointerException.class, () -> PreorderDisplay.formatStatus(null));
+        assertThrows(NullPointerException.class, () -> PreorderDisplay.formatItem(1, null));
         assertThrows(NullPointerException.class, () -> PreorderDisplay.getStatusStyleClass(null));
     }
 }

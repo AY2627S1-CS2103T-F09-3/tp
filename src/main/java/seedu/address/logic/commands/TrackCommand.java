@@ -9,7 +9,7 @@ import java.util.Set;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.Model;
 import seedu.address.model.person.PreorderStatusPredicate;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 
 /**
  * Lists customers with active preorders, or with preorders matching a specified fulfillment status.
@@ -26,21 +26,21 @@ public class TrackCommand extends Command {
     public static final String MESSAGE_ORDERS_LISTED_OVERVIEW = "%1$d order(s) listed!";
     public static final String MESSAGE_ORDERS_BY_STATUS_LISTED_OVERVIEW = "%1$d order(s) for %2$s listed!";
 
-    private final Optional<PreorderStatus> status;
+    private final Optional<ItemStatus> status;
 
     /**
      * Creates a command that lists preorders with the specified {@code status}.
      * An empty {@code status} lists active preorders: PENDING and PREPARED.
      */
-    public TrackCommand(Optional<PreorderStatus> status) {
+    public TrackCommand(Optional<ItemStatus> status) {
         this.status = requireNonNull(status);
     }
 
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
-        Set<PreorderStatus> statuses = status.map(Set::of)
-                .orElse(Set.of(PreorderStatus.PENDING, PreorderStatus.PREPARED));
+        Set<ItemStatus> statuses = status.map(Set::of)
+                .orElse(Set.of(ItemStatus.PENDING, ItemStatus.PREPARED));
         model.updateFilteredPersonList(new PreorderStatusPredicate(statuses));
 
         int orderCount = model.getFilteredPersonList().size();

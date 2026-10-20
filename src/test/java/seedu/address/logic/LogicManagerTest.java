@@ -40,7 +40,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.tag.Tag;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -220,7 +220,7 @@ public class LogicManagerTest {
 
         for (String input : List.of("track s/", "track s/UNKNOWN", "track s/PENDING p/123",
                 "track s/PENDING extra")) {
-            assertCommandFailurePreservesFilteredList(input, ParseException.class, PreorderStatus.MESSAGE_CONSTRAINTS);
+            assertCommandFailurePreservesFilteredList(input, ParseException.class, ItemStatus.MESSAGE_CONSTRAINTS);
         }
     }
 

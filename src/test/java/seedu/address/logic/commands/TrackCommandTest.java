@@ -3,9 +3,9 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.model.preorder.PreorderStatus.COMPLETED;
-import static seedu.address.model.preorder.PreorderStatus.PENDING;
-import static seedu.address.model.preorder.PreorderStatus.PREPARED;
+import static seedu.address.model.preorder.ItemStatus.COMPLETED;
+import static seedu.address.model.preorder.ItemStatus.PENDING;
+import static seedu.address.model.preorder.ItemStatus.PREPARED;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
@@ -25,7 +25,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.testutil.AddressBookBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -72,7 +72,7 @@ public class TrackCommandTest {
     @Test
     public void execute_emptyAddressBook_listsNoPreorders() {
         assertTrackResult(new TrackCommand(Optional.empty()), createModel(), "0 order(s) listed!", List.of());
-        for (PreorderStatus status : PreorderStatus.values()) {
+        for (ItemStatus status : ItemStatus.values()) {
             assertTrackResult(new TrackCommand(Optional.of(status)), createModel(), "0 order(s) listed!", List.of());
         }
     }
@@ -81,7 +81,7 @@ public class TrackCommandTest {
     public void execute_customersWithoutPreorders_listsNoPreorders() {
         Model model = createModel(ALICE, BENSON);
         assertTrackResult(new TrackCommand(Optional.empty()), model, "0 order(s) listed!", List.of());
-        for (PreorderStatus status : PreorderStatus.values()) {
+        for (ItemStatus status : ItemStatus.values()) {
             assertTrackResult(new TrackCommand(Optional.of(status)), model, "0 order(s) listed!", List.of());
         }
     }
@@ -130,7 +130,7 @@ public class TrackCommandTest {
     }
 
     @Test
-    public void execute_noStatus_updatesListWhenPreorderStatusesChange() {
+    public void execute_noStatus_updatesListWhenItemStatusesChange() {
         Model model = createMixedModel();
         assertTrackResult(new TrackCommand(Optional.empty()), model, "3 order(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
@@ -151,7 +151,7 @@ public class TrackCommandTest {
     }
 
     @Test
-    public void execute_explicitStatus_updatesListWhenPreorderStatusesChange() {
+    public void execute_explicitStatus_updatesListWhenItemStatusesChange() {
         Model model = createMixedModel();
         assertTrackResult(new TrackCommand(Optional.of(PENDING)), model,
                 "2 order(s) for PENDING listed!", List.of(PENDING_ELLE, PENDING_BENSON));

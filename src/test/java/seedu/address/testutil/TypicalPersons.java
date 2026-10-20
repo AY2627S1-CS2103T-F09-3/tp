@@ -10,9 +10,9 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
-import static seedu.address.model.preorder.PreorderStatus.COMPLETED;
-import static seedu.address.model.preorder.PreorderStatus.PENDING;
-import static seedu.address.model.preorder.PreorderStatus.PREPARED;
+import static seedu.address.model.preorder.ItemStatus.COMPLETED;
+import static seedu.address.model.preorder.ItemStatus.PENDING;
+import static seedu.address.model.preorder.ItemStatus.PREPARED;
 
 import java.util.ArrayList;
 import java.util.Arrays;

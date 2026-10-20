@@ -7,6 +7,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,7 +19,10 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.Item;
+import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.preorder.Quantity;
+import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
@@ -45,7 +49,7 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_personWithPreorder_returnsPersonWithPreorder() throws Exception {
         Person expected = new PersonBuilder(BENSON)
-                .withPreorder("2 chocolate cakes", PreorderStatus.PREPARED).build();
+                .withPreorder("2 chocolate cakes", ItemStatus.PREPARED).build();
 
         JsonAdaptedPerson adapted = new JsonAdaptedPerson(expected);
 
@@ -54,8 +58,8 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_personWithEachPreorderStatus_preservesStatus() throws Exception {
-        for (PreorderStatus status : PreorderStatus.values()) {
+    public void toModelType_personWithEachItemStatus_preservesStatus() throws Exception {
+        for (ItemStatus status : ItemStatus.values()) {
             Person expected = new PersonBuilder(BENSON)
                     .withPreorder("2 chocolate cakes", status).build();
             assertEquals(expected, new JsonAdaptedPerson(expected).toModelType());
@@ -63,21 +67,82 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_missingPreorderFields_throwsIllegalValueException() {
-        JsonAdaptedPreorder missingDetails = new JsonAdaptedPreorder(null, "PENDING");
-        JsonAdaptedPreorder missingStatus = new JsonAdaptedPreorder("2 cakes", null);
-
-        assertThrows(IllegalValueException.class, missingDetails::toModelType);
-        assertThrows(IllegalValueException.class, missingStatus::toModelType);
+    public void toModelType_personWithSeveralItems_keepsItemsInOrder() throws Exception {
+        Person expected = new PersonBuilder(BENSON).withPreorder(
+                new ItemBuilder().withName("Pineapple Tarts").withRemark("Less sugar").build(),
+                new ItemBuilder().withName("Almond Cookies").withQuantity("1").build()).build();
+        assertEquals(expected, new JsonAdaptedPerson(expected).toModelType());
     }
 
     @Test
-    public void toModelType_invalidPreorderFields_throwsIllegalValueException() {
-        JsonAdaptedPreorder invalidDetails = new JsonAdaptedPreorder(" ", "PENDING");
-        JsonAdaptedPreorder invalidStatus = new JsonAdaptedPreorder("2 cakes", "DONE");
+    public void toModelType_preorderWithoutItems_returnsPersonWithEmptyPreorder() throws Exception {
+        Person expected = new PersonBuilder(BENSON).withPreorder().build();
+        assertEquals(expected, new JsonAdaptedPerson(expected).toModelType());
+    }
 
-        assertThrows(IllegalValueException.class, invalidDetails::toModelType);
-        assertThrows(IllegalValueException.class, invalidStatus::toModelType);
+    @Test
+    public void toModelType_preorderWithoutItemsField_returnsPersonWithEmptyPreorder() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS, List.of(new JsonAdaptedPreorder((List<JsonAdaptedItem>) null)), null);
+        assertEquals(new PersonBuilder(BENSON).withPreorder().build(), person.toModelType());
+    }
+
+    @Test
+    public void toModelType_invalidItem_throwsIllegalValueException() {
+        JsonAdaptedItem invalidItem = new JsonAdaptedItem("Pineapple Tarts", "0", "PENDING", null);
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS, List.of(new JsonAdaptedPreorder(List.of(invalidItem))), null);
+        assertThrows(IllegalValueException.class, Quantity.MESSAGE_CONSTRAINTS, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_moreThanOnePreorder_throwsIllegalValueException() {
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of());
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS, List.of(preorder, preorder), null);
+        assertThrows(IllegalValueException.class, JsonAdaptedPerson.MESSAGE_TOO_MANY_PREORDERS, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullPreorder_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS, Arrays.asList((JsonAdaptedPreorder) null), null);
+        assertThrows(IllegalValueException.class, JsonAdaptedPerson.MESSAGE_NULL_PREORDER, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullItem_throwsIllegalValueException() {
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(Arrays.asList((JsonAdaptedItem) null));
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS, List.of(preorder), null);
+        assertThrows(IllegalValueException.class, JsonAdaptedPreorder.MESSAGE_NULL_ITEM, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_legacyPreorder_returnsOneItemWithoutQuantity() throws Exception {
+        JsonAdaptedLegacyPreorder legacyPreorder = new JsonAdaptedLegacyPreorder("2 chocolate cakes", "PREPARED");
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS, null, legacyPreorder);
+
+        Item expectedItem = new ItemBuilder().withName("2 chocolate cakes").withoutQuantity()
+                .withStatus(ItemStatus.PREPARED).build();
+        assertEquals(new PersonBuilder(BENSON).withPreorder(expectedItem).build(), person.toModelType());
+    }
+
+    @Test
+    public void toModelType_invalidLegacyPreorder_throwsIllegalValueException() {
+        JsonAdaptedLegacyPreorder legacyPreorder = new JsonAdaptedLegacyPreorder("2 chocolate cakes", "DONE");
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS, null, legacyPreorder);
+        assertThrows(IllegalValueException.class, ItemStatus.MESSAGE_CONSTRAINTS, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_legacyAndCurrentPreorder_throwsIllegalValueException() {
+        JsonAdaptedLegacyPreorder legacyPreorder = new JsonAdaptedLegacyPreorder("2 chocolate cakes", "PENDING");
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS, List.of(new JsonAdaptedPreorder(List.of())), legacyPreorder);
+        assertThrows(IllegalValueException.class, JsonAdaptedPerson.MESSAGE_TOO_MANY_PREORDERS, person::toModelType);
     }
 
     @Test

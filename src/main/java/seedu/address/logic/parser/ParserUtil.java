@@ -15,8 +15,10 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
-import seedu.address.model.preorder.PreorderDetails;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemName;
+import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.preorder.Quantity;
+import seedu.address.model.preorder.Remark;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -163,33 +165,63 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a {@code String details} into a {@code PreorderDetails}.
+     * Parses a {@code String name} into an {@code ItemName}.
      * Leading and trailing whitespaces will be trimmed.
      *
-     * @throws ParseException if the given {@code details} is invalid.
+     * @throws ParseException if the given {@code name} is invalid.
      */
-    public static PreorderDetails parsePreorderDetails(String details) throws ParseException {
-        requireNonNull(details);
-        String trimmedDetails = details.trim();
-        if (!PreorderDetails.isValidDetails(trimmedDetails)) {
-            throw new ParseException(PreorderDetails.MESSAGE_CONSTRAINTS);
+    public static ItemName parseItemName(String name) throws ParseException {
+        requireNonNull(name);
+        String trimmedName = name.trim();
+        if (!ItemName.isValidItemName(trimmedName)) {
+            throw new ParseException(ItemName.MESSAGE_CONSTRAINTS);
         }
-        return new PreorderDetails(trimmedDetails);
+        return new ItemName(trimmedName);
     }
 
     /**
-     * Parses a {@code String status} into a {@code PreorderStatus}.
+     * Parses a {@code String quantity} into a {@code Quantity}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code quantity} is invalid.
+     */
+    public static Quantity parseQuantity(String quantity) throws ParseException {
+        requireNonNull(quantity);
+        String trimmedQuantity = quantity.trim();
+        if (!Quantity.isValidQuantity(trimmedQuantity)) {
+            throw new ParseException(Quantity.MESSAGE_CONSTRAINTS);
+        }
+        return new Quantity(trimmedQuantity);
+    }
+
+    /**
+     * Parses a {@code String remark} into a {@code Remark}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code remark} is invalid.
+     */
+    public static Remark parseRemark(String remark) throws ParseException {
+        requireNonNull(remark);
+        String trimmedRemark = remark.trim();
+        if (!Remark.isValidRemark(trimmedRemark)) {
+            throw new ParseException(Remark.MESSAGE_CONSTRAINTS);
+        }
+        return new Remark(trimmedRemark);
+    }
+
+    /**
+     * Parses a {@code String status} into a {@code ItemStatus}.
      * Leading and trailing whitespaces will be trimmed, and letter case is ignored,
      * so {@code "pending"} and {@code "Pending"} both give {@code PENDING}.
      *
      * @throws ParseException if the given {@code status} is invalid.
      */
-    public static PreorderStatus parsePreorderStatus(String status) throws ParseException {
+    public static ItemStatus parseItemStatus(String status) throws ParseException {
         requireNonNull(status);
         String normalizedStatus = status.trim().toUpperCase(Locale.ROOT);
-        if (!PreorderStatus.isValidStatus(normalizedStatus)) {
-            throw new ParseException(PreorderStatus.MESSAGE_CONSTRAINTS);
+        if (!ItemStatus.isValidStatus(normalizedStatus)) {
+            throw new ParseException(ItemStatus.MESSAGE_CONSTRAINTS);
         }
-        return PreorderStatus.valueOf(normalizedStatus);
+        return ItemStatus.valueOf(normalizedStatus);
     }
 }

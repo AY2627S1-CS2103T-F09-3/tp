@@ -8,7 +8,7 @@ import java.util.Optional;
 
 import seedu.address.logic.commands.TrackCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 
 /**
  * Parses track command arguments and creates a new {@code TrackCommand}.
@@ -35,7 +35,7 @@ public class TrackCommandParser implements Parser<TrackCommand> {
             return new TrackCommand(Optional.empty());
         }
 
-        PreorderStatus status = ParserUtil.parsePreorderStatus(argMultimap.getValue(PREFIX_STATUS).get());
+        ItemStatus status = ParserUtil.parseItemStatus(argMultimap.getValue(PREFIX_STATUS).get());
         return new TrackCommand(Optional.of(status));
     }
 }

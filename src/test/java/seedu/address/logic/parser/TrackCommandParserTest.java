@@ -3,8 +3,8 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
-import static seedu.address.model.preorder.PreorderStatus.PENDING;
-import static seedu.address.model.preorder.PreorderStatus.PREPARED;
+import static seedu.address.model.preorder.ItemStatus.PENDING;
+import static seedu.address.model.preorder.ItemStatus.PREPARED;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.util.Locale;
@@ -13,7 +13,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.TrackCommand;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 
 public class TrackCommandParserTest {
 
@@ -39,7 +39,7 @@ public class TrackCommandParserTest {
 
     @Test
     public void parse_validStatuses_returnsStatusCommand() {
-        for (PreorderStatus status : PreorderStatus.values()) {
+        for (ItemStatus status : ItemStatus.values()) {
             TrackCommand expectedCommand = new TrackCommand(Optional.of(status));
             assertParseSuccess(parser, "s/" + status, expectedCommand);
             assertParseSuccess(parser, "s/" + status.name().toLowerCase(Locale.ROOT), expectedCommand);
@@ -57,16 +57,16 @@ public class TrackCommandParserTest {
 
     @Test
     public void parse_missingStatusValue_failure() {
-        assertParseFailure(parser, "s/", PreorderStatus.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "  s/  ", PreorderStatus.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "s/\t", PreorderStatus.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "s/", ItemStatus.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "  s/  ", ItemStatus.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "s/\t", ItemStatus.MESSAGE_CONSTRAINTS);
     }
 
     @Test
     public void parse_invalidStatus_failure() {
         String[] invalidStatuses = {"DONE", "COLLECTED", "COMPLETE", "PEND ING", "PENDING,PREPARED", "*"};
         for (String status : invalidStatuses) {
-            assertParseFailure(parser, "s/" + status, PreorderStatus.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, "s/" + status, ItemStatus.MESSAGE_CONSTRAINTS);
         }
     }
 
@@ -97,14 +97,14 @@ public class TrackCommandParserTest {
         for (String parameter : unsupportedParameters) {
             assertParseFailure(parser, parameter, MESSAGE_INVALID_FORMAT);
             assertParseFailure(parser, parameter + " s/PENDING", MESSAGE_INVALID_FORMAT);
-            assertParseFailure(parser, "s/PENDING " + parameter, PreorderStatus.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, "s/PENDING " + parameter, ItemStatus.MESSAGE_CONSTRAINTS);
         }
     }
 
     @Test
     public void parse_extraTextAfterStatus_failure() {
-        assertParseFailure(parser, "s/PENDING extra", PreorderStatus.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "s/PENDING PREPARED", PreorderStatus.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "s/PENDING extra", ItemStatus.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "s/PENDING PREPARED", ItemStatus.MESSAGE_CONSTRAINTS);
     }
 
     @Test

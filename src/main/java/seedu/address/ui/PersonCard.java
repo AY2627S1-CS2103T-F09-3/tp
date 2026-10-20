@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import java.util.Comparator;
+import java.util.List;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -9,6 +10,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.Preorder;
 
 /**
@@ -44,10 +46,6 @@ public class PersonCard extends UiPart<Region> {
     private FlowPane tags;
     @FXML
     private VBox preorder;
-    @FXML
-    private Label preorderDetails;
-    @FXML
-    private Label preorderStatus;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -66,10 +64,30 @@ public class PersonCard extends UiPart<Region> {
         person.getPreorder().ifPresentOrElse(this::showPreorder, this::hidePreorder);
     }
 
-    private void showPreorder(Preorder preorder) {
-        preorderDetails.setText(PreorderDisplay.formatDetails(preorder));
-        preorderStatus.setText(PreorderDisplay.formatStatus(preorder));
-        preorderStatus.getStyleClass().add(PreorderDisplay.getStatusStyleClass(preorder.getStatus()));
+    /**
+     * Shows one chip per item, numbered in the order the items were added and coloured by status.
+     */
+    private void showPreorder(Preorder currentPreorder) {
+        List<Item> items = currentPreorder.getItems();
+        if (items.isEmpty()) {
+            preorder.getChildren().add(createChip(PreorderDisplay.NO_ITEMS_TEXT, PreorderDisplay.NO_ITEMS_STYLE_CLASS));
+            return;
+        }
+
+        for (int i = 0; i < items.size(); i++) {
+            Item item = items.get(i);
+            preorder.getChildren().add(createChip(PreorderDisplay.formatItem(i + 1, item),
+                    PreorderDisplay.getStatusStyleClass(item.getStatus())));
+        }
+    }
+
+    private static Label createChip(String text, String styleClass) {
+        Label chip = new Label(text);
+        chip.getStyleClass().add(styleClass);
+        // As wide as its text, like the tags, unless the text is too long and has to wrap
+        chip.setWrapText(true);
+        chip.setMaxWidth(Region.USE_PREF_SIZE);
+        return chip;
     }
 
     /**
