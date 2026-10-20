@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -21,6 +22,8 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.model.person.PostalCode;
+import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
@@ -51,14 +54,15 @@ public class FindCommandParserTest {
     public void parse_unsupportedPrefix_throwsParseException() {
         for (String input : List.of("x/Alice", "n/Alice x/unknown", "n/Alice\tunknown/value",
                 "N/Alice", "n/Alice P/8123", "s/pending", "n/Alice s/pending",
-                "o/Pineapple Tarts", "f/2026-10-22", "m/delivery", "c/53")) {
+                "o/Pineapple Tarts", "f/2026-10-22", "m/delivery", "C/012345")) {
             assertParseFailure(parser, input, FORMAT_ERROR);
         }
     }
 
     @Test
     public void parse_blankValue_throwsParseException() {
-        for (Prefix prefix : List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG)) {
+        for (Prefix prefix : List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
+                PREFIX_POSTAL_CODE, PREFIX_TAG)) {
             assertParseFailure(parser, prefix + " \t\n ", FORMAT_ERROR);
             assertParseFailure(parser, prefix + " \t\n n/Alice", prefix.equals(PREFIX_NAME)
                     ? Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME) : FORMAT_ERROR);
@@ -67,7 +71,8 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_duplicatePrefix_throwsParseException() {
-        for (Prefix prefix : List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG)) {
+        for (Prefix prefix : List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
+                PREFIX_POSTAL_CODE, PREFIX_TAG)) {
             String expectedMessage = Messages.getErrorMessageForDuplicatePrefixes(prefix);
             assertParseFailure(parser, prefix + "first " + prefix + "second", expectedMessage);
             assertParseFailure(parser, prefix + "first " + prefix + "first", expectedMessage);
@@ -87,6 +92,56 @@ public class FindCommandParserTest {
         FindCommand expected = new FindCommand(new SearchCriteria(List.of(new TagCriterion(new Tag("regular")))));
         assertParseSuccess(parser, "t/REGULAR", expected);
         assertParseSuccess(parser, " \t t/ regular \n", expected);
+    }
+
+    @Test
+    public void parse_validPostalCode_returnsFindCommand() {
+        for (String postalCode : List.of("123456", "012345", "000000", "999999")) {
+            FindCommand expected = new FindCommand(new SearchCriteria(List.of(
+                    new PostalCodeCriterion(new PostalCode(postalCode)))));
+            assertParseSuccess(parser, "c/" + postalCode, expected);
+            assertParseSuccess(parser, " \t c/ " + postalCode + " \n", expected);
+        }
+    }
+
+    @Test
+    public void parse_invalidPostalCode_throwsParseException() {
+        for (String postalCode : List.of("53", "12345", "1234567", "abcdef", "01234a", "123 456",
+                "+12345", "-12345", "123.45", "123/456", "123456 extra")) {
+            assertParseFailure(parser, "c/" + postalCode, PostalCode.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, "n/Alice c/" + postalCode, PostalCode.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void parse_malformedPostalCodeSyntax_throwsParseException() {
+        for (String input : List.of("c012345", "c /012345", "/012345", "012345 c/123456",
+                "n/Alice c/", "c/012345 x/value")) {
+            assertParseFailure(parser, input, FORMAT_ERROR);
+        }
+        assertParseFailure(parser, "c/012345 c/123456",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_POSTAL_CODE));
+    }
+
+    @Test
+    public void parse_postalCodeWithName_returnsFindCommand() {
+        FindCommand expected = new FindCommand(new SearchCriteria(List.of(
+                new TextContainsCriterion(NAME, "Alice"),
+                new PostalCodeCriterion(new PostalCode("012345")))));
+        assertParseSuccess(parser, "n/Alice c/012345", expected);
+        assertParseSuccess(parser, "c/012345 n/Alice", expected);
+        assertParseSuccess(parser, "n/Alice\tc/012345", expected);
+    }
+
+    @Test
+    public void parse_addressCareOfWithPostalCode_preservesAddressText() {
+        String address = "Block 123 c/o Alice";
+        FindCommand expected = new FindCommand(new SearchCriteria(List.of(
+                new TextContainsCriterion(ADDRESS, address),
+                new PostalCodeCriterion(new PostalCode("012345")))));
+        assertParseSuccess(parser, "a/" + address + " c/012345", expected);
+        assertParseSuccess(parser, "c/012345 a/" + address, expected);
+        assertParseSuccess(parser, "a/" + address, textCommand(ADDRESS, address));
     }
 
     @Test

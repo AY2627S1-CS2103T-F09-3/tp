@@ -8,6 +8,7 @@ import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
@@ -40,6 +41,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.PostalCode;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.tag.Tag;
 import seedu.address.storage.JsonAddressBookStorage;
@@ -170,6 +172,62 @@ public class LogicManagerTest {
         assertFilteringCommandSuccess("find t/FRIENDS a/jurong", "1 person(s) listed!", List.of(ALICE));
         assertFilteringCommandSuccess("find p/9876 e/EXAMPLE.COM", "1 person(s) listed!", List.of(PENDING_BENSON));
         assertFilteringCommandSuccess("find n/Alice t/owesMoney", "0 person(s) listed!", List.of());
+    }
+
+    @Test
+    public void execute_postalSearchAndGrouping_preservesSavedOrderAndLeadingZeros() throws Exception {
+        Person zoe = new PersonBuilder().withName("Zoe Tan").withPostalCode("012345").build();
+        Person differentCode = new PersonBuilder().withName("Alex Lim").withPostalCode("654321").build();
+        Person amy = new PersonBuilder().withName("Amy Tan").withPostalCode("012345").build();
+        Person missingCode = new PersonBuilder().withName("Legacy Customer").build();
+        List<Person> savedOrder = List.of(zoe, differentCode, amy, missingCode);
+        savedOrder.forEach(model::addPerson);
+
+        assertFilteringCommandSuccess("find c/012345", "2 person(s) listed!", List.of(zoe, amy));
+        logic.execute("group postal");
+        assertEquals(List.of(amy, zoe), logic.getFilteredPersonList());
+        assertFilteringCommandSuccess("list", ListCommand.MESSAGE_SUCCESS, savedOrder);
+        logic.execute("group postal");
+        assertFilteringCommandSuccess("find c/012345", "2 person(s) listed!", List.of(amy, zoe));
+
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        ReadOnlyAddressBook reloaded = storage.readAddressBook().orElseThrow();
+        assertEquals(savedOrder, reloaded.getPersonList());
+        assertEquals("012345", reloaded.getPersonList().getFirst().getPostalCode().value);
+    }
+
+    @Test
+    public void execute_postalSearchWithAllCriteria_deleteTargetsDisplayedCustomer() throws Exception {
+        Person match = new PersonBuilder().withName("Alice Tan").withPhone("81234567")
+                .withEmail("alice@example.com").withAddress("123 Hougang Avenue")
+                .withPostalCode("012345").withTags("regular").build();
+        Person differentCode = new PersonBuilder(match).withName("Alice Lim").withPostalCode("123456").build();
+        Person differentTag = new PersonBuilder(match).withName("Alice Tanaka").withTags("vip").build();
+        Person missingCode = new PersonBuilder(match).withName("Alice Lee").withPostalCode(null).build();
+        List.of(differentCode, differentTag, missingCode, match).forEach(model::addPerson);
+
+        assertFilteringCommandSuccess("find n/Alice p/8123 e/EXAMPLE.COM a/hougang c/012345 t/REGULAR",
+                "1 person(s) listed!", List.of(match));
+        logic.execute("delete 1");
+
+        assertEquals(List.of(differentCode, differentTag, missingCode), model.getAddressBook().getPersonList());
+        assertEquals(List.of(), logic.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_invalidPostalSearch_preservesDataAndFilteredList() throws Exception {
+        model.addPerson(new PersonBuilder().withName("Alice Tan").withPostalCode("012345").build());
+        model.addPerson(new PersonBuilder().withName("Bob Tan").withPostalCode("654321").build());
+        logic.execute("find c/012345");
+
+        for (String value : List.of("12345", "1234567", "abcdef", "123 456", "01234a")) {
+            assertCommandFailurePreservesFilteredList("find c/" + value,
+                    ParseException.class, PostalCode.MESSAGE_CONSTRAINTS);
+        }
+        assertCommandFailurePreservesFilteredList("find n/Alice c/", ParseException.class,
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertCommandFailurePreservesFilteredList("find c/012345 c/654321", ParseException.class,
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_POSTAL_CODE));
     }
 
     @Test

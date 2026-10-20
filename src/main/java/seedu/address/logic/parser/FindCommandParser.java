@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.regex.Pattern;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.search.PersonCriterion;
+import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
@@ -27,7 +29,7 @@ import seedu.address.model.search.TextContainsCriterion.Field;
  */
 public class FindCommandParser implements Parser<FindCommand> {
     private static final List<Prefix> SUPPORTED_PREFIXES =
-            List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG);
+            List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_POSTAL_CODE, PREFIX_TAG);
     private static final Pattern PARAMETER_PREFIX = Pattern.compile("(?<!\\S)([A-Za-z]+/)");
 
     /**
@@ -60,6 +62,10 @@ public class FindCommandParser implements Parser<FindCommand> {
         addTextCriterion(criteria, arguments, PREFIX_PHONE, Field.PHONE);
         addTextCriterion(criteria, arguments, PREFIX_EMAIL, Field.EMAIL);
         addTextCriterion(criteria, arguments, PREFIX_ADDRESS, Field.ADDRESS);
+        if (arguments.getValue(PREFIX_POSTAL_CODE).isPresent()) {
+            criteria.add(new PostalCodeCriterion(
+                    ParserUtil.parsePostalCode(arguments.getValue(PREFIX_POSTAL_CODE).get().strip())));
+        }
         if (arguments.getValue(PREFIX_TAG).isPresent()) {
             criteria.add(new TagCriterion(ParserUtil.parseTag(arguments.getValue(PREFIX_TAG).get().strip())));
         }
@@ -80,7 +86,8 @@ public class FindCommandParser implements Parser<FindCommand> {
 
         // Let the shared tokenizer recognize the first prefix and prefixes after tabs or newlines.
         // Only add separator spaces before prefixes; preserve the text inside search values.
-        return matcher.replaceAll(" $1");
+        return matcher.replaceAll(match -> match.start() > 0 && args.charAt(match.start() - 1) == ' '
+                ? match.group(1) : " " + match.group(1));
     }
 
     private void addTextCriterion(List<PersonCriterion> criteria, ArgumentMultimap arguments,

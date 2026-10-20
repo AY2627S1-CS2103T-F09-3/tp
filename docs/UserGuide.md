@@ -212,7 +212,7 @@ For example, `find n/Alex` followed by `group postal` groups only the matching c
 
 Finds customers matching **every** supplied criterion.
 
-Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]`
+Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE] [t/TAG]`
 
 Supply at least one criterion. Each prefix may appear at most once, in any order.
 
@@ -222,6 +222,7 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 | `p/` | Phone number | Substring |
 | `e/` | Email | Case-insensitive substring |
 | `a/` | Address | Case-insensitive substring |
+| `c/` | Postal code | Exact six-digit string, preserving leading zeros |
 | `t/` | Tag | Complete tag name, ignoring case |
 
 * Different criteria combine using **AND**. For example, `find n/Alice t/regular` requires both a matching name and the complete tag `regular`.
@@ -229,6 +230,7 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 * Multiword text is one substring: `find n/Alice Tan` can match `Alice Tanaka`, but does not match `Alice Lim` or `Tan Alice`.
 * Surrounding whitespace is ignored. Internal spacing and punctuation remain significant.
 * Phone and email fragments are accepted: `p/8123` and `e/example.com` need not be complete contact details.
+* Postal codes must contain exactly six digits. `find c/012345` matches only that complete postal code; partial codes are rejected. Customers without a postal code do not match a postal-code criterion.
 * Tags must be single alphanumeric words. `t/reg` does not match a tag named `regular`.
 * Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
 * Results use the current displayed indices. Use `list` to show all customers again.
@@ -239,6 +241,8 @@ Examples:
 * `find n/Alice Tan` finds names containing the phrase `Alice Tan`.
 * `find p/8123` finds phone numbers containing `8123`.
 * `find e/example.com` finds emails containing `example.com`.
+* `find c/123456` finds customers whose postal code is exactly `123456`.
+* `find n/Alice c/012345` requires both a name containing `Alice` and the postal code `012345`.
 * `find a/Hougang t/regular` finds regular customers whose addresses contain `Hougang`.
 * `find n/Alice p/8123 t/regular` requires all three criteria to match.
 
@@ -247,8 +251,10 @@ Examples:
 | Input | Result |
 |-------|--------|
 | `find` | Invalid command format; supply at least one prefixed criterion. |
-| `find n/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
-| `find x/Alice` or `find n/Alice s/pending` | Invalid command format; only the five prefixes above are supported. |
+| `find n/`, `find c/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
+| `find x/Alice` or `find n/Alice s/pending` | Invalid command format; only the six prefixes above are supported. |
+| `find c/12345`, `find c/1234567` or `find c/01234a` | `Postal codes must contain exactly six digits.` |
+| `find c/012345 c/123456` | `Multiple values specified for the following single-valued field(s): c/` |
 | `find t/regular t/vip` | `Multiple values specified for the following single-valued field(s): t/` |
 | `find t/regular customer` or `find t/VIP!` | The tag constraint message is shown. |
 
@@ -365,7 +371,7 @@ Action     | Format, Examples
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Group postal** | `group postal`
-**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]` (at least one criterion)<br> e.g., `find n/James t/regular`
+**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE] [t/TAG]` (at least one criterion)<br> e.g., `find n/James c/012345 t/regular`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
 **Tag**    | `tag INDEX t/TAG`<br> e.g., `tag 1 t/regular`

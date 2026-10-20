@@ -162,19 +162,25 @@ and punctuation remain significant. Queries must be nonblank, but may be fragmen
 they do not use the validation rules for creating complete contact fields. `TagCriterion` accepts a validated `Tag` and
 uses its complete, case-insensitive equality rule.
 
+`PostalCodeCriterion` accepts a validated `PostalCode` and compares it with the customer's complete postal code.
+Postal codes remain six-digit strings, including leading zeros; customers whose postal code is null do not match.
+The `c/` prefix can be combined with any other supported criterion using the same **AND** semantics.
+
 To add a search condition with different matching rules, implement `PersonCriterion` and include it in a
 `SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
 CLI prefixes belong in the parser, not in the criteria. Add the prefix to `FindCommandParser`'s supported-prefix list
 and construct its criterion there. The parser accepts each supported prefix once, requires a prefix before the first
-value, rejects blank or unsupported parameters, and validates tags using `ParserUtil.parseTag`. It recognizes prefixes
-at whitespace boundaries without collapsing internal query spacing. `FindCommand` passes `SearchCriteria` directly to
+value, rejects blank or unsupported parameters, and validates tags using `ParserUtil.parseTag` and postal codes using
+`ParserUtil.parsePostalCode`. Postal-code queries use the same six-digit validation as `add` and `edit`.
+It recognizes prefixes at whitespace boundaries without collapsing internal query spacing, including `c/o` inside an
+address. `FindCommand` passes `SearchCriteria` directly to
 `Model.updateFilteredPersonList`, which replaces the predicate on the list backed by the full address book.
 There is no need to filter the previous search's results or execute another search command as an intermediate step.
 
 For future multi-item searches, product and status conditions must be grouped inside **one** `PersonCriterion` that
 checks whether any single item satisfies both conditions. Separate customer predicates for "has this product" and
-"has this status" could incorrectly match different items. Date/method and postal conditions can be separate criteria,
-because they describe the preorder or customer rather than an individual item. These extensions, shared tracking
+"has this status" could incorrectly match different items. Date/method conditions can be separate criteria,
+because they describe the preorder rather than an individual item. These extensions, shared tracking
 rules and active-search UI/state are not implemented by this foundation.
 
 ### Storage component
