@@ -5,9 +5,12 @@
     "email" : "alice@example.com",
     "address" : "123, Jurong West Ave 6, #08-111",
     "tags" : [ "friends" ],
-    "preorder" : {
-      "details" : "2 chocolate cakes",
-      "status" : "DONE"
-    }
+    "preorders" : [ {
+      "items" : [ {
+        "name" : " ",
+        "quantity" : "2",
+        "status" : "PENDING"
+      } ]
+    } ]
   } ]
 }

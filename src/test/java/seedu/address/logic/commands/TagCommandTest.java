@@ -21,7 +21,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
@@ -52,7 +52,7 @@ public class TagCommandTest {
     public void execute_personWithPreorder_preorderKept() {
         Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person personWithPreorder = new PersonBuilder(firstPerson)
-                .withPreorder("2 chocolate cakes", PreorderStatus.PENDING).build();
+                .withPreorder("2 chocolate cakes", ItemStatus.PENDING).build();
         model.setPerson(firstPerson, personWithPreorder);
 
         Person taggedPerson = new PersonBuilder(personWithPreorder)
