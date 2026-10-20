@@ -5,9 +5,11 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.preorder.Preorder;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -25,32 +27,44 @@ public class Person {
     private final Address address;
     private final PostalCode postalCode;
     private final Set<Tag> tags = new HashSet<>();
+    private final Preorder preorder; // null when the customer has no current preorder
 
     /**
+     * Creates a person without a preorder.
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags) {
-        this(name, phone, email, address, null, tags);
+        this(name, phone, email, address, null, tags, Optional.empty());
     }
 
     /**
-     * Creates a person with the given details and optional postal code.
-     *
-     * @param name person name
-     * @param phone person phone number
-     * @param email person email address
-     * @param address person address
-     * @param postalCode person postal code, or {@code null} for legacy data
-     * @param tags person tags
+     * Every field must be present and not null.
+     * Pass {@code Optional.empty()} as {@code preorder} for a person without a current preorder.
      */
+    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags,
+            Optional<Preorder> preorder) {
+        this(name, phone, email, address, null, tags, preorder);
+    }
+
+    /** Creates a person with an optional postal code and no preorder. */
     public Person(Name name, Phone phone, Email email, Address address, PostalCode postalCode, Set<Tag> tags) {
-        requireAllNonNull(name, phone, email, address, tags);
+        this(name, phone, email, address, postalCode, tags, Optional.empty());
+    }
+
+    /**
+     * Creates a person with the given details and preorder.
+     * The postal code may be null for legacy data; all other arguments must be non-null.
+     */
+    public Person(Name name, Phone phone, Email email, Address address, PostalCode postalCode, Set<Tag> tags,
+            Optional<Preorder> preorder) {
+        requireAllNonNull(name, phone, email, address, tags, preorder);
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.address = address;
         this.postalCode = postalCode;
         this.tags.addAll(tags);
+        this.preorder = preorder.orElse(null);
     }
 
     public Name getName() {
@@ -82,7 +96,15 @@ public class Person {
     }
 
     /**
-     * Returns true if both persons have the same name.
+     * Returns the person's current preorder, or an empty {@code Optional} if there is none.
+     */
+    public Optional<Preorder> getPreorder() {
+        return Optional.ofNullable(preorder);
+    }
+
+    /**
+     * Returns true if both persons have the same normalized name, ignoring capitalization.
+     * Leading, trailing and consecutive spaces are normalized by {@link Name}.
      * This defines a weaker notion of equality between two persons.
      */
     public boolean isSamePerson(Person otherPerson) {
@@ -91,7 +113,7 @@ public class Person {
         }
 
         return otherPerson != null
-                && otherPerson.getName().equals(getName());
+                && otherPerson.getName().fullName.equalsIgnoreCase(getName().fullName);
     }
 
     /**
@@ -114,13 +136,14 @@ public class Person {
                 && email.equals(otherPerson.email)
                 && address.equals(otherPerson.address)
                 && Objects.equals(postalCode, otherPerson.postalCode)
-                && tags.equals(otherPerson.tags);
+                && tags.equals(otherPerson.tags)
+                && Objects.equals(preorder, otherPerson.preorder);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, postalCode, tags);
+        return Objects.hash(name, phone, email, address, postalCode, tags, preorder);
     }
 
     @Override
@@ -132,6 +155,7 @@ public class Person {
                 .add("address", address)
                 .add("postalCode", postalCode)
                 .add("tags", tags)
+                .add("preorder", getPreorder())
                 .toString();
     }
 

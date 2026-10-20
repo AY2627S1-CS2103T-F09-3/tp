@@ -1,6 +1,7 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
@@ -8,11 +9,17 @@ import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.AMY;
+import static seedu.address.testutil.TypicalPersons.COMPLETED_DANIEL;
+import static seedu.address.testutil.TypicalPersons.PENDING_BENSON;
+import static seedu.address.testutil.TypicalPersons.PENDING_ELLE;
+import static seedu.address.testutil.TypicalPersons.PREPARED_CARL;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,17 +27,22 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.TrackCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.AddressBookBuilder;
 import seedu.address.testutil.PersonBuilder;
 
 public class LogicManagerTest {
@@ -71,6 +83,107 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_findThenTrack_listsActivePreordersFromAllCustomers() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("find Alice", "1 person(s) listed!", List.of(ALICE));
+
+        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+                List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
+    }
+
+    @Test
+    public void execute_findThenTrackStatus_listsMatchingPreordersFromAllCustomers() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("find Carl", "1 person(s) listed!", List.of(PREPARED_CARL));
+
+        assertFilteringCommandSuccess("track s/pending", "2 order(s) for PENDING listed!",
+                List.of(PENDING_ELLE, PENDING_BENSON));
+    }
+
+    @Test
+    public void execute_successiveTrackCommands_replacesPreviousFilter() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("track s/COMPLETED", "1 order(s) for COMPLETED listed!",
+                List.of(COMPLETED_DANIEL));
+        assertFilteringCommandSuccess("track s/PENDING", "2 order(s) for PENDING listed!",
+                List.of(PENDING_ELLE, PENDING_BENSON));
+        assertFilteringCommandSuccess("track s/PREPARED", "1 order(s) for PREPARED listed!",
+                List.of(PREPARED_CARL));
+        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+                List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
+    }
+
+    @Test
+    public void execute_trackThenList_restoresAllCustomersInOriginalOrder() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+                List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
+
+        assertFilteringCommandSuccess("list", ListCommand.MESSAGE_SUCCESS,
+                List.of(COMPLETED_DANIEL, PENDING_ELLE, ALICE, PREPARED_CARL, PENDING_BENSON));
+    }
+
+    @Test
+    public void execute_invalidTrackFormat_preservesDataAndFilteredList() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("track s/COMPLETED", "1 order(s) for COMPLETED listed!",
+                List.of(COMPLETED_DANIEL));
+
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, TrackCommand.MESSAGE_USAGE);
+        for (String input : List.of("track 1", "track PENDING", "track p/123")) {
+            assertCommandFailurePreservesFilteredList(input, ParseException.class, expectedMessage);
+        }
+    }
+
+    @Test
+    public void execute_invalidTrackStatus_preservesDataAndFilteredList() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("track s/COMPLETED", "1 order(s) for COMPLETED listed!",
+                List.of(COMPLETED_DANIEL));
+
+        for (String input : List.of("track s/", "track s/UNKNOWN", "track s/PENDING p/123",
+                "track s/PENDING extra")) {
+            assertCommandFailurePreservesFilteredList(input, ParseException.class, ItemStatus.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void execute_duplicateTrackStatuses_preservesDataAndFilteredList() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("track s/COMPLETED", "1 order(s) for COMPLETED listed!",
+                List.of(COMPLETED_DANIEL));
+
+        assertCommandFailurePreservesFilteredList("track s/PENDING s/PREPARED", ParseException.class,
+                "Multiple values specified for the following single-valued field(s): s/");
+    }
+
+    @Test
+    public void execute_trackThenDelete_deletesCustomerAtDisplayedIndex() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+                List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
+
+        CommandResult result = logic.execute("delete 1");
+
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_PERSON_SUCCESS,
+                Messages.format(PENDING_ELLE));
+        assertEquals(new CommandResult(expectedMessage), result);
+        assertEquals(List.of(COMPLETED_DANIEL, ALICE, PREPARED_CARL, PENDING_BENSON),
+                model.getAddressBook().getPersonList());
+        assertEquals(List.of(PREPARED_CARL, PENDING_BENSON), logic.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_trackThenDeleteHiddenIndex_preservesDataAndFilteredList() throws Exception {
+        setUpTrackPersons();
+        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+                List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
+
+        assertCommandFailurePreservesFilteredList("delete 4", CommandException.class,
+                MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+    }
+
+    @Test
     public void execute_storageThrowsIoException_throwsCommandException() {
         assertCommandFailureForExceptionFromStorage(DUMMY_IO_EXCEPTION, String.format(
                 LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()));
@@ -85,6 +198,30 @@ public class LogicManagerTest {
     @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> logic.getFilteredPersonList().remove(0));
+    }
+
+    private void setUpTrackPersons() {
+        model.setAddressBook(new AddressBookBuilder().withPerson(COMPLETED_DANIEL).withPerson(PENDING_ELLE)
+                .withPerson(ALICE).withPerson(PREPARED_CARL).withPerson(PENDING_BENSON).build());
+    }
+
+    private void assertFilteringCommandSuccess(String inputCommand, String expectedMessage,
+            List<Person> expectedPersons) throws CommandException, ParseException {
+        AddressBook originalAddressBook = new AddressBook(model.getAddressBook());
+
+        assertEquals(new CommandResult(expectedMessage), logic.execute(inputCommand));
+        assertEquals(expectedPersons, logic.getFilteredPersonList());
+        assertEquals(originalAddressBook, model.getAddressBook());
+    }
+
+    private void assertCommandFailurePreservesFilteredList(String inputCommand,
+            Class<? extends Throwable> expectedException, String expectedMessage) {
+        AddressBook originalAddressBook = new AddressBook(model.getAddressBook());
+        List<Person> originalFilteredPersons = List.copyOf(logic.getFilteredPersonList());
+
+        assertThrows(expectedException, expectedMessage, () -> logic.execute(inputCommand));
+        assertEquals(originalAddressBook, model.getAddressBook());
+        assertEquals(originalFilteredPersons, logic.getFilteredPersonList());
     }
 
     /**

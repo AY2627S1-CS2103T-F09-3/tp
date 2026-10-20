@@ -39,6 +39,20 @@ public class StringUtil {
     }
 
     /**
+     * Returns true if the {@code sentence} contains the {@code substring}, ignoring case.
+     *
+     * @param sentence cannot be null
+     * @param substring cannot be null or empty
+     */
+    public static boolean containsSubstringIgnoreCase(String sentence, String substring) {
+        requireNonNull(sentence);
+        requireNonNull(substring);
+        checkArgument(!substring.isEmpty(), "Substring parameter cannot be empty");
+
+        return sentence.toLowerCase().contains(substring.toLowerCase());
+    }
+
+    /**
      * Returns a detailed message of {@code t}, including the stack trace.
      */
     public static String getDetails(Throwable t) {

@@ -1,14 +1,23 @@
-[![CI Status](https://github.com/se-edu/addressbook-level3/workflows/Java%20CI/badge.svg)](https://github.com/se-edu/addressbook-level3/actions)
+[![Java CI](https://github.com/AY2627S1-CS2103T-F09-3/tp/actions/workflows/gradle.yml/badge.svg)](https://github.com/AY2627S1-CS2103T-F09-3/tp/actions/workflows/gradle.yml)
 
 ![Ui](docs/images/Ui.png)
 
-* This is **a sample project for Software Engineering (SE) students**.<br>
-  Example usages:
-  * as a starting point of a course project (as opposed to writing everything from scratch)
-  * as a case study
-* The project simulates an ongoing software project for a desktop application (called _AddressBook_) used for managing contact details.
-  * It is **written in an object-oriented programming (OOP) style** and provides a **reasonably well-written** codebase of about 6 KLoC. It is **larger** than what students typically write in beginner-level software-engineering modules, without being overwhelming.
-  * It comes with a **reasonable level of user and developer documentation**.
-* It is named `AddressBook Level 3` (`AB3` for short) because it was initially created as a part of a series of `AddressBook` projects (`Level 1`, `Level 2`, `Level 3` ...).
-* For the detailed documentation of this project, see the **[Address Book Product Website](https://se-education.org/addressbook-level3)**.
-* This project is a **part of the se-education.org** initiative. If you would like to contribute code to this project, see [se-education.org](https://se-education.org/#contributing-to-se-edu) for more info.
+LeBake is a desktop application for tech-savvy independent home bakers who handle high volumes of seasonal pre-orders
+on their own. It helps them keep track of orders and customer delivery addresses in one place, reducing the hassle of 
+juggling customer information. LeBake's planned pre-order features will associate each customer's current order and
+fulfilment status with their contact details, allowing home bakers to quickly identify orders requiring their attention,
+whilst retaining customer information for future seasons.
+
+LeBake is designed for bakers who prefer a CLI-focused workflow, with its text-based commands allowing for quick entry,
+retrieval and updates.
+
+## Documentation
+
+* [User Guide](docs/UserGuide.md) — how to use LeBake.
+* [Developer Guide](docs/DeveloperGuide.md) — how LeBake is designed and developed.
+* [Project website](https://ay2627s1-cs2103t-f09-3.github.io/tp/) — the published guides and project information.
+* [Team repository](https://github.com/AY2627S1-CS2103T-F09-3/tp) — source code and project updates.
+
+## Acknowledgements
+
+This project is based on the AddressBook-Level3 project created by the [SE-EDU initiative](https://se-education.org).

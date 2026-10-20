@@ -1,9 +1,11 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import seedu.address.commons.core.index.Index;
@@ -14,6 +16,10 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.PostalCode;
+import seedu.address.model.preorder.ItemName;
+import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.preorder.Quantity;
+import seedu.address.model.preorder.Remark;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -38,17 +44,17 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String name} into a {@code Name}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespace is trimmed, and consecutive spaces are collapsed.
+     * Capitalization is preserved.
      *
      * @throws ParseException if the given {@code name} is invalid.
      */
     public static Name parseName(String name) throws ParseException {
         requireNonNull(name);
-        String trimmedName = name.trim();
-        if (!Name.isValidName(trimmedName)) {
+        if (!Name.isValidName(name)) {
             throw new ParseException(Name.MESSAGE_CONSTRAINTS);
         }
-        return new Name(trimmedName);
+        return new Name(name);
     }
 
     /**
@@ -136,5 +142,102 @@ public class ParserUtil {
             tagSet.add(parseTag(tagName));
         }
         return tagSet;
+    }
+
+    /**
+     * Parses the preamble of {@code argMultimap} into an {@code Index}.
+     *
+     * @param argMultimap Tokenized arguments containing the index in the preamble.
+     * @param errorMessage Complete error message shown when the index is missing or invalid.
+     * @throws ParseException If the preamble is not a positive integer within the supported integer range.
+     */
+    public static Index parsePreambleIndex(ArgumentMultimap argMultimap, String errorMessage)
+            throws ParseException {
+        requireNonNull(argMultimap);
+        requireNonNull(errorMessage);
+        try {
+            return parseIndex(argMultimap.getPreamble());
+        } catch (ParseException pe) {
+            throw new ParseException(errorMessage, pe);
+        }
+    }
+
+    /**
+     * Parses the single {@code t/TAG} value in {@code argMultimap} into a {@code Tag}.
+     *
+     * @param argMultimap Tokenized arguments containing the tag prefix and value.
+     * @param errorMessage Complete error message shown when the tag prefix is missing.
+     * @throws ParseException If the tag prefix is missing or repeated, or the tag is invalid.
+     */
+    public static Tag parseSingleTag(ArgumentMultimap argMultimap, String errorMessage) throws ParseException {
+        requireNonNull(argMultimap);
+        requireNonNull(errorMessage);
+        if (argMultimap.getValue(PREFIX_TAG).isEmpty()) {
+            throw new ParseException(errorMessage);
+        }
+
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_TAG);
+        return parseTag(argMultimap.getValue(PREFIX_TAG).get());
+    }
+
+    /**
+     * Parses a {@code String name} into an {@code ItemName}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code name} is invalid.
+     */
+    public static ItemName parseItemName(String name) throws ParseException {
+        requireNonNull(name);
+        String trimmedName = name.trim();
+        if (!ItemName.isValidItemName(trimmedName)) {
+            throw new ParseException(ItemName.MESSAGE_CONSTRAINTS);
+        }
+        return new ItemName(trimmedName);
+    }
+
+    /**
+     * Parses a {@code String quantity} into a {@code Quantity}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code quantity} is invalid.
+     */
+    public static Quantity parseQuantity(String quantity) throws ParseException {
+        requireNonNull(quantity);
+        String trimmedQuantity = quantity.trim();
+        if (!Quantity.isValidQuantity(trimmedQuantity)) {
+            throw new ParseException(Quantity.MESSAGE_CONSTRAINTS);
+        }
+        return new Quantity(trimmedQuantity);
+    }
+
+    /**
+     * Parses a {@code String remark} into a {@code Remark}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code remark} is invalid.
+     */
+    public static Remark parseRemark(String remark) throws ParseException {
+        requireNonNull(remark);
+        String trimmedRemark = remark.trim();
+        if (!Remark.isValidRemark(trimmedRemark)) {
+            throw new ParseException(Remark.MESSAGE_CONSTRAINTS);
+        }
+        return new Remark(trimmedRemark);
+    }
+
+    /**
+     * Parses a {@code String status} into a {@code ItemStatus}.
+     * Leading and trailing whitespaces will be trimmed, and letter case is ignored,
+     * so {@code "pending"} and {@code "Pending"} both give {@code PENDING}.
+     *
+     * @throws ParseException if the given {@code status} is invalid.
+     */
+    public static ItemStatus parseItemStatus(String status) throws ParseException {
+        requireNonNull(status);
+        String normalizedStatus = status.trim().toUpperCase(Locale.ROOT);
+        if (!ItemStatus.isValidStatus(normalizedStatus)) {
+            throw new ParseException(ItemStatus.MESSAGE_CONSTRAINTS);
+        }
+        return ItemStatus.valueOf(normalizedStatus);
     }
 }

@@ -1,6 +1,8 @@
 package seedu.address.testutil;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.model.person.Address;
@@ -9,6 +11,9 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.PostalCode;
+import seedu.address.model.preorder.Item;
+import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.preorder.Preorder;
 import seedu.address.model.tag.Tag;
 import seedu.address.model.util.SampleDataUtil;
 
@@ -28,6 +33,7 @@ public class PersonBuilder {
     private Address address;
     private PostalCode postalCode;
     private Set<Tag> tags;
+    private Optional<Preorder> preorder;
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -39,6 +45,7 @@ public class PersonBuilder {
         address = new Address(DEFAULT_ADDRESS);
         postalCode = null;
         tags = new HashSet<>();
+        preorder = Optional.empty();
     }
 
     /**
@@ -51,6 +58,7 @@ public class PersonBuilder {
         address = personToCopy.getAddress();
         postalCode = personToCopy.getPostalCode();
         tags = new HashSet<>(personToCopy.getTags());
+        preorder = personToCopy.getPreorder();
     }
 
     /**
@@ -101,8 +109,24 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Sets the {@code Preorder} of the {@code Person} that we are building to a single item with quantity 1.
+     */
+    public PersonBuilder withPreorder(String itemName, ItemStatus status) {
+        return withPreorder(new ItemBuilder().withName(itemName).withQuantity("1").withStatus(status).build());
+    }
+
+    /**
+     * Sets the {@code Preorder} of the {@code Person} that we are building to contain {@code items}.
+     * With no arguments, the preorder has no items yet.
+     */
+    public PersonBuilder withPreorder(Item... items) {
+        this.preorder = Optional.of(new Preorder(List.of(items)));
+        return this;
+    }
+
     public Person build() {
-        return new Person(name, phone, email, address, postalCode, tags);
+        return new Person(name, phone, email, address, postalCode, tags, preorder);
     }
 
 }

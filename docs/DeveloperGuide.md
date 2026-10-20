@@ -4,7 +4,7 @@
   pageNav: 3
 ---
 
-# AB-3 Developer Guide
+# LeBake Developer Guide
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -35,7 +35,7 @@ The following provides a quick overview of the main components and their interac
 
 **Main components of the architecture**
 
-**`Main`** (consisting of classes [`Main`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
+**`Main`** (consisting of classes [`Main`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
 * At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
 * At shut down, it shuts down the other components and invokes cleanup methods where necessary.
 
@@ -67,13 +67,13 @@ The sections below give more details of each component.
 
 ### UI component
 
-The **API** of this component is specified in [`Ui.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/Ui.java)
+The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/ui/Ui.java)
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
+The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
 
@@ -84,7 +84,7 @@ The `UI` component,
 
 ### Logic component
 
-**API** : [`Logic.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/logic/Logic.java)
+**API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/logic/Logic.java)
 
 Here's a (partial) class diagram of the `Logic` component:
 
@@ -117,7 +117,7 @@ How the parsing works:
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
-**API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
+**API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/model/Model.java)
 
 <puml src="diagrams/ModelClassDiagram.puml" width="450" />
 
@@ -140,7 +140,7 @@ The `Model` component,
 
 ### Storage component
 
-**API** : [`Storage.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/storage/Storage.java)
+**API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/storage/Storage.java)
 
 <puml src="diagrams/StorageClassDiagram.puml" width="550" />
 
@@ -270,71 +270,228 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
+* is a tech-savvy independent home baker
+* manages a high volume of seasonal pre-orders
+* handles customer and order management independently
+* wants to spend less time on administrative tasks and more time baking
 * is reasonably comfortable using CLI apps
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+**Value proposition**: LeBake helps solo home bakers manage seasonal pre-orders efficiently, so they can spend less time juggling customers and more time baking.
 
 
 ### User stories
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
-
-*{More to be added}*
+| Priority | As a …                                               | I want to …                                                                       | So that I can …                                                     |
+|----------|------------------------------------------------------|-----------------------------------------------------------------------------------|---------------------------------------------------------------------|
+| `* * *`  | first-time home baker                                | view usage instructions                                                           | learn how to manage my customer contacts                            |
+| `* * *`  | home baker                                           | add a customer with their name, phone number, email address, and delivery address | keep their essential contact information in one place               |
+| `* * *`  | home baker                                           | list all saved customers                                                          | see everyone in my customer address book                            |
+| `* * *`  | home baker                                           | view a customer’s complete profile                                                | retrieve their contact details when needed                          |
+| `* * *`  | home baker                                           | edit a customer’s details                                                         | keep their contact information accurate                             |
+| `* * *`  | home baker                                           | find customers by name                                                            | retrieve a customer without scanning the entire address book        |
+| `* * *`  | home baker                                           | delete a customer profile                                                         | remove records I no longer need                                     |
+| `* * *`  | home baker                                           | clear all customer records                                                        | start again with an empty address book when necessary               |
+| `* * *`  | home baker                                           | assign tags to customers                                                          | organise contacts into meaningful groups                            |
+| `* * *`  | busy home baker                                      | have my changes saved automatically                                               | keep my customer information after closing the application         |
+| `* * *`  | returning home baker                                 | retrieve my previously saved contacts after reopening LeBake                      | continue where I left off                                           |
+| `* * *`  | keyboard-oriented home baker                         | exit LeBake using a command                                                       | complete my workflow without using a mouse                          |
+| `* * *`  | home baker                                           | add or remove tags from an existing customer                                      | keep the customer’s classifications current                         |
+| `* * *`  | home baker entering contacts quickly                 | be warned about possible duplicate profiles                                       | avoid recording the same customer twice                             |
+| `* * *`  | home baker                                           | record a concise seasonal pre-order summary in a customer’s profile               | keep the order connected to the correct customer                    |
+| `* * *`  | home baker                                           | update a customer’s current pre-order requirements                                | record later changes accurately                                     |
+| `* * *`  | home baker preparing an order                        | view its requirements together with the customer’s contact and address details    | avoid searching in separate places                                  |
+| `* * *`  | home baker                                           | record a customer’s fulfilment status                                             | know whether their order is pending, prepared, or completed         |
+| `* * *`  | home baker during a busy season                      | filter customer profiles by fulfilment status                                     | focus on customers requiring the same next action                   |
+| `* * *`  | home baker                                           | view only customers with active pre-orders                                        | focus on active orders without distraction from inactive contacts   |
+| `* * *`  | keyboard-oriented home baker                         | perform common customer-management tasks without using a mouse                    | work efficiently through the CLI                                    |
+| `* * *`  | home baker with a large customer base                | receive search and update results promptly                                        | keep using LeBake efficiently during peak periods                   |
+| `* *`    | home baker                                           | find a customer by phone number                                                   | identify someone who contacts me by phone                           |
+| `* *`    | home baker                                           | find a customer by email address                                                  | identify someone from an email enquiry                              |
+| `* *`    | home baker who remembers only part of a name         | search using partial and case-insensitive text                                    | still locate the correct customer                                   |
+| `* *`    | home baker with many customers                       | sort customer profiles alphabetically                                             | browse them predictably                                             |
+| `* *`    | home baker                                           | filter customers by tag                                                           | focus on a relevant group of contacts                               |
+| `* *`    | home baker                                           | record notes about a customer                                                     | remember information relevant to serving them                       |
+| `* *`    | home baker serving repeat customers                  | record their contact and delivery preferences                                     | provide consistent service                                          |
+| `* *`    | home baker                                           | archive an inactive customer without deleting them                                | keep my active address book free of old contacts                    |
+| `* *`    | home baker                                           | restore an archived customer                                                      | serve a returning customer without re-entering their details        |
+| `* *`    | home baker                                           | identify customer profiles with missing essential information                     | complete them before fulfilment begins                              |
+| `* *`    | home baker migrating from another system             | import existing customer contacts                                                 | avoid re-entering every profile manually                            |
+| `* *`    | home baker                                           | export my customer contacts                                                       | keep a backup or use them outside LeBake                            |
+| `* *`    | home baker                                           | record delivery instructions with an address                                      | remember access details such as gate codes or drop-off directions   |
+| `* *`    | home baker preparing deliveries                      | mark an address as verified or unverified                                         | identify addresses that still require confirmation                  |
+| `* *`    | home baker                                           | find customers using an address or postal-code keyword                            | retrieve contacts based on delivery location                        |
+| `* *`    | home baker planning deliveries                       | filter customers by neighbourhood or postal area                                  | focus on customers in the same vicinity                             |
+| `* *`    | home baker preparing a seasonal delivery run         | view customers who do not have a delivery address                                 | obtain the missing information in advance                           |
+| `* *`    | home baker                                           | group customer contacts by delivery area                                          | organise delivery batches efficiently                               |
+| `* *`    | home baker making deliveries                         | produce a list containing selected customers’ names, phone numbers, and addresses | have the necessary contact information on hand during delivery      |
+| `* *`    | home baker                                           | record customer-provided special requirements with their pre-order                | refer to them while fulfilling it                                   |
+| `* *`    | home baker                                           | associate customers with a seasonal campaign                                      | distinguish orders from different occasions                         |
+| `* *`    | home baker serving a repeat customer                 | view their previous seasonal order summaries                                      | understand their past preferences                                   |
+| `*`      | home baker                                           | store an alternative contact number for a customer                                | reach them another way if necessary                                 |
+| `*`      | home baker who makes occasional input mistakes       | undo my most recent change                                                        | recover quickly without reconstructing the original profile         |
+| `*`      | home baker serving customers at different locations  | store multiple addresses for a customer                                           | retain their commonly used delivery destinations                    |
+| `*`      | home baker                                           | mark one address as a customer’s preferred delivery address                       | know which address to use by default                                |
+| `*`      | home baker planning deliveries                       | sort customers by postal area                                                     | see nearby addresses together                                       |
+| `*`      | home baker processing many contacts                  | add multiple customer profiles in one batch                                       | spend less time on initial data entry                               |
+| `*`      | home baker managing a seasonal campaign              | apply or remove a tag from multiple customers at once                             | organise large groups efficiently                                   |
+| `*`      | experienced LeBake user                              | reuse previously entered commands                                                 | repeat common operations with fewer keystrokes                      |
+| `*`      | experienced LeBake user                              | use short forms for frequently used operations                                    | do repetitive customer-management work faster                       |
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
-
-**Use case: Delete a person**
-
+**Use case: U1. Add a customer**\
+**System: LeBake**\
+**Actor: User**\
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1. User requests to add a customer.
+2. LeBake adds the customer.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 1a. The given input is invalid.
+
+    * 1a1. LeBake shows an error message.
+
+      Use case resumes at step 1.
+
+* 1b. The customer already exists in LeBake.
+
+    * 1b1. LeBake shows an error message.
+
+      Use case resumes at step 1.
+
+**Use case: U2. Find a customer**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
+
+1. User searches for a customer.
+2. LeBake shows a list of matching customers.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. No customers match the search.
+
+    * 1a1. LeBake shows an empty list.
+
+      Use case ends.
+
+* 2a. The search returns other customers, but not the one the user wants.
 
   Use case ends.
 
-* 3a. The given index is invalid.
+**Use case: U3. Delete a customer**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
 
-    * 3a1. AddressBook shows an error message.
+1. User finds a customer (<u>U2. Find a customer</u>).
+2. User requests to delete that customer from the displayed list.
+3. LeBake deletes the customer.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The intended customer is not found.
+
+  Use case ends.
+
+* 2a. The customer selection is invalid.
+
+    * 2a1. LeBake shows an error message.
 
       Use case resumes at step 2.
+
+**Use case: U4. Record a customer's pre-order**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
+
+1. User finds a customer (<u>U2. Find a customer</u>).
+2. User selects a customer and requests to record a pre-order with order details and a fulfilment status.
+3. LeBake records and displays the pre-order.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The intended customer is not found.
+
+  Use case ends.
+
+* 2a. The customer selection or order information is invalid.
+
+    * 2a1. LeBake shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. The customer already has a pre-order.
+
+    * 2b1. LeBake updates and displays the existing pre-order.
+
+      Use case ends.
+
+**Use case: U5. Update a pre-order's fulfilment status**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
+
+1. User requests to view pre-orders with a chosen fulfilment status.
+2. LeBake shows customers with pre-orders in that status.
+3. User selects a customer and requests to change the pre-order to a valid fulfilment status.
+4. LeBake updates and displays the pre-order's fulfilment status.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. No pre-orders match the chosen status.
+
+    * 1a1. LeBake shows an empty list.
+
+      Use case ends.
+
+* 3a. The customer selection is invalid.
+
+    * 3a1. LeBake shows an error message.
+
+      Use case resumes at step 3.
 
 *{More to be added}*
 
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
+2.  Should support storing up to 1,000 customer details.
+3.  Should display the result or an error message within 3 seconds of submitting a command.
+4.  User with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
+5.  All core customer and pre-order management functionalities should remain available without an internet connection.
+6.  Invalid commands should produce a message identifying the error and explaining the correct syntax or accepted values. 
+7.  If changes cannot be saved, LeBake should clearly inform the user that those changes have not been saved. 
+8.  Commands operating on the same customer fields should use consistent parameter names and field formats, unless a difference is explicitly documented.
 
 *{More to be added}*
 
 ### Glossary
 
+* **Active order**: A pre-order whose fulfilment status is `PENDING` or `PREPARED`
+* **Archived customer**: A customer hidden from the active customer list but kept, so that it can be restored for a future seasonal campaign
+* **Customer**: A person whose contact and delivery details are stored in LeBake, represented by the `Person` class in the code
+* **Duplicate customer**: A customer with the same name as an existing customer, ignoring case and extra spaces (phone number, email and address are not compared)
+* **Fulfilment status**: The stage a pre-order has reached, which is `PENDING` (recorded but not ready), `PREPARED` (ready for collection or delivery), or `COMPLETED` (collected or delivered)
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
+* **Postal area**: A group of nearby addresses that share the same leading digits of their postal code, used to group deliveries
+* **Pre-order**: An order placed in advance for a later collection or delivery, with each customer having at most one current pre-order
 * **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Seasonal campaign**: A period of high order demand tied to an occasion, such as Chinese New Year or Christmas
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -382,6 +539,123 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
+
+### Tagging a person
+
+1. Tagging a person while all persons are being shown
+
+   1. Prerequisites: Start with the sample data. List all persons using the `list` command. The first person is `Alex Yeoh`, who has the tag `friends`.
+
+   1. Test case: `tag 1 t/regular`<br>
+      Expected: `regular` is added to the first person's tags. The status message shows `Added tag(s) [regular] to Alex Yeoh`.
+
+   1. Test case: `tag 1 t/FRIENDS`<br>
+      Expected: The person's tags are unchanged. The status message shows `Alex Yeoh already has tag [FRIENDS]. No changes made.`
+
+   1. Test case: `tag 1 t/gluten-free`<br>
+      Expected: No tag is added. The status message shows `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.`
+
+   1. Test case: `tag 1 t/vip t/regular`<br>
+      Expected: No tag is added. The status message shows `Multiple values specified for the following single-valued field(s): t/`.
+
+   1. Test case: `tag 0 t/vip`<br>
+      Expected: No tag is added. The status message shows `Invalid command format!`, followed by the usage instructions for `tag`.
+
+   1. Other incorrect tag commands to try: `tag`, `tag 1`, `tag t/vip`, `tag x t/vip`<br>
+      Expected: Similar to previous.
+
+   1. Test case: `tag 0 t/!`<br>
+      Expected: No tag is added. The index format error and usage instructions are shown, rather than the tag constraint message, because the index format is checked first.
+
+   1. Test case: `tag 100 t/vip` (where 100 is larger than the list size)<br>
+      Expected: No tag is added. The status message shows `The person index provided is invalid.`
+
+1. Tagging a person in a filtered list
+
+   1. Prerequisites: Find a person using `find Bernice`. Only `Bernice Yu` is shown.
+
+   1. Test case: `tag 1 t/vip`<br>
+      Expected: `vip` is added to `Bernice Yu`'s tags. The status message shows `Added tag(s) [vip] to Bernice Yu`. Only `Bernice Yu` remains displayed; the filter is preserved.
+
+### Untagging a person
+
+Run each group below independently, starting with the sample data unless stated otherwise. Within a group, run the test cases in order. For every rejected command, verify that all persons' tags, contact details, preorders, and the displayed list remain unchanged.
+
+1. Removing tags while all persons are being shown
+
+   1. Prerequisites: Run `list`. The first person is `Alex Yeoh`, who has the tag `friends`. Run `tag 1 t/regular` to give Alex a second tag.
+
+   1. Test case: `untag 1 t/FRIENDS`<br>
+      Expected: The `friends` tag is removed despite the different capitalization. The `regular` tag and Alex's contact details remain unchanged. The status message shows `Removed tag(s) [FRIENDS] from Alex Yeoh`.
+
+   1. Test case: `untag 1 t/regular`<br>
+      Expected: Alex has no tags left, but remains in the list with the same contact details. The status message shows `Removed tag(s) [regular] from Alex Yeoh`.
+
+   1. Test case: Repeat `untag 1 t/regular`.<br>
+      Expected: No data is changed. The status message shows `Alex Yeoh does not have tag [regular]`.
+
+1. Rejecting invalid input
+
+   1. Prerequisites: Run `list` with the sample persons displayed.
+
+   1. Test cases: `untag 0 t/friends`, `untag -1 t/friends`, `untag abc t/friends`<br>
+      Expected: Each command shows `Invalid command format!`, followed by the usage instructions for `untag`.
+
+   1. Test cases: `untag`, `untag t/friends`, `untag 1`<br>
+      Expected: Each command shows the same format error and usage instructions.
+
+   1. Test cases: `untag 1 t/`, `untag 1 t/close friends`, `untag 1 t/gluten-free`<br>
+      Expected: Each command shows `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.`
+
+   1. Test case: `untag 1 t/friends t/regular`<br>
+      Expected: The status message shows `Multiple values specified for the following single-valued field(s): t/`.
+
+   1. Test case: `untag 0 t/!`<br>
+      Expected: The index format error and usage instructions are shown, rather than the tag constraint message, because the index format is checked first.
+
+   1. Test case: `untag 100 t/friends` (where 100 is larger than the displayed list size)<br>
+      Expected: The status message shows `The person index provided is invalid.`
+
+1. Removing a tag in a filtered list
+
+   1. Prerequisites: Run `find Bernice`. Only `Bernice Yu` is shown, at index 1, with the tags `colleagues` and `friends`.
+
+   1. Test case: `untag 2 t/friends`<br>
+      Expected: The status message shows `The person index provided is invalid.`, even though the full address book contains more than one person.
+
+   1. Test case: `untag 1 t/FRIENDS`<br>
+      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag(s) [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other persons are unchanged.
+
+   1. Test case: `untag 1 t/FRIENDS` again.<br>
+      Expected: The status message shows `Bernice Yu does not have tag [FRIENDS]`. Only Bernice remains displayed.
+
+   1. Test case: Run `find NoMatchingCustomer`, confirm that the displayed list is empty, then run `untag 1 t/friends`.<br>
+      Expected: The status message shows `The person index provided is invalid.` The list remains empty and no data is changed.
+
+1. Preserving a preorder and saving tag removal
+
+   1. Prerequisites: Use a saved customer with a preorder. Run `list`, note their displayed index as `INDEX`, and record their contact details, preorder details, and fulfilment status. Run `tag INDEX t/untagtest`, replacing `INDEX` with that number.
+
+   1. Test case: `untag INDEX t/untagtest`<br>
+      Expected: Only `untagtest` is removed. Other tags, contact details, preorder details, and fulfilment status are unchanged.
+
+   1. Test case: Close and relaunch the application, then locate the same customer.<br>
+      Expected: The removed tag remains absent. The customer's other tags, contact details, and preorder are preserved.
+
+### Deleting a preorder
+
+Start with the sample data. List all customers using the `list` command. The first customer is `Alex Yeoh`, whose preorder has two items.
+
+1. Run `deleteorder 1`.<br>
+   Expected: The status message shows `Deleted preorder for Alex Yeoh`. Both item chips disappear from the card. The name, phone number, email, address and tags are unchanged.
+1. Run `deleteorder 1` again.<br>
+   Expected: The status message shows `Alex Yeoh has no preorder to delete.` Nothing changes.
+1. Try `deleteorder 0`, `deleteorder` and `deleteorder 1 2`.<br>
+   Expected: Nothing changes. The status message shows an invalid command format error, followed by the correct format of the `deleteorder` command.
+1. Run `deleteorder 100` (where 100 is larger than the list size).<br>
+   Expected: Nothing changes. The status message shows `The person index provided is invalid.`
+1. Run `track`, then `deleteorder` with the displayed index of `Charlotte Oliveiro`.<br>
+   Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder chips.
 
 ### Saving data
 

@@ -29,6 +29,10 @@ public class FindCommandParserTest {
 
         // multiple whitespaces between keywords
         assertParseSuccess(parser, " \n Alice \n \t Bob  \t", expectedFindCommand);
+
+        FindCommand symbolFindCommand =
+                new FindCommand(new NameContainsKeywordsPredicate(List.of("(friend)")));
+        assertParseSuccess(parser, "(friend)", symbolFindCommand);
     }
 
 }

@@ -32,6 +32,12 @@
       <Label fx:id="address" styleClass="cell_small_label" text="\$address" />
       <Label fx:id="postalCode" styleClass="cell_small_label" text="\$postalCode" />
       <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
+      <!-- PersonCard adds one chip per preorder item -->
+      <VBox fx:id="preorder" spacing="3">
+        <padding>
+          <Insets top="4" />
+        </padding>
+      </VBox>
     </VBox>
   </GridPane>
 </HBox>

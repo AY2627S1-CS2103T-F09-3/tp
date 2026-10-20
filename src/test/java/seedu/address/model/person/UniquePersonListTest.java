@@ -19,6 +19,9 @@ import seedu.address.testutil.PersonBuilder;
 
 public class UniquePersonListTest {
 
+    private static final List<String> ALICE_NAME_VARIANTS = List.of(
+            "alice pauline", "  Alice   Pauline  ", "  ALICE   PAULINE  ");
+
     private final UniquePersonList uniquePersonList = new UniquePersonList();
 
     @Test
@@ -46,6 +49,15 @@ public class UniquePersonListTest {
     }
 
     @Test
+    public void contains_nameDiffersOnlyInCaseOrSpaces_returnsTrue() {
+        uniquePersonList.add(ALICE);
+        for (String nameVariant : ALICE_NAME_VARIANTS) {
+            Person editedAlice = new PersonBuilder(ALICE).withName(nameVariant).build();
+            assertTrue(uniquePersonList.contains(editedAlice));
+        }
+    }
+
+    @Test
     public void add_nullPerson_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> uniquePersonList.add(null));
     }
@@ -54,6 +66,17 @@ public class UniquePersonListTest {
     public void add_duplicatePerson_throwsDuplicatePersonException() {
         uniquePersonList.add(ALICE);
         assertThrows(DuplicatePersonException.class, () -> uniquePersonList.add(ALICE));
+    }
+
+    @Test
+    public void add_nameDiffersOnlyInCaseOrSpaces_throwsDuplicatePersonException() {
+        uniquePersonList.add(ALICE);
+        for (String nameVariant : ALICE_NAME_VARIANTS) {
+            Person editedAlice = new PersonBuilder(ALICE).withName(nameVariant).withAddress(VALID_ADDRESS_BOB)
+                    .withTags(VALID_TAG_HUSBAND).build();
+            assertThrows(DuplicatePersonException.class, () -> uniquePersonList.add(editedAlice));
+            assertEquals(List.of(ALICE), uniquePersonList.asUnmodifiableObservableList());
+        }
     }
 
     @Test
@@ -92,6 +115,17 @@ public class UniquePersonListTest {
     }
 
     @Test
+    public void setPerson_editedNameDiffersOnlyInCaseAndSpaces_success() {
+        uniquePersonList.add(ALICE);
+        uniquePersonList.add(BOB);
+        Person editedAlice = new PersonBuilder(ALICE).withName("  ALICE   PAULINE  ").build();
+
+        uniquePersonList.setPerson(ALICE, editedAlice);
+
+        assertEquals(List.of(editedAlice, BOB), uniquePersonList.asUnmodifiableObservableList());
+    }
+
+    @Test
     public void setPerson_editedPersonHasDifferentIdentity_success() {
         uniquePersonList.add(ALICE);
         uniquePersonList.setPerson(ALICE, BOB);
@@ -105,6 +139,17 @@ public class UniquePersonListTest {
         uniquePersonList.add(ALICE);
         uniquePersonList.add(BOB);
         assertThrows(DuplicatePersonException.class, () -> uniquePersonList.setPerson(ALICE, BOB));
+    }
+
+    @Test
+    public void setPerson_editedNameDuplicatesAnotherPerson_throwsDuplicatePersonException() {
+        uniquePersonList.add(ALICE);
+        uniquePersonList.add(BOB);
+        for (String nameVariant : ALICE_NAME_VARIANTS) {
+            Person editedBob = new PersonBuilder(BOB).withName(nameVariant).build();
+            assertThrows(DuplicatePersonException.class, () -> uniquePersonList.setPerson(BOB, editedBob));
+            assertEquals(List.of(ALICE, BOB), uniquePersonList.asUnmodifiableObservableList());
+        }
     }
 
     @Test
@@ -158,6 +203,17 @@ public class UniquePersonListTest {
     public void setPersons_listWithDuplicatePersons_throwsDuplicatePersonException() {
         List<Person> listWithDuplicatePersons = List.of(ALICE, ALICE);
         assertThrows(DuplicatePersonException.class, () -> uniquePersonList.setPersons(listWithDuplicatePersons));
+    }
+
+    @Test
+    public void setPersons_listWithCaseOrSpacingDuplicateNames_throwsDuplicatePersonException() {
+        uniquePersonList.add(BOB);
+        for (String nameVariant : ALICE_NAME_VARIANTS) {
+            Person editedAlice = new PersonBuilder(ALICE).withName(nameVariant).build();
+            List<Person> persons = List.of(ALICE, editedAlice);
+            assertThrows(DuplicatePersonException.class, () -> uniquePersonList.setPersons(persons));
+            assertEquals(List.of(BOB), uniquePersonList.asUnmodifiableObservableList());
+        }
     }
 
     @Test

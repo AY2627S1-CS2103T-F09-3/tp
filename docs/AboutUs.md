@@ -11,51 +11,46 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 ## Project team
 
-### John Doe
+### Yi Xun
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/yxyx88.png" width="200px">
 
-[[homepage](http://www.comp.nus.edu.sg/~damithch)]
-[[github](https://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/yxyx88)]
 
-* Role: Project Advisor
+* Role: Developer
 
-### Jane Doe
+### Wong Chee Yew
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/chee-yew.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](http://github.com/chee-yew)]
 
 * Role: Team Lead
 * Responsibilities: UI
 
-### Johnny Doe
+### Zhou Zehao
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/shir0-kage.png" width="200px">
 
-[[github](http://github.com/johndoe)] [[portfolio](team/johndoe.md)]
+[[github](https://github.com/Shir0-Kage)]
 
 * Role: Developer
 * Responsibilities: Data
 
-### Jean Doe
+### Jixiang
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/jxyu2004.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](http://github.com/JXYU2004)]
 
 * Role: Developer
 * Responsibilities: Dev Ops + Threading
 
-### James Doe
+### Robert Livando
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/robertlivando.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/robertlivando)]
 
 * Role: Developer
-* Responsibilities: UI
+* Responsibilities: Deliverables and Deadline

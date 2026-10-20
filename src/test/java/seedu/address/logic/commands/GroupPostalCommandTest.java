@@ -29,9 +29,9 @@ public class GroupPostalCommandTest {
     @Test
     public void execute_groupsByPostalPrefix() {
         ModelManager model = new ModelManager();
-        model.addPerson(new PersonBuilder().withName("Prefix54").withPostalCode("541111").build());
-        model.addPerson(new PersonBuilder().withName("Prefix53Late").withPostalCode("539999").build());
-        model.addPerson(new PersonBuilder().withName("Prefix53Early").withPostalCode("531234").build());
+        model.addPerson(new PersonBuilder().withName("Later Prefix").withPostalCode("541111").build());
+        model.addPerson(new PersonBuilder().withName("Earlier Prefix Late").withPostalCode("539999").build());
+        model.addPerson(new PersonBuilder().withName("Earlier Prefix Early").withPostalCode("531234").build());
 
         new GroupPostalCommand().execute(model);
 

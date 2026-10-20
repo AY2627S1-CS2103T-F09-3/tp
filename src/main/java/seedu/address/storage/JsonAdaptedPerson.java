@@ -3,6 +3,7 @@ package seedu.address.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,6 +17,7 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.PostalCode;
+import seedu.address.model.preorder.Preorder;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -24,6 +26,8 @@ import seedu.address.model.tag.Tag;
 class JsonAdaptedPerson {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Person's %s field is missing!";
+    public static final String MESSAGE_TOO_MANY_PREORDERS = "Person has more than one preorder!";
+    public static final String MESSAGE_NULL_PREORDER = "Person's preorder list contains a null entry!";
 
     private final String name;
     private final String phone;
@@ -31,14 +35,19 @@ class JsonAdaptedPerson {
     private final String address;
     private final String postalCode;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
+    // Saved as a list so that customers can have more than one preorder in a later version
+    private final List<JsonAdaptedPreorder> preorders = new ArrayList<>();
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
+     * A {@code legacyPreorder} from a v1.3 data file is added to {@code preorders} in the current format.
      */
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("address") String address,
-            @JsonProperty("postalCode") String postalCode, @JsonProperty("tags") List<JsonAdaptedTag> tags) {
+            @JsonProperty("postalCode") String postalCode, @JsonProperty("tags") List<JsonAdaptedTag> tags,
+            @JsonProperty("preorders") List<JsonAdaptedPreorder> preorders,
+            @JsonProperty("preorder") JsonAdaptedLegacyPreorder legacyPreorder) {
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -47,10 +56,30 @@ class JsonAdaptedPerson {
         if (tags != null) {
             this.tags.addAll(tags);
         }
+        if (preorders != null) {
+            this.preorders.addAll(preorders);
+        }
+        if (legacyPreorder != null) {
+            this.preorders.add(legacyPreorder.toJsonAdaptedPreorder());
+        }
     }
 
-    public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags) {
-        this(name, phone, email, address, null, tags);
+    /** Backwards-compatible constructor for customers without a preorder. */
+    public JsonAdaptedPerson(String name, String phone, String email, String address,
+            List<JsonAdaptedTag> tags) {
+        this(name, phone, email, address, null, tags, null, null);
+    }
+
+    /** Creates an adapted customer with a postal code and no preorder. */
+    public JsonAdaptedPerson(String name, String phone, String email, String address, String postalCode,
+            List<JsonAdaptedTag> tags) {
+        this(name, phone, email, address, postalCode, tags, null, null);
+    }
+
+    /** Creates an adapted customer from preorder data without a postal code. */
+    public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags,
+            List<JsonAdaptedPreorder> preorders, JsonAdaptedLegacyPreorder legacyPreorder) {
+        this(name, phone, email, address, null, tags, preorders, legacyPreorder);
     }
 
     /**
@@ -65,6 +94,7 @@ class JsonAdaptedPerson {
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
+        source.getPreorder().ifPresent(preorder -> preorders.add(new JsonAdaptedPreorder(preorder)));
     }
 
     /**
@@ -115,7 +145,18 @@ class JsonAdaptedPerson {
         final PostalCode modelPostalCode = postalCode == null ? null : new PostalCode(postalCode);
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
-        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelPostalCode, modelTags);
+
+        if (preorders.contains(null)) {
+            throw new IllegalValueException(MESSAGE_NULL_PREORDER);
+        }
+        if (preorders.size() > 1) {
+            throw new IllegalValueException(MESSAGE_TOO_MANY_PREORDERS);
+        }
+        final Optional<Preorder> modelPreorder = preorders.isEmpty()
+                ? Optional.empty()
+                : Optional.of(preorders.get(0).toModelType());
+
+        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelPostalCode, modelTags, modelPreorder);
     }
 
 }

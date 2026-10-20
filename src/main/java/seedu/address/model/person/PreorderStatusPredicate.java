@@ -1,0 +1,63 @@
+package seedu.address.model.person;
+
+import static java.util.Objects.requireNonNull;
+
+import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
+
+import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.preorder.Preorder;
+
+/**
+ * Tests that a {@code Person} has a preorder item with one of the accepted statuses.
+ * Persons without a preorder, or whose preorder has no items, never match.
+ */
+public class PreorderStatusPredicate implements Predicate<Person> {
+    private final Set<ItemStatus> statuses;
+
+    /**
+     * Creates a predicate with an immutable copy of the accepted {@code statuses}.
+     * An empty set matches no persons.
+     *
+     * @throws NullPointerException If {@code statuses} or any of its elements is null.
+     */
+    public PreorderStatusPredicate(Set<ItemStatus> statuses) {
+        requireNonNull(statuses);
+        this.statuses = Set.copyOf(statuses);
+    }
+
+    @Override
+    public boolean test(Person person) {
+        requireNonNull(person);
+        return person.getPreorder()
+                .map(Preorder::getItems)
+                .orElse(List.of())
+                .stream()
+                .anyMatch(item -> statuses.contains(item.getStatus()));
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        }
+
+        if (!(other instanceof PreorderStatusPredicate otherPreorderStatusPredicate)) {
+            return false;
+        }
+
+        return statuses.equals(otherPreorderStatusPredicate.statuses);
+    }
+
+    @Override
+    public int hashCode() {
+        return statuses.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this).add("statuses", statuses).toString();
+    }
+}

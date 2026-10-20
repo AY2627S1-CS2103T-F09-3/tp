@@ -7,6 +7,7 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
+import static seedu.address.testutil.TypicalPersons.BOB;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.Collection;
@@ -50,6 +51,16 @@ public class AddressBookTest {
         AddressBookStub newData = new AddressBookStub(newPersons);
 
         assertThrows(DuplicatePersonException.class, () -> addressBook.resetData(newData));
+    }
+
+    @Test
+    public void resetData_withCaseAndSpacingDuplicateNames_throwsDuplicatePersonException() {
+        addressBook.addPerson(BOB);
+        Person editedAlice = new PersonBuilder(ALICE).withName("  ALICE   PAULINE  ").build();
+        AddressBookStub newData = new AddressBookStub(List.of(ALICE, editedAlice));
+
+        assertThrows(DuplicatePersonException.class, () -> addressBook.resetData(newData));
+        assertEquals(List.of(BOB), addressBook.getPersonList());
     }
 
     @Test
