@@ -17,6 +17,20 @@ public class ArgumentTokenizerTest {
     private final Prefix hatQ = new Prefix("^Q");
 
     @Test
+    public void tokenize_terminalCareOf_remainsPartOfAddress() {
+        ArgumentMultimap values = ArgumentTokenizer.tokenize(" a/Block 123 c/o", PREFIX_ADDRESS, PREFIX_POSTAL_CODE);
+        assertArgumentPresent(values, PREFIX_ADDRESS, "Block 123 c/o");
+        assertArgumentAbsent(values, PREFIX_POSTAL_CODE);
+    }
+
+    @Test
+    public void tokenize_emptyPostalCodeAfterAddress_remainsAnExplicitField() {
+        ArgumentMultimap values = ArgumentTokenizer.tokenize(" a/Block 123 c/", PREFIX_ADDRESS, PREFIX_POSTAL_CODE);
+        assertArgumentPresent(values, PREFIX_ADDRESS, "Block 123");
+        assertArgumentPresent(values, PREFIX_POSTAL_CODE, "");
+    }
+
+    @Test
     public void tokenize_careOfAddress_keepsAddressAndPostalCodeSeparate() {
         for (String args : new String[]{" a/Block 123 c/o Alice c/012345",
             " c/012345 a/Block 123 c/o Alice"}) {

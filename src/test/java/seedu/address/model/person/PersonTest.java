@@ -2,6 +2,7 @@ package seedu.address.model.person;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
@@ -49,6 +50,36 @@ public class PersonTest {
         Item tarts = new ItemBuilder().build();
         Person person = new PersonBuilder(ALICE).withPreorder(tarts).build();
         assertEquals(Optional.of(new Preorder(List.of(tarts))), person.getPreorder());
+    }
+
+    @Test
+    public void constructor_withoutPostalCode_preservesOptionalPreorder() {
+        Preorder preorder = new Preorder(List.of(new ItemBuilder().build()));
+        for (Optional<Preorder> optionalPreorder : List.of(Optional.<Preorder>empty(), Optional.of(preorder))) {
+            Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                    ALICE.getTags(), optionalPreorder);
+            Person expected = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                    null, ALICE.getTags(), optionalPreorder);
+            assertNull(person.getPostalCode());
+            assertEquals(optionalPreorder, person.getPreorder());
+            assertEquals(expected, person);
+        }
+    }
+
+    @Test
+    public void equals_postalCodeChanges_equalityChangesButIdentityDoesNot() {
+        Person original = new PersonBuilder(ALICE).withPostalCode("012345").build();
+        Person copy = new PersonBuilder(original).build();
+        Person differentPostalCode = new PersonBuilder(original).withPostalCode("654321").build();
+        Person missingPostalCode = new PersonBuilder(original).withPostalCode(null).build();
+
+        assertEquals(original, copy);
+        assertEquals(original.hashCode(), copy.hashCode());
+        assertFalse(original.equals(differentPostalCode));
+        assertFalse(original.equals(missingPostalCode));
+        assertFalse(missingPostalCode.equals(original));
+        assertTrue(original.isSamePerson(differentPostalCode));
+        assertTrue(original.isSamePerson(missingPostalCode));
     }
 
     @Test

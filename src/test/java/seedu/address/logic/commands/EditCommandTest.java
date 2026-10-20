@@ -118,6 +118,25 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_editingContactDetails_preservesPostalCodeTagsAndPreorder() throws Exception {
+        Person original = new PersonBuilder().withPostalCode("000001").withTags("regular")
+                .withPreorder("Chocolate cake", ItemStatus.PREPARED).build();
+        Model postalModel = new ModelManager();
+        postalModel.addPerson(original);
+
+        EditCommand command = new EditCommandParser().parse("1 p/98765432 e/new@example.com a/456 New Road");
+        Person expected = new PersonBuilder(original).withPhone("98765432").withEmail("new@example.com")
+                .withAddress("456 New Road").build();
+        command.execute(postalModel);
+
+        Person edited = postalModel.getAddressBook().getPersonList().getFirst();
+        assertEquals(expected, edited);
+        assertEquals("000001", edited.getPostalCode().value);
+        assertEquals(original.getTags(), edited.getTags());
+        assertEquals(original.getPreorder(), edited.getPreorder());
+    }
+
+    @Test
     public void execute_editingPostalCode_preservesTagsAndPreorder() throws CommandException {
         Person original = new PersonBuilder().withName("Postal Customer")
                 .withPostalCode("012345").withTags("old")

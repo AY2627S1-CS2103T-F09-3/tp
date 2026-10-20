@@ -13,9 +13,35 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
+import seedu.address.model.person.PostalCode;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 
 public class EditPersonDescriptorTest {
+
+    @Test
+    public void equals_onlyPostalCodeDiffers_returnsFalse() {
+        EditPersonDescriptor missingPostalCode = new EditPersonDescriptor();
+        EditPersonDescriptor postalCode = new EditPersonDescriptorBuilder().withPostalCode("012345").build();
+        EditPersonDescriptor samePostalCode = new EditPersonDescriptorBuilder().withPostalCode("012345").build();
+        EditPersonDescriptor differentPostalCode = new EditPersonDescriptorBuilder().withPostalCode("654321").build();
+
+        assertEquals(postalCode, samePostalCode);
+        assertFalse(postalCode.equals(differentPostalCode));
+        assertFalse(postalCode.equals(missingPostalCode));
+        assertFalse(missingPostalCode.equals(postalCode));
+        assertTrue(postalCode.isAnyFieldEdited());
+    }
+
+    @Test
+    public void constructor_copy_preservesPostalCodeIndependently() {
+        EditPersonDescriptor original = new EditPersonDescriptorBuilder().withPostalCode("012345").build();
+        EditPersonDescriptor copy = new EditPersonDescriptor(original);
+        assertEquals(original, copy);
+
+        original.setPostalCode(new PostalCode("654321"));
+        assertEquals(new PostalCode("012345"), copy.getPostalCode().orElseThrow());
+        assertFalse(original.equals(copy));
+    }
 
     @Test
     public void equals() {

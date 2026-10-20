@@ -3,14 +3,37 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
 
 public class GroupPostalCommandTest {
+
+    @Test
+    public void execute_boundaryCodesAndMultipleMissingCodes_ordersByCodeThenName() {
+        Person first = new PersonBuilder().withName("First").withPostalCode("000000").build();
+        Person sameCodeAmy = new PersonBuilder().withName("Amy").withPostalCode("000001").build();
+        Person sameCodeZoe = new PersonBuilder().withName("Zoe").withPostalCode("000001").build();
+        Person lastCode = new PersonBuilder().withName("Last Code").withPostalCode("999999").build();
+        Person missingAmy = new PersonBuilder().withName("Amy Missing").withPostalCode(null).build();
+        Person missingZoe = new PersonBuilder().withName("Zoe Missing").withPostalCode(null).build();
+        ModelManager model = new ModelManager();
+        List.of(missingZoe, sameCodeZoe, lastCode, missingAmy, sameCodeAmy, first).forEach(model::addPerson);
+        AddressBook original = new AddressBook(model.getAddressBook());
+
+        CommandResult result = new GroupPostalCommand().execute(model);
+
+        assertEquals(GroupPostalCommand.MESSAGE_SUCCESS, result.getFeedbackToUser());
+        assertEquals(List.of(first, sameCodeAmy, sameCodeZoe, lastCode, missingAmy, missingZoe),
+                model.getFilteredPersonList());
+        assertEquals(original, model.getAddressBook());
+    }
 
     @Test
     public void execute_repeatedGroupingAndList_preserveStoredOrder() {
