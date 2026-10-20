@@ -72,6 +72,9 @@ public class EditPersonDescriptorBuilder {
         return this;
     }
 
+    /**
+     * Sets the postal code of the {@code EditPersonDescriptor} that we are building.
+     */
     public EditPersonDescriptorBuilder withPostalCode(String postalCode) {
         descriptor.setPostalCode(new PostalCode(postalCode));
         return this;

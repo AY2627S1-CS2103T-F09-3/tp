@@ -5,6 +5,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -42,6 +43,15 @@ public class JsonSerializableAddressBookTest {
                 JsonSerializableAddressBook.class).get();
         assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_DUPLICATE_PERSON,
                 dataFromFile::toModelType);
+    }
+
+    @Test
+    public void toModelType_invalidPostalCode_throwsIllegalValueException() {
+        JsonAdaptedPerson invalidPerson = new JsonAdaptedPerson(
+                "Alice Pauline", "94351253", "alice@example.com", "123, Jurong West Ave 6, #08-111",
+                "12345", List.of());
+        JsonSerializableAddressBook data = new JsonSerializableAddressBook(List.of(invalidPerson));
+        assertThrows(IllegalValueException.class, data::toModelType);
     }
 
 }

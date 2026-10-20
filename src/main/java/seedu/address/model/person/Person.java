@@ -33,6 +33,16 @@ public class Person {
         this(name, phone, email, address, null, tags);
     }
 
+    /**
+     * Creates a person with the given details and optional postal code.
+     *
+     * @param name person name
+     * @param phone person phone number
+     * @param email person email address
+     * @param address person address
+     * @param postalCode person postal code, or {@code null} for legacy data
+     * @param tags person tags
+     */
     public Person(Name name, Phone phone, Email email, Address address, PostalCode postalCode, Set<Tag> tags) {
         requireAllNonNull(name, phone, email, address, tags);
         this.name = name;

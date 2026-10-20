@@ -10,6 +10,11 @@ public class PostalCode {
 
     public final String value;
 
+    /**
+     * Constructs a {@code PostalCode}.
+     *
+     * @param postalCode a six-digit postal code
+     */
     public PostalCode(String postalCode) {
         requireNonNull(postalCode);
         checkArgument(isValidPostalCode(postalCode), MESSAGE_CONSTRAINTS);

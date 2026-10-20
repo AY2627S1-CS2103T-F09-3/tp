@@ -81,6 +81,12 @@ public class ParserUtil {
         return new Address(trimmedAddress);
     }
 
+    /**
+     * Parses a {@code String postalCode} into a {@code PostalCode}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code postalCode} is invalid.
+     */
     public static PostalCode parsePostalCode(String postalCode) throws ParseException {
         requireNonNull(postalCode);
         String trimmedPostalCode = postalCode.trim();

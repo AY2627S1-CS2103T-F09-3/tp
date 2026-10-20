@@ -16,6 +16,7 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.PostalCode;
 
 public class JsonAdaptedPersonTest {
     private static final String INVALID_NAME = "R@chel";
@@ -23,6 +24,9 @@ public class JsonAdaptedPersonTest {
     private static final String INVALID_ADDRESS = " ";
     private static final String INVALID_EMAIL = "example.com";
     private static final String INVALID_TAG = "#friend";
+    private static final String VALID_POSTAL_CODE = "123456";
+    private static final String VALID_LEADING_ZERO_POSTAL_CODE = "012345";
+    private static final String INVALID_POSTAL_CODE = "12345";
 
     private static final String VALID_NAME = BENSON.getName().toString();
     private static final String VALID_PHONE = BENSON.getPhone().toString();
@@ -43,6 +47,27 @@ public class JsonAdaptedPersonTest {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
                 VALID_TAGS);
         assertEquals(null, person.toModelType().getPostalCode());
+    }
+
+    @Test
+    public void toModelType_validPostalCode_returnsPostalCode() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_POSTAL_CODE, VALID_TAGS);
+        assertEquals(VALID_POSTAL_CODE, person.toModelType().getPostalCode().value);
+    }
+
+    @Test
+    public void toModelType_leadingZeroPostalCode_preservesLeadingZero() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_LEADING_ZERO_POSTAL_CODE, VALID_TAGS);
+        assertEquals(VALID_LEADING_ZERO_POSTAL_CODE, person.toModelType().getPostalCode().value);
+    }
+
+    @Test
+    public void toModelType_invalidPostalCode_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                INVALID_POSTAL_CODE, VALID_TAGS);
+        assertThrows(IllegalValueException.class, PostalCode.MESSAGE_CONSTRAINTS, person::toModelType);
     }
 
     @Test

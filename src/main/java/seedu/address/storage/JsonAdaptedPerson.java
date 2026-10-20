@@ -109,6 +109,9 @@ class JsonAdaptedPerson {
             throw new IllegalValueException(Address.MESSAGE_CONSTRAINTS);
         }
         final Address modelAddress = new Address(address);
+        if (postalCode != null && !PostalCode.isValidPostalCode(postalCode)) {
+            throw new IllegalValueException(PostalCode.MESSAGE_CONSTRAINTS);
+        }
         final PostalCode modelPostalCode = postalCode == null ? null : new PostalCode(postalCode);
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
