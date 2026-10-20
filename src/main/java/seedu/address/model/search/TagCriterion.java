@@ -21,6 +21,10 @@ public final class TagCriterion implements PersonCriterion {
         this.tag = requireNonNull(tag);
     }
 
+    public Tag getTag() {
+        return tag;
+    }
+
     @Override
     public boolean test(Person person) {
         requireNonNull(person);

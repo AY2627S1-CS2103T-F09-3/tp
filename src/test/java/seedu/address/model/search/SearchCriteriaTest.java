@@ -12,6 +12,7 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -48,6 +49,18 @@ public class SearchCriteriaTest {
         assertTrue(search.test(ALICE));
         assertFalse(search.test(BENSON));
         assertFalse(search.test(new PersonBuilder(ALICE).withTags().build()));
+    }
+
+    @Test
+    public void getCriteria_returnsImmutableSet() {
+        SearchCriteria search = new SearchCriteria(List.of(NAME_CRITERION, TAG_CRITERION));
+
+        assertEquals(Set.of(NAME_CRITERION, TAG_CRITERION), search.getCriteria());
+        assertThrows(UnsupportedOperationException.class, () -> search.getCriteria().clear());
+        assertThrows(UnsupportedOperationException.class, () ->
+                search.getCriteria().add(new TextContainsCriterion(PHONE, "9435")));
+        assertTrue(search.test(ALICE));
+        assertFalse(search.test(BENSON));
     }
 
     @Test

@@ -26,6 +26,13 @@ public class PreorderStatusPredicate implements PersonCriterion {
         this.statuses = Set.copyOf(statuses);
     }
 
+    /**
+     * Returns the immutable set of accepted statuses.
+     */
+    public Set<PreorderStatus> getStatuses() {
+        return statuses;
+    }
+
     @Override
     public boolean test(Person person) {
         requireNonNull(person);

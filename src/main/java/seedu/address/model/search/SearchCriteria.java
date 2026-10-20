@@ -26,6 +26,13 @@ public final class SearchCriteria implements Predicate<Person> {
         this.criteria = Set.copyOf(criteria);
     }
 
+    /**
+     * Returns the immutable criteria without prescribing their display order.
+     */
+    public Set<PersonCriterion> getCriteria() {
+        return criteria;
+    }
+
     @Override
     public boolean test(Person person) {
         requireNonNull(person);
