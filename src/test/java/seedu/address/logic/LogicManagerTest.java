@@ -10,7 +10,7 @@ import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.model.Model.SEARCH_CRITERIA_SHOW_ALL_PERSONS;
-import static seedu.address.model.preorder.PreorderStatus.PENDING;
+import static seedu.address.model.preorder.ItemStatus.PENDING;
 import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
 import static seedu.address.model.search.TextContainsCriterion.Field.PHONE;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -48,7 +48,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PreorderStatusPredicate;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
@@ -195,15 +195,15 @@ public class LogicManagerTest {
         assertEquals(List.of(editedElle, PENDING_BENSON), logic.getFilteredPersonList());
         assertEquals(criteria, logic.getActiveSearchCriteria());
 
-        logic.execute("order 1 s/completed");
+        Person completedElle = new PersonBuilder(editedElle).withPreorder("1 strawberry cake",
+                ItemStatus.COMPLETED).build();
+        model.setPerson(editedElle, completedElle);
 
         assertEquals(List.of(PENDING_BENSON), logic.getFilteredPersonList());
         assertEquals(criteria, logic.getActiveSearchCriteria());
 
         logic.execute("deleteorder 1");
 
-        Person completedElle = new PersonBuilder(editedElle).withPreorder("1 strawberry cake",
-                PreorderStatus.COMPLETED).build();
         assertEquals(List.of(COMPLETED_DANIEL, completedElle, ALICE, PREPARED_CARL, BENSON, newPerson),
                 model.getAddressBook().getPersonList());
         assertEquals(List.of(), logic.getFilteredPersonList());
@@ -368,7 +368,7 @@ public class LogicManagerTest {
 
         for (String input : List.of("track s/", "track s/UNKNOWN", "track s/PENDING p/123",
                 "track s/PENDING extra")) {
-            assertCommandFailurePreservesFilteredList(input, ParseException.class, PreorderStatus.MESSAGE_CONSTRAINTS);
+            assertCommandFailurePreservesFilteredList(input, ParseException.class, ItemStatus.MESSAGE_CONSTRAINTS);
         }
     }
 

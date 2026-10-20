@@ -2,18 +2,20 @@ package seedu.address.model.person;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.List;
 import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.preorder.Preorder;
 import seedu.address.model.search.PersonCriterion;
 
 /**
- * Tests that a {@code Person} has a preorder with one of the accepted statuses.
- * Persons without a preorder never match.
+ * Tests that a {@code Person} has a preorder item with one of the accepted statuses.
+ * Persons without a preorder, or whose preorder has no items, never match.
  */
 public class PreorderStatusPredicate implements PersonCriterion {
-    private final Set<PreorderStatus> statuses;
+    private final Set<ItemStatus> statuses;
 
     /**
      * Creates a predicate with an immutable copy of the accepted {@code statuses}.
@@ -21,7 +23,7 @@ public class PreorderStatusPredicate implements PersonCriterion {
      *
      * @throws NullPointerException If {@code statuses} or any of its elements is null.
      */
-    public PreorderStatusPredicate(Set<PreorderStatus> statuses) {
+    public PreorderStatusPredicate(Set<ItemStatus> statuses) {
         requireNonNull(statuses);
         this.statuses = Set.copyOf(statuses);
     }
@@ -30,8 +32,10 @@ public class PreorderStatusPredicate implements PersonCriterion {
     public boolean test(Person person) {
         requireNonNull(person);
         return person.getPreorder()
-                .map(preorder -> statuses.contains(preorder.getStatus()))
-                .orElse(false);
+                .map(Preorder::getItems)
+                .orElse(List.of())
+                .stream()
+                .anyMatch(item -> statuses.contains(item.getStatus()));
     }
 
     @Override

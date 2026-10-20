@@ -77,7 +77,7 @@ Search criteria determine which customers are displayed. Keeping the criteria pr
 | Commands | Effect on the current search |
 |----------|------------------------------|
 | `find`, `track` | Each successful command replaces the previous criteria and searches all stored customers. |
-| `add`, `edit`, `delete`, `tag`, `untag`, `order`, `deleteorder` | Preserve the active criteria and refresh the matching results. |
+| `add`, `edit`, `delete`, `tag`, `untag`, `deleteorder` | Preserve the active criteria and refresh the matching results. |
 | `list` | Clears the criteria and shows all customers. |
 
 During a session, use `list` to explicitly return to an unfiltered view. A `find` that happens to match every customer still has active criteria. Empty results do not clear the criteria either. Updates and deletions can change the displayed indexes, so check them before your next command.
@@ -86,7 +86,6 @@ Examples, using the customer's current displayed `INDEX`:
 
 | Search and update | Result |
 |-------------------|--------|
-| `track s/pending`, then `order INDEX s/completed` | The customer disappears from the pending results. |
 | `track`, then `deleteorder INDEX` | The customer disappears from tracking because they no longer have a preorder. Their customer record remains saved. |
 | `find n/Alice`, then `deleteorder INDEX` | Alice remains visible because her name still matches the search. |
 
@@ -113,7 +112,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS`
 * Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
 * A person is a duplicate if their name matches an existing person's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
 * Duplicate checks include all persons in the address book, even those hidden by a `find` command.
-* New persons are added without tags or a preorder. Use [`tag`](#tagging-a-person-tag) and [`order`](#adding-or-updating-a-preorder-order) to add tags or orders afterwards.
+* New persons are added without tags or a preorder. Use [`tag`](#tagging-a-person-tag) to add tags afterwards.
 * Adding preserves the current search criteria. The new person appears only if they match. For example, they stay hidden after a tag search or `track` because they have no tags or preorder yet. Use `list` to show all customers.
 
 
@@ -240,7 +239,6 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 * Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
 * Results use the current displayed indices. Use `list` to show all customers again.
 * Use lowercase prefixes. A prefix starts at the beginning of the arguments or after whitespace. Unknown letter-based prefixes such as `x/` are rejected; embedded slashes such as `#04/08` remain ordinary text.
-* Bare-name searches are no longer accepted: use `find n/Alice` instead of `find Alice`.
 
 Examples:
 
@@ -254,7 +252,7 @@ Examples:
 
 | Input | Result |
 |-------|--------|
-| `find`, `find Alice`, or `find Alice t/regular` | Invalid command format, followed by usage instructions. |
+| `find` | Invalid command format; supply at least one prefixed criterion. |
 | `find n/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
 | `find x/Alice` or `find n/Alice s/pending` | Invalid command format; only the five prefixes above are supported. |
 | `find t/regular t/vip` | `Multiple values specified for the following single-valued field(s): t/` |
@@ -262,24 +260,16 @@ Examples:
 
 Rejected searches leave the current criteria and results unchanged. If no customers match a valid search, the list is empty and the feedback reports `0 person(s) listed!`. Use `list` to clear the search.
 
-### Adding or updating a preorder: `order`
+### Viewing preorders: `track`
 
-Records or updates a customer's current preorder. Each customer can have at most one current preorder.
+Format: `track [s/STATUS]`
 
-Format: `order INDEX [d/DETAILS] [s/STATUS]`
+* `track` shows customers with at least one active item (`PENDING` or `PREPARED`) in their preorder.
+* `track s/COMPLETED` shows customers with at least one `COMPLETED` item. You can also filter by `PENDING` or `PREPARED`; status input is case-insensitive.
+* Each successful `track` searches all customers and replaces the previous `find` or `track` criteria. Rejected commands preserve the current criteria and results.
+* Customers without preorders, or whose preorder has no items yet, are excluded. Use `list` to show all customers again.
 
-* `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
-* For a customer **without a preorder**, both `d/DETAILS` and `s/STATUS` are required.
-* For a customer **with a preorder**, supply either field or both. Supplied fields replace their existing values; omitted fields remain unchanged. Contact details and tags are preserved.
-* `DETAILS` must be non-blank, on a single line, and at most 200 characters long. Leading and trailing whitespace is removed.
-* `STATUS` must be `PENDING`, `PREPARED`, or `COMPLETED`. Status input is case-insensitive, so `s/pending`, `s/Prepared`, and `s/COMPLETED` are all accepted.
-* A supplied prefix must have a value. For example, `order 1 d/` is invalid.
-* Each prefix may appear at most once and may appear in any order
-* Put a space before each prefix.
-* `order INDEX` without either field leaves an existing preorder unchanged and reports `No preorder changes specified.` For a customer without a preorder, it reports that both fields are required.
-* Adding or updating an order preserves the current filter. If a status change means the customer no longer matches a `track` filter, their card disappears from that view. Check the displayed indices again before your next command. Use `list` to show all customers. A command with neither field leaves the current list unchanged.
-
-The customer's card shows an `Order: DETAILS` chip followed by a coloured `Status: STATUS` chip. Customers without preorders have no preorder chips.
+Each item in a preorder appears on the customer's card on its own line, for example `1. Pineapple Tarts - Quantity 2 - PENDING - "Less sugar"`. Its colour shows its status:
 
 Status | Meaning | Badge colour
 -------|---------|-------------
@@ -287,24 +277,7 @@ Status | Meaning | Badge colour
 `PREPARED` | Ready for collection or delivery | Blue
 `COMPLETED` | Collected or delivered | Green
 
-You can change a preorder to any of these statuses. Completing an order keeps its details; updating it later replaces the supplied fields rather than creating an order history.
-
-Examples (assuming customer 1 exists):
-
-* `order 1 d/2 chocolate cakes, no nuts s/PENDING` creates a preorder, or replaces both fields of an existing preorder.
-* `order 1 d/3 chocolate cakes, no nuts` changes only the details of an existing preorder.
-* `order 1 s/PREPARED` changes only the status of an existing preorder.
-* `order 1 s/COMPLETED` marks the existing preorder as completed.
-
-### Viewing preorders: `track`
-
-Format: `track [s/STATUS]`
-
-* `track` shows customers with active preorders (`PENDING` or `PREPARED`).
-* `track s/COMPLETED` shows customers with completed preorders. You can also filter by `PENDING` or `PREPARED`; status input is case-insensitive.
-* Each successful `track` searches all customers and replaces the previous `find` or `track` criteria. Rejected commands preserve the current criteria and results.
-* Customers without preorders are excluded. Use `list` to show all customers again.
-* To update a result, use its displayed index with `order`. The current filter is preserved; customers whose updated status no longer matches it disappear from the view.
+If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Quantity needed` instead of a quantity.
 
 ### Deleting a preorder: `deleteorder`
 
@@ -313,13 +286,13 @@ Deletes a customer's current preorder, for example when the customer cancels, wh
 Format: `deleteorder INDEX`
 
 * `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
-* Only the preorder is removed. The customer's name, phone number, email, address and tags are not changed.
+* The whole preorder is removed, including all its items. The customer's name, phone number, email, address and tags are not changed.
 * If the customer has no preorder, nothing is changed and the app shows `NAME has no preorder to delete.`, for example `Alex Yeoh has no preorder to delete.`
 * If `INDEX` is larger than the displayed list, the app shows `The person index provided is invalid.`
-* A deleted preorder cannot be restored. To record it again, use `order`.
+* A deleted preorder cannot be restored.
 * Deleting a preorder keeps the current filter. After `track`, the customer no longer has a preorder, so they disappear from that view. Check the displayed indices again before your next command. Use `list` to show all customers.
 
-On success, the app shows the deleted preorder, for example `Deleted preorder for Alex Yeoh: 2 chocolate cakes (PENDING)`.
+On success, the app shows whose preorder was deleted, for example `Deleted preorder for Alex Yeoh`.
 
 Examples:
 
@@ -400,7 +373,6 @@ Action     | Format, Examples
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]` (at least one criterion)<br> e.g., `find n/James t/regular`
-**Order**  | `order INDEX [d/DETAILS] [s/STATUS]` (both fields required for a new preorder)<br> e.g., `order 1 d/2 chocolate cakes s/PENDING`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
 **Tag**    | `tag INDEX t/TAG`<br> e.g., `tag 1 t/regular`
