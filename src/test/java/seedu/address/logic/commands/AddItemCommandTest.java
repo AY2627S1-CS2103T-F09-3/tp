@@ -1,0 +1,147 @@
+package seedu.address.logic.commands;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
+import static seedu.address.testutil.TypicalPersons.ALICE;
+import static seedu.address.testutil.TypicalPersons.BENSON;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
+import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
+import seedu.address.model.Model;
+import seedu.address.model.ModelManager;
+import seedu.address.model.UserPrefs;
+import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Person;
+import seedu.address.model.preorder.Item;
+import seedu.address.model.preorder.ItemStatus;
+import seedu.address.testutil.AddressBookBuilder;
+import seedu.address.testutil.ItemBuilder;
+import seedu.address.testutil.PersonBuilder;
+
+/** Tests item addition and its interaction with the model and filtered views. */
+public class AddItemCommandTest {
+    private static final Index FIRST = Index.fromOneBased(1);
+    private static final Item ITEM = new ItemBuilder().withRemark("Less sugar").build();
+
+    @Test
+    public void execute_noPreorder_createsPreorder() throws Exception {
+        Model model = createModel(ALICE, BENSON);
+        CommandResult result = new AddItemCommand(FIRST, ITEM).execute(model);
+        assertEquals(new CommandResult(String.format(AddItemCommand.MESSAGE_ADD_ITEM_SUCCESS,
+                ALICE.getName(), ITEM.getName(), ITEM.getQuantity().orElseThrow(), ITEM.getStatus())), result);
+        assertEquals(List.of(new PersonBuilder(ALICE).withPreorder(ITEM).build(), BENSON),
+                model.getAddressBook().getPersonList());
+        assertEquals(Optional.empty(), ALICE.getPreorder());
+    }
+
+    @Test
+    public void execute_emptyPreorder_addsFirstItem() throws Exception {
+        Person original = new PersonBuilder(ALICE).withPreorder().build();
+        Model model = createModel(original);
+        new AddItemCommand(FIRST, ITEM).execute(model);
+        assertEquals(List.of(new PersonBuilder(ALICE).withPreorder(ITEM).build()),
+                model.getAddressBook().getPersonList());
+        assertEquals(List.of(), original.getPreorder().orElseThrow().getItems());
+    }
+
+    @Test
+    public void execute_existingPreorder_preservesItemsAndAppendsDuplicate() throws Exception {
+        Item migrated = new ItemBuilder().withoutQuantity().withStatus(ItemStatus.COMPLETED).build();
+        Person original = new PersonBuilder(ALICE).withPreorder(ITEM, migrated).build();
+        Model model = createModel(original, BENSON);
+        new AddItemCommand(FIRST, ITEM).execute(model);
+        assertEquals(List.of(new PersonBuilder(ALICE).withPreorder(ITEM, migrated, ITEM).build(), BENSON),
+                model.getAddressBook().getPersonList());
+        assertEquals(List.of(ITEM, migrated), original.getPreorder().orElseThrow().getItems());
+    }
+
+    @Test
+    public void execute_filteredList_targetsDisplayedCustomerAndPreservesFilter() throws Exception {
+        Model model = createModel(BENSON, ALICE);
+        model.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+        new AddItemCommand(FIRST, ITEM).execute(model);
+        Person expected = new PersonBuilder(ALICE).withPreorder(ITEM).build();
+        assertEquals(List.of(BENSON, expected), model.getAddressBook().getPersonList());
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_statusFilter_preservesFilterAfterAddingCompletedItem() throws Exception {
+        Person original = new PersonBuilder(ALICE).withPreorder(ITEM).build();
+        Model model = createModel(original, BENSON);
+        new TrackCommand(Optional.of(ItemStatus.PENDING)).execute(model);
+        Item completed = new ItemBuilder().withStatus(ItemStatus.COMPLETED).build();
+        new AddItemCommand(FIRST, completed).execute(model);
+        Person expected = new PersonBuilder(ALICE).withPreorder(ITEM, completed).build();
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+        assertEquals(List.of(expected, BENSON), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_invalidIndex_failureWithoutMutation() {
+        AddItemCommand second = new AddItemCommand(Index.fromOneBased(2), ITEM);
+        assertCommandFailure(second, createModel(ALICE), Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertCommandFailure(new AddItemCommand(FIRST, ITEM), createModel(),
+                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        Model filtered = createModel(BENSON, ALICE);
+        filtered.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+        assertCommandFailure(second, filtered, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+    }
+
+    @Test
+    public void constructor_nullArguments_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new AddItemCommand(null, ITEM));
+        assertThrows(NullPointerException.class, () -> new AddItemCommand(FIRST, null));
+    }
+
+    @Test
+    public void constructor_missingQuantity_throwsIllegalArgumentException() {
+        Item migrated = new ItemBuilder().withoutQuantity().build();
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                new AddItemCommand(FIRST, migrated));
+        assertEquals(AddItemCommand.MESSAGE_QUANTITY_REQUIRED, exception.getMessage());
+    }
+
+    @Test
+    public void execute_nullModel_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new AddItemCommand(FIRST, ITEM).execute(null));
+    }
+
+    @Test
+    public void equalsAndHashCode_compareIndexAndItem() {
+        AddItemCommand command = new AddItemCommand(FIRST, ITEM);
+        AddItemCommand copy = new AddItemCommand(FIRST, new ItemBuilder(ITEM).build());
+        assertEquals(command, command);
+        assertEquals(command, copy);
+        assertEquals(command.hashCode(), copy.hashCode());
+        assertNotEquals(command, new AddItemCommand(Index.fromOneBased(2), ITEM));
+        assertNotEquals(command, new AddItemCommand(FIRST, new ItemBuilder(ITEM).withName("Cookies").build()));
+        assertNotEquals(command, new AddItemCommand(FIRST, new ItemBuilder(ITEM).withQuantity("3").build()));
+        assertNotEquals(command, new AddItemCommand(FIRST, new ItemBuilder(ITEM).withRemark("Gift").build()));
+        Item completed = new ItemBuilder(ITEM).withStatus(ItemStatus.COMPLETED).build();
+        assertNotEquals(command, new AddItemCommand(FIRST, completed));
+        assertNotEquals(command, null);
+        assertNotEquals(command, "additem");
+    }
+
+    @Test
+    public void toString_includesIndexAndItem() {
+        String expected = AddItemCommand.class.getCanonicalName() + "{index=" + FIRST + ", item=" + ITEM + "}";
+        assertEquals(expected, new AddItemCommand(FIRST, ITEM).toString());
+    }
+
+    private Model createModel(Person... persons) {
+        AddressBookBuilder builder = new AddressBookBuilder();
+        for (Person person : persons) {
+            builder.withPerson(person);
+        }
+        return new ModelManager(builder.build(), new UserPrefs());
+    }
+}
