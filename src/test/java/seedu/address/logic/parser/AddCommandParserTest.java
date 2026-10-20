@@ -149,7 +149,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_addressContainingUnrecognizedPrefixes_success() {
-        String address = "Block 123 x/foo z/bar";
+        String address = "Block 123 c/o Alice x/foo";
         Person expectedPerson = new PersonBuilder(BOB).withPostalCode("654321").withAddress(address).withTags().build();
         assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + " a/" + address
                 + POSTAL_CODE_DESC_BOB,

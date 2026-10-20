@@ -15,10 +15,11 @@ public class PostalCodeTest {
 
     @Test
     public void constructor_invalidPostalCode_throws() {
-        assertThrows(IllegalArgumentException.class, () -> new PostalCode("12345"));
-        assertThrows(IllegalArgumentException.class, () -> new PostalCode("1234567"));
-        assertThrows(IllegalArgumentException.class, () -> new PostalCode("12A456"));
-        assertThrows(IllegalArgumentException.class, () -> new PostalCode("      "));
+        for (String invalid : new String[]{"", "12345", "1234567", "12A456", "      ", "123 45", "-12345",
+            "123.45", " 123456", "123456 ", "\u0661\u0662\u0663\u0664\u0665\u0666"}) {
+            assertThrows(IllegalArgumentException.class, () -> new PostalCode(invalid));
+        }
+        assertThrows(NullPointerException.class, () -> new PostalCode(null));
     }
 
     @Test

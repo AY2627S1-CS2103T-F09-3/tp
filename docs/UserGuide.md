@@ -107,7 +107,7 @@ Examples:
 
 ### Listing all persons: `list`
 
-Shows a list of all persons in the address book.
+Shows a list of all persons in the address book in their saved order. This also clears postal-code grouping.
 
 Format: `list`
 
@@ -196,15 +196,20 @@ Common errors:
 
 If several inputs are invalid, only the first detected error is shown. The index format is checked before the tag input; whether the index exists in the displayed list is checked after both inputs are valid.
 
-Customers from old data files without postal codes remain usable and display `Postal code needed`.
-
 ### Grouping customers by postal code: `group postal`
 
 Groups the currently displayed customers by postal code without changing the saved customer order.
 
 Format: `group postal`
 
-Customers with the same postal code are shown together in ascending postal-code order. Customers without a postal code are shown in a final missing-code group. This command does not calculate delivery routes or filter by fulfilment information.
+* Customers are shown in ascending six-digit postal-code order, under headings based on their first two digits. Customers with the same postal code are ordered by name.
+* Customers from old data files without postal codes remain usable and display `Postal code needed`. They appear in a final `MISSING POSTAL CODE` group.
+* Grouping keeps the current filter, including results from `find` or `track`. It does not change customer details, preorders, or the order saved in the data file.
+* Displayed index numbers follow the grouped list. Use those numbers for commands such as `edit`, `tag`, and `deleteorder`.
+* Use `list` to show all customers in their saved order and remove the group headings. Grouping is not restored after restarting the application.
+* This command does not calculate delivery routes or filter by fulfilment information.
+
+For example, `find Alex` followed by `group postal` groups only the matching customers. To update the first displayed customer's postal code while preserving their other details and preorder, use `edit 1 c/012345`.
 
 ### Locating persons by name: `find`
 

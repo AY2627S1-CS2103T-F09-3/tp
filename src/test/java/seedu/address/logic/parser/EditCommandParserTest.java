@@ -212,7 +212,7 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_addressContainingUnrecognizedPrefixes_success() {
-        String address = "Block 123 x/foo z/bar";
+        String address = "Block 123 c/o Alice x/foo";
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withAddress(address).build();
         EditCommand expectedCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
 

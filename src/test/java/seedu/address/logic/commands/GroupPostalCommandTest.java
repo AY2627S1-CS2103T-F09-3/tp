@@ -5,11 +5,29 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.testutil.PersonBuilder;
 
 public class GroupPostalCommandTest {
+
+    @Test
+    public void execute_repeatedGroupingAndList_preserveStoredOrder() {
+        ModelManager model = new ModelManager();
+        model.addPerson(new PersonBuilder().withName("Missing").build());
+        model.addPerson(new PersonBuilder().withName("Later").withPostalCode("654321").build());
+        model.addPerson(new PersonBuilder().withName("Earlier").withPostalCode("012345").build());
+        AddressBook original = new AddressBook(model.getAddressBook());
+
+        new GroupPostalCommand().execute(model);
+        new GroupPostalCommand().execute(model);
+
+        assertEquals(original, model.getAddressBook());
+        assertEquals("Earlier", model.getFilteredPersonList().getFirst().getName().fullName);
+        new ListCommand().execute(model);
+        assertEquals(original.getPersonList(), model.getFilteredPersonList());
+    }
     @Test
     public void execute_groupsByPostalCodeAndMissingLast() {
         ModelManager model = new ModelManager();

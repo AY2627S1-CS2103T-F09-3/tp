@@ -9,8 +9,18 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.PostalCode;
 
 public class SampleDataUtilTest {
+
+    @Test
+    public void getSamplePersons_haveValidPostalCodesIncludingLeadingZero() {
+        Person[] samplePersons = SampleDataUtil.getSamplePersons();
+        assertTrue(Arrays.stream(samplePersons).allMatch(person -> person.getPostalCode() != null
+                && PostalCode.isValidPostalCode(person.getPostalCode().value)));
+        assertTrue(Arrays.stream(samplePersons).anyMatch(person -> person.getPostalCode().value.startsWith("0")));
+        assertTrue(Arrays.stream(samplePersons).map(person -> person.getPostalCode().value).distinct().count() > 1);
+    }
 
     @Test
     public void getSampleAddressBook_containsAllSamplePersons() {

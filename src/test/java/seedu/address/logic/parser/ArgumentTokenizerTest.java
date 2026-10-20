@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
 
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,31 @@ public class ArgumentTokenizerTest {
     private final Prefix pSlash = new Prefix("p/");
     private final Prefix dashT = new Prefix("-t");
     private final Prefix hatQ = new Prefix("^Q");
+
+    @Test
+    public void tokenize_careOfAddress_keepsAddressAndPostalCodeSeparate() {
+        for (String args : new String[]{" a/Block 123 c/o Alice c/012345",
+            " c/012345 a/Block 123 c/o Alice"}) {
+            ArgumentMultimap values = ArgumentTokenizer.tokenize(args, PREFIX_ADDRESS, PREFIX_POSTAL_CODE);
+            assertArgumentPresent(values, PREFIX_ADDRESS, "Block 123 c/o Alice");
+            assertArgumentPresent(values, PREFIX_POSTAL_CODE, "012345");
+        }
+    }
+
+    @Test
+    public void tokenize_careOfOutsideAddress_remainsPostalCodeInput() {
+        ArgumentMultimap values = ArgumentTokenizer.tokenize(" c/o", PREFIX_ADDRESS, PREFIX_POSTAL_CODE);
+        assertArgumentPresent(values, PREFIX_POSTAL_CODE, "o");
+        assertArgumentAbsent(values, PREFIX_ADDRESS);
+    }
+
+    @Test
+    public void tokenize_postalCodeStartingWithLetter_isNotSwallowedByAddress() {
+        ArgumentMultimap values = ArgumentTokenizer.tokenize(" a/Block 123 c/o12345",
+                PREFIX_ADDRESS, PREFIX_POSTAL_CODE);
+        assertArgumentPresent(values, PREFIX_ADDRESS, "Block 123");
+        assertArgumentPresent(values, PREFIX_POSTAL_CODE, "o12345");
+    }
 
     @Test
     public void tokenize_emptyArgsString_noValues() {

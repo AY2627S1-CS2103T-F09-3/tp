@@ -55,6 +55,67 @@ public class LogicManagerTest {
     private Model model = new ModelManager();
     private Logic logic;
 
+    @Test
+    public void execute_groupPostal_savesOriginalOrderAndReloadsAllFields() throws Exception {
+        Person later = new PersonBuilder().withName("Later").withPostalCode("654321").build();
+        Person missing = new PersonBuilder().withName("Missing").build();
+        Person earlier = new PersonBuilder().withName("Earlier").withPostalCode("012345")
+                .withTags("regular").withPreorder("Chocolate cake", ItemStatus.PENDING).build();
+        List<Person> savedOrder = List.of(later, missing, earlier);
+        savedOrder.forEach(model::addPerson);
+
+        logic.execute("group postal");
+
+        assertEquals(List.of(earlier, later, missing), logic.getFilteredPersonList());
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        ReadOnlyAddressBook reloaded = storage.readAddressBook().orElseThrow();
+        assertEquals(savedOrder, reloaded.getPersonList());
+        assertEquals("012345", reloaded.getPersonList().get(2).getPostalCode().value);
+        assertEquals(earlier.getPreorder(), reloaded.getPersonList().get(2).getPreorder());
+        assertEquals(null, reloaded.getPersonList().get(1).getPostalCode());
+    }
+
+    @Test
+    public void execute_editAfterGrouping_updatesDisplayedPersonAndPreservesOtherFields() throws Exception {
+        Person later = new PersonBuilder().withName("Later").withPostalCode("654321").build();
+        Person earlier = new PersonBuilder().withName("Earlier").withPostalCode("012345")
+                .withTags("regular").withPreorder("Chocolate cake", ItemStatus.PREPARED).build();
+        model.addPerson(later);
+        model.addPerson(earlier);
+        logic.execute("group postal");
+
+        logic.execute("edit 1 c/000001");
+
+        Person edited = new PersonBuilder(earlier).withPostalCode("000001").build();
+        assertEquals(List.of(later, edited), model.getAddressBook().getPersonList());
+        assertEquals(List.of(edited, later), logic.getFilteredPersonList());
+        assertThrows(ParseException.class, () -> logic.execute("edit 1 c/12345"));
+        assertEquals(List.of(later, edited), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_trackGroupTagUntagDeleteOrder_preservesCorrectCustomerAndPostalCode() throws Exception {
+        Person later = new PersonBuilder().withName("Later").withPostalCode("654321")
+                .withPreorder("Almond cookies", ItemStatus.PENDING).build();
+        Person earlier = new PersonBuilder().withName("Earlier").withPostalCode("012345")
+                .withPreorder("Chocolate cake", ItemStatus.PREPARED).build();
+        Person hidden = new PersonBuilder().withName("Hidden").withPostalCode("000001").build();
+        model.addPerson(later);
+        model.addPerson(earlier);
+        model.addPerson(hidden);
+        logic.execute("track");
+        logic.execute("group postal");
+        assertEquals(List.of(earlier, later), logic.getFilteredPersonList());
+
+        logic.execute("tag 1 t/vip");
+        logic.execute("untag 1 t/VIP");
+        logic.execute("deleteorder 1");
+
+        Person withoutPreorder = new PersonBuilder().withName("Earlier").withPostalCode("012345").build();
+        assertEquals(List.of(later, withoutPreorder, hidden), model.getAddressBook().getPersonList());
+        assertEquals(List.of(later), logic.getFilteredPersonList());
+    }
+
     @BeforeEach
     public void setUp() {
         JsonAddressBookStorage addressBookStorage =

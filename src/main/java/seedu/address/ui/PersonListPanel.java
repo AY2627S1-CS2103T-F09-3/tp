@@ -2,7 +2,9 @@ package seedu.address.ui;
 
 import java.util.logging.Logger;
 
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -30,6 +32,11 @@ public class PersonListPanel extends UiPart<Region> {
         super(FXML);
         personListView.setItems(personList);
         personListView.setCellFactory(listView -> new PersonListViewCell());
+        personList.addListener((ListChangeListener<Person>) change -> personListView.refresh());
+        if (personList instanceof SortedList<?> sortedPersons) {
+            sortedPersons.comparatorProperty().addListener((observable, oldValue, newValue) ->
+                    personListView.refresh());
+        }
     }
 
     /**
@@ -40,16 +47,19 @@ public class PersonListPanel extends UiPart<Region> {
         protected void updateItem(Person person, boolean empty) {
             super.updateItem(person, empty);
 
-            if (empty || person == null) {
+            int index = getIndex();
+            if (empty || person == null || index < 0 || index >= personListView.getItems().size()) {
                 setGraphic(null);
                 setText(null);
             } else {
                 VBox cellContent = new VBox();
                 String currentGroup = GroupPostalCommand.getPostalGroupKey(person);
-                boolean isFirstInGroup = getIndex() == 0
+                boolean isGrouped = personListView.getItems() instanceof SortedList<?> sortedPersons
+                        && sortedPersons.getComparator() != null;
+                boolean isFirstInGroup = index == 0
                         || !currentGroup.equals(GroupPostalCommand.getPostalGroupKey(personListView
-                        .getItems().get(getIndex() - 1)));
-                if (isFirstInGroup) {
+                        .getItems().get(index - 1)));
+                if (isGrouped && isFirstInGroup) {
                     Label groupHeading = new Label(currentGroup.equals("\uffff")
                             ? "MISSING POSTAL CODE" : "POSTAL PREFIX " + currentGroup);
                     groupHeading.getStyleClass().add("cell_big_label");
