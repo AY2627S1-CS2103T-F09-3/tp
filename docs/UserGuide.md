@@ -216,7 +216,6 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 * Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
 * Results use the current displayed indices. Use `list` to show all customers again.
 * Use lowercase prefixes. A prefix starts at the beginning of the arguments or after whitespace. Unknown letter-based prefixes such as `x/` are rejected; embedded slashes such as `#04/08` remain ordinary text.
-* Bare-name searches are no longer accepted: use `find n/Alice` instead of `find Alice`.
 
 Examples:
 
@@ -230,7 +229,7 @@ Examples:
 
 | Input | Result |
 |-------|--------|
-| `find`, `find Alice`, or `find Alice t/regular` | Invalid command format, followed by usage instructions. |
+| `find` | Invalid command format; supply at least one prefixed criterion. |
 | `find n/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
 | `find x/Alice` or `find n/Alice s/pending` | Invalid command format; only the five prefixes above are supported. |
 | `find t/regular t/vip` | `Multiple values specified for the following single-valued field(s): t/` |

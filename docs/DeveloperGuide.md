@@ -165,9 +165,9 @@ uses its complete, case-insensitive equality rule.
 To add a search condition with different matching rules, implement `PersonCriterion` and include it in a
 `SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
 CLI prefixes belong in the parser, not in the criteria. Add the prefix to `FindCommandParser`'s supported-prefix list
-and construct its criterion there. The parser accepts each supported prefix once, rejects bare preambles and blank or
-unsupported parameters, and validates tags using `ParserUtil.parseTag`. It recognizes prefixes at whitespace boundaries
-without collapsing internal query spacing. `FindCommand` passes `SearchCriteria` directly to
+and construct its criterion there. The parser accepts each supported prefix once, requires a prefix before the first
+value, rejects blank or unsupported parameters, and validates tags using `ParserUtil.parseTag`. It recognizes prefixes
+at whitespace boundaries without collapsing internal query spacing. `FindCommand` passes `SearchCriteria` directly to
 `Model.updateFilteredPersonList`, which replaces the predicate on the list backed by the full address book.
 There is no need to filter the previous search's results or execute another search command as an intermediate step.
 
