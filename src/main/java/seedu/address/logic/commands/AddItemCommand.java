@@ -35,7 +35,8 @@ public class AddItemCommand extends Command {
             + PREFIX_STATUS + "STATUS [" + PREFIX_REMARK + "REMARK]\n"
             + "Example: " + COMMAND_WORD + " 1 " + PREFIX_DETAILS + "Pineapple Tarts "
             + PREFIX_QUANTITY + "2 " + PREFIX_STATUS + "PENDING " + PREFIX_REMARK + "Less sugar";
-    public static final String MESSAGE_ADD_ITEM_SUCCESS = "Added item to %1$s: %2$s (quantity: %3$s, %4$s)";
+    public static final String MESSAGE_ADD_ITEM_SUCCESS =
+            "Added item %1$d for %2$s: %3$s (quantity: %4$s, %5$s)";
     public static final String MESSAGE_QUANTITY_REQUIRED = "New items must have a quantity.";
 
     private final Index index;
@@ -63,7 +64,8 @@ public class AddItemCommand extends Command {
         Person personWithAddedItem = createPersonWithAddedItem(identifiedPerson, item);
         model.setPerson(identifiedPerson, personWithAddedItem);
 
-        return new CommandResult(String.format(MESSAGE_ADD_ITEM_SUCCESS, identifiedPerson.getName(),
+        return new CommandResult(String.format(MESSAGE_ADD_ITEM_SUCCESS,
+                personWithAddedItem.getPreorder().orElseThrow().getItems().size(), identifiedPerson.getName(),
                 item.getName(), item.getQuantity().orElseThrow(), item.getStatus()));
     }
 

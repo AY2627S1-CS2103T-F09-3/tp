@@ -59,7 +59,7 @@ public class EditItemCommandTest {
     }
 
     @Test
-    public void execute_statusChange_removesOrderFromPendingView() throws Exception {
+    public void execute_statusChange_removesCustomerFromPendingView() throws Exception {
         Person orderedBenson = new PersonBuilder(BENSON).withPreorder("Tarts", PENDING).build();
         Model model = createModel(ORDERED_ALICE, orderedBenson);
         new TrackCommand(Optional.of(PENDING)).execute(model);
@@ -70,7 +70,7 @@ public class EditItemCommandTest {
     }
 
     @Test
-    public void execute_detailsChange_preservesStatusFilter() throws Exception {
+    public void execute_nameChange_preservesStatusFilter() throws Exception {
         Model model = createModel(BENSON, ORDERED_ALICE);
         new TrackCommand(Optional.of(PENDING)).execute(model);
         command(1, "Cookies", null).execute(model);
@@ -80,7 +80,7 @@ public class EditItemCommandTest {
     }
 
     @Test
-    public void execute_completeLastActiveOrder_leavesEmptyFilteredView() throws Exception {
+    public void execute_completeLastActiveItem_leavesEmptyFilteredView() throws Exception {
         Model model = createModel(BENSON, ORDERED_ALICE);
         new TrackCommand(Optional.empty()).execute(model);
         command(1, null, ItemStatus.PREPARED).execute(model);
@@ -207,7 +207,9 @@ public class EditItemCommandTest {
     public void execute_migratedItem_preservesMissingQuantityUntilSupplied() throws Exception {
         Item migrated = new ItemBuilder().withoutQuantity().withRemark("Less sugar").build();
         Model model = createModel(new PersonBuilder(ALICE).withPreorder(migrated).build());
-        command(1, null, COMPLETED).execute(model);
+        CommandResult result = command(1, null, COMPLETED).execute(model);
+        assertEquals(new CommandResult(
+                "Edited item 1 for Alice Pauline: Pineapple Tarts (quantity: , COMPLETED)"), result);
         Item completed = new ItemBuilder(migrated).withStatus(COMPLETED).build();
         assertEquals(new PersonBuilder(ALICE).withPreorder(completed).build(),
                 model.getFilteredPersonList().getFirst());
@@ -257,19 +259,19 @@ public class EditItemCommandTest {
         assertNotEquals(new EditItemDescriptor(), descriptor);
     }
 
-    private void assertUpdate(String details, ItemStatus status, String expectedDetails,
+    private void assertUpdate(String name, ItemStatus status, String expectedName,
             ItemStatus expectedStatus) throws Exception {
         Model model = createModel(ORDERED_ALICE);
-        Person expected = new PersonBuilder(ALICE).withPreorder(expectedDetails, expectedStatus).build();
+        Person expected = new PersonBuilder(ALICE).withPreorder(expectedName, expectedStatus).build();
         assertEquals(new CommandResult(String.format(EditItemCommand.MESSAGE_EDIT_ITEM_SUCCESS,
-                1, ALICE.getName(), expectedDetails, expectedStatus)), command(1, details, status).execute(model));
+                1, ALICE.getName(), expectedName, "1", expectedStatus)), command(1, name, status).execute(model));
         assertEquals(List.of(expected), model.getAddressBook().getPersonList());
     }
 
-    private EditItemCommand command(int index, String details, ItemStatus status) {
+    private EditItemCommand command(int index, String name, ItemStatus status) {
         EditItemDescriptor descriptor = new EditItemDescriptor();
-        if (details != null) {
-            descriptor.setName(new ItemName(details));
+        if (name != null) {
+            descriptor.setName(new ItemName(name));
         }
         descriptor.setStatus(status);
         return new EditItemCommand(Index.fromOneBased(index), Index.fromOneBased(1), descriptor);

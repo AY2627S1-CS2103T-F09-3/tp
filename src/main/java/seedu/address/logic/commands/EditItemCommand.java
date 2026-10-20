@@ -41,7 +41,8 @@ public class EditItemCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1 " + PREFIX_ITEM_INDEX + "2 " + PREFIX_QUANTITY + "3";
     public static final String MESSAGE_NO_PREORDER = "Identified person has no preorder.";
     public static final String MESSAGE_INVALID_ITEM_INDEX = "The item index provided is invalid.";
-    public static final String MESSAGE_EDIT_ITEM_SUCCESS = "Edited item %1$d of %2$s: %3$s (%4$s)";
+    public static final String MESSAGE_EDIT_ITEM_SUCCESS =
+            "Edited item %1$d for %2$s: %3$s (quantity: %4$s, %5$s)";
     public static final String MESSAGE_NOT_EDITED = "No item changes specified.";
 
     private final Index index;
@@ -79,7 +80,8 @@ public class EditItemCommand extends Command {
         model.setPerson(identifiedPerson, personWithUpdatedOrder);
 
         return new CommandResult(String.format(MESSAGE_EDIT_ITEM_SUCCESS, itemIndex.getOneBased(),
-                identifiedPerson.getName(), updatedItem.getName(), updatedItem.getStatus()));
+                identifiedPerson.getName(), updatedItem.getName(),
+                updatedItem.getQuantity().map(Quantity::toString).orElse(""), updatedItem.getStatus()));
     }
 
     /**

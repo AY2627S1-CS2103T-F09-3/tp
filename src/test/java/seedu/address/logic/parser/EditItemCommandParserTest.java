@@ -70,7 +70,7 @@ public class EditItemCommandParserTest {
     }
 
     @Test
-    public void parseCommand_order_dispatchesToOrderParser() throws Exception {
+    public void parseCommand_edititem_dispatchesToEditItemParser() throws Exception {
         assertEquals(parser.parse(" 1 i/1 d/Cake s/PENDING"),
                 new AddressBookParser().parseCommand("edititem 1 i/1 d/Cake s/PENDING"));
     }
@@ -131,10 +131,23 @@ public class EditItemCommandParserTest {
         assertThrows(ParseException.class, () -> commandParser.parseCommand("order 1 d/Cake s/pending"));
     }
 
-    private void assertValid(String input, String details, ItemStatus status) {
+    @Test
+    public void parse_multipleErrors_reportsValidationOrder() {
+        assertParseFailure(parser, "0 d/Cake d/Tarts",
+                String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, EditItemCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "1 d/Cake d/Tarts q/2 s/pending",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_DETAILS));
+        assertParseFailure(parser, "1 i/1 d/ q/0 s/invalid r/" + "a".repeat(Remark.MAX_LENGTH + 1),
+                ItemName.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 i/1 d/Cake q/0 s/invalid", Quantity.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 i/1 d/Cake q/1 s/invalid r/" + "a".repeat(Remark.MAX_LENGTH + 1),
+                ItemStatus.MESSAGE_CONSTRAINTS);
+    }
+
+    private void assertValid(String input, String name, ItemStatus status) {
         EditItemDescriptor descriptor = new EditItemDescriptor();
-        if (details != null) {
-            descriptor.setName(new ItemName(details));
+        if (name != null) {
+            descriptor.setName(new ItemName(name));
         }
         descriptor.setStatus(status);
         assertParseSuccess(parser, input,

@@ -38,11 +38,11 @@ public class AddItemCommandParser implements Parser<AddItemCommand> {
         String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddItemCommand.MESSAGE_USAGE);
 
         Index index = ParserUtil.parsePreambleIndex(argMultimap, usage);
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_DETAILS, PREFIX_QUANTITY, PREFIX_STATUS, PREFIX_REMARK);
         if (!arePrefixesPresent(argMultimap, PREFIX_DETAILS, PREFIX_QUANTITY, PREFIX_STATUS)) {
             throw new ParseException(usage);
         }
 
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_DETAILS, PREFIX_QUANTITY, PREFIX_STATUS, PREFIX_REMARK);
         Item item = parseItem(argMultimap);
         return new AddItemCommand(index, item);
     }

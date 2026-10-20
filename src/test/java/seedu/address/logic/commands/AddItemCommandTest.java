@@ -35,7 +35,7 @@ public class AddItemCommandTest {
         Model model = createModel(ALICE, BENSON);
         CommandResult result = new AddItemCommand(FIRST, ITEM).execute(model);
         assertEquals(new CommandResult(String.format(AddItemCommand.MESSAGE_ADD_ITEM_SUCCESS,
-                ALICE.getName(), ITEM.getName(), ITEM.getQuantity().orElseThrow(), ITEM.getStatus())), result);
+                1, ALICE.getName(), ITEM.getName(), ITEM.getQuantity().orElseThrow(), ITEM.getStatus())), result);
         assertEquals(List.of(new PersonBuilder(ALICE).withPreorder(ITEM).build(), BENSON),
                 model.getAddressBook().getPersonList());
         assertEquals(Optional.empty(), ALICE.getPreorder());
@@ -56,7 +56,9 @@ public class AddItemCommandTest {
         Item migrated = new ItemBuilder().withoutQuantity().withStatus(ItemStatus.COMPLETED).build();
         Person original = new PersonBuilder(ALICE).withPreorder(ITEM, migrated).build();
         Model model = createModel(original, BENSON);
-        new AddItemCommand(FIRST, ITEM).execute(model);
+        CommandResult result = new AddItemCommand(FIRST, ITEM).execute(model);
+        assertEquals(new CommandResult("Added item 3 for Alice Pauline: Pineapple Tarts (quantity: 2, PENDING)"),
+                result);
         assertEquals(List.of(new PersonBuilder(ALICE).withPreorder(ITEM, migrated, ITEM).build(), BENSON),
                 model.getAddressBook().getPersonList());
         assertEquals(List.of(ITEM, migrated), original.getPreorder().orElseThrow().getItems());

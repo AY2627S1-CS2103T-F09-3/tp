@@ -130,6 +130,18 @@ public class AddItemCommandParserTest {
                 new AddressBookParser().parseCommand("additem 1" + VALID_FIELDS));
     }
 
+    @Test
+    public void parse_multipleErrors_reportsValidationOrder() {
+        assertParseFailure(parser, "0 d/Cake d/Tarts", USAGE);
+        assertParseFailure(parser, "1 d/Cake d/Tarts",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_DETAILS));
+        assertParseFailure(parser, "1 d/ q/0 s/invalid r/" + "a".repeat(Remark.MAX_LENGTH + 1),
+                ItemName.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 d/Cake q/0 s/invalid", Quantity.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 d/Cake q/1 s/invalid r/" + "a".repeat(Remark.MAX_LENGTH + 1),
+                ItemStatus.MESSAGE_CONSTRAINTS);
+    }
+
     private void assertValid(String input, Item item) {
         assertParseSuccess(parser, input, new AddItemCommand(Index.fromOneBased(1), item));
     }

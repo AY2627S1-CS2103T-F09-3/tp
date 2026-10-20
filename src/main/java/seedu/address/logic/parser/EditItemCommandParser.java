@@ -58,12 +58,11 @@ public class EditItemCommandParser implements Parser<EditItemCommand> {
             descriptor.setName(
                     ParserUtil.parseItemName(argumentMultimap.getValue(PREFIX_DETAILS).get()));
         }
-        if (argumentMultimap.getValue(PREFIX_STATUS).isPresent()) {
-            descriptor.setStatus(ParserUtil.parseItemStatus(argumentMultimap.getValue(PREFIX_STATUS).get()));
-        }
-
         if (argumentMultimap.getValue(PREFIX_QUANTITY).isPresent()) {
             descriptor.setQuantity(ParserUtil.parseQuantity(argumentMultimap.getValue(PREFIX_QUANTITY).get()));
+        }
+        if (argumentMultimap.getValue(PREFIX_STATUS).isPresent()) {
+            descriptor.setStatus(ParserUtil.parseItemStatus(argumentMultimap.getValue(PREFIX_STATUS).get()));
         }
         if (argumentMultimap.getValue(PREFIX_REMARK).isPresent()) {
             String remark = argumentMultimap.getValue(PREFIX_REMARK).get();
