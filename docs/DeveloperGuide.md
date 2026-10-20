@@ -159,6 +159,25 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Preorder item deletion
+
+`DeleteItemCommandParser` parses `deleteitem INDEX i/ITEM_INDEX`. It validates the customer-index preamble,
+rejects duplicate `i/` prefixes, and parses the required item index using `ParserUtil.parseIndex`.
+`AddressBookParser` dispatches `deleteitem` to this parser.
+
+`DeleteItemCommand` resolves the customer from `model.getFilteredPersonList()`, checks that a preorder exists,
+and validates the item index against its full item list. Invalid input raises `ParseException` or `CommandException`
+before the model changes. Constructor arguments are checked for null, and assertions verify already-validated
+preconditions in the update helper.
+
+The command copies the immutable item list, removes only the selected position, and constructs a replacement
+`Preorder` and `Person`. It preserves other customer fields and calls `model.setPerson` without resetting the filter.
+An empty item list remains wrapped in a preorder. The success message uses the deleted item's original number,
+name, quantity and status; missing quantities are displayed as blank values.
+
+The current preorder contains only items. When fulfilment fields are added, this reconstruction must preserve
+existing delivery dates, methods and instructions, including when the final item is removed.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -641,6 +660,39 @@ Run each group below independently, starting with the sample data unless stated 
 
    1. Test case: Close and relaunch the application, then locate the same customer.<br>
       Expected: The removed tag remains absent. The customer's other tags, contact details, and preorder are preserved.
+
+### Deleting a preorder item
+
+Use a disposable copy of the sample data and run `list`. Initially, Alex Yeoh is customer 1 with two items,
+Charlotte Oliveiro is customer 3 with one item, David Li is customer 4 with an empty preorder, and Irfan Ibrahim
+is customer 5 without a preorder.
+
+1. Run `deleteitem 1 i/2`.<br>
+   Expected: `Deleted item 2 for Alex Yeoh: Almond Cookies (quantity: 1, PREPARED)`.
+   Only Almond Cookies disappears. Pineapple Tarts and its quantity, status and remark remain unchanged.
+   Alex's contact details and tags are unchanged.
+1. Run `deleteitem 1 i/1`.<br>
+   Expected: The final item is removed. Alex remains a customer with an empty preorder.
+1. Run `deleteitem 1 i/1` again, then `deleteitem 4 i/1`.<br>
+   Expected: Both show `The item index provided is invalid.` because both preorders are empty. Nothing changes.
+1. Run `deleteitem 5 i/1`.<br>
+   Expected: `Identified person has no preorder.` Nothing changes.
+1. Try `deleteitem`, `deleteitem 0 i/1`, `deleteitem 1`, `deleteitem 1 i/0`, and `deleteitem 1 o/1`.<br>
+   Expected: An invalid-command-format error followed by usage instructions. Nothing changes.
+1. Run `deleteitem 1 i/1 i/2`.<br>
+   Expected: `Multiple values specified for the following single-valued field(s): i/`. Nothing changes.
+1. Run `deleteitem 100 i/1`, where 100 exceeds the displayed list size.<br>
+   Expected: `The person index provided is invalid.` Nothing changes.
+1. Run `track`, then delete Charlotte's item using her current displayed customer index and `i/1`.<br>
+   Expected: Charlotte disappears from the tracked view because her preorder is now empty. Run `list` to confirm
+   that she remains a customer. The success message identifies her deleted item, quantity and status.
+1. Close and reopen the app.<br>
+   Expected: Alex's and Charlotte's preorders remain empty. Their other customer details are preserved.
+1. Using a fresh sample-data copy, run `list`, then `deleteitem 1 i/1`.<br>
+   Expected: Only Pineapple Tarts is removed. Almond Cookies remains and is renumbered from 2 to 1.
+1. With a migrated v1.3 item lacking quantity, delete it using its displayed indices.<br>
+   Expected: Deletion succeeds, and the success message shows a blank quantity value. An empty preorder remains
+   if this was the only item.
 
 ### Deleting a preorder
 
