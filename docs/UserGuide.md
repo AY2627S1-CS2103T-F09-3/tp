@@ -363,6 +363,45 @@ Status | Meaning | Badge colour
 
 If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `quantity needed` instead of a quantity.
 
+### Deleting a preorder item: `deleteitem`
+
+Deletes one item from a customer's preorder, for example when the customer cancels a product, while keeping the customer and the remaining items.
+
+Format: `deleteitem INDEX i/ITEM_INDEX`
+
+* `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
+* `ITEM_INDEX` must be a positive integer referring to the item number shown on that customer's card. It refers to the customer's full item list.
+* Only the selected item is removed. Remaining items keep their relative order and are renumbered from 1. Identical items remain separate: deleting one does not delete the others.
+* Deleting the final item retains an **empty preorder**. The customer's name, phone number, email, address, postal code and tags are unchanged. The preorder's fulfilment date, method and handover notes are also preserved.
+* Both indices are required. The `i/` prefix must appear exactly once; `o/` is not accepted for item selection.
+* Deletion cannot be undone through the app.
+* The current filter is preserved. A customer may disappear from a tracked view if no remaining item matches it. Check the displayed customer and item numbers before your next command. Use `list` to show all customers again.
+
+For example, deleting Alex Yeoh's second sample item shows:
+
+```text
+Deleted item 2 for Alex Yeoh: Almond Cookies (quantity: 1, PREPARED)
+```
+
+The message uses the item's number before deletion. For a migrated item with no recorded quantity, the quantity value is blank, for example `(quantity: , PENDING)`.
+
+| Situation | Message |
+|-----------|---------|
+| Customer index exceeds the displayed list | `The person index provided is invalid.` |
+| Customer has no preorder | `Identified person has no preorder.` |
+| Preorder is empty or item index exceeds the item count | `The item index provided is invalid.` |
+| Missing or invalid customer index, or missing `i/` prefix | `Invalid command format!` followed by usage instructions |
+| Present but empty or invalid item index, e.g. `i/0` or `i/abc` | `Item index must be a positive integer.` |
+| Repeated `i/` prefix | `Multiple values specified for the following single-valued field(s): i/` |
+
+Validation failures leave the data unchanged. If several inputs are invalid, customer-index syntax is checked first, then duplicate prefixes, then item-index syntax. Customer, preorder and item existence are checked after parsing succeeds.
+
+Examples:
+
+* `deleteitem 1 i/2` deletes the second item of the first displayed customer.
+* `find Bernice` followed by `deleteitem 1 i/1` deletes the first item of the first matching customer.
+* `track` followed by `deleteitem 1 i/1` deletes the first item of the first displayed customer, whether or not that particular item is active.
+
 ### Deleting a preorder: `deleteorder`
 
 Deletes a customer's current preorder, for example when the customer cancels, while keeping them as a customer.
@@ -456,6 +495,7 @@ Action     | Format, Examples
 **Edit item** | `edititem INDEX i/ITEM_INDEX [d/NAME] [q/QUANTITY] [s/STATUS] [r/REMARK]`<br> e.g., `edititem 1 i/2 q/3`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Delete item** | `deleteitem INDEX i/ITEM_INDEX`<br> e.g., `deleteitem 1 i/2`
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Group postal** | `group postal`
