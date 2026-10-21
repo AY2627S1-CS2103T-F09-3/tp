@@ -71,7 +71,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `SearchCriteriaDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -80,7 +80,19 @@ The `UI` component,
 * executes user commands using the `Logic` component.
 * listens for changes to `Model` data so that the UI can be updated with the modified data.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
-* depends on some classes in the `Model` component because it displays `Person` objects from the model.
+* depends on some classes in the `Model` component because it displays `Person` objects and structured search criteria.
+
+`MainWindow` places `SearchCriteriaDisplay` above the customer list and supplies
+`Logic.activeSearchCriteriaProperty()`. The display renders the current value immediately and observes criteria
+changes directly, including searches with identical results. It uses `SearchCriteriaFormatter` to obtain an immutable
+`SearchCriteriaSummary` containing a heading and one complete label per criterion, in predictable order. Formatting
+stays separate from matching and does not parse diagnostic `toString()` output.
+
+The display uses a `FlowPane` of read-only labels. Badges wrap onto additional rows without a row limit, and each
+badge is limited to the available width so long values wrap inside it. Its preferred-height measurement also accounts
+for wrapping when `FlowPane` measures a row without supplying a width. Empty searches hide the badge container and
+show only `Showing: All customers`; active searches show `Filters · Match all`. No focus request is made during an
+update, and the display cannot receive mouse input or keyboard focus.
 
 ### Logic component
 
@@ -189,12 +201,15 @@ value, rejects blank or unsupported parameters, and validates tags using `Parser
 at whitespace boundaries without collapsing internal query spacing. `FindCommand` passes `SearchCriteria` directly to
 `Model.updateFilteredPersonList`, which replaces the active criteria on the list backed by the full address book.
 There is no need to filter the previous search's results or execute another search command as an intermediate step.
+When adding a criterion type, also add its label and display position to `SearchCriteriaFormatter`, with formatter
+tests. Existing display bindings and wrapping then apply automatically. Keep conditions on the same item together
+in one criterion and one badge.
 
 For future multi-item searches, product and status conditions must be grouped inside **one** `PersonCriterion` that
 checks whether any single item satisfies both conditions. Separate customer predicates for "has this product" and
 "has this status" could incorrectly match different items. Date/method and postal conditions can be separate criteria,
 because they describe the preorder or customer rather than an individual item. These extensions, `find s/` support,
-final multi-item tracking rules and the active-criteria display remain deferred.
+and final multi-item tracking rules remain deferred.
 
 ### Storage component
 
@@ -580,6 +595,26 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Displaying active search criteria
+
+1. Run `list`.<br>
+   Expected: `Showing: All customers` appears above the list, with no badges.
+1. Run `find n/Alex p/874 e/example.com a/geylang t/friends` using the sample data.<br>
+   Expected: Alex Yeoh is listed. `Filters · Match all` appears with separate `Name: alex`, `Phone: 874`,
+   `Email: example.com`, `Address: geylang` and `Tag: friends` badges, in that order. Narrowing the window wraps
+   badges onto additional rows.
+1. Run `find a/` followed by a long address fragment, including spaces.<br>
+   Expected: The entire fragment is visible in a wrapping `Address` badge, even if no customers match. No hover or
+   expansion action is needed. Widening the window reflows the badge.
+1. Run `track`, then `track s/PENDING`.<br>
+   Expected: One status badge changes from `Item status: Pending or Prepared` to `Item status: Pending`.
+1. Run `find n/`.<br>
+   Expected: An error is shown and the status badge remains unchanged.
+1. Run `list` again.<br>
+   Expected: All badges disappear and `Showing: All customers` returns.
+
+After each command above, verify that you can immediately type the next command without clicking the command box.
 
 ### Preserving searches after customer changes
 

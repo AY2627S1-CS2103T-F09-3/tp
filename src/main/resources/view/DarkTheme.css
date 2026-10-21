@@ -351,6 +351,24 @@
     -fx-font-size: 11;
 }
 
+.search-criteria-heading {
+    -fx-text-fill: #e2e8ef;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-opacity: 1;
+}
+
+.search-criterion-badge {
+    -fx-text-fill: #f2f5f8;
+    -fx-background-color: #424d5f;
+    -fx-border-color: #66758a;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 5 9 5 9;
+    -fx-font-size: 13px;
+    -fx-opacity: 1;
+}
+
 /* Preorder chips. Each item takes its status colour, so items stand apart from the tags. */
 #preorder .label {
     -fx-text-fill: white;

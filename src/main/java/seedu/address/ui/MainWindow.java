@@ -47,6 +47,9 @@ public class MainWindow extends UiPart<Stage> {
     private StackPane personListPanelPlaceholder;
 
     @FXML
+    private StackPane searchCriteriaDisplayPlaceholder;
+
+    @FXML
     private StackPane resultDisplayPlaceholder;
 
     @FXML
@@ -114,6 +117,9 @@ public class MainWindow extends UiPart<Stage> {
      * Fills up all the placeholders of this window.
      */
     void fillInnerParts() {
+        SearchCriteriaDisplay searchCriteriaDisplay = new SearchCriteriaDisplay(logic.activeSearchCriteriaProperty());
+        searchCriteriaDisplayPlaceholder.getChildren().add(searchCriteriaDisplay.getRoot());
+
         personListPanel = new PersonListPanel(logic.getFilteredPersonList());
         personListPanelPlaceholder.getChildren().add(personListPanel.getRoot());
 

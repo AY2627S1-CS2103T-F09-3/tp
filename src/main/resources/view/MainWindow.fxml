@@ -50,6 +50,7 @@
           <padding>
             <Insets top="10" right="10" bottom="10" left="10" />
           </padding>
+          <StackPane fx:id="searchCriteriaDisplayPlaceholder" VBox.vgrow="NEVER" />
           <StackPane fx:id="personListPanelPlaceholder" VBox.vgrow="ALWAYS"/>
         </VBox>
 
