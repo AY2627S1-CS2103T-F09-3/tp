@@ -185,6 +185,25 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void readAndSaveAddressBook_currentPostalCodeData_preservesAllFields() throws Exception {
+        Path filePath = testFolder.resolve("CurrentAddressBook.json");
+        AddressBook original = new AddressBook();
+        original.addPerson(new PersonBuilder().withName("Current Customer")
+                .withPhone("81234567").withEmail("current@example.com")
+                .withAddress("123 Example Street").withPostalCode("012345")
+                .withTags("friends", "owesMoney")
+                .withPreorder(new ItemBuilder().withName("Chocolate cake").build()).build());
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        storage.saveAddressBook(original, filePath);
+
+        ReadOnlyAddressBook readBack = storage.readAddressBook(filePath).get();
+        assertEquals(original, new AddressBook(readBack));
+        assertEquals("012345", readBack.getPersonList().get(0).getPostalCode().value);
+        assertEquals(2, readBack.getPersonList().get(0).getTags().size());
+    }
+
+    @Test
     public void readAndSaveAddressBook_preorder_success() throws Exception {
         AddressBook original = new AddressBook();
         original.addPerson(new PersonBuilder(ALICE).withPreorder(

@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.EditCommandParser;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -64,7 +65,7 @@ public class EditCommandTest {
     public void execute_personWithPreorder_preorderKept() {
         Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person personWithPreorder = new PersonBuilder(firstPerson)
-                .withPreorder("2 chocolate cakes", ItemStatus.PREPARED).build();
+                .withPostalCode("012345").withPreorder("2 chocolate cakes", ItemStatus.PREPARED).build();
         model.setPerson(firstPerson, personWithPreorder);
 
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build();
@@ -98,6 +99,75 @@ public class EditCommandTest {
         expectedModel.setPerson(lastPerson, editedPerson);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_editingFields_preservesLeadingZeroPostalCode() throws CommandException {
+        Person original = new PersonBuilder().withName("Postal Customer")
+                .withPostalCode("012345").withTags("old").build();
+        AddressBook postalAddressBook = new AddressBook();
+        postalAddressBook.addPerson(original);
+        Model postalModel = new ModelManager(postalAddressBook, new UserPrefs());
+
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withName("Updated Customer").build();
+        new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(postalModel);
+
+        Person edited = postalModel.getAddressBook().getPersonList().get(0);
+        assertEquals("012345", edited.getPostalCode().value);
+        assertEquals("Updated Customer", edited.getName().fullName);
+        assertEquals(1, edited.getTags().size());
+        assertTrue(edited.getTags().stream().anyMatch(tag -> tag.tagName.equals("old")));
+    }
+
+    @Test
+    public void execute_editingContactDetails_preservesPostalCodeTagsAndPreorder() throws Exception {
+        Person original = new PersonBuilder().withPostalCode("000001").withTags("regular")
+                .withPreorder("Chocolate cake", ItemStatus.PREPARED).build();
+        Model postalModel = new ModelManager();
+        postalModel.addPerson(original);
+
+        EditCommand command = new EditCommandParser().parse("1 p/98765432 e/new@example.com a/456 New Road");
+        Person expected = new PersonBuilder(original).withPhone("98765432").withEmail("new@example.com")
+                .withAddress("456 New Road").build();
+        command.execute(postalModel);
+
+        Person edited = postalModel.getAddressBook().getPersonList().getFirst();
+        assertEquals(expected, edited);
+        assertEquals("000001", edited.getPostalCode().value);
+        assertEquals(original.getTags(), edited.getTags());
+        assertEquals(original.getPreorder(), edited.getPreorder());
+    }
+
+    @Test
+    public void execute_editingPostalCode_preservesTagsAndPreorder() throws CommandException {
+        Person original = new PersonBuilder().withName("Postal Customer")
+                .withPostalCode("012345").withTags("old")
+                .withPreorder("Chocolate cake", ItemStatus.PENDING).build();
+        AddressBook postalAddressBook = new AddressBook();
+        postalAddressBook.addPerson(original);
+        Model postalModel = new ModelManager(postalAddressBook, new UserPrefs());
+
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPostalCode("654321").build();
+        new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(postalModel);
+
+        Person edited = postalModel.getAddressBook().getPersonList().get(0);
+        assertEquals("654321", edited.getPostalCode().value);
+        assertEquals(original.getTags(), edited.getTags());
+        assertEquals(original.getPreorder(), edited.getPreorder());
+    }
+
+    @Test
+    public void execute_editingLegacyCustomer_preservesMissingPostalCode() throws CommandException {
+        Person original = new PersonBuilder().withName("Legacy Customer").withPostalCode(null).build();
+        AddressBook postalAddressBook = new AddressBook();
+        postalAddressBook.addPerson(original);
+        Model postalModel = new ModelManager(postalAddressBook, new UserPrefs());
+
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Updated Legacy").build();
+        new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(postalModel);
+
+        assertEquals(null, postalModel.getAddressBook().getPersonList().get(0).getPostalCode());
     }
 
     @Test

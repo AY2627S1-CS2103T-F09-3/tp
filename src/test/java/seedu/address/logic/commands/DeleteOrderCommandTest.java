@@ -53,13 +53,14 @@ public class DeleteOrderCommandTest {
     }
 
     @Test
-    public void execute_preorderWithSeveralItems_deletesWholePreorder() {
-        Person bensonWithItems = new PersonBuilder(BENSON).withPreorder(
+    public void execute_preorderWithSeveralItems_deletesWholePreorderAndKeepsPostalCode() {
+        Person bensonWithItems = new PersonBuilder(BENSON).withPostalCode("012345").withPreorder(
                 new ItemBuilder().withName("Pineapple Tarts").build(),
                 new ItemBuilder().withName("Almond Cookies").build()).build();
         model.setPerson(PENDING_BENSON, bensonWithItems);
 
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+        expectedModel.setPerson(BENSON, new PersonBuilder(BENSON).withPostalCode("012345").build());
 
         assertCommandSuccess(new DeleteOrderCommand(INDEX_BENSON), model, EXPECTED_SUCCESS_MESSAGE, expectedModel);
     }

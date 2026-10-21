@@ -42,8 +42,10 @@ public class PersonCardTest {
         Item tarts = new ItemBuilder().withName("Pineapple Tarts").withRemark("Less sugar").build();
         Item cookies = new ItemBuilder().withName("Almond Cookies").withQuantity("1")
                 .withStatus(ItemStatus.PREPARED).build();
-        PersonCard card = createCard(new PersonBuilder(ALICE).withPreorder(tarts, cookies).build());
+        PersonCard card = createCard(new PersonBuilder(ALICE).withPostalCode("012345")
+                .withPreorder(tarts, cookies).build());
 
+        assertEquals("012345", ((Label) lookup(card, "#postalCode")).getText());
         assertTrue(lookup(card, "#preorder").isVisible());
         assertTrue(lookup(card, "#preorder").isManaged());
         assertEquals(List.of(PreorderDisplay.formatItem(1, tarts), PreorderDisplay.formatItem(2, cookies)),
