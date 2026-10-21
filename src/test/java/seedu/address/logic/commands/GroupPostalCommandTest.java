@@ -2,6 +2,7 @@ package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
 
 import java.util.List;
 
@@ -11,6 +12,8 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.search.SearchCriteria;
+import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.testutil.PersonBuilder;
 
 public class GroupPostalCommandTest {
@@ -86,7 +89,7 @@ public class GroupPostalCommandTest {
         ModelManager model = new ModelManager();
         model.addPerson(new PersonBuilder().withName("Visible").withPostalCode("531234").build());
         model.addPerson(new PersonBuilder().withName("Hidden").withPostalCode("541234").build());
-        model.updateFilteredPersonList(person -> person.getName().fullName.equals("Visible"));
+        model.updateFilteredPersonList(new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Visible"))));
 
         new GroupPostalCommand().execute(model);
 

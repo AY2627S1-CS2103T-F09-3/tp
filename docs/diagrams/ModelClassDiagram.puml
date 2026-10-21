@@ -3,66 +3,29 @@
 skinparam arrowThickness 1.1
 skinparam arrowColor MODEL_COLOR
 skinparam classBackgroundColor MODEL_COLOR
-skinparam classAttributeIconSize 0
 
 Package Model as ModelPackage <<Rectangle>>{
 Class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
 Class "<<interface>>\nReadOnlyUserPrefs" as ReadOnlyUserPrefs
-Class "<<interface>>\nModel" as Model {
-  +getFilteredPersonList(): ObservableList<Person>
-  +updatePersonListComparator(Comparator<Person>): void
-}
+Class "<<interface>>\nModel" as Model
 Class AddressBook
-Class ModelManager {
-  -filteredPersons: FilteredList<Person>
-  -sortedPersons: SortedList<Person>
-  +getFilteredPersonList(): ObservableList<Person>
-  +updatePersonListComparator(Comparator<Person>): void
-}
+Class ModelManager
 Class UserPrefs
 
 Class UniquePersonList
-Class Person {
-  -postalCode: PostalCode
-  +getName(): Name
-  +getPostalCode(): PostalCode
-}
+Class Person
 Class Address
 Class Email
 Class Name
 Class Phone
-Class PostalCode {
-  +PostalCode(String)
-  +value: String
-  {static} +isValidPostalCode(String): boolean
-}
+Class PostalCode
 Class Tag
 
 Class I #FFFFFF
 }
 
-Package Logic as LogicPackage <<Rectangle>>{
-Class "{abstract}\nCommand" as Command LOGIC_COLOR
-Class GroupPostalCommand LOGIC_COLOR {
-  +execute(Model): CommandResult
-  {static} +getPostalGroupKey(Person): String
-}
-}
-
-show Model members
-show ModelManager members
-show Person members
-show PostalCode members
-show GroupPostalCommand members
-
-GroupPostalCommand -up-|> Command
-GroupPostalCommand ..> Model : <<call>> updatePersonListComparator
-GroupPostalCommand ..> Person : <<use>>
-GroupPostalCommand ..> PostalCode : <<use>>
-
-note right of PostalCode: Constructor rejects null and invalid values.\nValid postal codes contain exactly six digits.
-note right of GroupPostalCommand: Orders by two-digit postal prefix, full postal code, then name.\nCustomers without a postal code appear last.
-note right of ModelManager: Sorting changes display order only.
+Class HiddenOutside #FFFFFF
+HiddenOutside ..> Model
 
 AddressBook .up.|> ReadOnlyAddressBook
 
@@ -79,7 +42,7 @@ Person *--> Name
 Person *--> Phone
 Person *--> Email
 Person *--> Address
-Person *--> "0..1" PostalCode
+Person *--> PostalCode
 Person *--> "*" Tag
 
 Person -[hidden]up--> I
@@ -87,7 +50,8 @@ UniquePersonList -[hidden]right-> I
 
 Name -[hidden]right-> Phone
 Phone -[hidden]right-> Address
-Address -[hidden]right-> Email
+Address -[hidden]right-> PostalCode
+PostalCode -[hidden]right-> Email
 
 ModelManager --> "~* filtered, sorted" Person
 @enduml

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.util.logging.Logger;
 
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -14,6 +15,7 @@ import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
+import seedu.address.model.search.SearchCriteria;
 import seedu.address.storage.Storage;
 
 /**
@@ -62,6 +64,16 @@ public class LogicManager implements Logic {
     @Override
     public ObservableList<Person> getFilteredPersonList() {
         return model.getFilteredPersonList();
+    }
+
+    @Override
+    public SearchCriteria getActiveSearchCriteria() {
+        return model.getActiveSearchCriteria();
+    }
+
+    @Override
+    public ReadOnlyObjectProperty<SearchCriteria> activeSearchCriteriaProperty() {
+        return model.activeSearchCriteriaProperty();
     }
 
     @Override

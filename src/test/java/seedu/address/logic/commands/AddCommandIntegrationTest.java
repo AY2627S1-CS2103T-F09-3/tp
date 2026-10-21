@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_MARY_JANE_WITH_EXTRA_SPACES;
@@ -11,9 +12,14 @@ import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.model.search.TextContainsCriterion.Field.EMAIL;
+import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
+
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +30,8 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.search.SearchCriteria;
+import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -48,6 +56,32 @@ public class AddCommandIntegrationTest {
         assertCommandSuccess(new AddCommand(validPerson), model,
                 String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(validPerson)),
                 expectedModel);
+    }
+
+    @Test
+    public void execute_matchesCombinedSearch_preservesCriteriaAndShowsPerson() {
+        SearchCriteria criteria = new SearchCriteria(List.of(
+                new TextContainsCriterion(NAME, "Alice"), new TextContainsCriterion(EMAIL, "example.com")));
+        Person person = new PersonBuilder().withName("Alice Wong").withEmail("alicewong@example.com").build();
+
+        assertAddPreservesSearch(person, criteria, List.of(ALICE, person));
+    }
+
+    @Test
+    public void execute_matchesOnlySomeCriteria_preservesCriteriaAndKeepsPersonHidden() {
+        SearchCriteria criteria = new SearchCriteria(List.of(
+                new TextContainsCriterion(NAME, "Alice"), new TextContainsCriterion(EMAIL, "example.com")));
+        Person person = new PersonBuilder().withName("Alice Wong").withEmail("alicewong@other.com").build();
+
+        assertAddPreservesSearch(person, criteria, List.of(ALICE));
+    }
+
+    @Test
+    public void execute_noSearchResults_matchingPersonAppears() {
+        SearchCriteria criteria = new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Zoe")));
+        Person person = new PersonBuilder().withName("Zoe Tan").build();
+
+        assertAddPreservesSearch(person, criteria, List.of(person));
     }
 
     @Test
@@ -90,6 +124,19 @@ public class AddCommandIntegrationTest {
         Person personInList = model.getAddressBook().getPersonList().get(0);
         assertCommandFailure(new AddCommand(personInList), model,
                 AddCommand.MESSAGE_DUPLICATE_PERSON);
+    }
+
+    private void assertAddPreservesSearch(Person person, SearchCriteria criteria, List<Person> expectedPersons) {
+        model.updateFilteredPersonList(criteria);
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.updateFilteredPersonList(criteria);
+        expectedModel.addPerson(person);
+
+        assertCommandSuccess(new AddCommand(person), model,
+                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(person)), expectedModel);
+        assertEquals(criteria, model.getActiveSearchCriteria());
+        assertEquals(expectedPersons, model.getFilteredPersonList());
+        assertTrue(model.getAddressBook().getPersonList().contains(person));
     }
 
 }

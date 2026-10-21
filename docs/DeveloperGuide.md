@@ -143,6 +143,25 @@ The `Model` component,
 The `seedu.address.model.search` package provides reusable search predicates. `FindCommandParser` constructs a
 `SearchCriteria` from prefixed customer fields, and `FindCommand` applies it through the existing model filtering API.
 
+`ModelManager` keeps the active `SearchCriteria` in a `ReadOnlyObjectWrapper`. The filtered list's predicate is bound
+to this value, so replacing the criteria updates both the search state and the results. All filtering calls supply
+structured `SearchCriteria`, rather than an arbitrary predicate. `getActiveSearchCriteria()` returns the current
+immutable value, while `activeSearchCriteriaProperty()` exposes read-only observation through both `Model` and
+`Logic`. Observers can detect a different search even when its results are identical. This state is kept in memory
+and is not saved with customer data.
+
+Each successful `find` or `track` replaces the active criteria. `list` applies `SEARCH_CRITERIA_SHOW_ALL_PERSONS`,
+an empty search, to reset the state and show every customer. Rejected commands leave the active criteria unchanged.
+`track` wraps the immutable `PreorderStatusPredicate` as a `PersonCriterion`. It accepts a customer when any item
+in their preorder has an accepted `ItemStatus`; customers without a preorder or with an empty preorder never match.
+
+Customer changes preserve the active criteria. `addPerson` inserts into the observable backing list, while
+`setPerson` replaces an immutable customer; `FilteredList` re-evaluates the affected entry automatically. A new
+customer is displayed only if they match, and an edited customer disappears when they stop matching. Tag and
+preorder updates follow the same replacement path. Commands resolve their target from the displayed list before
+making changes, and later commands use the resulting displayed indexes. Rejected updates preserve both criteria
+and results.
+
 `SearchCriteria` implements `Predicate<Person>` and combines `PersonCriterion` objects using **AND**. A customer must
 match every criterion. An empty search matches every customer. The constructor defensively copies its criteria into an
 immutable set, so changing the source collection cannot change an existing search. Criterion order and duplicate
@@ -174,14 +193,14 @@ value, rejects blank or unsupported parameters, and validates tags using `Parser
 `ParserUtil.parsePostalCode`. Postal-code queries use the same six-digit validation as `add` and `edit`.
 It recognizes prefixes at whitespace boundaries without collapsing internal query spacing, including `c/o` inside an
 address. `FindCommand` passes `SearchCriteria` directly to
-`Model.updateFilteredPersonList`, which replaces the predicate on the list backed by the full address book.
+`Model.updateFilteredPersonList`, which replaces the active criteria on the list backed by the full address book.
 There is no need to filter the previous search's results or execute another search command as an intermediate step.
 
 For future multi-item searches, product and status conditions must be grouped inside **one** `PersonCriterion` that
 checks whether any single item satisfies both conditions. Separate customer predicates for "has this product" and
 "has this status" could incorrectly match different items. Date/method conditions can be separate criteria,
-because they describe the preorder rather than an individual item. These extensions, shared tracking
-rules and active-search UI/state are not implemented by this foundation.
+because they describe the preorder rather than an individual item. These extensions, `find s/` support,
+final multi-item tracking rules and the active-criteria display remain deferred.
 
 ### Storage component
 
@@ -567,6 +586,26 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Preserving searches after customer changes
+
+Use a test address book without customers whose names contain `SearchTest` or `OtherTest`.
+
+1. Add two customers:
+   * `add n/SearchTest Alice p/81111111 e/searchalice@example.com a/Test Street c/123456`
+   * `add n/SearchTest Ben p/82222222 e/searchben@example.com a/Test Street c/123456`
+1. Run `find n/SearchTest`.<br>
+   Expected: Only those two customers are shown.
+1. Run `add n/SearchTest Cara p/83333333 e/searchcara@example.com a/Test Street c/123456`.<br>
+   Expected: The new customer joins the results; only the three matching customers are shown.
+1. Run `add n/OtherTest Dana p/84444444 e/otherdana@example.com a/Other Street c/123456`.<br>
+   Expected: The customer is saved, and the three search results remain displayed.
+1. Run `edit 1 n/OtherTest Alice`.<br>
+   Expected: The edited customer disappears. `SearchTest Ben` and `SearchTest Cara` remain at indexes 1 and 2.
+1. Run `edit 1 p/89999999`.<br>
+   Expected: Ben's phone number changes; only Ben and Cara remain displayed.
+1. Run `list`.<br>
+   Expected: All customers are shown, including `OtherTest Alice` and `OtherTest Dana`.
 
 ### Deleting a person
 
