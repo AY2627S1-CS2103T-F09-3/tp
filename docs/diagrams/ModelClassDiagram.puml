@@ -49,7 +49,7 @@ Person *--> Name
 Person *--> Phone
 Person *--> Email
 Person *--> Address
-Person *--> "0..1" PostalCode
+Person *--> PostalCode
 Person *--> "*" Tag
 
 Person -[hidden]up--> I
