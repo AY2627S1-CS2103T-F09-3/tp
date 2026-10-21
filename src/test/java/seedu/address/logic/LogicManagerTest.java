@@ -290,7 +290,7 @@ public class LogicManagerTest {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
 
         for (String input : List.of("find", "find Alice", "find Alice t/friends", "find n/",
-                "find n/Alice p/", "find n/Alice x/value", "find s/pending", "find n/Alice\ts/pending")) {
+                "find n/Alice p/", "find n/Alice x/value", "find s/", "find n/Alice\td/")) {
             assertCommandFailurePreservesFilteredList(input, ParseException.class, expectedMessage);
         }
     }
