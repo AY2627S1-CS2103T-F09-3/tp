@@ -125,6 +125,14 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Sets the {@code Preorder} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withPreorder(Preorder preorder) {
+        this.preorder = Optional.of(preorder);
+        return this;
+    }
+
     public Person build() {
         return new Person(name, phone, email, address, postalCode, tags, preorder);
     }
