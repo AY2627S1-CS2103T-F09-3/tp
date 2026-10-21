@@ -121,6 +121,7 @@
         "editing-a-person-edit": "Editing a person: edit",
         "tagging-a-person-tag": "Tagging a person: tag",
         "removing-a-person-s-tag-untag": "Removing a person's tag: untag",
+        "grouping-customers-by-postal-code-group-postal": "Grouping customers by postal code: group postal",
         "finding-customers-by-their-attributes-find": "Finding customers by their attributes: find",
         "viewing-preorders-track": "Viewing preorders: track",
         "deleting-a-preorder-deleteorder": "Deleting a preorder: deleteorder",
