@@ -19,6 +19,7 @@ public class ListCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.updateFilteredPersonList(SEARCH_CRITERIA_SHOW_ALL_PERSONS);
+        model.updatePersonListComparator(null);
         return new CommandResult(MESSAGE_SUCCESS);
     }
 }

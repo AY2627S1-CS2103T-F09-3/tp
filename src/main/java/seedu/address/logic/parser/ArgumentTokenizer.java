@@ -1,5 +1,8 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -88,6 +91,20 @@ public class ArgumentTokenizer {
 
         // Sort by start position
         prefixPositions.sort((prefix1, prefix2) -> prefix1.getStartPosition() - prefix2.getStartPosition());
+
+        // Keep the conventional "c/o" notation inside an address instead of treating it as a postal-code field.
+        for (int i = 1; i < prefixPositions.size(); i++) {
+            PrefixPosition current = prefixPositions.get(i);
+            PrefixPosition previous = prefixPositions.get(i - 1);
+            int valueStart = current.getStartPosition() + current.getPrefix().getPrefix().length();
+            if (previous.getPrefix().equals(PREFIX_ADDRESS) && current.getPrefix().equals(PREFIX_POSTAL_CODE)
+                    && valueStart < argsString.length() && argsString.charAt(valueStart) == 'o'
+                    && (valueStart + 1 == argsString.length()
+                    || Character.isWhitespace(argsString.charAt(valueStart + 1)))) {
+                prefixPositions.remove(i);
+                i--;
+            }
+        }
 
         // Insert a PrefixPosition to represent the preamble
         PrefixPosition preambleMarker = new PrefixPosition(new Prefix(""), 0);

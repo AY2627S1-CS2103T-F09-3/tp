@@ -23,6 +23,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -39,6 +40,7 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.PostalCode;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 
 public class EditCommandParserTest {
@@ -104,6 +106,23 @@ public class EditCommandParserTest {
             "José Tan"}) {
             assertParseFailure(parser, "1 " + PREFIX_NAME + invalidName, Name.MESSAGE_CONSTRAINTS);
         }
+    }
+
+    @Test
+    public void parse_postalCodeOnly_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPostalCode("012345").build();
+        assertParseSuccess(parser, "1 c/012345", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_invalidPostalCode_failure() {
+        assertParseFailure(parser, "1 c/12345", PostalCode.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_repeatedPostalCode_failure() {
+        assertParseFailure(parser, "1 c/012345 c/654321",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_POSTAL_CODE));
     }
 
     @Test
@@ -192,7 +211,7 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_addressContainingPrefixLikeText_success() {
+    public void parse_addressContainingUnrecognizedPrefixes_success() {
         String address = "Block 123 c/o Alice x/foo";
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withAddress(address).build();
         EditCommand expectedCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);

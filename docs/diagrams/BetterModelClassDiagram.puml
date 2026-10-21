@@ -18,4 +18,8 @@ Person *--> Name
 Person *--> Phone
 Person *--> Email
 Person *--> Address
+Person *--> PostalCode
+
+Address -[hidden]right-> PostalCode
+PostalCode -[hidden]right-> Email
 @enduml
