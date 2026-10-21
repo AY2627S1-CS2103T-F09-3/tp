@@ -12,6 +12,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PostalCode;
 import seedu.address.model.preorder.FulfilmentMethod;
+import seedu.address.model.preorder.ItemStatus;
 
 public class SampleDataUtilTest {
 
@@ -50,6 +51,16 @@ public class SampleDataUtilTest {
         Person[] samplePersons = SampleDataUtil.getSamplePersons();
         assertTrue(Arrays.stream(samplePersons).anyMatch(person -> hasMethod(person, FulfilmentMethod.DELIVERY)));
         assertTrue(Arrays.stream(samplePersons).anyMatch(person -> hasMethod(person, FulfilmentMethod.COLLECTION)));
+    }
+
+    @Test
+    public void getSamplePersons_severalDeliveriesWithUnfinishedItems_present() {
+        long unfinishedDeliveryCount = Arrays.stream(SampleDataUtil.getSamplePersons())
+                .filter(person -> hasMethod(person, FulfilmentMethod.DELIVERY))
+                .filter(person -> person.getPreorder().get().getItems().stream()
+                        .anyMatch(item -> item.getStatus() != ItemStatus.COMPLETED))
+                .count();
+        assertTrue(unfinishedDeliveryCount >= 2);
     }
 
     private static boolean hasMethod(Person person, FulfilmentMethod method) {

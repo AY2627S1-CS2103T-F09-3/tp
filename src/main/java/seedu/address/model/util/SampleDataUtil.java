@@ -34,22 +34,23 @@ public class SampleDataUtil {
             new Person(new Name("Alex Yeoh"), new Phone("87438807"), new Email("alexyeoh@example.com"),
                 new Address("Blk 30 Geylang Street 29, #06-40"), new PostalCode("389030"),
                 getTagSet("friends"),
-                getPreorder(FulfilmentMethod.DELIVERY, "2026-12-20", "Call on arrival",
+                getPreorder("2026-12-20", FulfilmentMethod.DELIVERY, "Call on arrival",
                         getItem("Pineapple Tarts", "2", ItemStatus.PENDING, "Less sugar"),
                         getItem("Almond Cookies", "1", ItemStatus.PREPARED))),
             new Person(new Name("Bernice Yu"), new Phone("99272758"), new Email("berniceyu@example.com"),
                 new Address("Blk 30 Lorong 3 Serangoon Gardens, #07-18"), new PostalCode("555030"),
                 getTagSet("colleagues", "friends"),
-                getPreorder(getItem("Butter Cake", "1", ItemStatus.COMPLETED))),
+                getPreorder("2026-12-19", FulfilmentMethod.COLLECTION, "Collect from side gate",
+                        getItem("Butter Cake", "1", ItemStatus.COMPLETED))),
             new Person(new Name("Charlotte Oliveiro"), new Phone("93210283"), new Email("charlotte@example.com"),
                 new Address("Blk 11 Ang Mo Kio Street 74, #11-04"), new PostalCode("560011"),
                 getTagSet("neighbours"),
-                getPreorder(FulfilmentMethod.COLLECTION, "2026-12-19", "Collect from side gate",
+                getPreorder("2026-12-20", FulfilmentMethod.DELIVERY, "Leave at the door",
                         getItem("Pineapple Tarts", "3", ItemStatus.PREPARED, "Separate packaging"))),
             new Person(new Name("David Li"), new Phone("91031282"), new Email("lidavid@example.com"),
                 new Address("Blk 436 Serangoon Gardens Street 26, #16-43"), new PostalCode("555436"),
                 getTagSet("family"),
-                getPreorder(FulfilmentMethod.DELIVERY, "2026-12-23", null)),
+                getPreorder("2026-12-23", FulfilmentMethod.DELIVERY, "Leave at the guardhouse")),
             new Person(new Name("Irfan Ibrahim"), new Phone("92492021"), new Email("irfan@example.com"),
                 new Address("Blk 47 Tampines Street 20, #17-35"), new PostalCode("520047"),
                 getTagSet("classmates")),
@@ -68,20 +69,13 @@ public class SampleDataUtil {
     }
 
     /**
-     * Returns a preorder containing the items given.
+     * Returns a preorder containing the items given, delivered or collected by {@code method} on {@code date},
+     * with the given handover notes.
      */
-    public static Optional<Preorder> getPreorder(Item... items) {
-        return Optional.of(new Preorder(List.of(items)));
-    }
-
-    /**
-     * Returns a preorder containing the items given, delivered or collected by {@code method} on {@code date}.
-     * {@code handoverNotes} may be null for a preorder without handover notes.
-     */
-    private static Optional<Preorder> getPreorder(FulfilmentMethod method, String date, String handoverNotes,
+    private static Optional<Preorder> getPreorder(String date, FulfilmentMethod method, String handoverNotes,
             Item... items) {
         return Optional.of(new Preorder(List.of(items), Optional.of(new FulfilmentDate(date)), Optional.of(method),
-                Optional.ofNullable(handoverNotes).map(HandoverNotes::new)));
+                Optional.of(new HandoverNotes(handoverNotes))));
     }
 
     private static Item getItem(String name, String quantity, ItemStatus status) {
