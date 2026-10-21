@@ -1,11 +1,13 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
+import static seedu.address.model.Model.SEARCH_CRITERIA_SHOW_ALL_PERSONS;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
@@ -30,9 +32,14 @@ public class FindCommand extends Command {
 
     /**
      * Creates a command that lists customers satisfying {@code criteria}.
+     *
+     * @throws NullPointerException If {@code criteria} is null.
+     * @throws IllegalArgumentException If {@code criteria} is empty.
      */
     public FindCommand(SearchCriteria criteria) {
         this.criteria = requireNonNull(criteria);
+        checkArgument(!criteria.equals(SEARCH_CRITERIA_SHOW_ALL_PERSONS),
+                "Find requires at least one search criterion.");
     }
 
     @Override

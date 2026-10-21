@@ -38,6 +38,11 @@ public class FindCommandTest {
     }
 
     @Test
+    public void constructor_emptyCriteria_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> new FindCommand(new SearchCriteria(List.of())));
+    }
+
+    @Test
     public void equals() {
         SearchCriteria firstCriteria = prepareNameCriteria("first");
         SearchCriteria secondCriteria = prepareNameCriteria("second");
