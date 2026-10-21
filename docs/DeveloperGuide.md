@@ -138,6 +138,64 @@ The `Model` component,
 </box>
 
 
+#### Customer search criteria
+
+The `seedu.address.model.search` package provides reusable search predicates. `FindCommandParser` constructs a
+`SearchCriteria` from prefixed customer fields, and `FindCommand` applies it through the existing model filtering API.
+
+`ModelManager` keeps the active `SearchCriteria` in a `ReadOnlyObjectWrapper`. The filtered list's predicate is bound
+to this value, so replacing the criteria updates both the search state and the results. All filtering calls supply
+structured `SearchCriteria`, rather than an arbitrary predicate. `getActiveSearchCriteria()` returns the current
+immutable value, while `activeSearchCriteriaProperty()` exposes read-only observation through both `Model` and
+`Logic`. Observers can detect a different search even when its results are identical. This state is kept in memory
+and is not saved with customer data.
+
+Each successful `find` or `track` replaces the active criteria. `list` applies `SEARCH_CRITERIA_SHOW_ALL_PERSONS`,
+an empty search, to reset the state and show every customer. Rejected commands leave the active criteria unchanged.
+`track` wraps the immutable `PreorderStatusPredicate` as a `PersonCriterion`. It accepts a customer when any item
+in their preorder has an accepted `ItemStatus`; customers without a preorder or with an empty preorder never match.
+
+Customer changes preserve the active criteria. `addPerson` inserts into the observable backing list, while
+`setPerson` replaces an immutable customer; `FilteredList` re-evaluates the affected entry automatically. A new
+customer is displayed only if they match, and an edited customer disappears when they stop matching. Tag and
+preorder updates follow the same replacement path. Commands resolve their target from the displayed list before
+making changes, and later commands use the resulting displayed indexes. Rejected updates preserve both criteria
+and results.
+
+`SearchCriteria` implements `Predicate<Person>` and combines `PersonCriterion` objects using **AND**. A customer must
+match every criterion. An empty search matches every customer. The constructor defensively copies its criteria into an
+immutable set, so changing the source collection cannot change an existing search. Criterion order and duplicate
+conditions do not affect matching or equality; rejecting repeated CLI prefixes is the parser's responsibility.
+
+For example, the following predicate matches customers whose name contains `Alice Tan` and who have the tag `regular`:
+
+```java
+SearchCriteria criteria = new SearchCriteria(List.of(
+        new TextContainsCriterion(TextContainsCriterion.Field.NAME, "Alice Tan"),
+        new TagCriterion(new Tag("regular"))));
+```
+
+`TextContainsCriterion` supports name, phone, email and address fields. It strips surrounding query whitespace and
+matches the entire query as a case-insensitive substring using locale-independent case normalization. Internal spacing
+and punctuation remain significant. Queries must be nonblank, but may be fragments such as `8123` or `example.com`;
+they do not use the validation rules for creating complete contact fields. `TagCriterion` accepts a validated `Tag` and
+uses its complete, case-insensitive equality rule.
+
+To add a search condition with different matching rules, implement `PersonCriterion` and include it in a
+`SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
+CLI prefixes belong in the parser, not in the criteria. Add the prefix to `FindCommandParser`'s supported-prefix list
+and construct its criterion there. The parser accepts each supported prefix once, requires a prefix before the first
+value, rejects blank or unsupported parameters, and validates tags using `ParserUtil.parseTag`. It recognizes prefixes
+at whitespace boundaries without collapsing internal query spacing. `FindCommand` passes `SearchCriteria` directly to
+`Model.updateFilteredPersonList`, which replaces the active criteria on the list backed by the full address book.
+There is no need to filter the previous search's results or execute another search command as an intermediate step.
+
+For future multi-item searches, product and status conditions must be grouped inside **one** `PersonCriterion` that
+checks whether any single item satisfies both conditions. Separate customer predicates for "has this product" and
+"has this status" could incorrectly match different items. Date/method and postal conditions can be separate criteria,
+because they describe the preorder or customer rather than an individual item. These extensions, `find s/` support,
+final multi-item tracking rules and the active-criteria display remain deferred.
+
 ### Storage component
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/storage/Storage.java)
@@ -543,6 +601,26 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases … }_
 
+### Preserving searches after customer changes
+
+Use a test address book without customers whose names contain `SearchTest` or `OtherTest`.
+
+1. Add two customers:
+   * `add n/SearchTest Alice p/81111111 e/searchalice@example.com a/Test Street`
+   * `add n/SearchTest Ben p/82222222 e/searchben@example.com a/Test Street`
+1. Run `find n/SearchTest`.<br>
+   Expected: Only those two customers are shown.
+1. Run `add n/SearchTest Cara p/83333333 e/searchcara@example.com a/Test Street`.<br>
+   Expected: The new customer joins the results; only the three matching customers are shown.
+1. Run `add n/OtherTest Dana p/84444444 e/otherdana@example.com a/Other Street`.<br>
+   Expected: The customer is saved, and the three search results remain displayed.
+1. Run `edit 1 n/OtherTest Alice`.<br>
+   Expected: The edited customer disappears. `SearchTest Ben` and `SearchTest Cara` remain at indexes 1 and 2.
+1. Run `edit 1 p/89999999`.<br>
+   Expected: Ben's phone number changes; only Ben and Cara remain displayed.
+1. Run `list`.<br>
+   Expected: All customers are shown, including `OtherTest Alice` and `OtherTest Dana`.
+
 ### Deleting a person
 
 1. Deleting a person while all persons are being shown
@@ -592,7 +670,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Tagging a person in a filtered list
 
-   1. Prerequisites: Find a person using `find Bernice`. Only `Bernice Yu` is shown.
+   1. Prerequisites: Find a person using `find n/Bernice`. Only `Bernice Yu` is shown.
 
    1. Test case: `tag 1 t/vip`<br>
       Expected: `vip` is added to `Bernice Yu`'s tags. The status message shows `Added tag(s) [vip] to Bernice Yu`. Only `Bernice Yu` remains displayed; the filter is preserved.
@@ -638,7 +716,7 @@ Run each group below independently, starting with the sample data unless stated 
 
 1. Removing a tag in a filtered list
 
-   1. Prerequisites: Run `find Bernice`. Only `Bernice Yu` is shown, at index 1, with the tags `colleagues` and `friends`.
+   1. Prerequisites: Run `find n/Bernice`. Only `Bernice Yu` is shown, at index 1, with the tags `colleagues` and `friends`.
 
    1. Test case: `untag 2 t/friends`<br>
       Expected: The status message shows `The person index provided is invalid.`, even though the full address book contains more than one person.
@@ -649,7 +727,7 @@ Run each group below independently, starting with the sample data unless stated 
    1. Test case: `untag 1 t/FRIENDS` again.<br>
       Expected: The status message shows `Bernice Yu does not have tag [FRIENDS]`. Only Bernice remains displayed.
 
-   1. Test case: Run `find NoMatchingCustomer`, confirm that the displayed list is empty, then run `untag 1 t/friends`.<br>
+   1. Test case: Run `find n/NoMatchingCustomer`, confirm that the displayed list is empty, then run `untag 1 t/friends`.<br>
       Expected: The status message shows `The person index provided is invalid.` The list remains empty and no data is changed.
 
 1. Preserving a preorder and saving tag removal
