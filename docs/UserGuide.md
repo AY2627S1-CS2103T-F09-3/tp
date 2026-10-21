@@ -231,13 +231,14 @@ Format: `group postal`
 
 For example, `find n/Alex` followed by `group postal` groups only the matching customers. To update the first displayed customer's postal code while preserving their other details and preorder, use `edit 1 c/012345`.
 
-### Sorting customers by handover date: `sort date`
+### Sorting customers by fulfilment date: `sort date`
 
-Sorts the currently displayed customers by the handover date of their preorder, so you can see whose preorder is due first. The order saved in the data file is not changed.
+Sorts the currently displayed customers by the fulfilment date of their preorder, so you can see whose preorder is due first. The order saved in the data file is not changed.
 
 Format: `sort date`
 
-* Customers are shown with the earliest handover date first.
+* The fulfilment date is the delivery or collection date set with `preorder INDEX f/DATE` (see [Setting delivery or collection details](#setting-delivery-or-collection-details-preorder)).
+* Customers are shown with the earliest fulfilment date first.
 * Customers without a preorder, or whose preorder has no date yet, are listed last.
 * Customers with the same date are ordered by name, ignoring capitalization.
 * `date` is not case-sensitive, and spaces around it are ignored. For example, `sort DATE` also works.
@@ -246,8 +247,8 @@ Format: `sort date`
 
 Examples:
 
-* `sort date` sorts all displayed customers by handover date. If 5 customers are displayed, LeBake shows `Sorted 5 customer(s) by handover date. Customers without a date are listed last.`
-* `find t/regular` followed by `sort date` sorts only your regular customers by handover date.
+* `sort date` sorts all displayed customers by fulfilment date. If 5 customers are displayed, LeBake shows `Sorted 5 customer(s) by fulfilment date. Customers without a date are listed last.`
+* `find t/regular` followed by `sort date` sorts only your regular customers by fulfilment date.
 
 <box type="info" seamless>
 
@@ -533,10 +534,10 @@ Action     | Format, Examples
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Group postal** | `group postal`
-**Sort by date** | `sort date`
 **Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]` (at least one criterion)<br> e.g., `find n/James t/regular`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
 **Tag**    | `tag INDEX t/TAG`<br> e.g., `tag 1 t/regular`
 **Untag**  | `untag INDEX t/TAG`<br> e.g., `untag 1 t/friends`
+**Sort by date** | `sort date`
 **Help**   | `help`

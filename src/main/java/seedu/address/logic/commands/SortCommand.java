@@ -15,7 +15,7 @@ import seedu.address.model.preorder.FulfilmentDate;
 import seedu.address.model.preorder.Preorder;
 
 /**
- * Sorts the currently displayed customers by the handover date of their preorder.
+ * Sorts the currently displayed customers by the fulfilment date of their preorder.
  */
 public class SortCommand extends Command {
 
@@ -23,15 +23,15 @@ public class SortCommand extends Command {
     public static final String DATE_ARGUMENT = "date";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + " " + DATE_ARGUMENT
-            + ": Sorts the displayed customers by handover date, earliest first. "
+            + ": Sorts the displayed customers by fulfilment date, earliest first. "
             + "Customers without a date are listed last.\n"
             + "Parameters: " + DATE_ARGUMENT + "\n"
             + "Example: " + COMMAND_WORD + " " + DATE_ARGUMENT;
 
-    public static final String MESSAGE_SUCCESS = "Sorted %1$d customer(s) by handover date. "
+    public static final String MESSAGE_SUCCESS = "Sorted %1$d customer(s) by fulfilment date. "
             + "Customers without a date are listed last.";
 
-    /** Orders customers by handover date, with missing dates last, then by name ignoring case. */
+    /** Orders customers by fulfilment date, with missing dates last, then by name ignoring case. */
     public static final Comparator<Person> DATE_COMPARATOR = Comparator
             .comparing(SortCommand::getSortDate)
             .thenComparing(person -> person.getName().fullName, String.CASE_INSENSITIVE_ORDER);
@@ -39,7 +39,7 @@ public class SortCommand extends Command {
     private static final Logger logger = LogsCenter.getLogger(SortCommand.class);
 
     /**
-     * Returns the handover date of the person's preorder, or {@code LocalDate.MAX} if they have
+     * Returns the fulfilment date of the person's preorder, or {@code LocalDate.MAX} if they have
      * no preorder or no date, so that they are sorted last.
      */
     private static LocalDate getSortDate(Person person) {
@@ -59,7 +59,7 @@ public class SortCommand extends Command {
         requireNonNull(model);
         model.updatePersonListComparator(DATE_COMPARATOR);
         int sortedCount = model.getFilteredPersonList().size();
-        logger.info("Sorted " + sortedCount + " customer(s) by handover date");
+        logger.info("Sorted " + sortedCount + " customer(s) by fulfilment date");
         return new CommandResult(String.format(MESSAGE_SUCCESS, sortedCount));
     }
 
