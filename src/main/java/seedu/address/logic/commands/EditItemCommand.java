@@ -119,16 +119,18 @@ public class EditItemCommand extends Command {
     }
 
     /**
-     * Replaces only the validated item index, preserving the customer's other data.
+     * Replaces only the validated item index, preserving fulfilment details and the customer's other data.
      */
     private Person createUpdatedOrderPerson(Person personToUpdate, Item updatedItem) {
         assert personToUpdate.getPreorder().isPresent() : "Preorder was validated before updating";
-        List<Item> items = new ArrayList<>(personToUpdate.getPreorder().orElseThrow().getItems());
+        Preorder existingPreorder = personToUpdate.getPreorder().orElseThrow();
+        List<Item> items = new ArrayList<>(existingPreorder.getItems());
         assert itemIndex.getZeroBased() < items.size() : "Item index was validated before updating";
         items.set(itemIndex.getZeroBased(), updatedItem);
-        Preorder updatedPreorder = new Preorder(items);
+        Preorder updatedPreorder = existingPreorder.withItems(items);
         return new Person(personToUpdate.getName(), personToUpdate.getPhone(), personToUpdate.getEmail(),
-                personToUpdate.getAddress(), personToUpdate.getTags(), Optional.of(updatedPreorder));
+                personToUpdate.getAddress(), personToUpdate.getPostalCode(), personToUpdate.getTags(),
+                Optional.of(updatedPreorder));
     }
 
     @Override

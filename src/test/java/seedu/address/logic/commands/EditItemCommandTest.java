@@ -24,9 +24,13 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.FulfilmentDate;
+import seedu.address.model.preorder.FulfilmentMethod;
+import seedu.address.model.preorder.HandoverNotes;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.preorder.Preorder;
 import seedu.address.model.preorder.Quantity;
 import seedu.address.model.preorder.Remark;
 import seedu.address.testutil.AddressBookBuilder;
@@ -275,6 +279,45 @@ public class EditItemCommandTest {
         }
         descriptor.setStatus(status);
         return new EditItemCommand(Index.fromOneBased(index), Index.fromOneBased(1), descriptor);
+    }
+
+    @Test
+    public void execute_editItem_preservesPostalCodeAndFulfilment() throws Exception {
+        for (FulfilmentMethod method : FulfilmentMethod.values()) {
+            assertFulfilmentPreserved("012345", Optional.of(new FulfilmentDate("2026-12-20")),
+                    Optional.of(method), Optional.of(new HandoverNotes("Call on arrival")));
+        }
+    }
+
+    @Test
+    public void execute_partialFulfilment_preservesLegacyPostalCodeAndMissingFields() throws Exception {
+        assertFulfilmentPreserved(null, Optional.of(new FulfilmentDate("2026-12-20")),
+                Optional.empty(), Optional.empty());
+        assertFulfilmentPreserved(null, Optional.empty(), Optional.of(FulfilmentMethod.COLLECTION),
+                Optional.empty());
+        assertFulfilmentPreserved(null, Optional.empty(), Optional.empty(),
+                Optional.of(new HandoverNotes("Call on arrival")));
+    }
+
+    private void assertFulfilmentPreserved(String postalCode, Optional<FulfilmentDate> date,
+            Optional<FulfilmentMethod> method, Optional<HandoverNotes> notes) throws Exception {
+        Item first = new ItemBuilder().build();
+        Item target = new ItemBuilder().withoutQuantity().withRemark("Less sugar").build();
+        Preorder preorder = new Preorder(List.of(first, target), date, method, notes);
+        Person original = new PersonBuilder(ALICE).withPostalCode(postalCode).withPreorder(preorder).build();
+        Model model = createModel(BENSON, original);
+        showPersonAtIndex(model, Index.fromOneBased(2));
+        EditItemDescriptor descriptor = new EditItemDescriptor();
+        descriptor.setStatus(COMPLETED);
+        descriptor.setRemark(Optional.empty());
+        new EditItemCommand(Index.fromOneBased(1), Index.fromOneBased(2), descriptor).execute(model);
+        Item updated = new Item(target.getName(), Optional.empty(), COMPLETED, Optional.empty());
+        Person expected = new PersonBuilder(original)
+                .withPreorder(new Preorder(List.of(first, updated), date, method, notes)).build();
+        assertEquals(List.of(BENSON, expected), model.getAddressBook().getPersonList());
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+        assertEquals(preorder, original.getPreorder().orElseThrow());
+        assertEquals(List.of(first, target), preorder.getItems());
     }
 
     private Model createModel(Person... persons) {

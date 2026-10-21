@@ -82,15 +82,17 @@ public class AddItemCommand extends Command {
     }
 
     /**
-     * Appends the item to a copy of the existing list, preserving all other person data.
+     * Appends the item to a copy of the existing list, preserving fulfilment details and all other person data.
      */
     private Person createPersonWithAddedItem(Person personToAddItem, Item newItem) {
         List<Item> items = new ArrayList<>(personToAddItem.getPreorder()
                 .map(Preorder::getItems).orElseGet(List::of));
         items.add(newItem);
-        Preorder updatedPreorder = new Preorder(items);
+        Preorder updatedPreorder = personToAddItem.getPreorder()
+                .map(preorder -> preorder.withItems(items)).orElseGet(() -> new Preorder(items));
         return new Person(personToAddItem.getName(), personToAddItem.getPhone(), personToAddItem.getEmail(),
-                personToAddItem.getAddress(), personToAddItem.getTags(), Optional.of(updatedPreorder));
+                personToAddItem.getAddress(), personToAddItem.getPostalCode(), personToAddItem.getTags(),
+                Optional.of(updatedPreorder));
     }
 
     @Override

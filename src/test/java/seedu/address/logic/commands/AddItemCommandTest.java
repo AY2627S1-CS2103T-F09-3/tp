@@ -8,6 +8,7 @@ import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,8 +20,12 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.FulfilmentDate;
+import seedu.address.model.preorder.FulfilmentMethod;
+import seedu.address.model.preorder.HandoverNotes;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.preorder.Preorder;
 import seedu.address.testutil.AddressBookBuilder;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -137,6 +142,53 @@ public class AddItemCommandTest {
     public void toString_includesIndexAndItem() {
         String expected = AddItemCommand.class.getCanonicalName() + "{index=" + FIRST + ", item=" + ITEM + "}";
         assertEquals(expected, new AddItemCommand(FIRST, ITEM).toString());
+    }
+
+    @Test
+    public void execute_newPreorder_preservesPostalCodeAndUnsetFulfilment() throws Exception {
+        Person original = new PersonBuilder(ALICE).withPostalCode("012345").build();
+        Model model = createModel(original, BENSON);
+        new AddItemCommand(FIRST, ITEM).execute(model);
+        Person expected = new PersonBuilder(original).withPreorder(ITEM).build();
+        assertEquals(List.of(expected, BENSON), model.getAddressBook().getPersonList());
+        assertEquals(Optional.empty(), original.getPreorder());
+    }
+
+    @Test
+    public void execute_existingPreorder_preservesPostalCodeAndFulfilment() throws Exception {
+        for (List<Item> existing : List.of(List.<Item>of(), List.of(ITEM))) {
+            for (FulfilmentMethod method : FulfilmentMethod.values()) {
+                assertFulfilmentPreserved(existing, Optional.of(new FulfilmentDate("2026-12-20")),
+                        Optional.of(method), Optional.of(new HandoverNotes("Call on arrival")));
+            }
+        }
+    }
+
+    @Test
+    public void execute_partialFulfilment_preservesPresentAndAbsentFields() throws Exception {
+        assertFulfilmentPreserved(List.of(), Optional.of(new FulfilmentDate("2026-12-20")),
+                Optional.empty(), Optional.empty());
+        assertFulfilmentPreserved(List.of(ITEM), Optional.empty(), Optional.of(FulfilmentMethod.COLLECTION),
+                Optional.empty());
+        assertFulfilmentPreserved(List.of(), Optional.empty(), Optional.empty(),
+                Optional.of(new HandoverNotes("Call on arrival")));
+    }
+
+    private void assertFulfilmentPreserved(List<Item> existing, Optional<FulfilmentDate> date,
+            Optional<FulfilmentMethod> method, Optional<HandoverNotes> notes) throws Exception {
+        Preorder preorder = new Preorder(existing, date, method, notes);
+        Person original = new PersonBuilder(ALICE).withPostalCode("012345").withPreorder(preorder).build();
+        Model model = createModel(BENSON, original);
+        showPersonAtIndex(model, Index.fromOneBased(2));
+        new AddItemCommand(FIRST, ITEM).execute(model);
+        List<Item> expectedItems = new ArrayList<>(existing);
+        expectedItems.add(ITEM);
+        Person expected = new PersonBuilder(original)
+                .withPreorder(new Preorder(expectedItems, date, method, notes)).build();
+        assertEquals(List.of(BENSON, expected), model.getAddressBook().getPersonList());
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+        assertEquals(preorder, original.getPreorder().orElseThrow());
+        assertEquals(existing, preorder.getItems());
     }
 
     private Model createModel(Person... persons) {
