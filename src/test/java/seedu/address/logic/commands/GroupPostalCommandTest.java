@@ -109,8 +109,8 @@ public class GroupPostalCommandTest {
         new GroupPostalCommand().execute(model);
 
         assertTrue(model.getFilteredPersonList() instanceof SortedList<?>);
-        assertSame(GroupPostalCommand.POSTAL_COMPARATOR,
-                ((SortedList<?>) model.getFilteredPersonList()).getComparator());
+        SortedList<?> sortedPersons = (SortedList<?>) model.getFilteredPersonList();
+        assertSame(GroupPostalCommand.POSTAL_COMPARATOR, sortedPersons.getComparator());
     }
 
     @Test
