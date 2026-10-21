@@ -76,7 +76,7 @@ public class MainWindowTest {
                 assertEquals(List.of(delivery, collection), customers.getItems());
                 assertEquals("1 outstanding customer stop(s) | 1 postal group(s)", totals(summary));
                 assertTrue(text(summary).contains("Alice Tan | " + delivery.getPhone().value));
-                assertTrue(text(summary).contains("Delivery | 20 Dec 2026\nInstructions: Call on arrival"));
+                assertTrue(text(summary).contains("Delivery | 20 Dec 2026\nHandover notes: Call on arrival"));
 
                 logic.execute("find m/collection");
                 assertEquals(List.of(collection), customers.getItems());

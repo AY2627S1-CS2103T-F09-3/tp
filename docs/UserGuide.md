@@ -237,9 +237,9 @@ The **Delivery preparation** panel above the customer list summarises outstandin
 
 * A customer counts as one outstanding stop when their preorder uses `DELIVERY` and has at least one `PENDING` or `PREPARED` item. Multiple items still count as one stop.
 * Collection, empty preorders, completed-only preorders, and preorders without a method do not contribute to the totals.
-* Contacts are grouped by the first two postal digits. Each contact shows their name, phone, address, complete postal code, fulfilment date, and delivery instructions.
+* Contacts are grouped by the first two postal digits. Each contact shows their name, phone, address, complete postal code, fulfilment date, and handover notes.
 * Customers without postal codes remain included under `MISSING POSTAL CODE`, which counts as one additional postal group. Their contact shows `Postal code needed`.
-* An outstanding delivery without a date shows `Not scheduled`; absent instructions show `No instructions`.
+* An outstanding delivery without a date shows `Not scheduled`; absent handover notes show `Handover notes: None`.
 * The contact area scrolls and wraps long text. Use Tab to focus it and the arrow keys to scroll.
 
 For the sample data, `list` shows two outstanding delivery stops in two postal groups. `find f/2026-12-20 m/delivery` selects the deliveries for that date; `group postal` groups those results while keeping the search. An empty scheduled preorder may appear in the customer results but does not count as an outstanding stop.
@@ -248,7 +248,7 @@ For the sample data, `list` shows two outstanding delivery stops in two postal g
 
 Finds customers matching **every** supplied criterion.
 
-Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG] [f/YYYY-MM-DD] [m/METHOD] [i/INSTRUCTIONS]`
+Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG] [f/YYYY-MM-DD] [m/METHOD] [h/HANDOVER_NOTES]`
 
 Supply at least one criterion. Each prefix may appear at most once, in any order.
 
@@ -261,7 +261,7 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 | `t/` | Tag | Complete tag name, ignoring case |
 | `f/` | Shared preorder fulfilment date | Exact real date in `YYYY-MM-DD` format |
 | `m/` | Shared preorder method | `delivery` or `collection`, ignoring case |
-| `i/` | Shared delivery/handover instructions | Case-insensitive substring |
+| `h/` | Shared preorder handover notes | Case-insensitive substring |
 
 * Different criteria combine using **AND**. For example, `find n/Alice t/regular` requires both a matching name and the complete tag `regular`.
 * Names support partial matching: `find n/Han` can match `Hans Gruber`.
@@ -269,7 +269,7 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 * Surrounding whitespace is ignored. Internal spacing and punctuation remain significant.
 * Phone and email fragments are accepted: `p/8123` and `e/example.com` need not be complete contact details.
 * Tags must be single alphanumeric words. `t/reg` does not match a tag named `regular`.
-* Fulfilment conditions check the preorder's shared information. They can find empty preorders; customers without a preorder or without the requested field do not match. Delivery instructions are separate from an individual item's request notes.
+* Fulfilment conditions check the preorder's shared information. They can find empty preorders; customers without a preorder or without the requested field do not match. Handover notes are separate from an individual item's request notes.
 * Unprefixed name searches are also supported: `find Alice Bob` matches names containing either `Alice` or `Bob`, ignoring case. To combine a name with other criteria, use `n/`; bare name keywords cannot be mixed with prefixes.
 * Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
 * Results use the current displayed indices. Use `list` to show all customers again.
@@ -283,7 +283,7 @@ Examples:
 * `find a/Hougang t/regular` finds regular customers whose addresses contain `Hougang`.
 * `find n/Alice p/8123 t/regular` requires all three criteria to match.
 * `find f/2026-12-20 m/delivery` finds delivery preorders scheduled for that date, including ones without items.
-* `find n/Alice m/collection i/side gate` requires a matching name, collection method, and instructions containing `side gate`.
+* `find n/Alice m/collection h/side gate` requires a matching name, collection method, and handover notes containing `side gate`.
 * `find Alice Bob` finds customers matching either name keyword.
 
 **Invalid inputs**
@@ -293,10 +293,11 @@ Examples:
 | `find` | Invalid command format; supply name keywords or at least one prefixed criterion. |
 | `find n/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
 | `find x/Alice` or `find n/Alice s/pending` | Invalid command format; only the eight prefixes above are supported. |
+| `find i/arrival` | Invalid command format; use `h/` for handover notes. |
 | `find Alice m/delivery` | Invalid command format; use `find n/Alice m/delivery`. |
 | `find f/2026-02-30` or `find f/2026-2-03` | The date constraint message is shown; supply a real date in `YYYY-MM-DD` format. |
 | `find m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
-| `find i/` or `find m/` | Invalid command format; every supplied prefix needs a value. |
+| `find h/` or `find m/` | Invalid command format; every supplied prefix needs a value. |
 | `find t/regular t/vip` | `Multiple values specified for the following single-valued field(s): t/` |
 | `find t/regular customer` or `find t/VIP!` | The tag constraint message is shown. |
 
@@ -415,7 +416,7 @@ Action     | Format, Examples
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Group postal** | `group postal`
-**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG] [f/YYYY-MM-DD] [m/METHOD] [i/INSTRUCTIONS]` (at least one criterion), or `find NAME_KEYWORD [MORE_KEYWORDS]`<br> e.g., `find f/2026-12-20 m/delivery`
+**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG] [f/YYYY-MM-DD] [m/METHOD] [h/HANDOVER_NOTES]` (at least one criterion), or `find NAME_KEYWORD [MORE_KEYWORDS]`<br> e.g., `find f/2026-12-20 m/delivery`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
 **Tag**    | `tag INDEX t/TAG`<br> e.g., `tag 1 t/regular`

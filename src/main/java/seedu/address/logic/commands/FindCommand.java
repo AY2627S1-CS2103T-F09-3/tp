@@ -27,9 +27,9 @@ public class FindCommand extends Command {
             + "Parameters: [" + PREFIX_NAME + "NAME] [" + PREFIX_PHONE + "PHONE] ["
             + PREFIX_EMAIL + "EMAIL] [" + PREFIX_ADDRESS + "ADDRESS] [" + PREFIX_TAG + "TAG] ["
             + PREFIX_FULFILMENT_DATE + "YYYY-MM-DD] [" + PREFIX_FULFILMENT_METHOD + "METHOD] ["
-            + PREFIX_HANDOVER_NOTES + "INSTRUCTIONS]\n"
+            + PREFIX_HANDOVER_NOTES + "HANDOVER_NOTES]\n"
             + "Supply at least one criterion; use each prefix at most once. "
-            + "Method is delivery or collection. Instructions match a case-insensitive substring.\n"
+            + "Method is delivery or collection. Handover notes match a case-insensitive substring.\n"
             + "Alternatively, find NAME_KEYWORD [MORE_KEYWORDS] matches any name keyword.\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_FULFILMENT_DATE + "2026-12-20 "
             + PREFIX_FULFILMENT_METHOD + "delivery " + PREFIX_HANDOVER_NOTES + "arrival";

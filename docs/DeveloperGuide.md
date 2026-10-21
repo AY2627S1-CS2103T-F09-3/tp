@@ -184,13 +184,14 @@ uses its complete, case-insensitive equality rule.
 `FulfilmentDateCriterion` and `FulfilmentMethodCriterion` inspect the optional shared fields on `Preorder`, independently
 of its items. `TextContainsCriterion.Field.HANDOVER_NOTES` reads `Preorder.getHandoverNotes()` and uses the existing
 case-insensitive substring matcher. Missing preorders or missing requested fields do not match; empty preorders with
-matching fields do. Instruction searches do not inspect item remarks.
+matching fields do. Searches for handover notes do not inspect item remarks.
 
 The `f/` and `m/` values are parsed through `ParserUtil.parseFulfilmentDate` and `parseFulfilmentMethod`. Dates must be
 real calendar dates in `YYYY-MM-DD` format; methods are stripped and normalized with `Locale.ROOT` to `DELIVERY` or
-`COLLECTION`. Invalid values produce the corresponding model constraint message. The `i/` query follows existing text
-search rules: surrounding whitespace is stripped, while internal spacing and punctuation remain significant. Blank
-values, repeated prefixes and unsupported prefixes retain the shared parser's error handling.
+`COLLECTION`. Invalid values produce the corresponding model constraint message. The shared `PREFIX_HANDOVER_NOTES`
+constant defines `h/` for handover notes. These queries follow existing text search rules: surrounding whitespace is
+stripped, while internal spacing and punctuation remain significant. Blank values, repeated prefixes and unsupported
+prefixes retain the shared parser's error handling.
 
 Unprefixed name searches reuse `NameContainsKeywordsPredicate`, now an immutable `PersonCriterion` with value-based
 equality and hashing. They retain the legacy case-insensitive **any-keyword** substring rule. A query with prefixes
@@ -224,7 +225,7 @@ address book or the active search criteria.
 `Logic.getFilteredPersonList()` observable view and rebuilds its snapshot when results or customer records change.
 It reuses `GroupPostalCommand.getPostalGroupKey` for contact headings and `FulfilmentDate.toDisplayString` for dates.
 Names, phones, addresses, postal codes and shared handover notes are shown in a bounded, keyboard-scrollable area
-with wrapped text. Missing dates display `Not scheduled`; absent notes display `No instructions`.
+with wrapped text. Missing dates display `Not scheduled`; absent handover notes display `Handover notes: None`.
 
 This adds a derived model snapshot and a UI part within the existing Model/Logic/UI boundaries. It does not introduce
 stored summary state or change the fulfilment fields, JSON schema, customer reconstruction, or grouping command.
@@ -410,7 +411,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *`    | home baker                                           | identify customer profiles with missing essential information                     | complete them before fulfilment begins                              |
 | `* *`    | home baker migrating from another system             | import existing customer contacts                                                 | avoid re-entering every profile manually                            |
 | `* *`    | home baker                                           | export my customer contacts                                                       | keep a backup or use them outside LeBake                            |
-| `* *`    | home baker                                           | record delivery instructions with an address                                      | remember access details such as gate codes or drop-off directions   |
+| `* *`    | home baker                                           | record handover notes for a delivery                                              | remember access details such as gate codes or drop-off directions   |
 | `* *`    | home baker preparing deliveries                      | mark an address as verified or unverified                                         | identify addresses that still require confirmation                  |
 | `* *`    | home baker                                           | find customers using an address or postal-code keyword                            | retrieve contacts based on delivery location                        |
 | `* *`    | home baker planning deliveries                       | filter customers by neighbourhood or postal area                                  | focus on customers in the same vicinity                             |

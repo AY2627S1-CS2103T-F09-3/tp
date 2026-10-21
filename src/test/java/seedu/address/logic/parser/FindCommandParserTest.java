@@ -69,7 +69,8 @@ public class FindCommandParserTest {
     public void parse_unsupportedPrefix_throwsParseException() {
         for (String input : List.of("x/Alice", "n/Alice x/unknown", "n/Alice\tunknown/value",
                 "N/Alice", "n/Alice P/8123", "s/pending", "n/Alice s/pending",
-                "o/Pineapple Tarts", "z/2026-10-22", "M/delivery", "c/53")) {
+                "o/Pineapple Tarts", "z/2026-10-22", "M/delivery", "c/53",
+                "i/1", "n/Alice i/arrival", "h/arrival i/1")) {
             assertParseFailure(parser, input, FORMAT_ERROR);
         }
     }
@@ -116,8 +117,8 @@ public class FindCommandParserTest {
                 new FulfilmentMethodCriterion(FulfilmentMethod.DELIVERY),
                 new TextContainsCriterion(HANDOVER_NOTES, "call on arrival"),
                 new TextContainsCriterion(NAME, "Alice"))));
-        assertParseSuccess(parser, "f/2026-12-20 m/delivery i/Call on arrival n/Alice", expected);
-        assertParseSuccess(parser, " n/Alice\ti/ CALL ON ARRIVAL \nm/DeLiVeRy f/2026-12-20 ", expected);
+        assertParseSuccess(parser, "f/2026-12-20 m/delivery h/Call on arrival n/Alice", expected);
+        assertParseSuccess(parser, " n/Alice\th/ CALL ON ARRIVAL \nm/DeLiVeRy f/2026-12-20 ", expected);
         assertParseSuccess(parser, "m/ collection", new FindCommand(new SearchCriteria(List.of(
                 new FulfilmentMethodCriterion(FulfilmentMethod.COLLECTION)))));
     }
@@ -130,7 +131,7 @@ public class FindCommandParserTest {
         for (String method : List.of("pickup", "del", "delivery collection")) {
             assertParseFailure(parser, "m/" + method, FulfilmentMethod.MESSAGE_CONSTRAINTS);
         }
-        assertParseSuccess(parser, "i/ Call  on arrival! ", textCommand(HANDOVER_NOTES, "Call  on arrival!"));
+        assertParseSuccess(parser, "h/ Call  on arrival! ", textCommand(HANDOVER_NOTES, "Call  on arrival!"));
     }
 
     @Test

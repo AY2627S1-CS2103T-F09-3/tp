@@ -53,11 +53,11 @@ public class DeliverySummaryPanel extends UiPart<Region> {
             }
             Preorder preorder = person.getPreorder().orElseThrow();
             String date = preorder.getDate().map(FulfilmentDate::toDisplayString).orElse("Not scheduled");
-            String instructions = preorder.getHandoverNotes().map(notes -> notes.value).orElse("No instructions");
+            String handoverNotes = preorder.getHandoverNotes().map(notes -> notes.value).orElse("None");
             stops.getChildren().add(label(person.getName().fullName + " | " + person.getPhone().value + "\n"
                     + person.getAddress().value + " | "
                     + (person.getPostalCode() == null ? "Postal code needed" : person.getPostalCode().value) + "\n"
-                    + "Delivery | " + date + "\nInstructions: " + instructions, "delivery-stop"));
+                    + "Delivery | " + date + "\nHandover notes: " + handoverNotes, "delivery-stop"));
         }
     }
 

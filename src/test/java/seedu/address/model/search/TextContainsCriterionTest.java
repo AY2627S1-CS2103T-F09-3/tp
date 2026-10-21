@@ -80,7 +80,7 @@ public class TextContainsCriterionTest {
     }
 
     @Test
-    public void test_handoverNotes_matchesSharedInstructionsIncludingEmptyPreorders() {
+    public void test_handoverNotes_matchesSharedNotesIncludingEmptyPreorders() {
         TextContainsCriterion criterion = new TextContainsCriterion(TextContainsCriterion.Field.HANDOVER_NOTES,
                 " CALL on ");
         Person customer = new PersonBuilder().withPreorder(new PreorderBuilder()

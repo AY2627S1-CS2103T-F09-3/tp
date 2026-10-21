@@ -51,7 +51,7 @@ public class DeliverySummaryPanelTest {
             assertTrue(text(panel).contains("POSTAL PREFIX 01"));
             assertTrue(text(panel).contains(customer.getPhone().value));
             assertTrue(text(panel).contains(customer.getAddress().value));
-            assertTrue(text(panel).contains("Delivery | 20 Dec 2026\nInstructions: Call on arrival"));
+            assertTrue(text(panel).contains("Delivery | 20 Dec 2026\nHandover notes: Call on arrival"));
 
             new GroupPostalCommand().execute(model);
             assertEquals("1 outstanding customer stop(s) | 1 postal group(s)", totals(panel));
@@ -70,6 +70,36 @@ public class DeliverySummaryPanelTest {
     }
 
     @Test
+    public void customersSharingPostalCode_shareOneHeaderAndKeepSortedContacts() throws Exception {
+        runOnFxThread(() -> {
+            ModelManager model = new ModelManager();
+            Person first = new PersonBuilder().withName("Alice Tan").withPostalCode("012345")
+                    .withPreorder(new PreorderBuilder().withMethod(FulfilmentMethod.DELIVERY)
+                            .withItems(new ItemBuilder().build()).build()).build();
+            Person sameGroup = new PersonBuilder().withName("Ben Tan").withPostalCode("012345")
+                    .withPreorder(first.getPreorder().orElseThrow()).build();
+            Person otherGroup = new PersonBuilder().withName("Charlie Tan").withPostalCode("530123")
+                    .withPreorder(first.getPreorder().orElseThrow()).build();
+            model.addPerson(otherGroup);
+            model.addPerson(sameGroup);
+            model.addPerson(first);
+            DeliverySummaryPanel panel = new DeliverySummaryPanel(model.getFilteredPersonList());
+            new Scene(panel.getRoot(), 410, 200);
+            panel.getRoot().applyCss();
+            panel.getRoot().layout();
+
+            assertEquals("3 outstanding customer stop(s) | 2 postal group(s)", totals(panel));
+            assertEquals(List.of("POSTAL PREFIX 01", "POSTAL PREFIX 53"), groupHeaders(panel));
+            assertEquals(List.of("Alice Tan", "Ben Tan", "Charlie Tan"), contactNames(panel));
+
+            model.deletePerson(first);
+            assertEquals("2 outstanding customer stop(s) | 2 postal group(s)", totals(panel));
+            assertEquals(List.of("POSTAL PREFIX 01", "POSTAL PREFIX 53"), groupHeaders(panel));
+            assertEquals(List.of("Ben Tan", "Charlie Tan"), contactNames(panel));
+        });
+    }
+
+    @Test
     public void missingFieldsAndLongText_remainVisibleAtMinimumWidth() throws Exception {
         runOnFxThread(() -> {
             ModelManager model = new ModelManager();
@@ -84,7 +114,7 @@ public class DeliverySummaryPanelTest {
             assertTrue(text(panel).contains("MISSING POSTAL CODE"));
             assertTrue(text(panel).contains("Postal code needed"));
             assertTrue(text(panel).contains("Not scheduled"));
-            assertTrue(text(panel).contains("No instructions"));
+            assertTrue(text(panel).contains("Handover notes: None"));
             VBox stops = (VBox) panel.getRoot().lookup("#stops");
             for (Node node : stops.getChildren()) {
                 Label label = (Label) node;
@@ -101,6 +131,18 @@ public class DeliverySummaryPanelTest {
     private static String text(DeliverySummaryPanel panel) {
         return ((VBox) panel.getRoot().lookup("#stops")).getChildren().stream()
                 .map(node -> ((Label) node).getText()).collect(Collectors.joining("\n"));
+    }
+
+    private static List<String> groupHeaders(DeliverySummaryPanel panel) {
+        return ((VBox) panel.getRoot().lookup("#stops")).getChildren().stream()
+                .filter(node -> node.getStyleClass().contains("delivery-group"))
+                .map(node -> ((Label) node).getText()).toList();
+    }
+
+    private static List<String> contactNames(DeliverySummaryPanel panel) {
+        return ((VBox) panel.getRoot().lookup("#stops")).getChildren().stream()
+                .filter(node -> node.getStyleClass().contains("delivery-stop"))
+                .map(node -> ((Label) node).getText().split(" \\| ", 2)[0]).toList();
     }
 
     private static void runOnFxThread(Runnable action) throws Exception {
