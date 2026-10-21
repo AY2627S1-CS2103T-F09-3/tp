@@ -87,10 +87,9 @@ public class FindCommandParser implements Parser<FindCommand> {
             }
         }
 
-        // Let the shared tokenizer recognize the first prefix and prefixes after tabs or newlines.
-        // Only add separator spaces before prefixes; preserve the text inside search values.
-        return matcher.replaceAll(match -> match.start() > 0 && args.charAt(match.start() - 1) == ' '
-                ? match.group(1) : " " + match.group(1));
+        // Supply a separator for the first prefix; the shared tokenizer handles whitespace boundaries.
+        // Leave all text inside search values unchanged, including whitespace before literal c/o in an address.
+        return " " + args;
     }
 
     private void addTextCriterion(List<PersonCriterion> criteria, ArgumentMultimap arguments,

@@ -105,7 +105,7 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_invalidPostalCodePrefix_throwsParseException() {
-        for (String prefix : List.of("1234567", "abcdef", "01234a", "123 456",
+        for (String prefix : List.of("1234567", "abcdef", "01234a", "123 456", "o", "o12345",
                 "+12345", "-12345", "123.45", "123/456", "123456 extra", "\u0665\u0663")) {
             assertParseFailure(parser, "c/" + prefix, PostalCodeCriterion.MESSAGE_CONSTRAINTS);
             assertParseFailure(parser, "n/Alice c/" + prefix, PostalCodeCriterion.MESSAGE_CONSTRAINTS);
@@ -141,6 +141,18 @@ public class FindCommandParserTest {
         assertParseSuccess(parser, "a/" + address + " c/012345", expected);
         assertParseSuccess(parser, "c/012345 a/" + address, expected);
         assertParseSuccess(parser, "a/" + address, textCommand(ADDRESS, address));
+    }
+
+    @Test
+    public void parse_addressCareOfAfterWhitespace_preservesAddressText() {
+        for (String separator : List.of("\t", "\n", "\r\n", " \t ")) {
+            String address = "Block 123" + separator + "c/o Alice";
+            FindCommand expected = new FindCommand(new SearchCriteria(List.of(
+                    new TextContainsCriterion(ADDRESS, address), new PostalCodeCriterion("53"))));
+            assertParseSuccess(parser, "a/" + address, textCommand(ADDRESS, address));
+            assertParseSuccess(parser, "a/" + address + separator + "c/53", expected);
+            assertParseSuccess(parser, "c/53" + separator + "a/" + address, expected);
+        }
     }
 
     @Test
