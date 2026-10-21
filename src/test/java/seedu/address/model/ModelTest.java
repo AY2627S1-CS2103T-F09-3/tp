@@ -4,13 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.Person;
+import seedu.address.model.search.SearchCriteria;
 import seedu.address.testutil.PersonBuilder;
 
 public class ModelTest {
@@ -22,7 +23,7 @@ public class ModelTest {
         Person earlier = new PersonBuilder().withName("Earlier").withPostalCode("012345").build();
         Person hidden = new PersonBuilder().withName("Hidden").build();
         List.of(later, earlier, hidden).forEach(model::addPerson);
-        model.updateFilteredPersonList(person -> !person.equals(hidden));
+        model.updateFilteredPersonList(new SearchCriteria(List.of(person -> !person.equals(hidden))));
         AddressBook original = new AddressBook(model.getAddressBook());
 
         // Older Model implementations may ignore the optional display-ordering operation.
@@ -90,8 +91,18 @@ public class ModelTest {
         }
 
         @Override
-        public void updateFilteredPersonList(Predicate<Person> predicate) {
-            delegate.updateFilteredPersonList(predicate);
+        public SearchCriteria getActiveSearchCriteria() {
+            return delegate.getActiveSearchCriteria();
+        }
+
+        @Override
+        public ReadOnlyObjectProperty<SearchCriteria> activeSearchCriteriaProperty() {
+            return delegate.activeSearchCriteriaProperty();
+        }
+
+        @Override
+        public void updateFilteredPersonList(SearchCriteria criteria) {
+            delegate.updateFilteredPersonList(criteria);
         }
     }
 }
