@@ -9,7 +9,9 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -115,7 +117,12 @@ public class MainWindow extends UiPart<Stage> {
      */
     void fillInnerParts() {
         personListPanel = new PersonListPanel(logic.getFilteredPersonList());
-        personListPanelPlaceholder.getChildren().add(personListPanel.getRoot());
+        ProductSummaryPanel summaryPanel = new ProductSummaryPanel(logic.getFilteredPersonList(),
+                logic.activeSearchCriteriaProperty());
+        VBox customerView = new VBox(summaryPanel.getRoot(),
+                personListPanel.getRoot());
+        VBox.setVgrow(personListPanel.getRoot(), Priority.ALWAYS);
+        personListPanelPlaceholder.getChildren().add(customerView);
 
         resultDisplay = new ResultDisplay();
         resultDisplayPlaceholder.getChildren().add(resultDisplay.getRoot());

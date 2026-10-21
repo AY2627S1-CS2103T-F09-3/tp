@@ -4,5 +4,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <ListView fx:id="personListView" VBox.vgrow="ALWAYS" />
+  <ListView fx:id="personListView" VBox.vgrow="ALWAYS" focusTraversable="true"
+            accessibleText="Customers. Use Up and Down to select, Page Up and Page Down to scroll, Home and End to jump."
+            styleClass="customer-list" />
 </VBox>

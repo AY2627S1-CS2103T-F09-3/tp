@@ -1,5 +1,7 @@
 package seedu.address.ui;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.logging.Logger;
 
 import javafx.collections.ListChangeListener;
@@ -30,6 +32,7 @@ public class PersonListPanel extends UiPart<Region> {
      */
     public PersonListPanel(ObservableList<Person> personList) {
         super(FXML);
+        requireNonNull(personList);
         personListView.setItems(personList);
         personListView.setCellFactory(listView -> new PersonListViewCell());
         personList.addListener((ListChangeListener<Person>) change -> personListView.refresh());
@@ -37,6 +40,11 @@ public class PersonListPanel extends UiPart<Region> {
             sortedPersons.comparatorProperty().addListener((observable, oldValue, newValue) ->
                     personListView.refresh());
         }
+        personListView.focusedProperty().addListener((observable, previous, focused) -> {
+            if (focused && personListView.getSelectionModel().isEmpty() && !personListView.getItems().isEmpty()) {
+                personListView.getSelectionModel().selectFirst();
+            }
+        });
     }
 
     /**

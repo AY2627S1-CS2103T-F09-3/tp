@@ -49,6 +49,13 @@ public final class ItemCriterion implements PersonCriterion {
         return productName;
     }
 
+    /**
+     * Returns the immutable set of accepted statuses.
+     */
+    public Set<ItemStatus> getStatuses() {
+        return statuses;
+    }
+
     @Override
     public boolean test(Person person) {
         return getItems(person).stream().anyMatch(this::matches);

@@ -423,3 +423,40 @@
 #preorder .status-completed {
     -fx-background-color: #2a7a45;
 }
+
+.product-summary, .product-summary > .viewport {
+    -fx-background-color: #303840;
+}
+
+.product-summary {
+    -fx-border-color: #667889;
+    -fx-border-width: 1;
+}
+
+.product-summary:focused {
+    -fx-border-color: #9bc9f5;
+    -fx-border-width: 2;
+}
+
+.product-summary .label {
+    -fx-text-fill: #f0f0f0;
+    -fx-opacity: 1;
+    -fx-font-size: 13px;
+}
+
+.product-summary-heading {
+    -fx-font-weight: bold;
+}
+
+.customer-list {
+    -fx-border-color: transparent;
+    -fx-border-width: 2;
+}
+
+.customer-list:focused {
+    -fx-border-color: #9bc9f5;
+}
+
+.customer-list:focused .list-cell:filled:selected {
+    -fx-background-color: #385875;
+}
