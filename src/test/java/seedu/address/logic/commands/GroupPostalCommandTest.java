@@ -2,12 +2,15 @@ package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
 
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import javafx.collections.transformation.SortedList;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -97,6 +100,17 @@ public class GroupPostalCommandTest {
         assertEquals("Visible", model.getFilteredPersonList().get(0).getName().fullName);
         assertFalse(model.getFilteredPersonList().stream()
                 .anyMatch(person -> person.getName().fullName.equals("Hidden")));
+    }
+
+    @Test
+    public void execute_setsPostalComparator() {
+        ModelManager model = new ModelManager();
+
+        new GroupPostalCommand().execute(model);
+
+        assertTrue(model.getFilteredPersonList() instanceof SortedList<?>);
+        assertSame(GroupPostalCommand.POSTAL_COMPARATOR,
+                ((SortedList<?>) model.getFilteredPersonList()).getComparator());
     }
 
     @Test

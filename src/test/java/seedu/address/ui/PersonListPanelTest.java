@@ -57,6 +57,16 @@ public class PersonListPanelTest {
     }
 
     @Test
+    public void otherComparator_doesNotShowPostalHeadings() throws Exception {
+        runOnFxThread(() -> {
+            ModelManager model = createModel();
+            PersonListPanel panel = new PersonListPanel(model.getFilteredPersonList());
+            model.updatePersonListComparator(Comparator.comparing(person -> person.getName().fullName));
+            assertEquals(List.of(), headingsForFirstCell(panel, model));
+        });
+    }
+
+    @Test
     public void groupedList_onlyFirstCustomerInEachPrefixHasHeading() throws Exception {
         runOnFxThread(() -> {
             ModelManager model = createModel();
