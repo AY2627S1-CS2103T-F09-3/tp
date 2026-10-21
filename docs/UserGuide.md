@@ -286,7 +286,7 @@ Format: `track [s/STATUS]`
 * Each successful `track` searches all customers and replaces the previous `find` or `track` criteria. Rejected commands preserve the current criteria and results.
 * Customers without preorders, or whose preorder has no items yet, are excluded. Use `list` to show all customers again.
 
-Each item in a preorder appears on the customer's card on its own line, for example `1. Pineapple Tarts - Quantity 2 - PENDING - "Less sugar"`. Its colour shows its status:
+A customer's preorder appears in a dark panel at the bottom of their card. Its first line says how the preorder will be handed over, or `Not scheduled | Method not set` when that is not recorded yet. Below it, each item has its own row with its number and name, its quantity and its status, for example `1. Pineapple Tarts`, `Qty 2` and `PENDING`. A special request appears under the item, for example `Remark: Less sugar`, and a preorder with no items shows `No items yet`. The status badge's colour shows the status:
 
 Status | Meaning | Badge colour
 -------|---------|-------------
