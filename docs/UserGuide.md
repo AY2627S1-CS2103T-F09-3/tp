@@ -37,7 +37,7 @@ information.
 
    * `list` : Lists all contacts.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to LeBake.
+   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 c/123456` : Adds a contact named `John Doe` to LeBake.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -103,11 +103,13 @@ Format: `help`
 
 ### Adding a person: `add`
 
-Adds a person to the address book using their name, phone number, email address, and address.
+Adds a person to the address book using their name, phone number, email address, address, and postal code.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS c/POSTAL_CODE`
 
-* All four fields (`n/`, `p/`, `e/`, and `a/`) must be provided.
+Postal codes must contain exactly six digits. They are stored as text, so leading zeroes are preserved.
+
+* All five fields (`n/`, `p/`, `e/`, `a/`, and `c/`) must be provided.
 * Names must contain at least one English letter (`A-Z` or `a-z`) and may contain only English letters, spaces, straight apostrophes (`'`) and hyphens (`-`). Accented letters, non-English characters, digits and other symbols are rejected. For example, `Mary-Jane O'Brien`, `Li` and `A` are valid names; `José Tan` and `---` are invalid.
 * Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
 * A person is a duplicate if their name matches an existing person's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
@@ -118,24 +120,24 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS`
 
 Examples:
 
-* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe e/betsycrowe@example.com a/Newgate Prison p/81234567`
-* `add n/Mary-Jane O'Brien p/98765432 e/maryjane@example.com a/123 Baker Street`
+* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 c/123456`
+* `add n/Betsy Crowe e/betsycrowe@example.com a/Newgate Prison p/81234567 c/654321`
+* `add n/Mary-Jane O'Brien p/98765432 e/maryjane@example.com a/123 Baker Street c/123456`
 
 ### Listing all persons: `list`
 
-Clears the current search criteria and shows all persons in the address book.
+Clears the current search criteria and postal-code grouping, and shows all persons in the address book in their saved order.
 
 Format: `list`
 
 ### Editing a person: `edit`
 
-Edits the name, phone number, email address, or address of an existing person in the address book.
+Edits the name, phone number, email address, address, or postal code of an existing person in the address book.
 
-Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS]`
+Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
-* At least one of `n/`, `p/`, `e/`, or `a/` must be provided.
+* At least one of `n/`, `p/`, `e/`, `a/`, or `c/` must be provided.
 * Fields you provide replace their existing values. Fields you omit remain unchanged.
 * The name validation and spacing rules described for `add` also apply to `edit`.
 * You can retain a person's own name or change its capitalization or spacing while editing. A name matching another person's name is rejected, including persons hidden by a `find` command. Other contact details do not affect this duplicate check.
@@ -213,6 +215,21 @@ Common errors:
 | `untag 1 t/VIP` when the first person is Alex Yeoh and has no `VIP` tag | `Alex Yeoh does not have tag [VIP]` |
 
 If several inputs are invalid, only the first detected error is shown. The index format is checked before the tag input; whether the index exists in the displayed list is checked after both inputs are valid.
+
+### Grouping customers by postal code: `group postal`
+
+Groups the currently displayed customers by postal code without changing the saved customer order.
+
+Format: `group postal`
+
+* Customers are shown in ascending six-digit postal-code order, under headings based on their first two digits. Customers with the same postal code are ordered by name.
+* Customers from old data files without postal codes remain usable and display `Postal code needed`. They appear in a final `MISSING POSTAL CODE` group.
+* Grouping keeps the current filter, including results from `find` or `track`. It does not change customer details, preorders, or the order saved in the data file.
+* Displayed index numbers follow the grouped list. Use those numbers for commands such as `edit`, `tag`, and `deleteorder`.
+* Use `list` to show all customers in their saved order and remove the group headings. Grouping is not restored after restarting the application.
+* This command does not calculate delivery routes or filter by fulfilment information.
+
+For example, `find n/Alex` followed by `group postal` groups only the matching customers. To update the first displayed customer's postal code while preserving their other details and preorder, use `edit 1 c/012345`.
 
 ### Finding customers by their attributes: `find`
 
@@ -433,13 +450,14 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS` <br> e.g., `add n/James Ho p/92224444 e/jamesho@example.com a/123, Clementi Rd, 1234665`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS c/POSTAL_CODE` <br> e.g., `add n/James Ho p/92224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 c/123456`
 **Add item** | `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`<br> e.g., `additem 1 d/Cake q/2 s/pending`
 **Edit item** | `edititem INDEX i/ITEM_INDEX [d/NAME] [q/QUANTITY] [s/STATUS] [r/REMARK]`<br> e.g., `edititem 1 i/2 q/3`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Group postal** | `group postal`
 **Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]` (at least one criterion)<br> e.g., `find n/James t/regular`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`

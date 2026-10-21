@@ -49,7 +49,7 @@ public class UntagCommandTest {
     public void execute_personWithPreorder_preorderKept() {
         Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person withPreorder = new PersonBuilder(original)
-                .withPreorder("2 chocolate cakes", ItemStatus.PREPARED).build();
+                .withPostalCode("012345").withPreorder("2 chocolate cakes", ItemStatus.PREPARED).build();
         model.setPerson(original, withPreorder);
 
         Person expectedPerson = new PersonBuilder(withPreorder).withTags().build();

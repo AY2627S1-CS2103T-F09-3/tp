@@ -10,6 +10,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.PostalCode;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Preorder;
@@ -30,6 +31,7 @@ public class PersonBuilder {
     private Phone phone;
     private Email email;
     private Address address;
+    private PostalCode postalCode;
     private Set<Tag> tags;
     private Optional<Preorder> preorder;
 
@@ -41,6 +43,7 @@ public class PersonBuilder {
         phone = new Phone(DEFAULT_PHONE);
         email = new Email(DEFAULT_EMAIL);
         address = new Address(DEFAULT_ADDRESS);
+        postalCode = null;
         tags = new HashSet<>();
         preorder = Optional.empty();
     }
@@ -53,6 +56,7 @@ public class PersonBuilder {
         phone = personToCopy.getPhone();
         email = personToCopy.getEmail();
         address = personToCopy.getAddress();
+        postalCode = personToCopy.getPostalCode();
         tags = new HashSet<>(personToCopy.getTags());
         preorder = personToCopy.getPreorder();
     }
@@ -78,6 +82,14 @@ public class PersonBuilder {
      */
     public PersonBuilder withAddress(String address) {
         this.address = new Address(address);
+        return this;
+    }
+
+    /**
+     * Sets the postal code of the {@code Person} that we are building.
+     */
+    public PersonBuilder withPostalCode(String postalCode) {
+        this.postalCode = postalCode == null ? null : new PostalCode(postalCode);
         return this;
     }
 
@@ -113,8 +125,16 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Sets the {@code Preorder} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withPreorder(Preorder preorder) {
+        this.preorder = Optional.of(preorder);
+        return this;
+    }
+
     public Person build() {
-        return new Person(name, phone, email, address, tags, preorder);
+        return new Person(name, phone, email, address, postalCode, tags, preorder);
     }
 
 }

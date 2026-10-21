@@ -15,6 +15,7 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.PostalCode;
 import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
@@ -84,6 +85,21 @@ public class ParserUtil {
             throw new ParseException(Address.MESSAGE_CONSTRAINTS);
         }
         return new Address(trimmedAddress);
+    }
+
+    /**
+     * Parses a {@code String postalCode} into a {@code PostalCode}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code postalCode} is invalid.
+     */
+    public static PostalCode parsePostalCode(String postalCode) throws ParseException {
+        requireNonNull(postalCode);
+        String trimmedPostalCode = postalCode.trim();
+        if (!PostalCode.isValidPostalCode(trimmedPostalCode)) {
+            throw new ParseException(PostalCode.MESSAGE_CONSTRAINTS);
+        }
+        return new PostalCode(trimmedPostalCode);
     }
 
     /**
