@@ -217,6 +217,28 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Preorder item addition and editing
+
+`AddItemCommandParser` parses a customer index and the required name, quantity and status, with an optional remark.
+`EditItemCommandParser` additionally requires `i/ITEM_INDEX` and constructs an `EditItemDescriptor` for supplied fields.
+Both parsers validate the customer-index syntax first, reject duplicate prefixes, check required inputs, and validate
+item fields in the order name, quantity, status, remark. They reuse the model validators through `ParserUtil`.
+
+The edit descriptor distinguishes an omitted remark (`null`), removal (`Optional.empty()`) and replacement
+(`Optional.of(remark)`). The command copies the descriptor defensively. Empty remarks are rejected when adding.
+New items must have quantities; editing preserves a migrated missing quantity unless a quantity is supplied.
+
+Both commands resolve the customer against the filtered list, copy the immutable item list, and rebuild the preorder
+and person before calling `model.setPerson`. Addition appends an item, creating a preorder if absent. Editing validates
+preorder existence and the full item-list index before replacing only the selected item. No explicit filter reset occurs.
+User errors produce exceptions before mutation; assertions check already-validated internal assumptions.
+
+Success messages use `Added/Edited item NUMBER for CUSTOMER: NAME (quantity: QUANTITY, STATUS)`.
+For migrated items without a quantity, the quantity portion is `quantity needed`, matching the customer card.
+Remarks remain visible on the customer card. A missing `i/` produces usage instructions; a supplied but invalid
+item index produces `Item index must be a positive integer.`
+`deleteorder` still removes the whole preorder; its item-level replacement is a separate feature.
+
 ### Preorder item deletion
 
 `DeleteItemCommandParser` parses `deleteitem INDEX i/ITEM_INDEX`. It validates the customer-index preamble,
@@ -740,6 +762,33 @@ Run each group below independently, starting with the sample data unless stated 
 
    1. Test case: Close and relaunch the application, then locate the same customer.<br>
       Expected: The removed tag remains absent. The customer's other tags, contact details, and preorder are preserved.
+
+### Adding and editing preorder items
+
+Use a disposable data copy. Run `list` and choose a customer without a preorder, noting their displayed index as `INDEX`.
+Record their contact details and tags before starting. Replace `INDEX` in the examples with the displayed number.
+
+1. Run `additem INDEX d/Cake q/2 s/pending r/Less sugar`.<br>
+   Expected: A preorder is created with item 1. The success message includes item number, customer, name, quantity and status.
+   The card displays the remark. Contact details and tags are unchanged.
+1. Repeat the same command.<br>
+   Expected: A separate identical item 2 is appended; item 1 is unchanged.
+1. Run `edititem INDEX i/2 q/3`, followed by `edititem INDEX i/2 r/`.<br>
+   Expected: Only item 2 changes. Its quantity becomes 3 and its remark is removed. Its name and status are preserved.
+1. Try `additem INDEX d/Cake q/0 s/invalid`, then `edititem INDEX i/2 q/0 s/invalid`.<br>
+   Expected: Both report the quantity constraint first, with no data changes.
+1. Try `additem INDEX d/Cake d/Tarts`, then `edititem INDEX d/Cake d/Tarts`.<br>
+   Expected: Both report duplicate `d/` before the missing required fields, with no data changes.
+1. Try `additem INDEX d/Cake q/2 s/pending r/`, `edititem INDEX i/2`, and `edititem INDEX i/999 q/1`.<br>
+   Expected: Respectively, a remark constraint error, no-changes error, and invalid-item-index error. No data changes.
+1. Run `track s/pending`. Using the current displayed indices, mark both Cake items completed with `edititem`.<br>
+   Expected: The customer remains until their final pending item is completed, then leaves that filtered view.
+   Run `list` to confirm that both items and the customer remain stored.
+1. Close and reopen the application.<br>
+   Expected: Both items retain their quantities and statuses; the second item's remark remains absent.
+1. With a v1.3 migrated item lacking a quantity, edit only its status.<br>
+   Expected: Its success message and card both show `quantity needed`.
+   Supply `q/1` to correct it; subsequent success messages and the card show the recorded quantity.
 
 ### Deleting a preorder item
 

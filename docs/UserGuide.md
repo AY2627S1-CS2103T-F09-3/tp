@@ -277,6 +277,73 @@ Examples:
 
 Rejected searches leave the current criteria and results unchanged. If no customers match a valid search, the list is empty and the feedback reports `0 person(s) listed!`. Use `list` to clear the search.
 
+### Adding a preorder item: `additem`
+
+Adds one item to a customer's preorder. If the customer has no preorder, one is created automatically.
+
+Format: `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`
+
+* `INDEX` is a positive integer identifying a customer in the **currently displayed list**.
+* Name, quantity and status are required. A name must be non-blank, on one line and at most 200 characters long.
+* Quantity must be a whole number from 1 to 999, without leading zeros.
+* Status must be `PENDING`, `PREPARED` or `COMPLETED`, ignoring capitalisation.
+* Remarks are optional. If supplied, a remark must be non-blank, on one line and at most 100 characters long.
+* Surrounding spaces in values are trimmed. Prefixes may appear in any order, but each can appear only once.
+* The item is appended to the preorder. Repeated product names, including identical items, remain separate entries.
+* Existing items, contact details and tags are preserved. The current filter remains active.
+
+Example: `additem 1 d/Cake q/2 s/pending r/Less sugar`
+
+If customer 1 is Alice and this is her first item, the success message is:
+`Added item 1 for Alice: Cake (quantity: 2, PENDING)`.
+The remark appears on the customer card, rather than in the success message.
+
+Omitting a required prefix displays `Invalid command format!` followed by usage instructions.
+Supplying an empty value displays that field's validation error. In particular, `r/` without text is invalid when adding.
+An index beyond the displayed customer list produces `The person index provided is invalid.`
+
+### Editing a preorder item: `edititem`
+
+Edits one numbered item, preserving omitted fields and all other items.
+
+Format: `edititem INDEX i/ITEM_INDEX [d/NAME] [q/QUANTITY] [s/STATUS] [r/REMARK]`
+
+* `INDEX` identifies a customer in the currently displayed list. `ITEM_INDEX` identifies an item by the number on that
+  customer's card. Both must be positive integers.
+* At least one edit field must be supplied. Names, quantities, statuses and non-empty remarks follow the rules for `additem`.
+* Omitted fields retain their values. An empty `r/` **clears** the remark; omitting `r/` preserves it.
+* An item migrated from v1.3 keeps its missing quantity until a valid `q/QUANTITY` is supplied.
+* Supplying an existing value is accepted and reports success, even if the item does not change.
+* Other items, contact details and tags are preserved. The current filter remains active. Changing an item's status can
+  remove its customer from a tracked view, so check the displayed customer indices before the next command.
+
+Examples:
+
+* `edititem 1 i/2 q/3` changes the quantity of customer 1's second item.
+* `edititem 1 i/2 s/prepared` changes only that item's status.
+* `edititem 1 i/2 r/` clears only that item's remark.
+
+For Alice's second item, Cake, the success message could be:
+`Edited item 2 for Alice: Cake (quantity: 3, PREPARED)`.
+If its quantity is still missing, the message uses the same wording as the card:
+`Edited item 2 for Alice: Cake (quantity needed, PREPARED)`.
+The card continues to display `quantity needed` for that item.
+
+| Situation | Message |
+|-----------|---------|
+| No edit fields, e.g. `edititem 1 i/2` | `No item changes specified.` |
+| Customer has no preorder | `Identified person has no preorder.` |
+| Preorder is empty or item number exceeds the item count | `The item index provided is invalid.` |
+| Customer index exceeds the displayed list | `The person index provided is invalid.` |
+| Missing or malformed customer index, or missing `i/` prefix | `Invalid command format!` followed by usage instructions |
+| Present but empty or invalid item index, e.g. `i/0` or `i/abc` | `Item index must be a positive integer.` |
+
+For both commands, repeated prefixes produce `Multiple values specified for the following single-valued field(s): `
+followed by the repeated prefixes. Input validation reports the first error: customer-index syntax, duplicate prefixes,
+required fields/item-index syntax, then name, quantity, status and remark values. Customer and item existence are checked
+only after parsing succeeds. An edit with no supplied changes is rejected before those existence checks.
+Validation failures leave the data unchanged. The former `order` command is no longer supported.
+
 ### Viewing preorders: `track`
 
 Format: `track [s/STATUS]`
@@ -294,7 +361,7 @@ Status | Meaning | Badge colour
 `PREPARED` | Ready for collection or delivery | Blue
 `COMPLETED` | Collected or delivered | Green
 
-If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Quantity needed` instead of a quantity.
+If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `quantity needed` instead of a quantity.
 
 ### Deleting a preorder item: `deleteitem`
 
@@ -424,6 +491,8 @@ _Details coming soon ..._
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS c/POSTAL_CODE` <br> e.g., `add n/James Ho p/92224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 c/123456`
+**Add item** | `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`<br> e.g., `additem 1 d/Cake q/2 s/pending`
+**Edit item** | `edititem INDEX i/ITEM_INDEX [d/NAME] [q/QUANTITY] [s/STATUS] [r/REMARK]`<br> e.g., `edititem 1 i/2 q/3`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Delete item** | `deleteitem INDEX i/ITEM_INDEX`<br> e.g., `deleteitem 1 i/2`
