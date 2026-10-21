@@ -48,9 +48,9 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.PostalCode;
 import seedu.address.model.person.PreorderStatusPredicate;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
@@ -323,25 +323,40 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_postalSearchAndGrouping_preservesSavedOrderAndLeadingZeros() throws Exception {
-        Person zoe = new PersonBuilder().withName("Zoe Tan").withPostalCode("012345").build();
+    public void execute_postalPrefixSearchAndGrouping_preservesSavedOrderAndLeadingZeros() throws Exception {
+        Person zoe = new PersonBuilder().withName("Zoe Tan").withPostalCode("019876").build();
         Person differentCode = new PersonBuilder().withName("Alex Lim").withPostalCode("654321").build();
         Person amy = new PersonBuilder().withName("Amy Tan").withPostalCode("012345").build();
         Person missingCode = new PersonBuilder().withName("Legacy Customer").build();
         List<Person> savedOrder = List.of(zoe, differentCode, amy, missingCode);
         savedOrder.forEach(model::addPerson);
 
-        assertFilteringCommandSuccess("find c/012345", "2 person(s) listed!", List.of(zoe, amy));
+        assertFilteringCommandSuccess("find c/01", "2 person(s) listed!", List.of(zoe, amy));
         logic.execute("group postal");
         assertEquals(List.of(amy, zoe), logic.getFilteredPersonList());
         assertFilteringCommandSuccess("list", ListCommand.MESSAGE_SUCCESS, savedOrder);
         logic.execute("group postal");
-        assertFilteringCommandSuccess("find c/012345", "2 person(s) listed!", List.of(amy, zoe));
+        assertFilteringCommandSuccess("find c/01", "2 person(s) listed!", List.of(amy, zoe));
 
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
         ReadOnlyAddressBook reloaded = storage.readAddressBook().orElseThrow();
         assertEquals(savedOrder, reloaded.getPersonList());
-        assertEquals("012345", reloaded.getPersonList().getFirst().getPostalCode().value);
+        assertEquals("019876", reloaded.getPersonList().getFirst().getPostalCode().value);
+    }
+
+    @Test
+    public void execute_successivePostalPrefixSearches_replacesPreviousCriteria() throws Exception {
+        Person alice = new PersonBuilder().withName("Alice Tan").withPostalCode("530123").build();
+        Person bob = new PersonBuilder().withName("Bob Tan").withPostalCode("531234").build();
+        Person leadingZero = new PersonBuilder().withName("Charlie Tan").withPostalCode("012345").build();
+        Person middleDigits = new PersonBuilder().withName("David Tan").withPostalCode("155300").build();
+        Person missingCode = new PersonBuilder().withName("Legacy Customer").build();
+        List.of(alice, bob, leadingZero, middleDigits, missingCode).forEach(model::addPerson);
+
+        assertFilteringCommandSuccess("find n/Alice c/53", "1 person(s) listed!", List.of(alice));
+        assertFilteringCommandSuccess("find c/53", "2 person(s) listed!", List.of(alice, bob));
+        assertFilteringCommandSuccess("find c/530", "1 person(s) listed!", List.of(alice));
+        assertFilteringCommandSuccess("find c/01", "1 person(s) listed!", List.of(leadingZero));
     }
 
     @Test
@@ -368,9 +383,9 @@ public class LogicManagerTest {
         model.addPerson(new PersonBuilder().withName("Bob Tan").withPostalCode("654321").build());
         logic.execute("find c/012345");
 
-        for (String value : List.of("12345", "1234567", "abcdef", "123 456", "01234a")) {
+        for (String value : List.of("1234567", "abcdef", "123 456", "01234a", "-53")) {
             assertCommandFailurePreservesFilteredList("find c/" + value,
-                    ParseException.class, PostalCode.MESSAGE_CONSTRAINTS);
+                    ParseException.class, PostalCodeCriterion.MESSAGE_CONSTRAINTS);
         }
         assertCommandFailurePreservesFilteredList("find n/Alice c/", ParseException.class,
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));

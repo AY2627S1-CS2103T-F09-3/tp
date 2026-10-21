@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.FindCommand;
-import seedu.address.model.person.PostalCode;
 import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
@@ -95,21 +94,21 @@ public class FindCommandParserTest {
     }
 
     @Test
-    public void parse_validPostalCode_returnsFindCommand() {
-        for (String postalCode : List.of("123456", "012345", "000000", "999999")) {
+    public void parse_validPostalCodePrefix_returnsFindCommand() {
+        for (String prefix : List.of("0", "53", "530", "5301", "53012", "123456", "012345", "000000", "999999")) {
             FindCommand expected = new FindCommand(new SearchCriteria(List.of(
-                    new PostalCodeCriterion(new PostalCode(postalCode)))));
-            assertParseSuccess(parser, "c/" + postalCode, expected);
-            assertParseSuccess(parser, " \t c/ " + postalCode + " \n", expected);
+                    new PostalCodeCriterion(prefix))));
+            assertParseSuccess(parser, "c/" + prefix, expected);
+            assertParseSuccess(parser, " \t c/ " + prefix + " \n", expected);
         }
     }
 
     @Test
-    public void parse_invalidPostalCode_throwsParseException() {
-        for (String postalCode : List.of("53", "12345", "1234567", "abcdef", "01234a", "123 456",
-                "+12345", "-12345", "123.45", "123/456", "123456 extra")) {
-            assertParseFailure(parser, "c/" + postalCode, PostalCode.MESSAGE_CONSTRAINTS);
-            assertParseFailure(parser, "n/Alice c/" + postalCode, PostalCode.MESSAGE_CONSTRAINTS);
+    public void parse_invalidPostalCodePrefix_throwsParseException() {
+        for (String prefix : List.of("1234567", "abcdef", "01234a", "123 456",
+                "+12345", "-12345", "123.45", "123/456", "123456 extra", "\u0665\u0663")) {
+            assertParseFailure(parser, "c/" + prefix, PostalCodeCriterion.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, "n/Alice c/" + prefix, PostalCodeCriterion.MESSAGE_CONSTRAINTS);
         }
     }
 
@@ -124,13 +123,13 @@ public class FindCommandParserTest {
     }
 
     @Test
-    public void parse_postalCodeWithName_returnsFindCommand() {
+    public void parse_postalCodePrefixWithName_returnsFindCommand() {
         FindCommand expected = new FindCommand(new SearchCriteria(List.of(
                 new TextContainsCriterion(NAME, "Alice"),
-                new PostalCodeCriterion(new PostalCode("012345")))));
-        assertParseSuccess(parser, "n/Alice c/012345", expected);
-        assertParseSuccess(parser, "c/012345 n/Alice", expected);
-        assertParseSuccess(parser, "n/Alice\tc/012345", expected);
+                new PostalCodeCriterion("01"))));
+        assertParseSuccess(parser, "n/Alice c/01", expected);
+        assertParseSuccess(parser, "c/01 n/Alice", expected);
+        assertParseSuccess(parser, "n/Alice\tc/01", expected);
     }
 
     @Test
@@ -138,7 +137,7 @@ public class FindCommandParserTest {
         String address = "Block 123 c/o Alice";
         FindCommand expected = new FindCommand(new SearchCriteria(List.of(
                 new TextContainsCriterion(ADDRESS, address),
-                new PostalCodeCriterion(new PostalCode("012345")))));
+                new PostalCodeCriterion("012345"))));
         assertParseSuccess(parser, "a/" + address + " c/012345", expected);
         assertParseSuccess(parser, "c/012345 a/" + address, expected);
         assertParseSuccess(parser, "a/" + address, textCommand(ADDRESS, address));

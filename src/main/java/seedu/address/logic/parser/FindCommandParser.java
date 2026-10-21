@@ -63,8 +63,11 @@ public class FindCommandParser implements Parser<FindCommand> {
         addTextCriterion(criteria, arguments, PREFIX_EMAIL, Field.EMAIL);
         addTextCriterion(criteria, arguments, PREFIX_ADDRESS, Field.ADDRESS);
         if (arguments.getValue(PREFIX_POSTAL_CODE).isPresent()) {
-            criteria.add(new PostalCodeCriterion(
-                    ParserUtil.parsePostalCode(arguments.getValue(PREFIX_POSTAL_CODE).get().strip())));
+            String postalCodePrefix = arguments.getValue(PREFIX_POSTAL_CODE).get().strip();
+            if (!PostalCodeCriterion.isValidPrefix(postalCodePrefix)) {
+                throw new ParseException(PostalCodeCriterion.MESSAGE_CONSTRAINTS);
+            }
+            criteria.add(new PostalCodeCriterion(postalCodePrefix));
         }
         if (arguments.getValue(PREFIX_TAG).isPresent()) {
             criteria.add(new TagCriterion(ParserUtil.parseTag(arguments.getValue(PREFIX_TAG).get().strip())));

@@ -21,7 +21,6 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.PostalCode;
 import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
@@ -117,7 +116,7 @@ public class FindCommandTest {
         Person missingCode = new PersonBuilder().withName("Missing Code").build();
         Model searchModel = new ModelManager();
         List.of(firstMatch, differentCode, missingCode, secondMatch).forEach(searchModel::addPerson);
-        SearchCriteria criteria = new SearchCriteria(List.of(new PostalCodeCriterion(new PostalCode("123456"))));
+        SearchCriteria criteria = new SearchCriteria(List.of(new PostalCodeCriterion("123456")));
 
         CommandResult result = new FindCommand(criteria).execute(searchModel);
 
@@ -128,7 +127,7 @@ public class FindCommandTest {
     }
 
     @Test
-    public void execute_postalCodeWithName_requiresBothCriteria() {
+    public void execute_postalCodePrefixWithName_requiresBothCriteria() {
         Person match = new PersonBuilder().withName("Alice Tan").withPostalCode("012345").build();
         Person differentName = new PersonBuilder().withName("Bob Tan").withPostalCode("012345").build();
         Person differentCode = new PersonBuilder().withName("Alice Lim").withPostalCode("123456").build();
@@ -137,7 +136,7 @@ public class FindCommandTest {
         List.of(match, differentName, differentCode, missingCode).forEach(searchModel::addPerson);
         SearchCriteria criteria = new SearchCriteria(List.of(
                 new TextContainsCriterion(NAME, "Alice"),
-                new PostalCodeCriterion(new PostalCode("012345"))));
+                new PostalCodeCriterion("01")));
 
         CommandResult result = new FindCommand(criteria).execute(searchModel);
 
@@ -149,7 +148,7 @@ public class FindCommandTest {
     public void execute_unmatchedPostalCode_returnsEmptyList() {
         Model searchModel = new ModelManager();
         searchModel.addPerson(new PersonBuilder().withPostalCode("012345").build());
-        SearchCriteria criteria = new SearchCriteria(List.of(new PostalCodeCriterion(new PostalCode("654321"))));
+        SearchCriteria criteria = new SearchCriteria(List.of(new PostalCodeCriterion("654321")));
 
         CommandResult result = new FindCommand(criteria).execute(searchModel);
 

@@ -1,31 +1,45 @@
 package seedu.address.model.search;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PostalCode;
 
 /**
- * Tests whether a customer has the exact requested postal code.
+ * Tests whether a customer's postal code starts with the requested digits.
  * Customers without a postal code do not match.
  */
 public final class PostalCodeCriterion implements PersonCriterion {
-    private final PostalCode postalCode;
+    public static final String MESSAGE_CONSTRAINTS = "Postal-code search values must contain one to six digits.";
+
+    private final String postalCodePrefix;
 
     /**
-     * Creates a criterion for an already validated {@code postalCode}.
+     * Creates a criterion for a one-to-six-digit {@code postalCodePrefix}.
      *
-     * @throws NullPointerException If {@code postalCode} is null.
+     * @throws NullPointerException If {@code postalCodePrefix} is null.
+     * @throws IllegalArgumentException If {@code postalCodePrefix} is not one to six digits.
      */
-    public PostalCodeCriterion(PostalCode postalCode) {
-        this.postalCode = requireNonNull(postalCode);
+    public PostalCodeCriterion(String postalCodePrefix) {
+        requireNonNull(postalCodePrefix);
+        checkArgument(isValidPrefix(postalCodePrefix), MESSAGE_CONSTRAINTS);
+        this.postalCodePrefix = postalCodePrefix;
+    }
+
+    /**
+     * Returns whether {@code prefix} contains one to six ASCII digits.
+     */
+    public static boolean isValidPrefix(String prefix) {
+        return prefix.matches("[0-9]{1,6}");
     }
 
     @Override
     public boolean test(Person person) {
         requireNonNull(person);
-        return postalCode.equals(person.getPostalCode());
+        PostalCode postalCode = person.getPostalCode();
+        return postalCode != null && postalCode.value.startsWith(postalCodePrefix);
     }
 
     @Override
@@ -38,16 +52,16 @@ public final class PostalCodeCriterion implements PersonCriterion {
             return false;
         }
 
-        return postalCode.equals(otherCriterion.postalCode);
+        return postalCodePrefix.equals(otherCriterion.postalCodePrefix);
     }
 
     @Override
     public int hashCode() {
-        return postalCode.hashCode();
+        return postalCodePrefix.hashCode();
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this).add("postalCode", postalCode).toString();
+        return new ToStringBuilder(this).add("postalCodePrefix", postalCodePrefix).toString();
     }
 }
