@@ -4,7 +4,9 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Locale;
 
 /**
  * Represents the date a customer's preorder is to be delivered or collected, such as 2026-12-20.
@@ -17,6 +19,10 @@ public class FulfilmentDate {
 
     // Exactly four digits for the year and two each for the month and day, so "2026-1-5" is rejected
     public static final String VALIDATION_REGEX = "\\d{4}-\\d{2}-\\d{2}";
+
+    // English month names, so the display does not change with the computer's language
+    private static final DateTimeFormatter DISPLAY_FORMATTER =
+            DateTimeFormatter.ofPattern("d MMM uuuu", Locale.ENGLISH);
 
     public final LocalDate value;
 
@@ -44,6 +50,15 @@ public class FulfilmentDate {
         } catch (DateTimeParseException e) {
             return false;
         }
+    }
+
+    /**
+     * Returns the date in the one display format for fulfilment dates, such as "20 Dec 2026",
+     * used by the customer card and the summaries.
+     * Use {@link #toString()} for the YYYY-MM-DD form saved in the data file.
+     */
+    public String toDisplayString() {
+        return value.format(DISPLAY_FORMATTER);
     }
 
     @Override

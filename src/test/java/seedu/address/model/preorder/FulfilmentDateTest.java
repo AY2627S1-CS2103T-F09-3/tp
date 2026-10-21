@@ -54,6 +54,13 @@ public class FulfilmentDateTest {
     @Test
     public void toString_returnsIsoDate() {
         assertEquals("2026-01-05", new FulfilmentDate("2026-01-05").toString());
+        assertEquals("2026-12-20", new FulfilmentDate("2026-12-20").toString());
+    }
+
+    @Test
+    public void toDisplayString_returnsDayMonthYear() {
+        assertEquals("5 Dec 2026", new FulfilmentDate("2026-12-05").toDisplayString()); // one-digit day
+        assertEquals("20 Dec 2026", new FulfilmentDate("2026-12-20").toDisplayString()); // two-digit day
     }
 
     @Test
