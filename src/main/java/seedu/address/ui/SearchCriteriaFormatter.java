@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import seedu.address.model.person.PreorderStatusPredicate;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.PersonCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
@@ -76,7 +76,7 @@ public final class SearchCriteriaFormatter {
         };
     }
 
-    private static String formatStatuses(Set<PreorderStatus> statuses) {
+    private static String formatStatuses(Set<ItemStatus> statuses) {
         if (statuses.isEmpty()) {
             return "None";
         }
@@ -86,7 +86,7 @@ public final class SearchCriteriaFormatter {
                 .collect(Collectors.joining(" or "));
     }
 
-    private static String formatStatus(PreorderStatus status) {
+    private static String formatStatus(ItemStatus status) {
         return switch (status) {
             case PENDING -> "Pending";
             case PREPARED -> "Prepared";

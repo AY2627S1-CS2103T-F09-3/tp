@@ -5,9 +5,11 @@
     "email" : "alice@example.com",
     "address" : "123, Jurong West Ave 6, #08-111",
     "tags" : [ "friends" ],
-    "preorder" : {
-      "details" : " ",
-      "status" : "PENDING"
-    }
+    "preorders" : [ {
+      "items" : [ {
+        "name" : "Pineapple Tarts",
+        "quantity" : "2"
+      } ]
+    } ]
   } ]
 }

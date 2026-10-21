@@ -5,8 +5,6 @@
     "email" : "alice@example.com",
     "address" : "123, Jurong West Ave 6, #08-111",
     "tags" : [ "friends" ],
-    "preorder" : {
-      "details" : "2 chocolate cakes"
-    }
+    "preorders" : [ null ]
   } ]
 }

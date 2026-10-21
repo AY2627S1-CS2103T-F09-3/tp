@@ -1,9 +1,9 @@
 package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static seedu.address.model.preorder.PreorderStatus.COMPLETED;
-import static seedu.address.model.preorder.PreorderStatus.PENDING;
-import static seedu.address.model.preorder.PreorderStatus.PREPARED;
+import static seedu.address.model.preorder.ItemStatus.COMPLETED;
+import static seedu.address.model.preorder.ItemStatus.PENDING;
+import static seedu.address.model.preorder.ItemStatus.PREPARED;
 import static seedu.address.model.search.TextContainsCriterion.Field.ADDRESS;
 import static seedu.address.model.search.TextContainsCriterion.Field.EMAIL;
 import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PreorderStatusPredicate;
-import seedu.address.model.preorder.PreorderStatus;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.PersonCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
@@ -65,7 +65,7 @@ public class SearchCriteriaFormatterTest {
 
     @Test
     public void format_defaultTracking_keepsAlternativesInOneSegment() {
-        Set<PreorderStatus> statuses = new LinkedHashSet<>(List.of(PREPARED, PENDING));
+        Set<ItemStatus> statuses = new LinkedHashSet<>(List.of(PREPARED, PENDING));
         assertSummary(List.of(new PreorderStatusPredicate(statuses)), "Item status: Pending or Prepared");
     }
 

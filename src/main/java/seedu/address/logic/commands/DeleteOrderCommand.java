@@ -13,7 +13,6 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
-import seedu.address.model.preorder.Preorder;
 
 /**
  * Deletes the preorder of a customer identified using their displayed index, keeping the customer's other details.
@@ -28,7 +27,7 @@ public class DeleteOrderCommand extends Command {
             + "Parameters: INDEX (must be a positive integer)\n"
             + "Example: " + COMMAND_WORD + " 1";
 
-    public static final String MESSAGE_DELETE_ORDER_SUCCESS = "Deleted preorder for %1$s: %2$s (%3$s)";
+    public static final String MESSAGE_DELETE_ORDER_SUCCESS = "Deleted preorder for %1$s";
     public static final String MESSAGE_NO_PREORDER = "%1$s has no preorder to delete.";
 
     private static final Logger logger = LogsCenter.getLogger(DeleteOrderCommand.class);
@@ -53,13 +52,11 @@ public class DeleteOrderCommand extends Command {
             throw new CommandException(String.format(MESSAGE_NO_PREORDER, identifiedPerson.getName()));
         }
 
-        Preorder deletedPreorder = identifiedPerson.getPreorder().get();
         Person personWithoutPreorder = createPersonWithoutPreorder(identifiedPerson);
         model.setPerson(identifiedPerson, personWithoutPreorder);
 
         logger.info("Deleted preorder for " + identifiedPerson.getName());
-        return new CommandResult(String.format(MESSAGE_DELETE_ORDER_SUCCESS, identifiedPerson.getName(),
-                deletedPreorder.getDetails(), deletedPreorder.getStatus()));
+        return new CommandResult(String.format(MESSAGE_DELETE_ORDER_SUCCESS, identifiedPerson.getName()));
     }
 
     /**
