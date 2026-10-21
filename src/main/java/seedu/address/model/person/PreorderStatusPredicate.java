@@ -4,17 +4,17 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Preorder;
+import seedu.address.model.search.PersonCriterion;
 
 /**
  * Tests that a {@code Person} has a preorder item with one of the accepted statuses.
  * Persons without a preorder, or whose preorder has no items, never match.
  */
-public class PreorderStatusPredicate implements Predicate<Person> {
+public class PreorderStatusPredicate implements PersonCriterion {
     private final Set<ItemStatus> statuses;
 
     /**
