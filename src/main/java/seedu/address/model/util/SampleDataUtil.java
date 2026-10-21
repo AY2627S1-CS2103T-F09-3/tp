@@ -14,6 +14,9 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.PostalCode;
+import seedu.address.model.preorder.FulfilmentDate;
+import seedu.address.model.preorder.FulfilmentMethod;
+import seedu.address.model.preorder.HandoverNotes;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
@@ -31,7 +34,8 @@ public class SampleDataUtil {
             new Person(new Name("Alex Yeoh"), new Phone("87438807"), new Email("alexyeoh@example.com"),
                 new Address("Blk 30 Geylang Street 29, #06-40"), new PostalCode("389030"),
                 getTagSet("friends"),
-                getPreorder(getItem("Pineapple Tarts", "2", ItemStatus.PENDING, "Less sugar"),
+                getPreorder(FulfilmentMethod.DELIVERY, "2026-12-20", "Call on arrival",
+                        getItem("Pineapple Tarts", "2", ItemStatus.PENDING, "Less sugar"),
                         getItem("Almond Cookies", "1", ItemStatus.PREPARED))),
             new Person(new Name("Bernice Yu"), new Phone("99272758"), new Email("berniceyu@example.com"),
                 new Address("Blk 30 Lorong 3 Serangoon Gardens, #07-18"), new PostalCode("555030"),
@@ -40,11 +44,12 @@ public class SampleDataUtil {
             new Person(new Name("Charlotte Oliveiro"), new Phone("93210283"), new Email("charlotte@example.com"),
                 new Address("Blk 11 Ang Mo Kio Street 74, #11-04"), new PostalCode("560011"),
                 getTagSet("neighbours"),
-                getPreorder(getItem("Pineapple Tarts", "3", ItemStatus.PREPARED, "Separate packaging"))),
+                getPreorder(FulfilmentMethod.COLLECTION, "2026-12-19", "Collect from side gate",
+                        getItem("Pineapple Tarts", "3", ItemStatus.PREPARED, "Separate packaging"))),
             new Person(new Name("David Li"), new Phone("91031282"), new Email("lidavid@example.com"),
                 new Address("Blk 436 Serangoon Gardens Street 26, #16-43"), new PostalCode("555436"),
                 getTagSet("family"),
-                getPreorder()),
+                getPreorder(FulfilmentMethod.DELIVERY, "2026-12-23", null)),
             new Person(new Name("Irfan Ibrahim"), new Phone("92492021"), new Email("irfan@example.com"),
                 new Address("Blk 47 Tampines Street 20, #17-35"), new PostalCode("520047"),
                 getTagSet("classmates")),
@@ -67,6 +72,16 @@ public class SampleDataUtil {
      */
     public static Optional<Preorder> getPreorder(Item... items) {
         return Optional.of(new Preorder(List.of(items)));
+    }
+
+    /**
+     * Returns a preorder containing the items given, delivered or collected by {@code method} on {@code date}.
+     * {@code handoverNotes} may be null for a preorder without handover notes.
+     */
+    private static Optional<Preorder> getPreorder(FulfilmentMethod method, String date, String handoverNotes,
+            Item... items) {
+        return Optional.of(new Preorder(List.of(items), Optional.of(new FulfilmentDate(date)), Optional.of(method),
+                Optional.ofNullable(handoverNotes).map(HandoverNotes::new)));
     }
 
     private static Item getItem(String name, String quantity, ItemStatus status) {

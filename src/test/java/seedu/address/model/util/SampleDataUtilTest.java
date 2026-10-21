@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PostalCode;
+import seedu.address.model.preorder.FulfilmentMethod;
 
 public class SampleDataUtilTest {
 
@@ -41,6 +43,18 @@ public class SampleDataUtilTest {
                 .anyMatch(person -> person.getPreorder()
                         .map(preorder -> preorder.getItems().isEmpty())
                         .orElse(false)));
+    }
+
+    @Test
+    public void getSamplePersons_deliveryAndCollection_present() {
+        Person[] samplePersons = SampleDataUtil.getSamplePersons();
+        assertTrue(Arrays.stream(samplePersons).anyMatch(person -> hasMethod(person, FulfilmentMethod.DELIVERY)));
+        assertTrue(Arrays.stream(samplePersons).anyMatch(person -> hasMethod(person, FulfilmentMethod.COLLECTION)));
+    }
+
+    private static boolean hasMethod(Person person, FulfilmentMethod method) {
+        return person.getPreorder().isPresent()
+                && person.getPreorder().get().getMethod().equals(Optional.of(method));
     }
 
     @Test
