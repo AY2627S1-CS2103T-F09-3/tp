@@ -20,6 +20,8 @@ Class Name
 Class Phone
 Class PostalCode
 Class Tag
+Class Preorder
+Class Item
 
 Class I #FFFFFF
 }
@@ -44,6 +46,8 @@ Person *--> Email
 Person *--> Address
 Person *--> PostalCode
 Person *--> "*" Tag
+Person *--> "0..1" Preorder
+Preorder *--> "*" Item
 
 Person -[hidden]up--> I
 UniquePersonList -[hidden]right-> I

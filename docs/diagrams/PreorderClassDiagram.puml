@@ -1,0 +1,31 @@
+@startuml
+!include style.puml
+skinparam arrowThickness 1.1
+skinparam arrowColor MODEL_COLOR
+skinparam classBackgroundColor MODEL_COLOR
+
+Class Person
+Class Preorder
+Class Item
+Class ItemName
+Class Quantity
+Class Remark
+Class "<<enumeration>>\nItemStatus" as ItemStatus {
+PENDING
+PREPARED
+COMPLETED
+}
+' style.puml hides members, but an enumeration is clearer with its values
+show ItemStatus fields
+
+Person *--> "0..1" Preorder
+Preorder *--> "*" Item
+Item *--> "1" ItemName
+Item *--> "0..1" Quantity
+Item --> "1" ItemStatus
+Item *--> "0..1" Remark
+
+ItemName -[hidden]right-> Quantity
+Quantity -[hidden]right-> ItemStatus
+ItemStatus -[hidden]right-> Remark
+@enduml
