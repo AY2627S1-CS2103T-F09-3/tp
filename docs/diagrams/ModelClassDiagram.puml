@@ -24,15 +24,8 @@ Class Tag
 Class I #FFFFFF
 }
 
-Package Logic as LogicPackage <<Rectangle>>{
-Class "{abstract}\nCommand" as Command LOGIC_COLOR
-Class GroupPostalCommand LOGIC_COLOR
-}
-
-GroupPostalCommand -up-|> Command
-GroupPostalCommand ..> Model : <<call>>
-GroupPostalCommand ..> Person : <<use>>
-GroupPostalCommand ..> PostalCode : <<use>>
+Class HiddenOutside #FFFFFF
+HiddenOutside ..> Model
 
 AddressBook .up.|> ReadOnlyAddressBook
 
@@ -57,7 +50,8 @@ UniquePersonList -[hidden]right-> I
 
 Name -[hidden]right-> Phone
 Phone -[hidden]right-> Address
-Address -[hidden]right-> Email
+Address -[hidden]right-> PostalCode
+PostalCode -[hidden]right-> Email
 
 ModelManager --> "~* filtered, sorted" Person
 @enduml
