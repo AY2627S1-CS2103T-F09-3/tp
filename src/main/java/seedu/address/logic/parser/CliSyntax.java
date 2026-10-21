@@ -17,5 +17,8 @@ public class CliSyntax {
     public static final Prefix PREFIX_QUANTITY = new Prefix("q/");
     public static final Prefix PREFIX_REMARK = new Prefix("r/");
     public static final Prefix PREFIX_DETAILS = new Prefix("d/");
+    public static final Prefix PREFIX_FULFILMENT_DATE = new Prefix("f/");
+    public static final Prefix PREFIX_FULFILMENT_METHOD = new Prefix("m/");
+    public static final Prefix PREFIX_HANDOVER_NOTES = new Prefix("h/");
 
 }
