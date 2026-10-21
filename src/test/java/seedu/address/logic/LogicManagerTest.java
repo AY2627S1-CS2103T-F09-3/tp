@@ -350,7 +350,7 @@ public class LogicManagerTest {
         assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
 
-        for (String input : List.of("find", "find Alice", "find Alice t/friends", "find n/",
+        for (String input : List.of("find", "find Alice t/friends", "find n/",
                 "find n/Alice p/", "find n/Alice x/value", "find s/pending", "find n/Alice\ts/pending")) {
             assertCommandFailurePreservesFilteredList(input, ParseException.class, expectedMessage);
         }

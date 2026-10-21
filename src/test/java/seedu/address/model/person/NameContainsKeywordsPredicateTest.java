@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -80,6 +81,15 @@ public class NameContainsKeywordsPredicateTest {
         predicate = new NameContainsKeywordsPredicate(List.of("12345", "alice@email.com", "Main", "Street"));
         assertFalse(predicate.test(new PersonBuilder().withName("Alice").withPhone("81234567")
                 .withEmail("alice@email.com").withAddress("Main Street").build()));
+    }
+
+    @Test
+    public void constructor_copiesKeywordsAndSupportsCriteriaValueEquality() {
+        List<String> keywords = new ArrayList<>(List.of("Alice"));
+        NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(keywords);
+        keywords.clear();
+        assertTrue(predicate.test(new PersonBuilder().withName("Alice Tan").build()));
+        assertEquals(predicate.hashCode(), new NameContainsKeywordsPredicate(List.of("Alice")).hashCode());
     }
 
     @Test

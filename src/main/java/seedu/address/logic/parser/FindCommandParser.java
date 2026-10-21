@@ -4,11 +4,15 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FULFILMENT_DATE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FULFILMENT_METHOD;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_HANDOVER_NOTES;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -16,6 +20,9 @@ import java.util.regex.Pattern;
 
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.search.FulfilmentDateCriterion;
+import seedu.address.model.search.FulfilmentMethodCriterion;
 import seedu.address.model.search.PersonCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
@@ -27,7 +34,8 @@ import seedu.address.model.search.TextContainsCriterion.Field;
  */
 public class FindCommandParser implements Parser<FindCommand> {
     private static final List<Prefix> SUPPORTED_PREFIXES =
-            List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG);
+            List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG,
+                    PREFIX_FULFILMENT_DATE, PREFIX_FULFILMENT_METHOD, PREFIX_HANDOVER_NOTES);
     private static final Pattern PARAMETER_PREFIX = Pattern.compile("(?<!\\S)([A-Za-z]+/)");
 
     /**
@@ -39,7 +47,12 @@ public class FindCommandParser implements Parser<FindCommand> {
     public FindCommand parse(String args) throws ParseException {
         requireNonNull(args);
         String formatError = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
-        String preparedArgs = prepareArguments(args.strip(), formatError);
+        String strippedArgs = args.strip();
+        if (!strippedArgs.isEmpty() && !PARAMETER_PREFIX.matcher(strippedArgs).find()) {
+            return new FindCommand(new SearchCriteria(List.of(
+                    new NameContainsKeywordsPredicate(Arrays.asList(strippedArgs.split("\\s+"))))));
+        }
+        String preparedArgs = prepareArguments(strippedArgs, formatError);
         Prefix[] prefixes = SUPPORTED_PREFIXES.toArray(Prefix[]::new);
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(preparedArgs, prefixes);
 
@@ -60,6 +73,15 @@ public class FindCommandParser implements Parser<FindCommand> {
         addTextCriterion(criteria, arguments, PREFIX_PHONE, Field.PHONE);
         addTextCriterion(criteria, arguments, PREFIX_EMAIL, Field.EMAIL);
         addTextCriterion(criteria, arguments, PREFIX_ADDRESS, Field.ADDRESS);
+        addTextCriterion(criteria, arguments, PREFIX_HANDOVER_NOTES, Field.HANDOVER_NOTES);
+        if (arguments.getValue(PREFIX_FULFILMENT_DATE).isPresent()) {
+            criteria.add(new FulfilmentDateCriterion(
+                    ParserUtil.parseFulfilmentDate(arguments.getValue(PREFIX_FULFILMENT_DATE).get())));
+        }
+        if (arguments.getValue(PREFIX_FULFILMENT_METHOD).isPresent()) {
+            criteria.add(new FulfilmentMethodCriterion(
+                    ParserUtil.parseFulfilmentMethod(arguments.getValue(PREFIX_FULFILMENT_METHOD).get())));
+        }
         if (arguments.getValue(PREFIX_TAG).isPresent()) {
             criteria.add(new TagCriterion(ParserUtil.parseTag(arguments.getValue(PREFIX_TAG).get().strip())));
         }

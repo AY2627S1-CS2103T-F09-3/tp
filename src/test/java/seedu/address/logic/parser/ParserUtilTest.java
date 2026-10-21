@@ -16,6 +16,8 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.preorder.FulfilmentDate;
+import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
@@ -44,6 +46,25 @@ public class ParserUtilTest {
     private static final String VALID_REMARK = "Less sugar";
 
     private static final String WHITESPACE = " \t\r\n";
+
+    @Test
+    public void parseFulfilmentDate_validAndInvalidCalendarDates() throws Exception {
+        assertEquals(new FulfilmentDate("2024-02-29"), ParserUtil.parseFulfilmentDate(" 2024-02-29 "));
+        for (String date : List.of("2026-02-29", "2026-02-30", "2026-1-05", "2026/12/20", "")) {
+            assertThrows(ParseException.class, FulfilmentDate.MESSAGE_CONSTRAINTS, ()
+                -> ParserUtil.parseFulfilmentDate(date));
+        }
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseFulfilmentDate(null));
+    }
+
+    @Test
+    public void parseFulfilmentMethod_normalizesCaseAndRejectsUnknownMethods() throws Exception {
+        assertEquals(FulfilmentMethod.DELIVERY, ParserUtil.parseFulfilmentMethod(" delivery "));
+        assertEquals(FulfilmentMethod.COLLECTION, ParserUtil.parseFulfilmentMethod("CoLlEcTiOn"));
+        assertThrows(ParseException.class, FulfilmentMethod.MESSAGE_CONSTRAINTS, ()
+            -> ParserUtil.parseFulfilmentMethod("pickup"));
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseFulfilmentMethod(null));
+    }
 
     @Test
     public void parsePreambleIndex_invalidIndex_usesSuppliedMessage() {

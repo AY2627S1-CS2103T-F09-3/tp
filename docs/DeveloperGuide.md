@@ -181,6 +181,21 @@ and punctuation remain significant. Queries must be nonblank, but may be fragmen
 they do not use the validation rules for creating complete contact fields. `TagCriterion` accepts a validated `Tag` and
 uses its complete, case-insensitive equality rule.
 
+`FulfilmentDateCriterion` and `FulfilmentMethodCriterion` inspect the optional shared fields on `Preorder`, independently
+of its items. `TextContainsCriterion.Field.HANDOVER_NOTES` reads `Preorder.getHandoverNotes()` and uses the existing
+case-insensitive substring matcher. Missing preorders or missing requested fields do not match; empty preorders with
+matching fields do. Instruction searches do not inspect item remarks.
+
+The `f/` and `m/` values are parsed through `ParserUtil.parseFulfilmentDate` and `parseFulfilmentMethod`. Dates must be
+real calendar dates in `YYYY-MM-DD` format; methods are stripped and normalized with `Locale.ROOT` to `DELIVERY` or
+`COLLECTION`. Invalid values produce the corresponding model constraint message. The `i/` query follows existing text
+search rules: surrounding whitespace is stripped, while internal spacing and punctuation remain significant. Blank
+values, repeated prefixes and unsupported prefixes retain the shared parser's error handling.
+
+Unprefixed name searches reuse `NameContainsKeywordsPredicate`, now an immutable `PersonCriterion` with value-based
+equality and hashing. They retain the legacy case-insensitive **any-keyword** substring rule. A query with prefixes
+uses the combined-search path and rejects a bare preamble, so `find Alice m/delivery` must use `n/Alice` instead.
+
 To add a search condition with different matching rules, implement `PersonCriterion` and include it in a
 `SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
 CLI prefixes belong in the parser, not in the criteria. Add the prefix to `FindCommandParser`'s supported-prefix list
@@ -193,8 +208,26 @@ There is no need to filter the previous search's results or execute another sear
 For future multi-item searches, product and status conditions must be grouped inside **one** `PersonCriterion` that
 checks whether any single item satisfies both conditions. Separate customer predicates for "has this product" and
 "has this status" could incorrectly match different items. Date/method and postal conditions can be separate criteria,
-because they describe the preorder or customer rather than an individual item. These extensions, `find s/` support,
-final multi-item tracking rules and the active-criteria display remain deferred.
+because they describe the preorder or customer rather than an individual item. Postal search, `find s/` support,
+final multi-item tracking rules and the active-criteria display are separate integration work.
+
+#### Delivery preparation summary
+
+`DeliveryPreparationSummary` takes a snapshot of the current displayed customer results. It reuses
+`PreorderStatusPredicate` with `PENDING` and `PREPARED`, then requires the preorder's method to be `DELIVERY`. It counts
+customers, not matching items. Collection, unset methods, empty wrappers and completed-only preorders are excluded.
+Missing postal codes remain represented by one additional group; dates and notes may be unset without excluding an
+otherwise outstanding delivery. The immutable snapshot orders contacts by postal code and name, without mutating the
+address book or the active search criteria.
+
+`MainWindow` installs a `DeliverySummaryPanel` above `PersonListPanel`. The panel observes the existing
+`Logic.getFilteredPersonList()` observable view and rebuilds its snapshot when results or customer records change.
+It reuses `GroupPostalCommand.getPostalGroupKey` for contact headings and `FulfilmentDate.toDisplayString` for dates.
+Names, phones, addresses, postal codes and shared handover notes are shown in a bounded, keyboard-scrollable area
+with wrapped text. Missing dates display `Not scheduled`; absent notes display `No instructions`.
+
+This adds a derived model snapshot and a UI part within the existing Model/Logic/UI boundaries. It does not introduce
+stored summary state or change the fulfilment fields, JSON schema, customer reconstruction, or grouping command.
 
 ### Storage component
 
