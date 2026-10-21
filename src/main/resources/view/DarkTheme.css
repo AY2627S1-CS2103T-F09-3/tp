@@ -460,3 +460,11 @@
 .customer-list:focused .list-cell:filled:selected {
     -fx-background-color: #385875;
 }
+
+/* Retain the status colour; the border and text marker identify search matches. */
+.matching-item {
+    -fx-border-color: #f4dc8a;
+    -fx-border-width: 2;
+    -fx-border-radius: 4;
+    -fx-font-weight: bold;
+}

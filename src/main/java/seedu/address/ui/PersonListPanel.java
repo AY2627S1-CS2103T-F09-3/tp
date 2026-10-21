@@ -4,6 +4,8 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.logging.Logger;
 
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
@@ -15,7 +17,9 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.GroupPostalCommand;
+import seedu.address.model.Model;
 import seedu.address.model.person.Person;
+import seedu.address.model.search.SearchCriteria;
 
 /**
  * Panel containing the list of persons.
@@ -24,6 +28,8 @@ public class PersonListPanel extends UiPart<Region> {
     private static final String FXML = "PersonListPanel.fxml";
     private final Logger logger = LogsCenter.getLogger(PersonListPanel.class);
 
+    private final ReadOnlyObjectProperty<SearchCriteria> activeCriteria;
+
     @FXML
     private ListView<Person> personListView;
 
@@ -31,7 +37,18 @@ public class PersonListPanel extends UiPart<Region> {
      * Creates a {@code PersonListPanel} with the given {@code ObservableList}.
      */
     public PersonListPanel(ObservableList<Person> personList) {
+        this(personList, new ReadOnlyObjectWrapper<>(Model.SEARCH_CRITERIA_SHOW_ALL_PERSONS).getReadOnlyProperty());
+    }
+
+    /**
+     * Creates a list that refreshes item highlighting when the active search changes.
+     */
+    public PersonListPanel(ObservableList<Person> personList,
+            ReadOnlyObjectProperty<SearchCriteria> activeCriteria) {
         super(FXML);
+        this.activeCriteria = requireNonNull(activeCriteria);
+        requireNonNull(activeCriteria.get());
+        activeCriteria.addListener((observable, previous, current) -> personListView.refresh());
         requireNonNull(personList);
         personListView.setItems(personList);
         personListView.setCellFactory(listView -> new PersonListViewCell());
@@ -73,7 +90,7 @@ public class PersonListPanel extends UiPart<Region> {
                     groupHeading.getStyleClass().add("cell_big_label");
                     cellContent.getChildren().add(groupHeading);
                 }
-                cellContent.getChildren().add(new PersonCard(person, getIndex() + 1).getRoot());
+                cellContent.getChildren().add(new PersonCard(person, getIndex() + 1, activeCriteria.get()).getRoot());
                 setGraphic(cellContent);
             }
         }

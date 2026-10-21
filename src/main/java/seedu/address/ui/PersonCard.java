@@ -1,5 +1,8 @@
 package seedu.address.ui;
 
+import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkArgument;
+
 import java.util.Comparator;
 import java.util.List;
 
@@ -17,6 +20,8 @@ import javafx.scene.shape.SVGPath;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.Preorder;
+import seedu.address.model.search.ItemCriterion;
+import seedu.address.model.search.SearchCriteria;
 
 /**
  * A UI component that displays information of a {@code Person}.
@@ -31,6 +36,7 @@ public class PersonCard extends UiPart<Region> {
     public static final String REMARK_STYLE_CLASS = "preorder-remark";
     public static final String NO_ITEMS_STYLE_CLASS = "preorder-empty";
 
+    public static final String MATCH_STYLE_CLASS = "matching-item";
     private static final String FXML = "PersonListCard.fxml";
 
     // Wide enough for "COMPLETED", so the chips line up from row to row
@@ -46,6 +52,7 @@ public class PersonCard extends UiPart<Region> {
      */
 
     public final Person person;
+    private final List<ItemCriterion> itemCriteria;
 
     @FXML
     private GridPane cardPane;
@@ -78,8 +85,20 @@ public class PersonCard extends UiPart<Region> {
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
      */
     public PersonCard(Person person, int displayedIndex) {
+        this(person, displayedIndex, new SearchCriteria(List.of()));
+    }
+
+    /**
+     * Creates a card that marks matching items while retaining all original item numbers.
+     */
+    public PersonCard(Person person, int displayedIndex, SearchCriteria criteria) {
         super(FXML);
+        requireNonNull(person);
+        requireNonNull(criteria);
+        checkArgument(displayedIndex > 0, "Displayed index must be positive.");
         this.person = person;
+        itemCriteria = criteria.getCriteria().stream().filter(ItemCriterion.class::isInstance)
+                .map(ItemCriterion.class::cast).toList();
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
         phone.setText(person.getPhone().value);
@@ -116,7 +135,7 @@ public class PersonCard extends UiPart<Region> {
     /**
      * Returns an item's row: its number and name, its quantity and a status chip, with any remark underneath.
      */
-    private static GridPane createItemRow(int itemNumber, Item item) {
+    private GridPane createItemRow(int itemNumber, Item item) {
         GridPane row = new GridPane();
         row.getStyleClass().add(ITEM_ROW_STYLE_CLASS);
         row.setHgap(ITEM_ROW_GAP);
@@ -133,6 +152,10 @@ public class PersonCard extends UiPart<Region> {
         status.getStyleClass().add(PreorderDisplay.getStatusStyleClass(item.getStatus()));
         status.setMinWidth(STATUS_CHIP_WIDTH);
         status.setAlignment(Pos.CENTER);
+        if (!itemCriteria.isEmpty() && itemCriteria.stream().allMatch(criterion -> criterion.matches(item))) {
+            row.getStyleClass().add(MATCH_STYLE_CLASS);
+            name.setText(name.getText() + " [Matches search]");
+        }
         row.addRow(0, name, quantity, status);
 
         item.getRemark().ifPresent(remark -> {

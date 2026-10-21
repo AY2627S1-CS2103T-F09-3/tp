@@ -221,9 +221,30 @@ items without quantities. Explicit status feedback retains the requested status 
 
 The criterion rejects null arguments, null status elements and blank product queries, and defensively copies the
 status set. Its normalized conditions define value equality and hash codes for observable search state.
-Future summaries and highlighting should reuse this matcher to stay consistent with customer filtering.
-Date/method conditions can remain separate customer criteria. Those extensions, the preparation summary,
-matching-item highlighting and the active-criteria display are outside this search change.
+Date/method conditions can remain separate customer criteria. Those extensions and the general
+active-criteria display are outside this change.
+
+#### Preparation summary and matching-item highlighting
+
+`ProductPreparationSummary.from` creates an immutable snapshot from the filtered customers and a product
+`ItemCriterion`. It reuses `ItemCriterion.matches`, retaining matching entries in customer/item order,
+including duplicates. Each `MatchingItem` retains its customer and original one-based item number for
+remark attribution. Customer count is distinct, item count counts entries, and quantity is summed using
+`long`. Missing quantities from migrated data are counted separately so that a known subtotal is never
+presented as a complete total. Constructors reject null inputs and invalid item references; collections
+are defensively copied.
+
+`MainWindow` places `ProductSummaryPanel` above `PersonListPanel`. The summary listens to both the filtered
+customer list and `Logic.activeSearchCriteriaProperty()`, so changing criteria refreshes it even when the
+same customers remain visible. It is visible and managed only when a product criterion exists. Updates
+recompute the snapshot, including zero results. Labels wrap inside a focusable scroll pane, whose key
+handler supports arrows, Page Up/Down and Home/End with scroll values clamped to the valid range.
+
+`PersonListPanel` also refreshes its cells when active criteria change. Each `PersonCard` receives the
+current criteria and reuses the item matcher to add the `matching-item` style and a text marker. It keeps
+all items, original numbering and status styles. Status-only criteria (including `track`) also highlight
+matching items; criteria without item conditions produce no highlights. The customer list uses native
+JavaFX keyboard navigation and selects its first entry when focused without an existing selection.
 
 ### Storage component
 

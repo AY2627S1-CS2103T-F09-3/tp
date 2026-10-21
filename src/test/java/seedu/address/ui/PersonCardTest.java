@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +28,8 @@ import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Preorder;
+import seedu.address.model.search.ItemCriterion;
+import seedu.address.model.search.SearchCriteria;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PreorderBuilder;
@@ -160,11 +164,50 @@ public class PersonCardTest {
         assertEquals(heights[1], heights[0], 0.5);
     }
 
+    @Test
+    public void constructor_productAndStatus_marksOnlyMatchingItemsAndKeepsNumbering() throws Exception {
+        Item pending = new ItemBuilder().withName("Pineapple Tarts").withStatus(ItemStatus.PENDING).build();
+        Item prepared = new ItemBuilder(pending).withStatus(ItemStatus.PREPARED).build();
+        Item other = new ItemBuilder().withName("Cookies").withStatus(ItemStatus.PENDING).build();
+        Person person = new PersonBuilder(ALICE).withPreorder(prepared, pending, other, pending).build();
+        SearchCriteria criteria = new SearchCriteria(List.of(new ItemCriterion(
+                Optional.of("PINEAPPLE TARTS"), Set.of(ItemStatus.PENDING))));
+        List<GridPane> chips = getRows(createCard(person, criteria));
+
+        assertEquals(4, chips.size());
+        for (int i = 0; i < chips.size(); i++) {
+            boolean matches = i == 1 || i == 3;
+            assertEquals(matches, chips.get(i).getStyleClass().contains(PersonCard.MATCH_STYLE_CLASS));
+            Item item = List.of(prepared, pending, other, pending).get(i);
+            Label name = (Label) chips.get(i).getChildren().getFirst();
+            assertEquals(PreorderDisplay.formatItemName(i + 1, item) + (matches ? " [Matches search]" : ""),
+                    name.getText());
+            assertTrue(chips.get(i).getChildren().get(2).getStyleClass()
+                    .contains(PreorderDisplay.getStatusStyleClass(item.getStatus())));
+        }
+    }
+
+    @Test
+    public void constructor_productWithoutStatus_marksEveryStatus() throws Exception {
+        for (ItemStatus status : ItemStatus.values()) {
+            Person person = new PersonBuilder(ALICE).withPreorder(
+                    new ItemBuilder().withName("Tarts").withStatus(status).build()).build();
+            SearchCriteria criteria = new SearchCriteria(List.of(new ItemCriterion(
+                    Optional.of("tarts"), Set.of(ItemStatus.values()))));
+            assertTrue(getRows(createCard(person, criteria)).get(0).getStyleClass()
+                    .contains(PersonCard.MATCH_STYLE_CLASS));
+        }
+    }
+
     /**
      * Builds the card on the JavaFX thread, as a real list cell would.
      */
     private static PersonCard createCard(Person person) throws Exception {
         return onFxThread(() -> new PersonCard(person, 1));
+    }
+
+    private static PersonCard createCard(Person person, SearchCriteria criteria) throws Exception {
+        return onFxThread(() -> new PersonCard(person, 1, criteria));
     }
 
     private static <T> T onFxThread(Callable<T> task) throws Exception {

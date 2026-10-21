@@ -116,7 +116,7 @@ public class MainWindow extends UiPart<Stage> {
      * Fills up all the placeholders of this window.
      */
     void fillInnerParts() {
-        personListPanel = new PersonListPanel(logic.getFilteredPersonList());
+        personListPanel = new PersonListPanel(logic.getFilteredPersonList(), logic.activeSearchCriteriaProperty());
         ProductSummaryPanel summaryPanel = new ProductSummaryPanel(logic.getFilteredPersonList(),
                 logic.activeSearchCriteriaProperty());
         VBox customerView = new VBox(summaryPanel.getRoot(),

@@ -145,6 +145,37 @@ public class ProductSummaryPanelTest {
         });
     }
 
+    @Test
+    public void refresh_postalGroupingAndItemEdit_keepsSummaryAndHighlightsConsistent() throws Exception {
+        onFxThread(() -> {
+            Model model = new ModelManager();
+            model.addPerson(new PersonBuilder(ALICE).withPostalCode("019999").build());
+            model.addPerson(new PersonBuilder(ALICE).withName("Ben").withPostalCode("012345").build());
+            model.addPerson(new PersonBuilder(ALICE).withName("Other Area").withPostalCode("530123").build());
+            ProductSummaryPanel summary = createPanel(model);
+            PersonListPanel list = new PersonListPanel(model.getFilteredPersonList(),
+                    model.activeSearchCriteriaProperty());
+            VBox root = new VBox(summary.getRoot(), list.getRoot());
+            new Scene(root, 800, 1200);
+            execute(model, "find c/01 d/Pineapple Tarts s/pending");
+            execute(model, "group postal");
+            root.applyCss();
+            root.layout();
+            assertEquals("2 customer(s) | 2 matching item(s)", text(summary, "counts"));
+            assertEquals("Total quantity: 4", text(summary, "quantity"));
+            assertEquals(2, root.lookupAll("." + PersonCard.MATCH_STYLE_CLASS).size());
+            execute(model, "edititem 1 i/2 s/completed");
+            root.layout();
+            assertEquals("Alice", model.getFilteredPersonList().getFirst().getName().fullName);
+            assertEquals("1 customer(s) | 1 matching item(s)", text(summary, "counts"));
+            assertEquals(1, root.lookupAll("." + PersonCard.MATCH_STYLE_CLASS).size());
+            execute(model, "list");
+            root.layout();
+            assertFalse(summary.getRoot().isVisible());
+            assertEquals(0, root.lookupAll("." + PersonCard.MATCH_STYLE_CLASS).size());
+        });
+    }
+
     private Model createModel() {
         return new ModelManager(new AddressBookBuilder().withPerson(ALICE).build(), new UserPrefs());
     }

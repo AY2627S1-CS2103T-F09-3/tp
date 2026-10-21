@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
@@ -24,11 +27,14 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
-
 import seedu.address.logic.commands.GroupPostalCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.ItemCriterion;
+import seedu.address.model.search.SearchCriteria;
+import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 
 /** Checks postal headings against the current display ordering. */
@@ -208,6 +214,35 @@ public class PersonListPanelTest {
             }
             press(list, KeyCode.TAB, false);
             assertSame(after, scene.getFocusOwner());
+        });
+    }
+
+    @Test
+    public void criteriaChange_sameCustomers_refreshesAndClearsHighlights() throws Exception {
+        runOnFxThread(() -> {
+            Person customer = new PersonBuilder().withPreorder(
+                    new ItemBuilder().withStatus(ItemStatus.PENDING).build(),
+                    new ItemBuilder().withStatus(ItemStatus.PREPARED).build()).build();
+            ReadOnlyObjectWrapper<SearchCriteria> criteria = new ReadOnlyObjectWrapper<>(
+                    new SearchCriteria(List.of()));
+            PersonListPanel panel = new PersonListPanel(FXCollections.observableArrayList(customer),
+                    criteria.getReadOnlyProperty());
+            VBox root = new VBox(panel.getRoot());
+            new Scene(root, 500, 600);
+            root.applyCss();
+            root.layout();
+            assertEquals(0, root.lookupAll("." + PersonCard.MATCH_STYLE_CLASS).size());
+            criteria.set(new SearchCriteria(List.of(new ItemCriterion(Optional.empty(),
+                    Set.of(ItemStatus.PENDING, ItemStatus.PREPARED)))));
+            root.layout();
+            assertEquals(2, root.lookupAll("." + PersonCard.MATCH_STYLE_CLASS).size());
+            criteria.set(new SearchCriteria(List.of(new ItemCriterion(Optional.empty(),
+                    Set.of(ItemStatus.PREPARED)))));
+            root.layout();
+            assertEquals(1, root.lookupAll("." + PersonCard.MATCH_STYLE_CLASS).size());
+            criteria.set(new SearchCriteria(List.of()));
+            root.layout();
+            assertEquals(0, root.lookupAll("." + PersonCard.MATCH_STYLE_CLASS).size());
         });
     }
 

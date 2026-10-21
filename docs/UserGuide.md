@@ -299,6 +299,33 @@ Customer and preorder changes preserve the search and refresh the results. A cus
 
 Rejected searches leave the current criteria and results unchanged. If no customers match a valid search, the list is empty and the feedback reports `0 person(s) listed!`. Use `list` to clear the search.
 
+### Reading the preparation summary and matching items
+
+A search containing `d/PRODUCT` shows a preparation summary above the customer list. It shows:
+
+* The selected product and statuses. Without `s/`, **all statuses**, including completed items, contribute.
+* The number of matching customers and matching item entries. Repeated entries count separately.
+* The total quantity of matching items. If migrated items have no quantity, the panel instead shows the
+  **known quantity** subtotal and how many matching items still need a quantity. This subtotal is incomplete.
+* Special requests from matching items, each labelled with the customer name and original item number.
+
+For example, two matching entries with quantities 2 and 3 contribute two items and a total quantity of 5.
+An additional entry without a quantity raises the item count to three, leaves the known quantity at 5,
+and is reported as one item needing a quantity. Only customers in the current results contribute;
+customer fields such as `n/` and `t/` therefore also restrict the summary.
+
+Matching items on customer cards have a border and a `[Matches search]` marker while retaining their
+status colours. This applies to product/status searches and `track`. All other items remain visible,
+and item numbers remain unchanged. Customer-only searches and `list` remove the highlighting.
+
+The summary refreshes when the search or customer data changes, including when there are no matches.
+It is hidden for searches without a product, including status-only searches, `track`, and `list`.
+
+Use **Tab** or **Shift+Tab** to move between the command box, summary (when shown), and customer list.
+With the summary focused, use **Up/Down**, **Page Up/Page Down**, or **Home/End** to scroll long content.
+With the customer list focused, use **Up/Down** to select customers and **Home/End** to reach the first/last
+customer. Long summary text wraps to fit the panel.
+
 ### Adding a preorder item: `additem`
 
 Adds one item to a customer's preorder. If the customer has no preorder, one is created automatically.
