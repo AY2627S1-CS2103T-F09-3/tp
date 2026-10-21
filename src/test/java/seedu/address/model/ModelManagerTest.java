@@ -3,17 +3,22 @@ package seedu.address.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
+import static seedu.address.model.Model.SEARCH_CRITERIA_SHOW_ALL_PERSONS;
+import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import seedu.address.commons.core.GuiSettings;
-import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.search.SearchCriteria;
+import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.testutil.AddressBookBuilder;
 
 public class ModelManagerTest {
@@ -25,6 +30,8 @@ public class ModelManagerTest {
         assertEquals(new UserPrefs(), modelManager.getUserPrefs());
         assertEquals(new GuiSettings(), modelManager.getGuiSettings());
         assertEquals(new AddressBook(), new AddressBook(modelManager.getAddressBook()));
+        assertEquals(SEARCH_CRITERIA_SHOW_ALL_PERSONS, modelManager.getActiveSearchCriteria());
+        assertEquals(SEARCH_CRITERIA_SHOW_ALL_PERSONS, modelManager.activeSearchCriteriaProperty().get());
     }
 
     @Test
@@ -74,6 +81,81 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void updateFilteredPersonList_searchReplaced_updatesCriteriaAndResults() {
+        modelManager = new ModelManager(new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build(),
+                new UserPrefs());
+        SearchCriteria aliceCriteria = new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Alice")));
+        SearchCriteria bensonCriteria = new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Benson")));
+
+        modelManager.updateFilteredPersonList(aliceCriteria);
+        assertEquals(aliceCriteria, modelManager.getActiveSearchCriteria());
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+
+        modelManager.updateFilteredPersonList(bensonCriteria);
+        assertEquals(bensonCriteria, modelManager.getActiveSearchCriteria());
+        assertEquals(List.of(BENSON), modelManager.getFilteredPersonList());
+
+        modelManager.updateFilteredPersonList(SEARCH_CRITERIA_SHOW_ALL_PERSONS);
+        assertEquals(SEARCH_CRITERIA_SHOW_ALL_PERSONS, modelManager.getActiveSearchCriteria());
+        assertEquals(List.of(ALICE, BENSON), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void updateFilteredPersonList_nullCriteria_preservesCriteriaAndResults() {
+        modelManager.addPerson(ALICE);
+        SearchCriteria criteria = new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Alice")));
+        modelManager.updateFilteredPersonList(criteria);
+
+        assertThrows(NullPointerException.class, () -> modelManager.updateFilteredPersonList(null));
+
+        assertEquals(criteria, modelManager.getActiveSearchCriteria());
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void updateFilteredPersonList_noMatches_keepsActiveCriteria() {
+        modelManager.addPerson(ALICE);
+        SearchCriteria criteria = new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Nobody")));
+
+        modelManager.updateFilteredPersonList(criteria);
+
+        assertEquals(criteria, modelManager.getActiveSearchCriteria());
+        assertTrue(modelManager.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
+    public void activeSearchCriteriaProperty_sameResultsDifferentCriteria_notifiesObservers() {
+        modelManager.addPerson(ALICE);
+        ReadOnlyObjectProperty<SearchCriteria> property = modelManager.activeSearchCriteriaProperty();
+        assertFalse(property instanceof Property<?>);
+        List<SearchCriteria> observedCriteria = new ArrayList<>();
+        property.addListener((observable, oldCriteria, newCriteria) -> observedCriteria.add(newCriteria));
+        SearchCriteria firstCriteria = new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Alice")));
+        SearchCriteria secondCriteria = new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Pauline")));
+
+        modelManager.updateFilteredPersonList(firstCriteria);
+        modelManager.updateFilteredPersonList(secondCriteria);
+
+        assertEquals(List.of(firstCriteria, secondCriteria), observedCriteria);
+        assertEquals(secondCriteria, property.get());
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void equals_sameResultsDifferentCriteria_returnsFalse() {
+        modelManager.addPerson(ALICE);
+        ModelManager otherModel = new ModelManager(modelManager.getAddressBook(), new UserPrefs());
+        modelManager.updateFilteredPersonList(new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Alice"))));
+        otherModel.updateFilteredPersonList(new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Pauline"))));
+
+        assertEquals(modelManager.getFilteredPersonList(), otherModel.getFilteredPersonList());
+        assertFalse(modelManager.equals(otherModel));
+
+        otherModel.updateFilteredPersonList(new SearchCriteria(List.of(new TextContainsCriterion(NAME, "ALICE"))));
+        assertTrue(modelManager.equals(otherModel));
+    }
+
+    @Test
     public void equals() {
         AddressBook addressBook = new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build();
         AddressBook differentAddressBook = new AddressBook();
@@ -97,12 +179,12 @@ public class ModelManagerTest {
         assertFalse(modelManager.equals(new ModelManager(differentAddressBook, userPrefs)));
 
         // different filteredList -> returns false
-        String[] keywords = ALICE.getName().fullName.split("\\s+");
-        modelManager.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of(keywords)));
+        modelManager.updateFilteredPersonList(new SearchCriteria(List.of(
+                new TextContainsCriterion(NAME, ALICE.getName().fullName))));
         assertFalse(modelManager.equals(new ModelManager(addressBook, userPrefs)));
 
         // resets modelManager to initial state for upcoming tests
-        modelManager.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        modelManager.updateFilteredPersonList(SEARCH_CRITERIA_SHOW_ALL_PERSONS);
 
         // different userPrefs -> returns false
         UserPrefs differentUserPrefs = new UserPrefs();
