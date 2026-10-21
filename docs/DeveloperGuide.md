@@ -234,7 +234,9 @@ preorder existence and the full item-list index before replacing only the select
 User errors produce exceptions before mutation; assertions check already-validated internal assumptions.
 
 Success messages use `Added/Edited item NUMBER for CUSTOMER: NAME (quantity: QUANTITY, STATUS)`.
-The quantity value is blank for migrated items without one. Remarks remain visible on the customer card.
+For migrated items without a quantity, the quantity portion is `quantity needed`, matching the customer card.
+Remarks remain visible on the customer card. A missing `i/` produces usage instructions; a supplied but invalid
+item index produces `Item index must be a positive integer.`
 `deleteorder` still removes the whole preorder; its item-level replacement is a separate feature.
 
 ### \[Proposed\] Undo/redo feature
@@ -764,7 +766,7 @@ Record their contact details and tags before starting. Replace `INDEX` in the ex
 1. Close and reopen the application.<br>
    Expected: Both items retain their quantities and statuses; the second item's remark remains absent.
 1. With a v1.3 migrated item lacking a quantity, edit only its status.<br>
-   Expected: Its success message has a blank quantity value, and its card still shows `Quantity needed`.
+   Expected: Its success message and card both show `quantity needed`.
    Supply `q/1` to correct it; subsequent success messages and the card show the recorded quantity.
 
 ### Deleting a preorder

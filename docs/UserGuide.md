@@ -325,9 +325,9 @@ Examples:
 
 For Alice's second item, Cake, the success message could be:
 `Edited item 2 for Alice: Cake (quantity: 3, PREPARED)`.
-If its quantity is still missing, the message leaves the value blank:
-`Edited item 2 for Alice: Cake (quantity: , PREPARED)`.
-The card continues to display `Quantity needed` for that item.
+If its quantity is still missing, the message uses the same wording as the card:
+`Edited item 2 for Alice: Cake (quantity needed, PREPARED)`.
+The card continues to display `quantity needed` for that item.
 
 | Situation | Message |
 |-----------|---------|
@@ -335,7 +335,8 @@ The card continues to display `Quantity needed` for that item.
 | Customer has no preorder | `Identified person has no preorder.` |
 | Preorder is empty or item number exceeds the item count | `The item index provided is invalid.` |
 | Customer index exceeds the displayed list | `The person index provided is invalid.` |
-| Missing or malformed customer/item index | `Invalid command format!` followed by usage instructions |
+| Missing or malformed customer index, or missing `i/` prefix | `Invalid command format!` followed by usage instructions |
+| Present but empty or invalid item index, e.g. `i/0` or `i/abc` | `Item index must be a positive integer.` |
 
 For both commands, repeated prefixes produce `Multiple values specified for the following single-valued field(s): `
 followed by the repeated prefixes. Input validation reports the first error: customer-index syntax, duplicate prefixes,
@@ -360,7 +361,7 @@ Status | Meaning | Badge colour
 `PREPARED` | Ready for collection or delivery | Blue
 `COMPLETED` | Collected or delivered | Green
 
-If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Quantity needed` instead of a quantity.
+If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `quantity needed` instead of a quantity.
 
 ### Deleting a preorder: `deleteorder`
 

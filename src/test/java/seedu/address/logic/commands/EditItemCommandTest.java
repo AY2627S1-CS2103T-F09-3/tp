@@ -213,7 +213,7 @@ public class EditItemCommandTest {
         Model model = createModel(new PersonBuilder(ALICE).withPreorder(migrated).build());
         CommandResult result = command(1, null, COMPLETED).execute(model);
         assertEquals(new CommandResult(
-                "Edited item 1 for Alice Pauline: Pineapple Tarts (quantity: , COMPLETED)"), result);
+                "Edited item 1 for Alice Pauline: Pineapple Tarts (quantity needed, COMPLETED)"), result);
         Item completed = new ItemBuilder(migrated).withStatus(COMPLETED).build();
         assertEquals(new PersonBuilder(ALICE).withPreorder(completed).build(),
                 model.getFilteredPersonList().getFirst());
@@ -268,7 +268,8 @@ public class EditItemCommandTest {
         Model model = createModel(ORDERED_ALICE);
         Person expected = new PersonBuilder(ALICE).withPreorder(expectedName, expectedStatus).build();
         assertEquals(new CommandResult(String.format(EditItemCommand.MESSAGE_EDIT_ITEM_SUCCESS,
-                1, ALICE.getName(), expectedName, "1", expectedStatus)), command(1, name, status).execute(model));
+                1, ALICE.getName(), expectedName, "quantity: 1", expectedStatus)),
+                command(1, name, status).execute(model));
         assertEquals(List.of(expected), model.getAddressBook().getPersonList());
     }
 

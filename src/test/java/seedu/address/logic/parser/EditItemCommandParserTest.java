@@ -76,12 +76,21 @@ public class EditItemCommandParserTest {
     }
 
     @Test
-    public void parse_missingOrInvalidItemIndex_failure() {
+    public void parse_missingItemIndex_showsUsage() {
         String usage = String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, EditItemCommand.MESSAGE_USAGE);
         assertParseFailure(parser, "1 d/Cake", usage);
-        for (String value : new String[]{"", "0", "-1", "abc", "1.5", "2147483648", "1 extra"}) {
-            assertParseFailure(parser, "1 i/" + value + " d/Cake", usage);
+    }
+
+    @Test
+    public void parse_invalidItemIndex_showsIndexConstraint() {
+        for (String value : new String[]{"", "   ", "0", "-1", "+1", "abc", "1.5", "2147483648", "1 extra"}) {
+            assertParseFailure(parser, "1 i/" + value + " d/Cake", Messages.MESSAGE_INVALID_ITEM_INDEX);
+            assertParseFailure(parser, "1 i/" + value, Messages.MESSAGE_INVALID_ITEM_INDEX);
         }
+    }
+
+    @Test
+    public void parse_noEditFields_showsNoChangesMessage() {
         assertParseFailure(parser, "1 i/1", EditItemCommand.MESSAGE_NOT_EDITED);
     }
 
