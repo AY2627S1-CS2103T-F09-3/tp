@@ -4,49 +4,65 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.preorder.Preorder;
+import seedu.address.model.preorder.Remark;
 import seedu.address.testutil.ItemBuilder;
 
 public class PreorderDisplayTest {
 
+    private static final Preorder TARTS_PREORDER = new Preorder(List.of(new ItemBuilder().build()));
+
     @Test
-    public void formatItem_itemWithRemark_showsRemarkLast() {
-        Item tarts = new ItemBuilder().withName("Pineapple Tarts").withQuantity("2")
-                .withStatus(ItemStatus.PENDING).withRemark("Less sugar").build();
-        assertEquals("1. Pineapple Tarts - Quantity 2 - PENDING - \"Less sugar\"",
-                PreorderDisplay.formatItem(1, tarts));
+    public void formatHeader_anyPreorder_notScheduled() {
+        assertEquals(PreorderDisplay.NOT_SCHEDULED_TEXT, PreorderDisplay.formatHeader(TARTS_PREORDER));
+        assertEquals(PreorderDisplay.NOT_SCHEDULED_TEXT, PreorderDisplay.formatHeader(new Preorder(List.of())));
     }
 
     @Test
-    public void formatItem_itemWithoutRemark_endsWithStatus() {
-        Item cookies = new ItemBuilder().withName("Almond Cookies").withQuantity("1")
-                .withStatus(ItemStatus.PREPARED).build();
-        assertEquals("2. Almond Cookies - Quantity 1 - PREPARED", PreorderDisplay.formatItem(2, cookies));
+    public void getHeaderIcon_anyPreorder_returnsCalendar() {
+        assertEquals(PreorderDisplay.CALENDAR_ICON, PreorderDisplay.getHeaderIcon(TARTS_PREORDER));
     }
 
     @Test
-    public void formatItem_itemWithoutQuantity_saysQuantityNeeded() {
-        Item cakes = new ItemBuilder().withName("2 chocolate cakes").withoutQuantity()
-                .withStatus(ItemStatus.PENDING).build();
-        assertEquals("1. 2 chocolate cakes - " + PreorderDisplay.MISSING_QUANTITY_TEXT + " - PENDING",
-                PreorderDisplay.formatItem(1, cakes));
+    public void formatItemName_validItem_numbersName() {
+        Item cookies = new ItemBuilder().withName("Almond Cookies").build();
+        assertEquals("2. Almond Cookies", PreorderDisplay.formatItemName(2, cookies));
     }
 
     @Test
-    public void formatItem_longestName_keepsFullText() {
+    public void formatItemName_longestName_keepsFullText() {
         String longest = "a".repeat(ItemName.MAX_LENGTH);
-        Item item = new ItemBuilder().withName(longest).withQuantity("3").build();
-        assertEquals("1. " + longest + " - Quantity 3 - PENDING", PreorderDisplay.formatItem(1, item));
+        Item item = new ItemBuilder().withName(longest).build();
+        assertEquals("1. " + longest, PreorderDisplay.formatItemName(1, item));
     }
 
     @Test
-    public void formatItem_itemNumberBelowOne_throwsIllegalArgumentException() {
+    public void formatItemName_itemNumberBelowOne_throwsIllegalArgumentException() {
         Item item = new ItemBuilder().build();
-        assertThrows(IllegalArgumentException.class, () -> PreorderDisplay.formatItem(0, item));
+        assertThrows(IllegalArgumentException.class, () -> PreorderDisplay.formatItemName(0, item));
+    }
+
+    @Test
+    public void formatQuantity_itemWithQuantity_showsQuantity() {
+        assertEquals("Qty 12", PreorderDisplay.formatQuantity(new ItemBuilder().withQuantity("12").build()));
+    }
+
+    @Test
+    public void formatQuantity_itemWithoutQuantity_saysQuantityNeeded() {
+        Item cakes = new ItemBuilder().withName("2 chocolate cakes").withoutQuantity().build();
+        assertEquals(PreorderDisplay.MISSING_QUANTITY_TEXT, PreorderDisplay.formatQuantity(cakes));
+    }
+
+    @Test
+    public void formatRemark_validRemark_addsPrefix() {
+        assertEquals("Remark: Less sugar", PreorderDisplay.formatRemark(new Remark("Less sugar")));
     }
 
     @Test
@@ -66,7 +82,11 @@ public class PreorderDisplayTest {
 
     @Test
     public void nullInputs_throwNullPointerException() {
-        assertThrows(NullPointerException.class, () -> PreorderDisplay.formatItem(1, null));
+        assertThrows(NullPointerException.class, () -> PreorderDisplay.formatHeader(null));
+        assertThrows(NullPointerException.class, () -> PreorderDisplay.getHeaderIcon(null));
+        assertThrows(NullPointerException.class, () -> PreorderDisplay.formatItemName(1, null));
+        assertThrows(NullPointerException.class, () -> PreorderDisplay.formatQuantity(null));
+        assertThrows(NullPointerException.class, () -> PreorderDisplay.formatRemark(null));
         assertThrows(NullPointerException.class, () -> PreorderDisplay.getStatusStyleClass(null));
     }
 }

@@ -4,11 +4,15 @@ import java.util.Comparator;
 import java.util.List;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.SVGPath;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.Preorder;
@@ -18,7 +22,19 @@ import seedu.address.model.preorder.Preorder;
  */
 public class PersonCard extends UiPart<Region> {
 
+    public static final String ITEM_ROW_STYLE_CLASS = "preorder-item-row";
+    public static final String ITEM_NAME_STYLE_CLASS = "preorder-item-name";
+    public static final String QUANTITY_STYLE_CLASS = "preorder-quantity";
+    public static final String MISSING_QUANTITY_STYLE_CLASS = "preorder-quantity-missing";
+    public static final String STATUS_CHIP_STYLE_CLASS = "status-chip";
+    public static final String REMARK_STYLE_CLASS = "preorder-remark";
+    public static final String NO_ITEMS_STYLE_CLASS = "preorder-empty";
+
     private static final String FXML = "PersonListCard.fxml";
+
+    // Wide enough for "COMPLETED", so the chips line up from row to row
+    private static final double STATUS_CHIP_WIDTH = 80;
+    private static final double ITEM_ROW_GAP = 12;
 
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
@@ -31,7 +47,7 @@ public class PersonCard extends UiPart<Region> {
     public final Person person;
 
     @FXML
-    private HBox cardPane;
+    private GridPane cardPane;
     @FXML
     private Label name;
     @FXML
@@ -48,6 +64,12 @@ public class PersonCard extends UiPart<Region> {
     private FlowPane tags;
     @FXML
     private VBox preorder;
+    @FXML
+    private SVGPath preorderIcon;
+    @FXML
+    private Label preorderHeader;
+    @FXML
+    private VBox preorderItems;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -68,34 +90,72 @@ public class PersonCard extends UiPart<Region> {
     }
 
     /**
-     * Shows one chip per item, numbered in the order the items were added and coloured by status.
+     * Fills the preorder panel: how the preorder will be handed over, then one row per item,
+     * numbered in the order the items were added.
      */
     private void showPreorder(Preorder currentPreorder) {
+        preorderIcon.setContent(PreorderDisplay.getHeaderIcon(currentPreorder));
+        preorderHeader.setText(PreorderDisplay.formatHeader(currentPreorder));
+
         List<Item> items = currentPreorder.getItems();
         if (items.isEmpty()) {
-            preorder.getChildren().add(createChip(PreorderDisplay.NO_ITEMS_TEXT, PreorderDisplay.NO_ITEMS_STYLE_CLASS));
+            preorderItems.getChildren().add(createWrappingLabel(PreorderDisplay.NO_ITEMS_TEXT, NO_ITEMS_STYLE_CLASS));
             return;
         }
 
         for (int i = 0; i < items.size(); i++) {
-            Item item = items.get(i);
-            preorder.getChildren().add(createChip(PreorderDisplay.formatItem(i + 1, item),
-                    PreorderDisplay.getStatusStyleClass(item.getStatus())));
+            preorderItems.getChildren().add(createItemRow(i + 1, items.get(i)));
         }
     }
 
-    private static Label createChip(String text, String styleClass) {
-        Label chip = new Label(text);
-        chip.getStyleClass().add(styleClass);
-        // As wide as its text, like the tags, unless the text is too long and has to wrap
-        chip.setWrapText(true);
-        chip.setMaxWidth(Region.USE_PREF_SIZE);
-        return chip;
+    /**
+     * Returns an item's row: its number and name, its quantity and a status chip, with any remark underneath.
+     */
+    private static GridPane createItemRow(int itemNumber, Item item) {
+        GridPane row = new GridPane();
+        row.getStyleClass().add(ITEM_ROW_STYLE_CLASS);
+        row.setHgap(ITEM_ROW_GAP);
+
+        // The name takes the spare width and wraps, while the quantity and status keep their own width
+        ColumnConstraints nameColumn = new ColumnConstraints();
+        nameColumn.setHgrow(Priority.ALWAYS);
+        row.getColumnConstraints().addAll(nameColumn, new ColumnConstraints(), new ColumnConstraints());
+
+        Label name = createWrappingLabel(PreorderDisplay.formatItemName(itemNumber, item), ITEM_NAME_STYLE_CLASS);
+        Label quantity = createLabel(PreorderDisplay.formatQuantity(item),
+                item.getQuantity().isPresent() ? QUANTITY_STYLE_CLASS : MISSING_QUANTITY_STYLE_CLASS);
+        Label status = createLabel(item.getStatus().name(), STATUS_CHIP_STYLE_CLASS);
+        status.getStyleClass().add(PreorderDisplay.getStatusStyleClass(item.getStatus()));
+        status.setMinWidth(STATUS_CHIP_WIDTH);
+        status.setAlignment(Pos.CENTER);
+        row.addRow(0, name, quantity, status);
+
+        item.getRemark().ifPresent(remark -> {
+            Label remarkLabel = createWrappingLabel(PreorderDisplay.formatRemark(remark), REMARK_STYLE_CLASS);
+            // On the line below, across all the columns
+            row.add(remarkLabel, 0, 1, row.getColumnCount(), 1);
+        });
+        return row;
+    }
+
+    private static Label createLabel(String text, String styleClass) {
+        Label label = new Label(text);
+        label.getStyleClass().add(styleClass);
+        // Keeps its full text, so a long item name wraps instead of squeezing the quantity or status
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        return label;
+    }
+
+    private static Label createWrappingLabel(String text, String styleClass) {
+        Label label = new Label(text);
+        label.getStyleClass().add(styleClass);
+        label.setWrapText(true);
+        return label;
     }
 
     /**
-     * Removes the preorder section from the layout, so a customer without a preorder
-     * shows no empty chips or blank gap.
+     * Removes the preorder panel from the layout, so a customer without a preorder
+     * shows no empty panel or blank gap.
      */
     private void hidePreorder() {
         preorder.setVisible(false);
