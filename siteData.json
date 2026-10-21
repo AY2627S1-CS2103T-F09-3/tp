@@ -52,6 +52,7 @@
         "common-classes": "Common classes",
         "implementation": "Implementation",
         "preorder-item-addition-and-editing": "Preorder item addition and editing",
+        "preorder-item-deletion": "Preorder item deletion",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
@@ -68,6 +69,7 @@
         "tagging-a-person": "Tagging a person",
         "untagging-a-person": "Untagging a person",
         "adding-and-editing-preorder-items": "Adding and editing preorder items",
+        "deleting-a-preorder-item": "Deleting a preorder item",
         "deleting-a-preorder": "Deleting a preorder",
         "saving-data": "Saving data"
       },
@@ -128,6 +130,7 @@
         "adding-a-preorder-item-additem": "Adding a preorder item: additem",
         "editing-a-preorder-item-edititem": "Editing a preorder item: edititem",
         "viewing-preorders-track": "Viewing preorders: track",
+        "deleting-a-preorder-item-deleteitem": "Deleting a preorder item: deleteitem",
         "deleting-a-preorder-deleteorder": "Deleting a preorder: deleteorder",
         "deleting-a-person-delete": "Deleting a person: delete",
         "clearing-all-entries-clear": "Clearing all entries: clear",
