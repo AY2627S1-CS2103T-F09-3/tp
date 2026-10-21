@@ -42,6 +42,13 @@ public final class ItemCriterion implements PersonCriterion {
         return strippedName.toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Returns the normalized product name, or an empty value for a status-only criterion.
+     */
+    public Optional<String> getProductName() {
+        return productName;
+    }
+
     @Override
     public boolean test(Person person) {
         return getItems(person).stream().anyMatch(this::matches);
