@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
+import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
@@ -17,7 +18,6 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
@@ -67,7 +67,7 @@ public class AddItemCommandTest {
     @Test
     public void execute_filteredList_targetsDisplayedCustomerAndPreservesFilter() throws Exception {
         Model model = createModel(BENSON, ALICE);
-        model.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+        showPersonAtIndex(model, Index.fromOneBased(2));
         new AddItemCommand(FIRST, ITEM).execute(model);
         Person expected = new PersonBuilder(ALICE).withPreorder(ITEM).build();
         assertEquals(List.of(BENSON, expected), model.getAddressBook().getPersonList());
@@ -93,7 +93,7 @@ public class AddItemCommandTest {
         assertCommandFailure(new AddItemCommand(FIRST, ITEM), createModel(),
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         Model filtered = createModel(BENSON, ALICE);
-        filtered.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+        showPersonAtIndex(filtered, Index.fromOneBased(2));
         assertCommandFailure(second, filtered, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
+import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.model.preorder.ItemStatus.COMPLETED;
 import static seedu.address.model.preorder.ItemStatus.PENDING;
 import static seedu.address.testutil.TypicalPersons.ALICE;
@@ -22,7 +23,6 @@ import seedu.address.logic.commands.EditItemCommand.EditItemDescriptor;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemName;
@@ -51,7 +51,7 @@ public class EditItemCommandTest {
     @Test
     public void execute_filteredList_updatesDisplayedPersonAndPreservesFilter() throws Exception {
         Model model = createModel(BENSON, ORDERED_ALICE);
-        model.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+        showPersonAtIndex(model, Index.fromOneBased(2));
         command(1, null, COMPLETED).execute(model);
         Person expected = new PersonBuilder(ALICE).withPreorder("Cake", COMPLETED).build();
         assertEquals(List.of(BENSON, expected), model.getAddressBook().getPersonList());
@@ -95,7 +95,7 @@ public class EditItemCommandTest {
     @Test
     public void execute_invalidDisplayedIndex_failureWithoutMutation() {
         Model model = createModel(BENSON, ORDERED_ALICE);
-        model.updateFilteredPersonList(person -> person.equals(ORDERED_ALICE));
+        showPersonAtIndex(model, Index.fromOneBased(2));
         assertCommandFailure(command(2, "Tarts", COMPLETED), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         assertCommandFailure(command(1, "Tarts", COMPLETED), createModel(),
