@@ -27,6 +27,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -47,8 +48,8 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.PreorderStatusPredicate;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
@@ -105,12 +106,13 @@ public class LogicManagerTest {
                 observedCriteria.add(newCriteria));
         SearchCriteria findCriteria = new SearchCriteria(List.of(
                 new TextContainsCriterion(NAME, "Alice"), new TagCriterion(new Tag("friends"))));
-        SearchCriteria trackCriteria = new SearchCriteria(List.of(new PreorderStatusPredicate(Set.of(PENDING))));
+        SearchCriteria trackCriteria =
+                new SearchCriteria(List.of(new ItemCriterion(Optional.empty(), Set.of(PENDING))));
 
         assertFilteringCommandSuccess("find n/Alice t/friends", "1 person(s) listed!", List.of(ALICE));
         assertEquals(findCriteria, logic.getActiveSearchCriteria());
 
-        assertFilteringCommandSuccess("track s/pending", "2 order(s) for PENDING listed!",
+        assertFilteringCommandSuccess("track s/pending", "2 customer(s) with 2 matching item(s) for PENDING listed!",
                 List.of(PENDING_ELLE, PENDING_BENSON));
         assertEquals(trackCriteria, logic.getActiveSearchCriteria());
 
@@ -175,7 +177,7 @@ public class LogicManagerTest {
     @Test
     public void execute_customerAndPreorderChanges_preservesTrackingCriteriaAndRefreshesResults() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track s/pending", "2 order(s) for PENDING listed!",
+        assertFilteringCommandSuccess("track s/pending", "2 customer(s) with 2 matching item(s) for PENDING listed!",
                 List.of(PENDING_ELLE, PENDING_BENSON));
         SearchCriteria criteria = logic.getActiveSearchCriteria();
         List<SearchCriteria> observedCriteria = new ArrayList<>();
@@ -238,7 +240,7 @@ public class LogicManagerTest {
         setUpTrackPersons();
         assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
 
-        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+        assertFilteringCommandSuccess("track", "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
     }
 
@@ -247,7 +249,7 @@ public class LogicManagerTest {
         setUpTrackPersons();
         assertFilteringCommandSuccess("find n/Carl", "1 person(s) listed!", List.of(PREPARED_CARL));
 
-        assertFilteringCommandSuccess("track s/pending", "2 order(s) for PENDING listed!",
+        assertFilteringCommandSuccess("track s/pending", "2 customer(s) with 2 matching item(s) for PENDING listed!",
                 List.of(PENDING_ELLE, PENDING_BENSON));
     }
 
@@ -270,7 +272,8 @@ public class LogicManagerTest {
     @Test
     public void execute_trackThenFind_searchesAllCustomers() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track s/completed", "1 order(s) for COMPLETED listed!",
+        assertFilteringCommandSuccess("track s/completed",
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!",
                 List.of(COMPLETED_DANIEL));
         assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
     }
@@ -328,20 +331,21 @@ public class LogicManagerTest {
     @Test
     public void execute_successiveTrackCommands_replacesPreviousFilter() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track s/COMPLETED", "1 order(s) for COMPLETED listed!",
+        assertFilteringCommandSuccess("track s/COMPLETED",
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!",
                 List.of(COMPLETED_DANIEL));
-        assertFilteringCommandSuccess("track s/PENDING", "2 order(s) for PENDING listed!",
+        assertFilteringCommandSuccess("track s/PENDING", "2 customer(s) with 2 matching item(s) for PENDING listed!",
                 List.of(PENDING_ELLE, PENDING_BENSON));
-        assertFilteringCommandSuccess("track s/PREPARED", "1 order(s) for PREPARED listed!",
+        assertFilteringCommandSuccess("track s/PREPARED", "1 customer(s) with 1 matching item(s) for PREPARED listed!",
                 List.of(PREPARED_CARL));
-        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+        assertFilteringCommandSuccess("track", "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
     }
 
     @Test
     public void execute_trackThenList_restoresAllCustomersInOriginalOrder() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+        assertFilteringCommandSuccess("track", "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
 
         assertFilteringCommandSuccess("list", ListCommand.MESSAGE_SUCCESS,
@@ -351,7 +355,8 @@ public class LogicManagerTest {
     @Test
     public void execute_invalidTrackFormat_preservesDataAndFilteredList() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track s/COMPLETED", "1 order(s) for COMPLETED listed!",
+        assertFilteringCommandSuccess("track s/COMPLETED",
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!",
                 List.of(COMPLETED_DANIEL));
 
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, TrackCommand.MESSAGE_USAGE);
@@ -363,7 +368,8 @@ public class LogicManagerTest {
     @Test
     public void execute_invalidTrackStatus_preservesDataAndFilteredList() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track s/COMPLETED", "1 order(s) for COMPLETED listed!",
+        assertFilteringCommandSuccess("track s/COMPLETED",
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!",
                 List.of(COMPLETED_DANIEL));
 
         for (String input : List.of("track s/", "track s/UNKNOWN", "track s/PENDING p/123",
@@ -375,7 +381,8 @@ public class LogicManagerTest {
     @Test
     public void execute_duplicateTrackStatuses_preservesDataAndFilteredList() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track s/COMPLETED", "1 order(s) for COMPLETED listed!",
+        assertFilteringCommandSuccess("track s/COMPLETED",
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!",
                 List.of(COMPLETED_DANIEL));
 
         assertCommandFailurePreservesFilteredList("track s/PENDING s/PREPARED", ParseException.class,
@@ -385,7 +392,7 @@ public class LogicManagerTest {
     @Test
     public void execute_trackThenDelete_deletesCustomerAtDisplayedIndex() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+        assertFilteringCommandSuccess("track", "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
 
         CommandResult result = logic.execute("delete 1");
@@ -401,7 +408,7 @@ public class LogicManagerTest {
     @Test
     public void execute_trackThenDeleteHiddenIndex_preservesDataAndFilteredList() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+        assertFilteringCommandSuccess("track", "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
 
         assertCommandFailurePreservesFilteredList("delete 4", CommandException.class,

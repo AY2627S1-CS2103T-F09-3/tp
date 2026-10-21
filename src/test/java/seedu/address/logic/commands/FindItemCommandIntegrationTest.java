@@ -63,6 +63,20 @@ public class FindItemCommandIntegrationTest {
         }
     }
 
+    @Test
+    public void execute_findAndTrackStatus_shareCriteriaAndResults() throws Exception {
+        for (String status : List.of("pending", "prepared", "completed")) {
+            parser.parseCommand("find s/" + status).execute(model);
+            SearchCriteria criteria = model.getActiveSearchCriteria();
+            List<Person> customers = List.copyOf(model.getFilteredPersonList());
+
+            parser.parseCommand("track s/" + status).execute(model);
+
+            assertEquals(criteria, model.getActiveSearchCriteria());
+            assertEquals(customers, model.getFilteredPersonList());
+        }
+    }
+
     private void assertResults(String command, Person... expectedPersons) throws Exception {
         CommandResult result = parser.parseCommand(command).execute(model);
         assertEquals(List.of(expectedPersons), model.getFilteredPersonList());
