@@ -144,6 +144,37 @@ public class EditItemCommandParserTest {
                 ItemStatus.MESSAGE_CONSTRAINTS);
     }
 
+    @Test
+    public void parse_allFieldsWithDistinctIndices_preservesEveryValue() {
+        EditItemDescriptor descriptor = new EditItemDescriptor();
+        descriptor.setName(new ItemName("Chocolate Cake"));
+        descriptor.setQuantity(new Quantity("3"));
+        descriptor.setStatus(ItemStatus.PREPARED);
+        descriptor.setRemark(Optional.of(new Remark("Gift box")));
+        assertParseSuccess(parser, "2 r/Gift box s/prepared q/3 i/4 d/Chocolate Cake",
+                new EditItemCommand(Index.fromOneBased(2), Index.fromOneBased(4), descriptor));
+    }
+
+    @Test
+    public void parse_quantityOnly_leavesOtherFieldsUnspecified() {
+        EditItemDescriptor descriptor = new EditItemDescriptor();
+        descriptor.setQuantity(new Quantity("3"));
+        assertParseSuccess(parser, "1 i/2 q/3",
+                new EditItemCommand(Index.fromOneBased(1), Index.fromOneBased(2), descriptor));
+    }
+
+    @Test
+    public void parse_remarkOnly_distinguishesReplacementRemovalAndOmission() {
+        Index first = Index.fromOneBased(1);
+        EditItemDescriptor descriptor = new EditItemDescriptor();
+        descriptor.setRemark(Optional.of(new Remark("Gift box")));
+        assertParseSuccess(parser, "1 i/1 r/Gift box", new EditItemCommand(first, first, descriptor));
+        descriptor.setRemark(Optional.empty());
+        assertParseSuccess(parser, "1 i/1 r/", new EditItemCommand(first, first, descriptor));
+        assertParseFailure(parser, "1 i/1", EditItemCommand.MESSAGE_NOT_EDITED);
+        assertValid("1 i/1 d/Cake", "Cake", null);
+    }
+
     private void assertValid(String input, String name, ItemStatus status) {
         EditItemDescriptor descriptor = new EditItemDescriptor();
         if (name != null) {

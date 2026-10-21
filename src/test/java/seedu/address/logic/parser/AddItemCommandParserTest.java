@@ -142,6 +142,20 @@ public class AddItemCommandParserTest {
                 ItemStatus.MESSAGE_CONSTRAINTS);
     }
 
+    @Test
+    public void parse_secondCustomer_preservesCustomerIndex() {
+        Item item = new ItemBuilder().withName("Cake").withRemark("Gift box").build();
+        assertParseSuccess(parser, "2" + VALID_FIELDS + " r/Gift box",
+                new AddItemCommand(Index.fromOneBased(2), item));
+    }
+
+    @Test
+    public void parse_remarkOmittedAfterRemark_suppliesIndependentItem() {
+        Item withRemark = new ItemBuilder().withName("Cake").withRemark("Gift box").build();
+        assertValid("1" + VALID_FIELDS + " r/Gift box", withRemark);
+        assertValid("1" + VALID_FIELDS, new ItemBuilder().withName("Cake").build());
+    }
+
     private void assertValid(String input, Item item) {
         assertParseSuccess(parser, input, new AddItemCommand(Index.fromOneBased(1), item));
     }
