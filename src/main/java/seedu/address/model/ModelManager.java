@@ -125,6 +125,9 @@ public class ModelManager implements Model {
     @Override
     public void updateFilteredPersonList(SearchCriteria criteria) {
         activeSearchCriteria.set(requireNonNull(criteria));
+        String operation = criteria.equals(SEARCH_CRITERIA_SHOW_ALL_PERSONS) ? "reset" : "applied";
+        logger.info(() -> "Search criteria " + operation + ": " + criteria.getLogSummary()
+                + ", matchingCustomers=" + filteredPersons.size());
     }
 
     @Override

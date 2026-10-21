@@ -3,6 +3,7 @@ package seedu.address.model.search;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -30,6 +31,18 @@ public final class SearchCriteria implements Predicate<Person> {
     public boolean test(Person person) {
         requireNonNull(person);
         return criteria.stream().allMatch(criterion -> criterion.test(person));
+    }
+
+    /**
+     * Returns the stored criterion count and sorted, distinct criterion type names for diagnostic logging.
+     */
+    public String getLogSummary() {
+        List<String> types = criteria.stream()
+                .map(criterion -> criterion.getClass().getSimpleName())
+                .distinct()
+                .sorted()
+                .toList();
+        return "count=" + criteria.size() + ", types=" + types;
     }
 
     @Override
