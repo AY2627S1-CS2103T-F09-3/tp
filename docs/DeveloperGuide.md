@@ -141,7 +141,7 @@ The `Model` component,
 #### Customer search criteria
 
 The `seedu.address.model.search` package provides reusable search predicates. `FindCommandParser` constructs a
-`SearchCriteria` from prefixed customer fields, and `FindCommand` applies it through the existing model filtering API.
+`SearchCriteria` from prefixed customer and item fields, and `FindCommand` applies it through the existing model filtering API.
 
 `ModelManager` keeps the active `SearchCriteria` in a `ReadOnlyObjectWrapper`. The filtered list's predicate is bound
 to this value, so replacing the criteria updates both the search state and the results. All filtering calls supply
@@ -152,8 +152,9 @@ and is not saved with customer data.
 
 Each successful `find` or `track` replaces the active criteria. `list` applies `SEARCH_CRITERIA_SHOW_ALL_PERSONS`,
 an empty search, to reset the state and show every customer. Rejected commands leave the active criteria unchanged.
-`track` wraps the immutable `PreorderStatusPredicate` as a `PersonCriterion`. It accepts a customer when any item
-in their preorder has an accepted `ItemStatus`; customers without a preorder or with an empty preorder never match.
+`find` and `track` use the immutable `ItemCriterion` for item matching. It accepts a customer when any single item
+satisfies both its optional product name and accepted statuses. Customers without a preorder or with an empty
+preorder never match item criteria.
 
 Customer changes preserve the active criteria. `addPerson` inserts into the observable backing list, while
 `setPerson` replaces an immutable customer; `FilteredList` re-evaluates the affected entry automatically. A new
@@ -190,11 +191,26 @@ at whitespace boundaries without collapsing internal query spacing. `FindCommand
 `Model.updateFilteredPersonList`, which replaces the active criteria on the list backed by the full address book.
 There is no need to filter the previous search's results or execute another search command as an intermediate step.
 
-For future multi-item searches, product and status conditions must be grouped inside **one** `PersonCriterion` that
-checks whether any single item satisfies both conditions. Separate customer predicates for "has this product" and
-"has this status" could incorrectly match different items. Date/method and postal conditions can be separate criteria,
-because they describe the preorder or customer rather than an individual item. These extensions, `find s/` support,
-final multi-item tracking rules and the active-criteria display remain deferred.
+`FindCommandParser` combines `d/` (`PREFIX_DETAILS`) and `s/` into **one** `ItemCriterion`. Separate predicates for
+"has this product" and "has this status" would incorrectly allow different items to satisfy the conditions.
+Product names match completely after stripping surrounding whitespace and normalizing case with `Locale.ROOT`;
+internal spacing and punctuation remain significant. Status input is validated with `ParserUtil.parseItemStatus`.
+
+The parser supplies `EnumSet.allOf(ItemStatus.class)` when `s/` is omitted. This is deliberate: an empty status set
+in `ItemCriterion` matches **nothing**, rather than meaning "any status". An absent product name accepts any product.
+Bare `track` supplies only `PENDING` and `PREPARED`; explicit `track s/STATUS` and `find s/STATUS` produce equivalent
+item criteria. Each new command still replaces the previous search, rather than accumulating conditions.
+
+`ItemCriterion.matches(Item)` is the shared item-level check. `getMatchingItems(Person)` returns an unmodifiable list
+that preserves item order and duplicate entries. `TrackCommand` counts filtered customers once each, then sums the
+sizes of their matching-item lists using a `long` total. It counts item entries, not quantities, including migrated
+items without quantities. Explicit status feedback retains the requested status even when both counts are zero.
+
+The criterion rejects null arguments, null status elements and blank product queries, and defensively copies the
+status set. Its normalized conditions define value equality and hash codes for observable search state.
+Future summaries and highlighting should reuse this matcher to stay consistent with customer filtering.
+Date/method and postal conditions can remain separate customer criteria. Those extensions, the preparation summary,
+matching-item highlighting and the active-criteria display are outside this search change.
 
 ### Storage component
 

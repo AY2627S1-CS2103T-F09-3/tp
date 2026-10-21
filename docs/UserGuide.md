@@ -214,11 +214,11 @@ Common errors:
 
 If several inputs are invalid, only the first detected error is shown. The index format is checked before the tag input; whether the index exists in the displayed list is checked after both inputs are valid.
 
-### Finding customers by their attributes: `find`
+### Finding customers by their attributes and preorder items: `find`
 
 Finds customers matching **every** supplied criterion.
 
-Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]`
+Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG] [d/PRODUCT] [s/STATUS]`
 
 Supply at least one criterion. Each prefix may appear at most once, in any order.
 
@@ -229,6 +229,8 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 | `e/` | Email | Case-insensitive substring |
 | `a/` | Address | Case-insensitive substring |
 | `t/` | Tag | Complete tag name, ignoring case |
+| `d/` | Preorder item product name | Complete product name, ignoring case |
+| `s/` | Item status | `PENDING`, `PREPARED` or `COMPLETED`, ignoring case |
 
 * Different criteria combine using **AND**. For example, `find n/Alice t/regular` requires both a matching name and the complete tag `regular`.
 * Names support partial matching: `find n/Han` can match `Hans Gruber`.
@@ -236,6 +238,11 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 * Surrounding whitespace is ignored. Internal spacing and punctuation remain significant.
 * Phone and email fragments are accepted: `p/8123` and `e/example.com` need not be complete contact details.
 * Tags must be single alphanumeric words. `t/reg` does not match a tag named `regular`.
+* Product names match completely: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Surrounding whitespace is ignored; internal spacing and punctuation remain significant.
+* Omitting `s/` includes **all statuses**, including `COMPLETED`. A blank `s/` is invalid. A status-only search such as `find s/prepared` accepts any product with that status.
+* Product and status must match the **same item**. A customer with pending Pineapple Tarts and prepared Almond Cookies does not match `find d/Pineapple Tarts s/prepared`.
+* Customers without a preorder or with an empty preorder cannot match item criteria. Customer-only searches can still find them.
+* All items on matching customer cards remain visible with their existing item numbers, including items that did not match. Searches do not change stored items.
 * Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
 * Results use the current displayed indices. Use `list` to show all customers again.
 * Use lowercase prefixes. A prefix starts at the beginning of the arguments or after whitespace. Unknown letter-based prefixes such as `x/` are rejected; embedded slashes such as `#04/08` remain ordinary text.
@@ -247,6 +254,10 @@ Examples:
 * `find e/example.com` finds emails containing `example.com`.
 * `find a/Hougang t/regular` finds regular customers whose addresses contain `Hougang`.
 * `find n/Alice p/8123 t/regular` requires all three criteria to match.
+* `find d/Pineapple Tarts` finds customers with that product in any status.
+* `find n/Alice d/Pineapple Tarts s/pending` finds customers whose names contain Alice and who have a pending Pineapple Tarts item.
+
+Customer and preorder changes preserve the search and refresh the results. A customer disappears when their last matching item is removed or stops matching. Displayed customer indexes can change, so check them before the next command.
 
 **Invalid inputs**
 
@@ -254,7 +265,10 @@ Examples:
 |-------|--------|
 | `find` | Invalid command format; supply at least one prefixed criterion. |
 | `find n/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
-| `find x/Alice` or `find n/Alice s/pending` | Invalid command format; only the five prefixes above are supported. |
+| `find x/Alice` or `find o/Pineapple Tarts` | Invalid command format; only the seven prefixes above are supported. |
+| `find d/` or `find d/Tarts s/` | Invalid command format; every supplied prefix needs a value. |
+| `find s/unknown` | The item-status constraint message is shown. |
+| `find d/Tarts d/Cookies` or `find s/pending s/prepared` | Repeated single-valued prefixes are rejected. |
 | `find t/regular t/vip` | `Multiple values specified for the following single-valued field(s): t/` |
 | `find t/regular customer` or `find t/VIP!` | The tag constraint message is shown. |
 
@@ -268,6 +282,10 @@ Format: `track [s/STATUS]`
 * `track s/COMPLETED` shows customers with at least one `COMPLETED` item. You can also filter by `PENDING` or `PREPARED`; status input is case-insensitive.
 * Each successful `track` searches all customers and replaces the previous `find` or `track` criteria. Rejected commands preserve the current criteria and results.
 * Customers without preorders, or whose preorder has no items yet, are excluded. Use `list` to show all customers again.
+
+`track` accepts only the optional `s/` field. Use `find` for product or customer combinations. `track s/prepared` and `find s/prepared` select the same customers. Bare `track` includes only active statuses, whereas `find d/Pineapple Tarts` includes all statuses.
+
+Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count, and an item with a missing quantity still counts as one item. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
 
 Each item in a preorder appears on the customer's card on its own line, for example `1. Pineapple Tarts - Quantity 2 - PENDING - "Less sugar"`. Its colour shows its status:
 
@@ -372,7 +390,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]` (at least one criterion)<br> e.g., `find n/James t/regular`
+**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG] [d/PRODUCT] [s/STATUS]` (at least one criterion)<br> e.g., `find n/James t/regular`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
 **Tag**    | `tag INDEX t/TAG`<br> e.g., `tag 1 t/regular`

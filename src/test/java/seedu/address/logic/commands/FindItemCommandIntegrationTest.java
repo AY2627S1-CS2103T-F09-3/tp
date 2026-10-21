@@ -77,6 +77,38 @@ public class FindItemCommandIntegrationTest {
         }
     }
 
+    @Test
+    public void execute_itemChanges_refreshProductSearchWithoutResettingCriteria() throws Exception {
+        assertResults("find d/Pineapple Tarts s/pending", ALICE);
+        SearchCriteria criteria = model.getActiveSearchCriteria();
+        Person pendingBen = new PersonBuilder(BEN)
+                .withPreorder(new ItemBuilder().withName("Pineapple Tarts").withStatus(PENDING).build()).build();
+        model.setPerson(BEN, pendingBen);
+        assertEquals(List.of(ALICE, pendingBen), model.getFilteredPersonList());
+
+        Person emptyAlice = new PersonBuilder(ALICE).withPreorder().build();
+        model.setPerson(ALICE, emptyAlice);
+        assertEquals(List.of(pendingBen), model.getFilteredPersonList());
+        assertEquals(criteria, model.getActiveSearchCriteria());
+
+        parser.parseCommand("delete 1").execute(model);
+        assertEquals(List.of(), model.getFilteredPersonList());
+        assertEquals(List.of(emptyAlice, CARL), model.getAddressBook().getPersonList());
+        assertEquals(criteria, model.getActiveSearchCriteria());
+    }
+
+    @Test
+    public void execute_productSearchAfterTrack_replacesFilterAndListResetsIt() throws Exception {
+        parser.parseCommand("track s/pending").execute(model);
+        assertResults("find d/Pineapple Tarts", ALICE, BEN, CARL);
+        assertEquals(2, model.getFilteredPersonList().getFirst().getPreorder().orElseThrow().getItems().size());
+
+        assertResults("find d/No matching product");
+        parser.parseCommand("list").execute(model);
+        assertEquals(Model.SEARCH_CRITERIA_SHOW_ALL_PERSONS, model.getActiveSearchCriteria());
+        assertEquals(List.of(ALICE, BEN, CARL), model.getFilteredPersonList());
+    }
+
     private void assertResults(String command, Person... expectedPersons) throws Exception {
         CommandResult result = parser.parseCommand(command).execute(model);
         assertEquals(List.of(expectedPersons), model.getFilteredPersonList());
