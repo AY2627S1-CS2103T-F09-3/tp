@@ -126,7 +126,7 @@ Examples:
 
 ### Listing all persons: `list`
 
-Clears the current search criteria and postal-code grouping, and shows all persons in the address book in their saved order.
+Clears the current search criteria, sorting and postal-code grouping, and shows all persons in the address book in their saved order.
 
 Format: `list`
 
@@ -230,6 +230,40 @@ Format: `group postal`
 * This command does not calculate delivery routes or filter by fulfilment information.
 
 For example, `find n/Alex` followed by `group postal` groups only the matching customers. To update the first displayed customer's postal code while preserving their other details and preorder, use `edit 1 c/012345`.
+
+### Sorting customers by handover date: `sort date`
+
+Sorts the currently displayed customers by the handover date of their preorder, so you can see whose preorder is due first. The order saved in the data file is not changed.
+
+Format: `sort date`
+
+* Customers are shown with the earliest handover date first.
+* Customers without a preorder, or whose preorder has no date yet, are listed last.
+* Customers with the same date are ordered by name, ignoring capitalization.
+* `date` is not case-sensitive, and spaces around it are ignored. For example, `sort DATE` also works.
+* Sorting keeps the current filter, including results from `find` or `track`. It does not change customer details or preorders.
+* Displayed index numbers follow the sorted list. Use those numbers for commands such as `edit`, `tag`, and `deleteorder`.
+
+Examples:
+
+* `sort date` sorts all displayed customers by handover date. If 5 customers are displayed, LeBake shows `Sorted 5 customer(s) by handover date. Customers without a date are listed last.`
+* `find t/regular` followed by `sort date` sorts only your regular customers by handover date.
+
+<box type="info" seamless>
+
+**Notes about sorting:**
+
+* The sort stays in place after a new `find` or `track`, so the new results are also sorted by date. Use `list` to show all customers in their saved order.
+* Only one ordering is used at a time: `sort date` replaces `group postal`, and `group postal` replaces `sort date`.
+* If you change a customer's date with `preorder` while the list is sorted, that customer moves to their new position, so their index number changes. Check the displayed index before your next command.
+* Sorting is not restored after restarting the application.
+</box>
+
+Common errors:
+
+| Input | Feedback |
+| --- | --- |
+| `sort`, `sort name`, or `sort date 2026-12-20` | `Invalid command format!` followed by the sort usage instructions. |
 
 ### Finding customers by their attributes: `find`
 
@@ -499,6 +533,7 @@ Action     | Format, Examples
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Group postal** | `group postal`
+**Sort by date** | `sort date`
 **Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]` (at least one criterion)<br> e.g., `find n/James t/regular`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
