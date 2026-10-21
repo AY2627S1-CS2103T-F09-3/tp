@@ -70,10 +70,14 @@ public class DeleteItemCommandParserTest {
     }
 
     @Test
-    public void parse_missingOrInvalidItemIndex_throwsParseException() {
+    public void parse_missingItemIndex_showsUsage() {
         assertParseFailure(parser, "1", MESSAGE_INVALID_FORMAT);
-        for (String value : new String[]{"", "0", "-1", "+1", "1.5", "abc", "2147483648", "1 extra"}) {
-            assertParseFailure(parser, "1 i/" + value, MESSAGE_INVALID_FORMAT);
+    }
+
+    @Test
+    public void parse_invalidItemIndex_showsIndexConstraint() {
+        for (String value : new String[]{"", "   ", "0", "-1", "+1", "1.5", "abc", "2147483648", "1 extra"}) {
+            assertParseFailure(parser, "1 i/" + value, Messages.MESSAGE_INVALID_ITEM_INDEX);
         }
     }
 
@@ -95,7 +99,7 @@ public class DeleteItemCommandParserTest {
 
     @Test
     public void parse_extraFieldOrOldPrefix_throwsParseException() {
-        assertParseFailure(parser, "1 i/1 q/2", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1 i/1 q/2", Messages.MESSAGE_INVALID_ITEM_INDEX);
         assertParseFailure(parser, "1 o/1", MESSAGE_INVALID_FORMAT);
     }
 

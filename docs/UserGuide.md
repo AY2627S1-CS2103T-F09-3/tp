@@ -305,7 +305,7 @@ Format: `deleteitem INDEX i/ITEM_INDEX`
 * `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
 * `ITEM_INDEX` must be a positive integer referring to the item number shown on that customer's card. It refers to the customer's full item list.
 * Only the selected item is removed. Remaining items keep their relative order and are renumbered from 1. Identical items remain separate: deleting one does not delete the others.
-* Deleting the final item retains an **empty preorder**. The customer's name, phone number, email, address and tags are unchanged.
+* Deleting the final item retains an **empty preorder**. The customer's name, phone number, email, address, postal code and tags are unchanged. The preorder's fulfilment date, method and handover notes are also preserved.
 * Both indices are required. The `i/` prefix must appear exactly once; `o/` is not accepted for item selection.
 * Deletion cannot be undone through the app.
 * The current filter is preserved. A customer may disappear from a tracked view if no remaining item matches it. Check the displayed customer and item numbers before your next command. Use `list` to show all customers again.
@@ -323,7 +323,8 @@ The message uses the item's number before deletion. For a migrated item with no 
 | Customer index exceeds the displayed list | `The person index provided is invalid.` |
 | Customer has no preorder | `Identified person has no preorder.` |
 | Preorder is empty or item index exceeds the item count | `The item index provided is invalid.` |
-| Missing, zero, negative, non-integer or oversized index | `Invalid command format!` followed by usage instructions |
+| Missing or invalid customer index, or missing `i/` prefix | `Invalid command format!` followed by usage instructions |
+| Present but empty or invalid item index, e.g. `i/0` or `i/abc` | `Item index must be a positive integer.` |
 | Repeated `i/` prefix | `Multiple values specified for the following single-valued field(s): i/` |
 
 Validation failures leave the data unchanged. If several inputs are invalid, customer-index syntax is checked first, then duplicate prefixes, then item-index syntax. Customer, preorder and item existence are checked after parsing succeeds.

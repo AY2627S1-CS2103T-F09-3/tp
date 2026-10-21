@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_ITEM_INDEX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ITEM_INDEX;
 
 import seedu.address.commons.core.index.Index;
@@ -30,10 +31,11 @@ public class DeleteItemCommandParser implements Parser<DeleteItemCommand> {
     }
 
     private Index parseItemIndex(ArgumentMultimap arguments, String usage) throws ParseException {
+        String value = arguments.getValue(PREFIX_ITEM_INDEX).orElseThrow(() -> new ParseException(usage));
         try {
-            return ParserUtil.parseIndex(arguments.getValue(PREFIX_ITEM_INDEX).orElse(""));
+            return ParserUtil.parseIndex(value);
         } catch (ParseException pe) {
-            throw new ParseException(usage, pe);
+            throw new ParseException(MESSAGE_INVALID_ITEM_INDEX, pe);
         }
     }
 }

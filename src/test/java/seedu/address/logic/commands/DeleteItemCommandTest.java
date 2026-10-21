@@ -26,8 +26,12 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.FulfilmentDate;
+import seedu.address.model.preorder.FulfilmentMethod;
+import seedu.address.model.preorder.HandoverNotes;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.preorder.Preorder;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -173,6 +177,51 @@ public class DeleteItemCommandTest {
     public void execute_nullModel_throwsNullPointerException() {
         DeleteItemCommand command = new DeleteItemCommand(INDEX_BENSON, INDEX_FIRST_ITEM);
         assertThrows(NullPointerException.class, () -> command.execute(null));
+    }
+
+    @Test
+    public void execute_withRemainingItems_preservesPostalCodeAndFulfilment() throws Exception {
+        for (FulfilmentMethod method : FulfilmentMethod.values()) {
+            assertDetailsPreserved("012345", List.of(PENDING_ITEM, new ItemBuilder().withName("Cake").build()),
+                    Optional.of(new FulfilmentDate("2026-12-20")), Optional.of(method),
+                    Optional.of(new HandoverNotes("Call on arrival")));
+        }
+    }
+
+    @Test
+    public void execute_finalItem_preservesPostalCodeAndFulfilment() throws Exception {
+        for (FulfilmentMethod method : FulfilmentMethod.values()) {
+            assertDetailsPreserved("012345", List.of(PENDING_ITEM),
+                    Optional.of(new FulfilmentDate("2026-12-20")), Optional.of(method),
+                    Optional.of(new HandoverNotes("Call on arrival")));
+        }
+    }
+
+    @Test
+    public void execute_partialFulfilment_preservesLegacyPostalCodeAndMissingFields() throws Exception {
+        assertDetailsPreserved(null, List.of(PENDING_ITEM), Optional.of(new FulfilmentDate("2026-12-20")),
+                Optional.empty(), Optional.empty());
+        assertDetailsPreserved(null, List.of(PENDING_ITEM), Optional.empty(),
+                Optional.of(FulfilmentMethod.COLLECTION), Optional.empty());
+        assertDetailsPreserved(null, List.of(PENDING_ITEM), Optional.empty(), Optional.empty(),
+                Optional.of(new HandoverNotes("Call on arrival")));
+    }
+
+    private void assertDetailsPreserved(String postalCode, List<Item> items, Optional<FulfilmentDate> date,
+            Optional<FulfilmentMethod> method, Optional<HandoverNotes> notes) throws Exception {
+        Preorder preorder = new Preorder(items, date, method, notes);
+        Person original = new PersonBuilder(BENSON).withPostalCode(postalCode).withPreorder(preorder).build();
+        Model actualModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+        actualModel.setPerson(BENSON, original);
+        showPersonAtIndex(actualModel, INDEX_BENSON);
+        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+        Preorder remaining = new Preorder(items.subList(1, items.size()), date, method, notes);
+        expectedModel.setPerson(BENSON, new PersonBuilder(original).withPreorder(remaining).build());
+        showPersonAtIndex(expectedModel, INDEX_BENSON);
+        assertCommandSuccess(new DeleteItemCommand(INDEX_FIRST_PERSON, INDEX_FIRST_ITEM),
+                actualModel, EXPECTED_SUCCESS_MESSAGE, expectedModel);
+        assertEquals(items, preorder.getItems());
+        assertEquals(preorder, original.getPreorder().orElseThrow());
     }
 
     @Test

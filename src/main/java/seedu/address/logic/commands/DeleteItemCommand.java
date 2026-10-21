@@ -101,13 +101,14 @@ public class DeleteItemCommand extends Command {
      */
     private Person createPersonWithoutItem(Person personWithPreorder) {
         assert personWithPreorder.getPreorder().isPresent() : "Preorder was validated before deleting";
-        List<Item> items = new ArrayList<>(personWithPreorder.getPreorder().orElseThrow().getItems());
+        Preorder existingPreorder = personWithPreorder.getPreorder().orElseThrow();
+        List<Item> items = new ArrayList<>(existingPreorder.getItems());
         assert itemIndex.getZeroBased() < items.size() : "Item index was validated before deleting";
         items.remove(itemIndex.getZeroBased());
-        Preorder updatedPreorder = new Preorder(items);
+        Preorder updatedPreorder = existingPreorder.withItems(items);
         return new Person(personWithPreorder.getName(), personWithPreorder.getPhone(),
-                personWithPreorder.getEmail(), personWithPreorder.getAddress(), personWithPreorder.getTags(),
-                Optional.of(updatedPreorder));
+                personWithPreorder.getEmail(), personWithPreorder.getAddress(), personWithPreorder.getPostalCode(),
+                personWithPreorder.getTags(), Optional.of(updatedPreorder));
     }
 
     @Override

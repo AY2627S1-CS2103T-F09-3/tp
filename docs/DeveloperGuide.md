@@ -221,6 +221,8 @@ This section describes some noteworthy details on how certain features are imple
 
 `DeleteItemCommandParser` parses `deleteitem INDEX i/ITEM_INDEX`. It validates the customer-index preamble,
 rejects duplicate `i/` prefixes, and parses the required item index using `ParserUtil.parseIndex`.
+A missing `i/` shows usage instructions; a supplied empty or invalid value shows
+`Item index must be a positive integer.`
 `AddressBookParser` dispatches `deleteitem` to this parser.
 
 `DeleteItemCommand` resolves the customer from `model.getFilteredPersonList()`, checks that a preorder exists,
@@ -233,8 +235,8 @@ The command copies the immutable item list, removes only the selected position, 
 An empty item list remains wrapped in a preorder. The success message uses the deleted item's original number,
 name, quantity and status; missing quantities are displayed as blank values.
 
-The current preorder contains only items. When fulfilment fields are added, this reconstruction must preserve
-existing delivery dates, methods and instructions, including when the final item is removed.
+The replacement person preserves the customer's postal code. `Preorder.withItems` preserves the fulfilment date,
+method and handover notes, including when the final item is removed. Missing optional fields remain absent.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -755,8 +757,10 @@ is customer 5 without a preorder.
    Expected: Both show `The item index provided is invalid.` because both preorders are empty. Nothing changes.
 1. Run `deleteitem 5 i/1`.<br>
    Expected: `Identified person has no preorder.` Nothing changes.
-1. Try `deleteitem`, `deleteitem 0 i/1`, `deleteitem 1`, `deleteitem 1 i/0`, and `deleteitem 1 o/1`.<br>
+1. Try `deleteitem`, `deleteitem 0 i/1`, `deleteitem 1`, and `deleteitem 1 o/1`.<br>
    Expected: An invalid-command-format error followed by usage instructions. Nothing changes.
+1. Try `deleteitem 1 i/`, `deleteitem 1 i/0`, and `deleteitem 1 i/abc`.<br>
+   Expected: `Item index must be a positive integer.` Nothing changes.
 1. Run `deleteitem 1 i/1 i/2`.<br>
    Expected: `Multiple values specified for the following single-valued field(s): i/`. Nothing changes.
 1. Run `deleteitem 100 i/1`, where 100 exceeds the displayed list size.<br>
