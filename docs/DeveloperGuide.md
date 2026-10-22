@@ -250,14 +250,17 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Preorders and items
 
-A customer's preorder records the products they ordered. Each customer has at most one `Preorder`, and each
-`Preorder` holds the customer's `Item`s in the order they were added.
+A customer's preorder records the products they ordered and how they will be handed over. Each customer has at most
+one `Preorder`, and each `Preorder` holds the customer's `Item`s in the order they were added.
 
-<puml src="diagrams/PreorderClassDiagram.puml" width="380" />
+<puml src="diagrams/PreorderClassDiagram.puml" width="600" />
 
 * `Person` stores its preorder as an `Optional<Preorder>`, which is empty for a customer without one.
 * `Preorder` keeps an unmodifiable copy of its items and may have none yet. The number shown before an item on
   the customer's card is its position in this list, starting from 1.
+* `Preorder` also has an optional `FulfilmentDate`, `FulfilmentMethod` (`DELIVERY` or `COLLECTION`) and
+  `HandoverNotes`, such as "Call on arrival". They belong to the whole preorder, so all of its items are handed
+  over together. `Preorder#withItems()` keeps them when a command changes the items.
 * `Item` has an `ItemName` of up to 200 characters, an `ItemStatus`, and an optional `Quantity` and `Remark`.
   A `Quantity` is a whole number from 1 to 999, and a `Remark` is a special request of up to 100 characters.
 * New items always have a quantity. `Item#getQuantity()` is empty only for items converted from v1.3 data, as
@@ -273,8 +276,9 @@ existing preorder to the new `Person`, so it is not lost.
 #### Saving preorders
 
 `JsonAdaptedPerson` saves a customer's preorder in a `"preorders"` list, which holds one `JsonAdaptedPreorder`, or
-none for a customer without a preorder. Each `JsonAdaptedPreorder` holds its `JsonAdaptedItem`s, which save each
-field as a string. A missing remark, or the missing quantity of a converted item, is saved as `null`.
+none for a customer without a preorder. Each `JsonAdaptedPreorder` holds its `JsonAdaptedItem`s, and saves the date
+in `YYYY-MM-DD` form, the method by its name, and the handover notes. Each `JsonAdaptedItem` saves each field as a
+string. A missing fulfilment detail or remark, or the missing quantity of a converted item, is saved as `null`.
 
 ```json
 "preorders" : [ {
@@ -283,12 +287,15 @@ field as a string. A missing remark, or the missing quantity of a converted item
     "quantity" : "2",
     "status" : "PENDING",
     "remark" : "Less sugar"
-  } ]
+  } ],
+  "date" : "2026-12-20",
+  "method" : "DELIVERY",
+  "handoverNotes" : "Call on arrival"
 } ]
 ```
 
-When the file is loaded, a customer with more than one preorder, a `null` preorder or item, or an item field that
-breaks its rules is reported as invalid data, in the same way as an invalid name or phone number. A preorder without
+When the file is loaded, a customer with more than one preorder, a `null` preorder or item, or a preorder or item
+field that breaks its rules is reported as invalid data, in the same way as an invalid name or phone number. A preorder without
 an `"items"` field loads as a preorder with no items.
 
 #### Loading v1.3 data
@@ -296,8 +303,9 @@ an `"items"` field loads as a preorder with no items.
 LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and one `"status"`.
 `JsonAdaptedPerson` still reads that field through `JsonAdaptedLegacyPreorder`, which turns it into a preorder with
 one item named after the old details, with the old status. v1.3 did not record a quantity, and guessing one from the
-details could be wrong, so the item has no quantity and its card shows `Quantity needed`. The old field is never
-written back, so the next save stores the customer in the current format.
+details could be wrong, so the item has no quantity and its card shows `quantity needed`. The converted preorder has
+no date, method or handover notes, as v1.3 had none. The old field is never written back, so the next save stores
+the customer in the current format.
 
 #### Design considerations
 
@@ -310,6 +318,16 @@ written back, so the next save stores the customer in the current format.
   * Pros: Simpler to display and to filter by.
   * Cons: Cannot show that one product is ready while another is not, which is common when a customer orders
     several products.
+
+**Aspect: where the date and method are kept**
+
+* **Alternative 1 (current choice):** one date, method and set of handover notes per `Preorder`.
+  * Pros: A preorder is handed over in one trip, so its items cannot disagree on when or how.
+  * Cons: Items for different days cannot share a preorder. As the data file already saves a list of preorders
+    (see "how preorders are saved" below), a later version can give such a customer a second preorder instead.
+* **Alternative 2:** a date and method on each `Item`.
+  * Pros: Each product can be handed over on its own day.
+  * Cons: The same details are repeated on every item, and changing the date of an order means editing each item.
 
 **Aspect: how a quantity is stored**
 
@@ -967,7 +985,7 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
       `"preorder" : { "details" : "2 chocolate cakes", "status" : "PENDING" }`.
 
    1. Test case: Launch LeBake.<br>
-      Expected: The first customer's card shows one item, `2 chocolate cakes`, with `Quantity needed` and the
+      Expected: The first customer's card shows one item, `2 chocolate cakes`, with `quantity needed` and the
       status `PENDING`. Their other details are unchanged.
 
    1. Test case: Run `list`, close LeBake, then open `data/addressbook.json` again.<br>

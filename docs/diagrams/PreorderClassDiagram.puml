@@ -6,6 +6,12 @@ skinparam classBackgroundColor MODEL_COLOR
 
 Class Person
 Class Preorder
+Class FulfilmentDate
+Class "<<enumeration>>\nFulfilmentMethod" as FulfilmentMethod {
+DELIVERY
+COLLECTION
+}
+Class HandoverNotes
 Class Item
 Class ItemName
 Class Quantity
@@ -16,15 +22,22 @@ PREPARED
 COMPLETED
 }
 ' style.puml hides members, but an enumeration is clearer with its values
+show FulfilmentMethod fields
 show ItemStatus fields
 
 Person *--> "0..1" Preorder
+Preorder *--> "0..1" FulfilmentDate
+Preorder --> "0..1" FulfilmentMethod
+Preorder *--> "0..1" HandoverNotes
 Preorder *--> "*" Item
 Item *--> "1" ItemName
 Item *--> "0..1" Quantity
 Item --> "1" ItemStatus
 Item *--> "0..1" Remark
 
+FulfilmentDate -[hidden]right-> FulfilmentMethod
+FulfilmentMethod -[hidden]right-> HandoverNotes
+HandoverNotes -[hidden]right-> Item
 ItemName -[hidden]right-> Quantity
 Quantity -[hidden]right-> ItemStatus
 ItemStatus -[hidden]right-> Remark
