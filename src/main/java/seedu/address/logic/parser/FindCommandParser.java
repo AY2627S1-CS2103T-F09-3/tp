@@ -7,6 +7,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
@@ -23,6 +24,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PersonCriterion;
+import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
@@ -33,7 +35,8 @@ import seedu.address.model.search.TextContainsCriterion.Field;
  */
 public class FindCommandParser implements Parser<FindCommand> {
     private static final List<Prefix> SUPPORTED_PREFIXES =
-            List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG, PREFIX_DETAILS, PREFIX_STATUS);
+            List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_POSTAL_CODE, PREFIX_TAG,
+                    PREFIX_DETAILS, PREFIX_STATUS);
     private static final Pattern PARAMETER_PREFIX = Pattern.compile("(?<!\\S)([A-Za-z]+/)");
 
     /**
@@ -79,6 +82,13 @@ public class FindCommandParser implements Parser<FindCommand> {
         addTextCriterion(criteria, arguments, PREFIX_PHONE, Field.PHONE);
         addTextCriterion(criteria, arguments, PREFIX_EMAIL, Field.EMAIL);
         addTextCriterion(criteria, arguments, PREFIX_ADDRESS, Field.ADDRESS);
+        if (arguments.getValue(PREFIX_POSTAL_CODE).isPresent()) {
+            String postalCodePrefix = arguments.getValue(PREFIX_POSTAL_CODE).get().strip();
+            if (!PostalCodeCriterion.isValidPrefix(postalCodePrefix)) {
+                throw new ParseException(PostalCodeCriterion.MESSAGE_CONSTRAINTS);
+            }
+            criteria.add(new PostalCodeCriterion(postalCodePrefix));
+        }
         if (arguments.getValue(PREFIX_TAG).isPresent()) {
             criteria.add(new TagCriterion(ParserUtil.parseTag(arguments.getValue(PREFIX_TAG).get().strip())));
         }
@@ -109,9 +119,9 @@ public class FindCommandParser implements Parser<FindCommand> {
             }
         }
 
-        // Let the shared tokenizer recognize the first prefix and prefixes after tabs or newlines.
-        // Only add separator spaces before prefixes; preserve the text inside search values.
-        return matcher.replaceAll(" $1");
+        // Supply a separator for the first prefix; the shared tokenizer handles whitespace boundaries.
+        // Leave all text inside search values unchanged, including whitespace before literal c/o in an address.
+        return " " + args;
     }
 
     private void addTextCriterion(List<PersonCriterion> criteria, ArgumentMultimap arguments,

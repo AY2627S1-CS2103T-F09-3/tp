@@ -235,7 +235,7 @@ For example, `find n/Alex` followed by `group postal` groups only the matching c
 
 Finds customers matching **every** supplied criterion.
 
-Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG] [d/PRODUCT] [s/STATUS]`
+Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE_PREFIX] [t/TAG] [d/PRODUCT] [s/STATUS]`
 
 Supply at least one criterion. Each prefix may appear at most once, in any order.
 
@@ -245,6 +245,7 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 | `p/` | Phone number | Substring |
 | `e/` | Email | Case-insensitive substring |
 | `a/` | Address | Case-insensitive substring |
+| `c/` | Postal code | Starts with the supplied one to six digits, preserving leading zeros |
 | `t/` | Tag | Complete tag name, ignoring case |
 | `d/` | Preorder item product name | Complete product name, ignoring case |
 | `s/` | Item status | `PENDING`, `PREPARED` or `COMPLETED`, ignoring case |
@@ -254,6 +255,8 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 * Multiword text is one substring: `find n/Alice Tan` can match `Alice Tanaka`, but does not match `Alice Lim` or `Tan Alice`.
 * Surrounding whitespace is ignored. Internal spacing and punctuation remain significant.
 * Phone and email fragments are accepted: `p/8123` and `e/example.com` need not be complete contact details.
+* Postal searches accept one to six digits. `find c/53` matches codes beginning with `53`, such as `530123` and `531234`; `find c/530` narrows this to codes beginning with `530`. A six-digit query such as `find c/012345` matches only that complete code. Customers without a postal code do not match a postal-code criterion.
+* When adding a customer or editing their postal code, supply all six digits. Shorter prefixes are accepted only for searching; leading zeros are preserved in both cases.
 * Tags must be single alphanumeric words. `t/reg` does not match a tag named `regular`.
 * Product names match completely: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Surrounding whitespace is ignored; internal spacing and punctuation remain significant.
 * Omitting `s/` includes **all statuses**, including `COMPLETED`. A blank `s/` is invalid. A status-only search such as `find s/prepared` accepts any product with that status.
@@ -269,6 +272,10 @@ Examples:
 * `find n/Alice Tan` finds names containing the phrase `Alice Tan`.
 * `find p/8123` finds phone numbers containing `8123`.
 * `find e/example.com` finds emails containing `example.com`.
+* `find c/53` finds customers whose postal code starts with `53`.
+* `find c/01` finds customers whose postal code starts with `01`, including `012345`.
+* `find c/123456` finds customers whose postal code is exactly `123456`.
+* `find n/Alice c/53` requires both a name containing `Alice` and a postal code starting with `53`.
 * `find a/Hougang t/regular` finds regular customers whose addresses contain `Hougang`.
 * `find n/Alice p/8123 t/regular` requires all three criteria to match.
 * `find d/Pineapple Tarts` finds customers with that product in any status.
@@ -281,11 +288,12 @@ Customer and preorder changes preserve the search and refresh the results. A cus
 | Input | Result |
 |-------|--------|
 | `find` | Invalid command format; supply at least one prefixed criterion. |
-| `find n/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
-| `find x/Alice` or `find o/Pineapple Tarts` | Invalid command format; only the seven prefixes above are supported. |
-| `find d/` or `find d/Tarts s/` | Invalid command format; every supplied prefix needs a value. |
+| `find n/`, `find c/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
+| `find x/Alice` or `find o/Pineapple Tarts` | Invalid command format; only the eight prefixes above are supported. |
 | `find s/unknown` | The item-status constraint message is shown. |
 | `find d/Tarts d/Cookies` or `find s/pending s/prepared` | Repeated single-valued prefixes are rejected. |
+| `find c/1234567`, `find c/01234a` or `find c/5 3` | `Postal-code search values must contain one to six digits.` |
+| `find c/012345 c/123456` | `Multiple values specified for the following single-valued field(s): c/` |
 | `find t/regular t/vip` | `Multiple values specified for the following single-valued field(s): t/` |
 | `find t/regular customer` or `find t/VIP!` | The tag constraint message is shown. |
 
@@ -516,7 +524,7 @@ Action     | Format, Examples
 **Delete item** | `deleteitem INDEX i/ITEM_INDEX`<br> e.g., `deleteitem 1 i/2`
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG] [d/PRODUCT] [s/STATUS]` (at least one criterion)<br> e.g., `find n/James t/regular`
+**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE_PREFIX] [t/TAG] [d/PRODUCT] [s/STATUS]` (at least one criterion)<br> e.g., `find n/James c/53 t/regular`
 **Group postal** | `group postal`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
