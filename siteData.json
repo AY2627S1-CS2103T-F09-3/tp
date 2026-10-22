@@ -73,6 +73,7 @@
         "deleting-a-preorder-item": "Deleting a preorder item",
         "deleting-a-preorder": "Deleting a preorder",
         "loading-preorder-data": "Loading preorder data",
+        "sorting-customers-by-fulfilment-date": "Sorting customers by fulfilment date",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
@@ -129,6 +130,7 @@
         "tagging-a-person-tag": "Tagging a person: tag",
         "removing-a-person-s-tag-untag": "Removing a person's tag: untag",
         "grouping-customers-by-postal-code-group-postal": "Grouping customers by postal code: group postal",
+        "sorting-customers-by-fulfilment-date-sort-date": "Sorting customers by fulfilment date: sort date",
         "preparing-deliveries": "Preparing deliveries",
         "finding-customers-by-their-attributes-and-preorder-items-find": "Finding customers by their attributes and preorder items: find",
         "adding-a-preorder-item-additem": "Adding a preorder item: additem",
