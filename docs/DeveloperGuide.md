@@ -1036,6 +1036,32 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
       that the data file could not be loaded. Restore the file from your copy before running a command, as the
       next command saves the empty list over it.
 
+### Sorting customers by fulfilment date
+
+Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`.
+
+1. Run `sort date`.<br>
+   Expected: `Sorted 6 customer(s) by fulfilment date. Customers without a date are listed last.`
+   The order is `Bernice Yu` (19 Dec), `Alex Yeoh` and `Charlotte Oliveiro` (both 20 Dec, ordered by name),
+   `David Li` (23 Dec, no items), then `Irfan Ibrahim` and `Roy Balakrishnan` (no preorder).
+1. Run `sort DATE`.<br>
+   Expected: Same message and order as above.
+1. Run `tag 1 t/sorttest`.<br>
+   Expected: The tag is added to `Bernice Yu`, the first customer in the sorted list.
+1. Run `find t/friends`.<br>
+   Expected: The sort stays in place. `Bernice Yu` is shown before `Alex Yeoh`.
+1. Run `list`.<br>
+   Expected: All 6 customers are shown in their saved order, with `Alex Yeoh` first.
+1. Run `find t/friends`, then `sort date`.<br>
+   Expected: `Sorted 2 customer(s) by fulfilment date. Customers without a date are listed last.`
+   Only `Bernice Yu` and `Alex Yeoh` are shown, in that order.
+1. Run `list`, `group postal`, then `sort date`.<br>
+   Expected: The postal grouping is replaced. The order is the same as in step 1.
+1. Try `sort`, `sort name`, `sort date 2026-12-20` and `sort date x`.<br>
+   Expected: `Invalid command format!` followed by the sort usage instructions. The displayed list does not change.
+1. Close and relaunch the app.<br>
+   Expected: Customers are shown in their saved order, with `Alex Yeoh` first. Sorting is not restored.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files

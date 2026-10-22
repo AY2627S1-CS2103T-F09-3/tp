@@ -55,7 +55,7 @@ public class PersonListPanel extends UiPart<Region> {
                 VBox cellContent = new VBox();
                 String currentGroup = GroupPostalCommand.getPostalGroupKey(person);
                 boolean isGrouped = personListView.getItems() instanceof SortedList<?> sortedPersons
-                        && sortedPersons.getComparator() != null;
+                        && sortedPersons.getComparator() == GroupPostalCommand.POSTAL_COMPARATOR;
                 boolean isFirstInGroup = index == 0
                         || !currentGroup.equals(GroupPostalCommand.getPostalGroupKey(personListView
                         .getItems().get(index - 1)));
