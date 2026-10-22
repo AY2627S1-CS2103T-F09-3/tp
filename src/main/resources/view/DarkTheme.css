@@ -423,3 +423,20 @@
 #preorder .status-completed {
     -fx-background-color: #2a7a45;
 }
+
+.delivery-summary, .delivery-summary .viewport, .delivery-summary .scroll-pane {
+    -fx-background-color: #383838;
+}
+
+.delivery-summary .label {
+    -fx-text-fill: white;
+    -fx-font-size: 12;
+}
+
+.delivery-summary .delivery-title, .delivery-summary .delivery-group {
+    -fx-font-weight: bold;
+}
+
+.delivery-summary .delivery-title {
+    -fx-font-size: 15;
+}

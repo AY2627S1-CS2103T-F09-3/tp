@@ -267,13 +267,26 @@ Common errors:
 | --- | --- |
 | `sort`, `sort name`, or `sort date 2026-12-20` | `Invalid command format!` followed by the sort usage instructions. |
 
+### Preparing deliveries
+
+The **Delivery preparation** panel above the customer list summarises outstanding deliveries in the current results. It refreshes after searches, customer changes, and preorder changes. No extra command is needed. When there are no outstanding deliveries, the panel remains visible with zero totals and `No outstanding deliveries in the current results.`
+
+* A customer counts as one outstanding stop when their preorder uses `DELIVERY` and has at least one `PENDING` or `PREPARED` item. Multiple items still count as one stop.
+* Collection, empty preorders, completed-only preorders, and preorders without a method do not contribute to the totals.
+* Contacts are grouped by the first two postal digits. Each contact shows their name, phone, address, complete postal code, fulfilment date, and handover notes.
+* Customers without postal codes remain included under `MISSING POSTAL CODE`, which counts as one additional postal group. Their contact shows `Postal code needed`.
+* An outstanding delivery without a date shows `Not scheduled`; absent handover notes show `Handover notes: None`.
+* The contact area scrolls and wraps long text. Use Tab to focus it and the arrow keys to scroll.
+
+For the sample data, `list` shows two outstanding delivery stops in two postal groups. `find f/2026-12-20 m/delivery` selects the deliveries for that date; `group postal` groups those results while keeping the search. An empty scheduled preorder may appear in the customer results but does not count as an outstanding stop.
+
 ### Finding customers by their attributes and preorder items: `find`
 
 Finds customers matching **every** supplied criterion.
 
-Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE_PREFIX] [t/TAG] [d/PRODUCT] [s/STATUS]`
+Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE_PREFIX] [t/TAG] [d/PRODUCT] [s/STATUS] [f/YYYY-MM-DD] [m/METHOD] [h/HANDOVER_NOTES]`
 
-Supply at least one criterion. Each prefix may appear at most once, in any order.
+Supply at least one prefixed criterion. Each prefix may appear at most once, in any order. Name searches require `n/`.
 
 | Prefix | Searches | Matching rule |
 |--------|----------|---------------|
@@ -285,6 +298,9 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 | `t/` | Tag | Complete tag name, ignoring case |
 | `d/` | Preorder item product name | Complete product name, ignoring case |
 | `s/` | Item status | `PENDING`, `PREPARED` or `COMPLETED`, ignoring case |
+| `f/` | Shared preorder fulfilment date | Exact real date in `YYYY-MM-DD` format |
+| `m/` | Shared preorder method | `delivery` or `collection`, ignoring case |
+| `h/` | Shared preorder handover notes | Case-insensitive substring |
 
 * Different criteria combine using **AND**. For example, `find n/Alice t/regular` requires both a matching name and the complete tag `regular`.
 * Names support partial matching: `find n/Han` can match `Hans Gruber`.
@@ -294,6 +310,7 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 * Postal searches accept one to six digits. `find c/53` matches codes beginning with `53`, such as `530123` and `531234`; `find c/530` narrows this to codes beginning with `530`. A six-digit query such as `find c/012345` matches only that complete code. Customers without a postal code do not match a postal-code criterion.
 * When adding a customer or editing their postal code, supply all six digits. Shorter prefixes are accepted only for searching; leading zeros are preserved in both cases.
 * Tags must be single alphanumeric words. `t/reg` does not match a tag named `regular`.
+* Fulfilment conditions check the preorder's shared information. They can find empty preorders; customers without a preorder or without the requested field do not match. Handover notes are separate from an individual item's request notes.
 * Product names match completely: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Surrounding whitespace is ignored; internal spacing and punctuation remain significant.
 * Omitting `s/` includes **all statuses**, including `COMPLETED`. A blank `s/` is invalid. A status-only search such as `find s/prepared` accepts any product with that status.
 * Product and status must match the **same item**. A customer with pending Pineapple Tarts and prepared Almond Cookies does not match `find d/Pineapple Tarts s/prepared`.
@@ -314,6 +331,9 @@ Examples:
 * `find n/Alice c/53` requires both a name containing `Alice` and a postal code starting with `53`.
 * `find a/Hougang t/regular` finds regular customers whose addresses contain `Hougang`.
 * `find n/Alice p/8123 t/regular` requires all three criteria to match.
+* `find f/2026-12-20 m/delivery` finds delivery preorders scheduled for that date, including ones without items.
+* `find n/Alice m/collection h/side gate` requires a matching name, collection method, and handover notes containing `side gate`.
+* `find c/53 f/2026-12-20 m/delivery h/arrival` combines a postal prefix with the shared date, method, and handover notes.
 * `find d/Pineapple Tarts` finds customers with that product in any status.
 * `find n/Alice d/Pineapple Tarts s/pending` finds customers whose names contain Alice and who have a pending Pineapple Tarts item.
 
@@ -323,9 +343,13 @@ Customer and preorder changes preserve the search and refresh the results. A cus
 
 | Input | Result |
 |-------|--------|
-| `find` | Invalid command format; supply at least one prefixed criterion. |
+| `find` or `find Alice Bob` | Invalid command format; supply at least one prefixed criterion. |
 | `find n/`, `find c/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
-| `find x/Alice` or `find o/Pineapple Tarts` | Invalid command format; only the eight prefixes above are supported. |
+| `find x/Alice` or `find o/Pineapple Tarts` | Invalid command format; only the eleven prefixes above are supported. |
+| `find Alice m/delivery` | Invalid command format; use `find n/Alice m/delivery`. |
+| `find f/2026-02-30` or `find f/2026-2-03` | The date constraint message is shown; supply a real date in `YYYY-MM-DD` format. |
+| `find m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
+| `find h/` or `find m/` | Invalid command format; every supplied prefix needs a value. |
 | `find s/unknown` | The item-status constraint message is shown. |
 | `find d/Tarts d/Cookies` or `find s/pending s/prepared` | Repeated single-valued prefixes are rejected. |
 | `find c/1234567`, `find c/01234a` or `find c/5 3` | `Postal-code search values must contain one to six digits.` |
@@ -461,7 +485,7 @@ Validation failures leave the data unchanged. If several inputs are invalid, cus
 Examples:
 
 * `deleteitem 1 i/2` deletes the second item of the first displayed customer.
-* `find Bernice` followed by `deleteitem 1 i/1` deletes the first item of the first matching customer.
+* `find n/Bernice` followed by `deleteitem 1 i/1` deletes the first item of the first matching customer.
 * `track` followed by `deleteitem 1 i/1` deletes the first item of the first displayed customer, whether or not that particular item is active.
 
 ### Setting delivery or collection details: `preorder`
@@ -480,7 +504,7 @@ Format: `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`
 * Supply at least one of `f/`, `m/` and `h/`, in any order. Each can appear only once.
 * Only the details you supply change. For example, `preorder 1 m/collection` changes the method and keeps the date and handover notes.
 * A prefix with no value **clears** that detail. For example, `preorder 1 h/` removes the handover notes and `preorder 1 f/ m/ h/` clears all three.
-* If the customer has no preorder yet, one is created with no items, so you can record the arrangements before adding items with [`additem`](#adding-a-preorder-item-additem).
+* If the customer has no preorder yet, supplying at least one nonempty value creates one with no items, so you can record the arrangements before adding items with [`additem`](#adding-a-preorder-item-additem). Supplying only empty values makes no changes because there is nothing to clear.
 * A past date is accepted, so you can still record late orders. The success message then adds a note on a new line, for example `Note: 20 Dec 2025 is in the past.`
 * The customer's items (with their quantities, statuses and remarks), contact details, postal code and tags are not changed. The current filter remains active.
 * Surrounding spaces in values are trimmed. Text that starts a new prefix after a space, such as ` m/`, ends the previous value, so avoid it inside handover notes.
@@ -606,7 +630,7 @@ Action     | Format, Examples
 **Delete item** | `deleteitem INDEX i/ITEM_INDEX`<br> e.g., `deleteitem 1 i/2`
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE_PREFIX] [t/TAG] [d/PRODUCT] [s/STATUS]` (at least one criterion)<br> e.g., `find n/James c/53 t/regular`
+**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE_PREFIX] [t/TAG] [d/PRODUCT] [s/STATUS] [f/YYYY-MM-DD] [m/METHOD] [h/HANDOVER_NOTES]` (at least one prefixed criterion)<br> e.g., `find c/53 f/2026-12-20 m/delivery`
 **Group postal** | `group postal`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
