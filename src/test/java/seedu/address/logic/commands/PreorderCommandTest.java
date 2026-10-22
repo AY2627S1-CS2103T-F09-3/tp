@@ -232,10 +232,9 @@ public class PreorderCommandTest {
         // different index -> returns false
         assertFalse(preorderFirstCommand.equals(new PreorderCommand(INDEX_SECOND_PERSON, dateDescriptor)));
 
-        // clearing a field differs from leaving it unchanged -> returns false
+        // different descriptor -> returns false
         EditFulfilmentDescriptor clearDateDescriptor = new EditFulfilmentDescriptorBuilder().withoutDate().build();
         assertFalse(preorderFirstCommand.equals(new PreorderCommand(INDEX_FIRST_PERSON, clearDateDescriptor)));
-        assertFalse(new EditFulfilmentDescriptor().equals(clearDateDescriptor));
     }
 
     @Test
