@@ -12,12 +12,15 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
@@ -51,6 +54,18 @@ public class SearchCriteriaTest {
     }
 
     @Test
+    public void getCriteria_returnsImmutableSet() {
+        SearchCriteria search = new SearchCriteria(List.of(NAME_CRITERION, TAG_CRITERION));
+
+        assertEquals(Set.of(NAME_CRITERION, TAG_CRITERION), search.getCriteria());
+        assertThrows(UnsupportedOperationException.class, () -> search.getCriteria().clear());
+        assertThrows(UnsupportedOperationException.class, () ->
+                search.getCriteria().add(new TextContainsCriterion(PHONE, "9435")));
+        assertTrue(search.test(ALICE));
+        assertFalse(search.test(BENSON));
+    }
+
+    @Test
     public void test_emptyCriteria_matchesEveryPerson() {
         SearchCriteria search = new SearchCriteria(List.of());
         assertTrue(search.test(ALICE));
@@ -75,6 +90,30 @@ public class SearchCriteriaTest {
     public void test_nullPerson_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new SearchCriteria(List.of()).test(null));
         assertThrows(NullPointerException.class, () -> new SearchCriteria(List.of(NAME_CRITERION)).test(null));
+    }
+
+    @Test
+    public void getLogSummary_emptyCriteria_reportsZeroCountAndNoTypes() {
+        assertEquals("count=0, types=[]", new SearchCriteria(List.of()).getLogSummary());
+    }
+
+    @Test
+    public void getLogSummary_mixedCriteria_reportsDeduplicatedCountAndSortedTypes() {
+        PersonCriterion phoneCriterion = new TextContainsCriterion(PHONE, "9435");
+        SearchCriteria search = new SearchCriteria(List.of(NAME_CRITERION, phoneCriterion, TAG_CRITERION,
+                new TextContainsCriterion(NAME, " ALICE ")));
+        SearchCriteria reorderedSearch = new SearchCriteria(List.of(TAG_CRITERION, phoneCriterion, NAME_CRITERION));
+
+        assertEquals("count=3, types=[TagCriterion, TextContainsCriterion]", search.getLogSummary());
+        assertEquals(search.getLogSummary(), reorderedSearch.getLogSummary());
+    }
+
+    @Test
+    public void getLogSummary_statusAlternatives_reportsOneCriterion() {
+        SearchCriteria search = new SearchCriteria(List.of(
+                new ItemCriterion(Optional.empty(), Set.of(ItemStatus.PENDING, ItemStatus.PREPARED))));
+
+        assertEquals("count=1, types=[ItemCriterion]", search.getLogSummary());
     }
 
     @Test

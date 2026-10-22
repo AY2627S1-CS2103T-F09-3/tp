@@ -50,7 +50,9 @@
           <padding>
             <Insets top="5" right="10" bottom="10" left="10" />
           </padding>
-          <StackPane fx:id="personListPanelPlaceholder" VBox.vgrow="ALWAYS"/>
+          <StackPane fx:id="searchCriteriaDisplayPlaceholder" VBox.vgrow="NEVER" />
+          <StackPane fx:id="deliverySummaryPlaceholder" VBox.vgrow="NEVER" />
+          <StackPane fx:id="personListPanelPlaceholder" minHeight="0" VBox.vgrow="ALWAYS"/>
         </VBox>
 
         <StackPane fx:id="statusbarPlaceholder" VBox.vgrow="NEVER" />

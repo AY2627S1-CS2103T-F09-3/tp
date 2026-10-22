@@ -15,6 +15,13 @@ public class GroupPostalCommand extends Command {
     public static final String POSTAL_ARGUMENT = "postal";
     public static final String MESSAGE_SUCCESS = "Customers grouped by postal code.";
 
+    /** Orders customers by postal prefix, then full postal code, then name, with missing codes last. */
+    public static final Comparator<Person> POSTAL_COMPARATOR = Comparator
+            .comparing(GroupPostalCommand::getPostalGroupKey)
+            .thenComparing(person -> person.getPostalCode() == null
+                    ? "" : person.getPostalCode().value)
+            .thenComparing(person -> person.getName().fullName);
+
     private static final String MISSING_POSTAL_CODE = "\uffff";
     private static final Logger logger = LogsCenter.getLogger(GroupPostalCommand.class);
 
@@ -27,12 +34,7 @@ public class GroupPostalCommand extends Command {
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
-        Comparator<Person> comparator = Comparator
-                .comparing(GroupPostalCommand::getPostalGroupKey)
-                .thenComparing(person -> person.getPostalCode() == null
-                        ? "" : person.getPostalCode().value)
-                .thenComparing(person -> person.getName().fullName);
-        model.updatePersonListComparator(comparator);
+        model.updatePersonListComparator(POSTAL_COMPARATOR);
         logger.info(MESSAGE_SUCCESS);
         return new CommandResult(MESSAGE_SUCCESS);
     }

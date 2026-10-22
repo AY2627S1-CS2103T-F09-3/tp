@@ -26,16 +26,21 @@ import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.PreorderCommand;
+import seedu.address.logic.commands.PreorderCommand.EditFulfilmentDescriptor;
+import seedu.address.logic.commands.SortCommand;
 import seedu.address.logic.commands.TagCommand;
 import seedu.address.logic.commands.TrackCommand;
 import seedu.address.logic.commands.UntagCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.model.tag.Tag;
+import seedu.address.testutil.EditFulfilmentDescriptorBuilder;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -79,6 +84,15 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_preorder() throws Exception {
+        PreorderCommand command = (PreorderCommand) parser.parseCommand(PreorderCommand.COMMAND_WORD + " "
+                + INDEX_FIRST_PERSON.getOneBased() + " f/2026-12-20 m/delivery h/Call on arrival");
+        EditFulfilmentDescriptor descriptor = new EditFulfilmentDescriptorBuilder().withDate("2026-12-20")
+                .withMethod(FulfilmentMethod.DELIVERY).withHandoverNotes("Call on arrival").build();
+        assertEquals(new PreorderCommand(INDEX_FIRST_PERSON, descriptor), command);
+    }
+
+    @Test
     public void parseCommand_edit() throws Exception {
         Person person = new PersonBuilder().build();
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder(person).build();
@@ -107,6 +121,12 @@ public class AddressBookParserTest {
     public void parseCommand_help() throws Exception {
         assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD) instanceof HelpCommand);
         assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD + " 3") instanceof HelpCommand);
+    }
+
+    @Test
+    public void parseCommand_sort() throws Exception {
+        String sortDateInput = SortCommand.COMMAND_WORD + " " + SortCommand.DATE_ARGUMENT;
+        assertEquals(new SortCommand(), parser.parseCommand(sortDateInput));
     }
 
     @Test

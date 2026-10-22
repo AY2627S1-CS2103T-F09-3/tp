@@ -5,6 +5,9 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FULFILMENT_DATE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FULFILMENT_METHOD;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_HANDOVER_NOTES;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
@@ -14,6 +17,7 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailur
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.model.search.TextContainsCriterion.Field.ADDRESS;
 import static seedu.address.model.search.TextContainsCriterion.Field.EMAIL;
+import static seedu.address.model.search.TextContainsCriterion.Field.HANDOVER_NOTES;
 import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
 import static seedu.address.model.search.TextContainsCriterion.Field.PHONE;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -27,7 +31,11 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.model.preorder.FulfilmentDate;
+import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.FulfilmentDateCriterion;
+import seedu.address.model.search.FulfilmentMethodCriterion;
 import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
@@ -49,9 +57,15 @@ public class FindCommandParserTest {
     }
 
     @Test
-    public void parse_missingPrefixesOrBarePreamble_throwsParseException() {
-        for (String input : List.of("", " \t\n ", "Alice", "Alice Tan", "Alice t/regular",
-                "Alice n/Tan", "nAlice", "/Alice")) {
+    public void parse_emptyOrMixedSyntax_throwsParseException() {
+        for (String input : List.of("", " \t\n ", "Alice t/regular", "Alice n/Tan")) {
+            assertParseFailure(parser, input, FORMAT_ERROR);
+        }
+    }
+
+    @Test
+    public void parse_unprefixedName_throwsParseException() {
+        for (String input : List.of("Alice", "Alice Tan", "nAlice", "/Alice", " \t Alice  Bob \n")) {
             assertParseFailure(parser, input, FORMAT_ERROR);
         }
     }
@@ -60,7 +74,8 @@ public class FindCommandParserTest {
     public void parse_unsupportedPrefix_throwsParseException() {
         for (String input : List.of("x/Alice", "n/Alice x/unknown", "n/Alice\tunknown/value",
                 "N/Alice", "n/Alice P/8123", "S/pending", "n/Alice D/Tarts",
-                "o/Pineapple Tarts", "f/2026-10-22", "m/delivery", "C/012345")) {
+                "o/Pineapple Tarts", "z/2026-10-22", "M/delivery", "C/012345", "H/arrival",
+                "i/1", "n/Alice i/arrival", "h/arrival i/1")) {
             assertParseFailure(parser, input, FORMAT_ERROR);
         }
     }
@@ -68,8 +83,8 @@ public class FindCommandParserTest {
     @Test
     public void parse_blankValue_throwsParseException() {
         for (Prefix prefix : List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_POSTAL_CODE,
-                PREFIX_TAG,
-                PREFIX_DETAILS, PREFIX_STATUS)) {
+                PREFIX_TAG, PREFIX_DETAILS, PREFIX_STATUS,
+                PREFIX_FULFILMENT_DATE, PREFIX_FULFILMENT_METHOD, PREFIX_HANDOVER_NOTES)) {
             assertParseFailure(parser, prefix + " \t\n ", FORMAT_ERROR);
             assertParseFailure(parser, prefix + " \t\n n/Alice", prefix.equals(PREFIX_NAME)
                     ? Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME) : FORMAT_ERROR);
@@ -79,8 +94,8 @@ public class FindCommandParserTest {
     @Test
     public void parse_duplicatePrefix_throwsParseException() {
         for (Prefix prefix : List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_POSTAL_CODE,
-                PREFIX_TAG,
-                PREFIX_DETAILS, PREFIX_STATUS)) {
+                PREFIX_TAG, PREFIX_DETAILS, PREFIX_STATUS,
+                PREFIX_FULFILMENT_DATE, PREFIX_FULFILMENT_METHOD, PREFIX_HANDOVER_NOTES)) {
             String expectedMessage = Messages.getErrorMessageForDuplicatePrefixes(prefix);
             assertParseFailure(parser, prefix + "first " + prefix + "second", expectedMessage);
             assertParseFailure(parser, prefix + "first " + prefix + "first", expectedMessage);
@@ -100,6 +115,30 @@ public class FindCommandParserTest {
         FindCommand expected = new FindCommand(new SearchCriteria(List.of(new TagCriterion(new Tag("regular")))));
         assertParseSuccess(parser, "t/REGULAR", expected);
         assertParseSuccess(parser, " \t t/ regular \n", expected);
+    }
+
+    @Test
+    public void parse_fulfilmentCriteria_returnsCombinedFindCommand() {
+        FindCommand expected = new FindCommand(new SearchCriteria(List.of(
+                new FulfilmentDateCriterion(new FulfilmentDate("2026-12-20")),
+                new FulfilmentMethodCriterion(FulfilmentMethod.DELIVERY),
+                new TextContainsCriterion(HANDOVER_NOTES, "call on arrival"),
+                new TextContainsCriterion(NAME, "Alice"))));
+        assertParseSuccess(parser, "f/2026-12-20 m/delivery h/Call on arrival n/Alice", expected);
+        assertParseSuccess(parser, " n/Alice\th/ CALL ON ARRIVAL \nm/DeLiVeRy f/2026-12-20 ", expected);
+        assertParseSuccess(parser, "m/ collection", new FindCommand(new SearchCriteria(List.of(
+                new FulfilmentMethodCriterion(FulfilmentMethod.COLLECTION)))));
+    }
+
+    @Test
+    public void parse_invalidFulfilmentValues_throwsFieldMessage() {
+        for (String date : List.of("2026-02-30", "2026-2-03", "2026/12/20", "2026-12-20 extra")) {
+            assertParseFailure(parser, "f/" + date, FulfilmentDate.MESSAGE_CONSTRAINTS);
+        }
+        for (String method : List.of("pickup", "del", "delivery collection")) {
+            assertParseFailure(parser, "m/" + method, FulfilmentMethod.MESSAGE_CONSTRAINTS);
+        }
+        assertParseSuccess(parser, "h/ Call  on arrival! ", textCommand(HANDOVER_NOTES, "Call  on arrival!"));
     }
 
     @Test
@@ -171,6 +210,22 @@ public class FindCommandParserTest {
                 new ItemCriterion(Optional.of("Tarts"), Set.of(ItemStatus.PENDING)))));
         assertParseSuccess(parser, "c/01 d/Tarts s/pending", expected);
         assertParseSuccess(parser, "s/pending\td/Tarts\nc/01", expected);
+    }
+
+    @Test
+    public void parse_postalFulfilmentAndItemCriteria_returnsCombinedFindCommand() {
+        FindCommand expected = new FindCommand(new SearchCriteria(List.of(
+                new TextContainsCriterion(NAME, "Alice"), new TextContainsCriterion(PHONE, "8123"),
+                new TextContainsCriterion(EMAIL, "example.com"), new TextContainsCriterion(ADDRESS, "Hougang"),
+                new PostalCodeCriterion("01"), new TagCriterion(new Tag("regular")),
+                new ItemCriterion(Optional.of("Tarts"), Set.of(ItemStatus.PENDING)),
+                new FulfilmentDateCriterion(new FulfilmentDate("2026-12-20")),
+                new FulfilmentMethodCriterion(FulfilmentMethod.DELIVERY),
+                new TextContainsCriterion(HANDOVER_NOTES, "arrival"))));
+        assertParseSuccess(parser, "n/Alice p/8123 e/example.com a/Hougang c/01 t/regular d/Tarts s/pending "
+                + "f/2026-12-20 m/delivery h/arrival", expected);
+        assertParseSuccess(parser, "h/ARRIVAL\tm/DELIVERY\nf/2026-12-20 s/PENDING d/TARTS t/REGULAR "
+                + "c/01 a/HOUGANG e/EXAMPLE.COM p/8123 n/ALICE", expected);
     }
 
     @Test

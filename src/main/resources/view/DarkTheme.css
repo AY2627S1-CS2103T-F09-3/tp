@@ -351,6 +351,24 @@
     -fx-font-size: 11;
 }
 
+.search-criteria-heading {
+    -fx-text-fill: #e2e8ef;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-opacity: 1;
+}
+
+.search-criterion-badge {
+    -fx-text-fill: #f2f5f8;
+    -fx-background-color: #424d5f;
+    -fx-border-color: #66758a;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 5 9 5 9;
+    -fx-font-size: 13px;
+    -fx-opacity: 1;
+}
+
 /* Preorder panel. One solid shade, so it looks the same on both row colors of the list. */
 #preorder {
     -fx-background-color: #2e3031;
@@ -467,4 +485,21 @@
     -fx-border-width: 2;
     -fx-border-radius: 4;
     -fx-font-weight: bold;
+}
+
+.delivery-summary, .delivery-summary .viewport, .delivery-summary .scroll-pane {
+    -fx-background-color: #383838;
+}
+
+.delivery-summary .label {
+    -fx-text-fill: white;
+    -fx-font-size: 12;
+}
+
+.delivery-summary .delivery-title, .delivery-summary .delivery-group {
+    -fx-font-weight: bold;
+}
+
+.delivery-summary .delivery-title {
+    -fx-font-size: 15;
 }

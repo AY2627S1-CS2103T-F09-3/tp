@@ -71,7 +71,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `SearchCriteriaDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -80,7 +80,35 @@ The `UI` component,
 * executes user commands using the `Logic` component.
 * listens for changes to `Model` data so that the UI can be updated with the modified data.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
-* depends on some classes in the `Model` component because it displays `Person` objects from the model.
+* depends on some classes in the `Model` component because it displays `Person` objects and structured search criteria.
+
+`MainWindow` places `SearchCriteriaDisplay` above the customer list and supplies
+`Logic.activeSearchCriteriaProperty()`. The display renders the current value immediately and observes criteria
+changes directly, including searches with identical results. It uses `SearchCriteriaFormatter` to obtain an immutable
+`SearchCriteriaSummary` containing a heading and one complete label per criterion, in predictable order. Formatting
+stays separate from matching and does not parse diagnostic `toString()` output.
+
+`PostalCodeCriterion.getPostalCodePrefix()` exposes the immutable search digits for a `Postal` badge, preserving
+leading zeros and the supplied prefix length. Postal badges are ordered after Address and before Tag badges.
+
+`ItemCriterion` exposes its stripped display product name and immutable accepted statuses. The formatter keeps
+the capitalization typed by the user and both conditions in one `Item` badge after customer badges, reflecting
+same-item matching. All statuses on a product
+criterion display as `Any status`; subsets display their readable labels joined by `or` in fulfilment order.
+A criterion without a product uses `Item status`, retaining the status-only search and tracking labels. An empty
+status set displays `None`, so a criterion matching no items is still visible.
+
+`FulfilmentDateCriterion.getDate()` and `FulfilmentMethodCriterion.getMethod()` expose their immutable matching
+values. Date badges reuse `FulfilmentDate.toDisplayString()` for English dates such as `22 Oct 2026`; method badges
+show `Delivery` or `Collection`. Handover-note badges use the normalized query from `TextContainsCriterion`.
+The complete display order is Name, Phone, Email, Address, Postal, Tag, Item (or Item status), Date, Method and
+Handover notes, independent of prefix order or the model's unordered criteria set.
+
+The display uses a `FlowPane` of read-only labels. Badges wrap onto additional rows without a row limit, and each
+badge is limited to the available width so long values wrap inside it. Its preferred-height measurement also accounts
+for wrapping when `FlowPane` measures a row without supplying a width. Empty searches hide the badge container and
+show only `Showing: All customers`; active searches show `Filters · Match all`. No focus request is made during an
+update, and the display cannot receive mouse input or keyboard focus.
 
 ### Logic component
 
@@ -125,6 +153,7 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+* stores each customer's preorder, if any, as a `Preorder` holding the `Item`s they ordered (see [Preorders and items](#preorders-and-items)).
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -182,6 +211,21 @@ and punctuation remain significant. Queries must be nonblank, but may be fragmen
 they do not use the validation rules for creating complete contact fields. `TagCriterion` accepts a validated `Tag` and
 uses its complete, case-insensitive equality rule.
 
+`FulfilmentDateCriterion` and `FulfilmentMethodCriterion` inspect the optional shared fields on `Preorder`, independently
+of its items. `TextContainsCriterion.Field.HANDOVER_NOTES` reads `Preorder.getHandoverNotes()` and uses the existing
+case-insensitive substring matcher. Missing preorders or missing requested fields do not match; empty preorders with
+matching fields do. Searches for handover notes do not inspect item remarks.
+
+The `f/` and `m/` values are parsed through `ParserUtil.parseFulfilmentDate` and `parseFulfilmentMethod`. Dates must be
+real calendar dates in `YYYY-MM-DD` format; methods are stripped and normalized with `Locale.ROOT` to `DELIVERY` or
+`COLLECTION`. Invalid values produce the corresponding model constraint message. The shared `PREFIX_HANDOVER_NOTES`
+constant defines `h/` for handover notes. These queries follow existing text search rules: surrounding whitespace is
+stripped, while internal spacing and punctuation remain significant. Blank values, repeated prefixes and unsupported
+prefixes retain the shared parser's error handling.
+
+All `find` searches require a supported prefix, including `n/` for names. Unprefixed searches and bare preambles are
+rejected; `find Alice m/delivery` must use `find n/Alice m/delivery` instead.
+
 `PostalCodeCriterion` accepts a search prefix stored as a string. `FindCommandParser` strips surrounding whitespace
 from the `c/` value and validates it using `PostalCodeCriterion.isValidPrefix`, which accepts one to six ASCII digits
 (`[0-9]{1,6}`). Blank values produce the existing invalid-command-format error; other invalid values produce
@@ -203,6 +247,9 @@ It recognizes prefixes at whitespace boundaries without collapsing internal quer
 address. `FindCommand` passes `SearchCriteria` directly to
 `Model.updateFilteredPersonList`, which replaces the active criteria on the list backed by the full address book.
 There is no need to filter the previous search's results or execute another search command as an intermediate step.
+When adding a criterion type, also add its label and display position to `SearchCriteriaFormatter`, with formatter
+tests. Existing display bindings and wrapping then apply automatically. Keep conditions on the same item together
+in one criterion and one badge.
 
 `FindCommandParser` combines `d/` (`PREFIX_DETAILS`) and `s/` into **one** `ItemCriterion`. Separate predicates for
 "has this product" and "has this status" would incorrectly allow different items to satisfy the conditions.
@@ -222,8 +269,8 @@ items without quantities. Explicit status feedback retains the requested status 
 
 The criterion rejects null arguments, null status elements and blank product queries, and defensively copies the
 status set. Its normalized conditions define value equality and hash codes for observable search state.
-Date/method conditions can remain separate customer criteria. Those extensions and the general
-active-criteria display are outside this change.
+Date/method and postal conditions remain separate customer criteria because they describe the preorder or customer
+rather than an individual item.
 
 #### Preparation summary and matching-item highlighting
 
@@ -248,6 +295,27 @@ all items, original numbering and status styles. Status-only criteria (including
 matching items; criteria without item conditions produce no highlights. The customer list uses native
 JavaFX keyboard navigation and selects its first entry when focused without an existing selection.
 
+#### Delivery preparation summary
+
+`DeliveryPreparationSummary` takes a snapshot of the current displayed customer results. It reuses
+`ItemCriterion` with no product condition and statuses `PENDING` and `PREPARED`, then requires the preorder's method
+to be `DELIVERY`. It counts customers, not matching items. Collection, unset methods, empty wrappers and completed-only
+preorders are excluded. Missing postal codes remain represented by one additional group; dates and notes may be unset
+without excluding an otherwise outstanding delivery. The immutable snapshot orders contacts by postal code and name,
+without mutating the address book or the active search criteria.
+
+`MainWindow` installs a `DeliverySummaryPanel` above `PersonListPanel`. The panel observes the existing
+`Logic.getFilteredPersonList()` observable view and rebuilds its snapshot when results or customer records change.
+It reuses `GroupPostalCommand.getPostalGroupKey` for contact headings and `FulfilmentDate.toDisplayString` for dates.
+Names, phones, addresses, postal codes and shared handover notes are shown in a bounded, keyboard-scrollable area
+with wrapped text. Missing dates display `Not scheduled`; absent handover notes display `Handover notes: None`.
+The panel stays installed and visible when there are no outstanding deliveries, showing zero totals and
+`No outstanding deliveries in the current results.` The UI tests cover exclusion of ineligible preorders, one contact
+per customer with multiple outstanding items, postal headings, and layout at the minimum FXML window dimensions.
+
+This adds a derived model snapshot and a UI part within the existing Model/Logic/UI boundaries. It does not introduce
+stored summary state or change the fulfilment fields, JSON schema, customer reconstruction, or grouping command.
+
 ### Storage component
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/storage/Storage.java)
@@ -258,6 +326,7 @@ The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+* saves preorders through `JsonAdaptedPreorder` and `JsonAdaptedItem`, and reads preorders saved by v1.3 through `JsonAdaptedLegacyPreorder` (see [Saving preorders](#saving-preorders)).
 
 ### Common classes
 
@@ -268,6 +337,108 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Preorders and items
+
+A customer's preorder records the products they ordered and how they will be handed over. Each customer has at most
+one `Preorder`, and each `Preorder` holds the customer's `Item`s in the order they were added.
+
+<puml src="diagrams/PreorderClassDiagram.puml" width="600" />
+
+* `Person` stores its preorder as an `Optional<Preorder>`, which is empty for a customer without one.
+* `Preorder` keeps an unmodifiable copy of its items and may have none yet. The number shown before an item on
+  the customer's card is its position in this list, starting from 1.
+* `Preorder` also has an optional `FulfilmentDate`, `FulfilmentMethod` (`DELIVERY` or `COLLECTION`) and
+  `HandoverNotes`, such as "Call on arrival". They belong to the whole preorder, so all of its items are handed
+  over together. `Preorder#withItems()` keeps them when a command changes the items.
+* `Item` has an `ItemName` of up to 200 characters, an `ItemStatus`, and an optional `Quantity` and `Remark`.
+  A `Quantity` is a whole number from 1 to 999, and a `Remark` is a special request of up to 100 characters.
+* New items always have a quantity. `Item#getQuantity()` is empty only for items converted from v1.3 data, as
+  described under "Loading v1.3 data" below.
+* `ItemStatus` belongs to each item, so a customer can have one item `PREPARED` while another is still
+  `PENDING`. There is no overall status for a customer or a preorder. `track` matches a customer when any item
+  has one of the requested statuses.
+
+`Preorder` and `Item` are immutable. A command that changes a customer creates a new `Person` and replaces the old
+one through `Model#setPerson`. Commands that do this for other reasons, such as `edit`, `tag` and `untag`, pass the
+existing preorder to the new `Person`, so it is not lost.
+
+#### Saving preorders
+
+`JsonAdaptedPerson` saves a customer's preorder in a `"preorders"` list, which holds one `JsonAdaptedPreorder`, or
+none for a customer without a preorder. Each `JsonAdaptedPreorder` holds its `JsonAdaptedItem`s, and saves the date
+in `YYYY-MM-DD` form, the method by its name, and the handover notes. Each `JsonAdaptedItem` saves each field as a
+string. A missing fulfilment detail or remark, or the missing quantity of a converted item, is saved as `null`.
+
+```json
+"preorders" : [ {
+  "items" : [ {
+    "name" : "Pineapple Tarts",
+    "quantity" : "2",
+    "status" : "PENDING",
+    "remark" : "Less sugar"
+  } ],
+  "date" : "2026-12-20",
+  "method" : "DELIVERY",
+  "handoverNotes" : "Call on arrival"
+} ]
+```
+
+When the file is loaded, a customer with more than one preorder, a `null` preorder or item, or a preorder or item
+field that breaks its rules is reported as invalid data, in the same way as an invalid name or phone number. A preorder without
+an `"items"` field loads as a preorder with no items.
+
+#### Loading v1.3 data
+
+LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and one `"status"`.
+`JsonAdaptedPerson` still reads that field through `JsonAdaptedLegacyPreorder`, which turns it into a preorder with
+one item named after the old details, with the old status. v1.3 did not record a quantity, and guessing one from the
+details could be wrong, so the item has no quantity and its card shows `quantity needed`. The converted preorder has
+no date, method or handover notes, as v1.3 had none. The old field is never written back, so the next save stores
+the customer in the current format.
+
+#### Design considerations
+
+**Aspect: where the status is kept**
+
+* **Alternative 1 (current choice):** each `Item` has its own `ItemStatus`.
+  * Pros: Items that are prepared at different times can be tracked separately.
+  * Cons: There is no single status for a customer, so a summary has to look at every item.
+* **Alternative 2:** one status per `Preorder`.
+  * Pros: Simpler to display and to filter by.
+  * Cons: Cannot show that one product is ready while another is not, which is common when a customer orders
+    several products.
+
+**Aspect: where the date and method are kept**
+
+* **Alternative 1 (current choice):** one date, method and set of handover notes per `Preorder`.
+  * Pros: A preorder is handed over in one trip, so its items cannot disagree on when or how.
+  * Cons: Items for different days cannot share a preorder. As the data file already saves a list of preorders
+    (see "how preorders are saved" below), a later version can give such a customer a second preorder instead.
+* **Alternative 2:** a date and method on each `Item`.
+  * Pros: Each product can be handed over on its own day.
+  * Cons: The same details are repeated on every item, and changing the date of an order means editing each item.
+
+**Aspect: how a quantity is stored**
+
+* **Alternative 1 (current choice):** a `Quantity` class.
+  * Pros: The rule and its error message are in one place, shared by `ParserUtil#parseQuantity` and the JSON
+    loader. An item without a quantity is an empty `Optional<Quantity>`, the same way an item without a remark is
+    an empty `Optional<Remark>`.
+  * Cons: One more small class.
+* **Alternative 2:** a plain `int`.
+  * Pros: Less code.
+  * Cons: Each place that creates an item has to repeat the range check, and a missing quantity needs a special
+    value such as 0.
+
+**Aspect: how preorders are saved**
+
+* **Alternative 1 (current choice):** a list of preorders in the data file, while the model allows only one.
+  * Pros: Allowing several preorders per customer later will not change the file format again.
+  * Cons: The loader has to reject a list with more than one preorder.
+* **Alternative 2:** a single `"preorder"` object, as in v1.3.
+  * Pros: Matches the model exactly.
+  * Cons: Supporting several preorders later would need another conversion of saved data.
 
 ### Preorder item addition and editing
 
@@ -472,7 +643,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *`    | home baker                                           | identify customer profiles with missing essential information                     | complete them before fulfilment begins                              |
 | `* *`    | home baker migrating from another system             | import existing customer contacts                                                 | avoid re-entering every profile manually                            |
 | `* *`    | home baker                                           | export my customer contacts                                                       | keep a backup or use them outside LeBake                            |
-| `* *`    | home baker                                           | record delivery instructions with an address                                      | remember access details such as gate codes or drop-off directions   |
+| `* *`    | home baker                                           | record handover notes for a delivery                                              | remember access details such as gate codes or drop-off directions   |
 | `* *`    | home baker preparing deliveries                      | mark an address as verified or unverified                                         | identify addresses that still require confirmation                  |
 | `* *`    | home baker                                           | find customers using an address or postal-code keyword                            | retrieve contacts based on delivery location                        |
 | `* *`    | home baker planning deliveries                       | filter customers by neighbourhood or postal area                                  | focus on customers in the same vicinity                             |
@@ -635,14 +806,15 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Glossary
 
-* **Active order**: A pre-order whose fulfilment status is `PENDING` or `PREPARED`
+* **Active order**: A pre-order with at least one item whose fulfilment status is `PENDING` or `PREPARED`
 * **Archived customer**: A customer hidden from the active customer list but kept, so that it can be restored for a future seasonal campaign
 * **Customer**: A person whose contact and delivery details are stored in LeBake, represented by the `Person` class in the code
 * **Duplicate customer**: A customer with the same name as an existing customer, ignoring case and extra spaces (phone number, email and address are not compared)
-* **Fulfilment status**: The stage a pre-order has reached, which is `PENDING` (recorded but not ready), `PREPARED` (ready for collection or delivery), or `COMPLETED` (collected or delivered)
+* **Fulfilment status**: The stage an item in a pre-order has reached, which is `PENDING` (recorded but not ready), `PREPARED` (ready for collection or delivery), or `COMPLETED` (collected or delivered). Each item has its own status, represented by `ItemStatus` in the code; a pre-order has no overall status
+* **Item**: One product in a pre-order, with its name, quantity, fulfilment status and an optional remark
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Postal area**: A group of nearby addresses that share the same leading digits of their postal code, used to group deliveries
-* **Pre-order**: An order placed in advance for a later collection or delivery, with each customer having at most one current pre-order
+* **Pre-order**: An order placed in advance for a later collection or delivery, made up of the items the customer ordered, with each customer having at most one current pre-order
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 * **Seasonal campaign**: A period of high order demand tied to an occasion, such as Chinese New Year or Christmas
 
@@ -675,6 +847,33 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Displaying active search criteria
+
+1. Run `list`.<br>
+   Expected: `Showing: All customers` appears above the list, with no badges.
+1. Run `find n/Alex p/874 e/example.com a/geylang t/friends` using the sample data.<br>
+   Expected: Alex Yeoh is listed. `Filters · Match all` appears with separate `Name: alex`, `Phone: 874`,
+   `Email: example.com`, `Address: geylang` and `Tag: friends` badges, in that order. Narrowing the window wraps
+   badges onto additional rows.
+1. Run `find a/` followed by a long address fragment, including spaces.<br>
+   Expected: The entire fragment is visible in a wrapping `Address` badge, even if no customers match. No hover or
+   expansion action is needed. Widening the window reflows the badge.
+1. Run `track`, then `track s/PENDING`.<br>
+   Expected: One status badge changes from `Item status: Pending or Prepared` to `Item status: Pending`.
+1. Run `find c/01`, then `find d/Pineapple Tarts s/PENDING`.<br>
+   Expected: A `Postal: 01` badge is replaced by one `Item: Pineapple Tarts · Pending` badge. Product and status
+   stay together, including when the search has no results.
+1. Run `find f/2026-10-22 m/delivery h/arrival`.<br>
+   Expected: Separate `Date: 22 Oct 2026`, `Method: Delivery` and `Handover notes: arrival` badges appear in that order.
+1. Run `find m/collection`, then `track s/PENDING`.<br>
+   Expected: The method badge shows `Method: Collection`, then is replaced by `Item status: Pending`.
+1. Run `find n/`.<br>
+   Expected: An error is shown and the status badge remains unchanged.
+1. Run `list` again.<br>
+   Expected: All badges disappear and `Showing: All customers` returns.
+
+After each command above, verify that you can immediately type the next command without clicking the command box.
 
 ### Preserving searches after customer changes
 
@@ -891,6 +1090,59 @@ Start with the sample data. List all customers using the `list` command. The fir
    Expected: Nothing changes. The status message shows `The person index provided is invalid.`
 1. Run `track`, then `deleteorder` with the displayed index of `Charlotte Oliveiro`.<br>
    Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder panel.
+
+### Loading preorder data
+
+These steps edit the data file, so use a copy of LeBake in an empty folder. Launch it once and run `list` to create
+`data/addressbook.json`, then close LeBake before each edit.
+
+1. Loading a preorder saved by v1.3
+
+   1. Prerequisites: In `data/addressbook.json`, replace the first customer's `"preorders"` list with
+      `"preorder" : { "details" : "2 chocolate cakes", "status" : "PENDING" }`.
+
+   1. Test case: Launch LeBake.<br>
+      Expected: The first customer's card shows one item, `2 chocolate cakes`, with `quantity needed` and the
+      status `PENDING`. Their other details are unchanged.
+
+   1. Test case: Run `list`, close LeBake, then open `data/addressbook.json` again.<br>
+      Expected: The customer has a `"preorders"` list holding one item whose `"quantity"` is `null`, and no
+      `"preorder"` field.
+
+1. Loading a data file with an invalid item
+
+   1. Prerequisites: In `data/addressbook.json`, change one item's `"quantity"` to `"0"`. Keep a copy of the file.
+
+   1. Test case: Launch LeBake.<br>
+      Expected: The data file cannot be loaded, so LeBake starts with an empty customer list, and the log warns
+      that the data file could not be loaded. Restore the file from your copy before running a command, as the
+      next command saves the empty list over it.
+
+### Sorting customers by fulfilment date
+
+Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`.
+
+1. Run `sort date`.<br>
+   Expected: `Sorted 6 customer(s) by fulfilment date. Customers without a date are listed last.`
+   The order is `Bernice Yu` (19 Dec), `Alex Yeoh` and `Charlotte Oliveiro` (both 20 Dec, ordered by name),
+   `David Li` (23 Dec, no items), then `Irfan Ibrahim` and `Roy Balakrishnan` (no preorder).
+1. Run `sort DATE`.<br>
+   Expected: Same message and order as above.
+1. Run `tag 1 t/sorttest`.<br>
+   Expected: The tag is added to `Bernice Yu`, the first customer in the sorted list.
+1. Run `find t/friends`.<br>
+   Expected: The sort stays in place. `Bernice Yu` is shown before `Alex Yeoh`.
+1. Run `list`.<br>
+   Expected: All 6 customers are shown in their saved order, with `Alex Yeoh` first.
+1. Run `find t/friends`, then `sort date`.<br>
+   Expected: `Sorted 2 customer(s) by fulfilment date. Customers without a date are listed last.`
+   Only `Bernice Yu` and `Alex Yeoh` are shown, in that order.
+1. Run `list`, `group postal`, then `sort date`.<br>
+   Expected: The postal grouping is replaced. The order is the same as in step 1.
+1. Try `sort`, `sort name`, `sort date 2026-12-20` and `sort date x`.<br>
+   Expected: `Invalid command format!` followed by the sort usage instructions. The displayed list does not change.
+1. Close and relaunch the app.<br>
+   Expected: Customers are shown in their saved order, with `Alex Yeoh` first. Sorting is not restored.
 
 ### Saving data
 
