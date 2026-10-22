@@ -97,6 +97,12 @@ criterion display as `Any status`; subsets display their readable labels joined 
 A criterion without a product uses `Item status`, retaining the status-only search and tracking labels. An empty
 status set displays `None`, so a criterion matching no items is still visible.
 
+`FulfilmentDateCriterion.getDate()` and `FulfilmentMethodCriterion.getMethod()` expose their immutable matching
+values. Date badges reuse `FulfilmentDate.toDisplayString()` for English dates such as `22 Oct 2026`; method badges
+show `Delivery` or `Collection`. Handover-note badges use the normalized query from `TextContainsCriterion`.
+The complete display order is Name, Phone, Email, Address, Postal, Tag, Item (or Item status), Date, Method and
+Handover notes, independent of prefix order or the model's unordered criteria set.
+
 The display uses a `FlowPane` of read-only labels. Badges wrap onto additional rows without a row limit, and each
 badge is limited to the available width so long values wrap inside it. Its preferred-height measurement also accounts
 for wrapping when `FlowPane` measures a row without supplying a width. Empty searches hide the badge container and
@@ -830,6 +836,13 @@ testers are expected to do more *exploratory* testing.
    expansion action is needed. Widening the window reflows the badge.
 1. Run `track`, then `track s/PENDING`.<br>
    Expected: One status badge changes from `Item status: Pending or Prepared` to `Item status: Pending`.
+1. Run `find c/01`, then `find d/Pineapple Tarts s/PENDING`.<br>
+   Expected: A `Postal: 01` badge is replaced by one `Item: pineapple tarts · Pending` badge. Product and status
+   stay together, including when the search has no results.
+1. Run `find f/2026-10-22 m/delivery h/arrival`.<br>
+   Expected: Separate `Date: 22 Oct 2026`, `Method: Delivery` and `Handover notes: arrival` badges appear in that order.
+1. Run `find m/collection`, then `track s/PENDING`.<br>
+   Expected: The method badge shows `Method: Collection`, then is replaced by `Item status: Pending`.
 1. Run `find n/`.<br>
    Expected: An error is shown and the status badge remains unchanged.
 1. Run `list` again.<br>

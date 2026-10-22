@@ -41,9 +41,11 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.parser.FindCommandParser;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PersonCriterion;
@@ -56,6 +58,7 @@ import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
+import seedu.address.testutil.PreorderBuilder;
 
 /**
  * Checks live criteria updates and wrapping on the JavaFX thread. Linux CI supplies a display using xvfb.
@@ -367,6 +370,111 @@ public class SearchCriteriaDisplayTest {
         });
     }
 
+    @Test
+    public void mainWindow_fulfilmentSearchesAndAllPrefixes_showEveryBadgeAndKeepCommandBoxFocus() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Person alice = new PersonBuilder(ALICE).withPreorder(new PreorderBuilder().withDate("2026-10-22")
+                    .withMethod(FulfilmentMethod.DELIVERY).withHandoverNotes("Call on arrival").build()).build();
+            Person benson = new PersonBuilder(BENSON).withPhone("81234567").withEmail("benson@example.com")
+                    .withAddress("Hougang Avenue").withPostalCode("530123").withTags("regular")
+                    .withPreorder(new PreorderBuilder().withDate("2026-10-22").withMethod(FulfilmentMethod.COLLECTION)
+                            .withHandoverNotes("Collect from side gate").withItems(new ItemBuilder().build()).build())
+                    .build();
+            model.addPerson(alice);
+            model.addPerson(benson);
+            Path dataPath = temporaryFolder.resolve("fulfilment-addressbook.json");
+            Logic logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(dataPath),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("fulfilment-preferences.json"))));
+            Stage stage = new Stage();
+            try {
+                MainWindow window = new MainWindow(stage, logic, dataPath);
+                window.fillInnerParts();
+                Parent root = stage.getScene().getRoot();
+                TextField commandBox = (TextField) root.lookup("#commandTextField");
+                commandBox.requestFocus();
+
+                enterCommand(commandBox, "find f/2026-10-22");
+                assertEquals(List.of(alice, benson), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Date: 22 Oct 2026");
+                enterCommand(commandBox, "find f/2026-10-23");
+                assertTrue(model.getFilteredPersonList().isEmpty());
+                assertDisplay(root, "Filters · Match all", "Date: 23 Oct 2026");
+                enterCommand(commandBox, "find f/2026-10-24");
+                assertTrue(model.getFilteredPersonList().isEmpty());
+                assertDisplay(root, "Filters · Match all", "Date: 24 Oct 2026");
+
+                enterCommand(commandBox, "find m/DeLiVeRy");
+                assertEquals(List.of(alice), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Method: Delivery");
+                enterCommand(commandBox, "find m/collection");
+                assertEquals(List.of(benson), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Method: Collection");
+                enterCommand(commandBox, "find h/ARRIVAL");
+                assertEquals(List.of(alice), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Handover notes: arrival");
+
+                enterCommand(commandBox, "find h/side gate m/collection f/2026-10-22 s/pending d/Pineapple Tarts "
+                        + "t/regular c/53 a/Hougang e/example.com p/8123 n/Benson");
+                assertEquals(List.of(benson), model.getFilteredPersonList());
+                String[] fullSearchBadges = {"Name: benson", "Phone: 8123", "Email: example.com", "Address: hougang",
+                    "Postal: 53", "Tag: regular", "Item: pineapple tarts · Pending", "Date: 22 Oct 2026",
+                    "Method: Collection", "Handover notes: side gate"};
+                assertDisplay(root, "Filters · Match all", fullSearchBadges);
+
+                for (String invalidCommand : List.of("find f/2026-02-30", "find m/pickup", "find h/")) {
+                    enterCommand(commandBox, invalidCommand);
+                    assertTrue(commandBox.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                    assertEquals(List.of(benson), model.getFilteredPersonList());
+                    assertDisplay(root, "Filters · Match all", fullSearchBadges);
+                }
+
+                enterCommand(commandBox, "preorder 1 m/delivery");
+                assertTrue(model.getFilteredPersonList().isEmpty());
+                assertDisplay(root, "Filters · Match all", fullSearchBadges);
+                enterCommand(commandBox, "find f/2026-10-22 m/delivery");
+                assertEquals(2, model.getFilteredPersonList().size());
+                assertDisplay(root, "Filters · Match all", "Date: 22 Oct 2026", "Method: Delivery");
+
+                enterCommand(commandBox, "list");
+                assertEquals(2, model.getFilteredPersonList().size());
+                assertDisplay(root, "Showing: All customers");
+                assertFalse(getBadgePane(root).isManaged());
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
+    public void layout_allFindPrefixes_wrapsEveryBadgeAndFullValueWithoutRowLimit() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            new FindCommandParser().parse("n/Alice p/8123 e/example.com a/Hougang c/01 t/regular "
+                    + "d/Pineapple Tarts s/pending f/2026-10-22 m/delivery h/call on arrival").execute(model);
+            SearchCriteriaDisplay display = new SearchCriteriaDisplay(model.activeSearchCriteriaProperty());
+            Region root = display.getRoot();
+            attachToScene(root);
+            String[] expected = {"Name: alice", "Phone: 8123", "Email: example.com", "Address: hougang", "Postal: 01",
+                "Tag: regular", "Item: pineapple tarts · Pending", "Date: 22 Oct 2026", "Method: Delivery",
+                "Handover notes: call on arrival"};
+
+            layoutAtWidth(root, 250);
+            assertDisplay(root, "Filters · Match all", expected);
+            long narrowRows = countRows(root);
+            assertTrue(narrowRows > 2);
+            assertBadgesFit(root);
+            for (Label badge : getBadges(root)) {
+                assertEquals(badge.getText(), ((Text) badge.lookup(".text")).getText());
+            }
+
+            layoutAtWidth(root, 720);
+            assertTrue(countRows(root) < narrowRows);
+            assertDisplay(root, "Filters · Match all", expected);
+            assertBadgesFit(root);
+        });
+    }
+
     private static void enterCommand(TextField commandBox, String text) {
         commandBox.setText(text);
         commandBox.fireEvent(new ActionEvent());
@@ -418,11 +526,18 @@ public class SearchCriteriaDisplayTest {
     private static void runOnFxThread(Executable test) throws Exception {
         CompletableFuture<Void> execution = new CompletableFuture<>();
         Platform.runLater(() -> {
+            Thread thread = Thread.currentThread();
+            Thread.UncaughtExceptionHandler previousHandler = thread.getUncaughtExceptionHandler();
+            List<Throwable> uncaughtErrors = new ArrayList<>();
+            thread.setUncaughtExceptionHandler((sourceThread, error) -> uncaughtErrors.add(error));
             try {
                 test.execute();
+                assertTrue(uncaughtErrors.isEmpty(), () -> "Uncaught JavaFX errors: " + uncaughtErrors);
                 execution.complete(null);
             } catch (Throwable throwable) {
                 execution.completeExceptionally(throwable);
+            } finally {
+                thread.setUncaughtExceptionHandler(previousHandler);
             }
         });
         execution.get(10, TimeUnit.SECONDS);

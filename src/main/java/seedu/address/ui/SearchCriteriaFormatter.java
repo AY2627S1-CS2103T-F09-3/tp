@@ -8,7 +8,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.FulfilmentDateCriterion;
+import seedu.address.model.search.FulfilmentMethodCriterion;
 import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PersonCriterion;
 import seedu.address.model.search.PostalCodeCriterion;
@@ -29,7 +32,7 @@ public final class SearchCriteriaFormatter {
      * Defines display order independently of the model's unordered criterion set.
      */
     private enum Position {
-        NAME, PHONE, EMAIL, ADDRESS, POSTAL, TAG, ITEM, HANDOVER_NOTES
+        NAME, PHONE, EMAIL, ADDRESS, POSTAL, TAG, ITEM, DATE, METHOD, HANDOVER_NOTES
     }
 
     /**
@@ -63,6 +66,10 @@ public final class SearchCriteriaFormatter {
             case PostalCodeCriterion postal -> new Segment(Position.POSTAL, "Postal: " + postal.getPostalCodePrefix());
             case TagCriterion tag -> new Segment(Position.TAG, "Tag: " + tag.getTag().tagName);
             case ItemCriterion item -> formatItem(item);
+            case FulfilmentDateCriterion date ->
+                new Segment(Position.DATE, "Date: " + date.getDate().toDisplayString());
+            case FulfilmentMethodCriterion method ->
+                new Segment(Position.METHOD, "Method: " + formatMethod(method.getMethod()));
             default -> throw new IllegalArgumentException("Unsupported search criterion: "
                     + criterion.getClass().getName());
         };
@@ -96,6 +103,13 @@ public final class SearchCriteriaFormatter {
                 .sorted()
                 .map(SearchCriteriaFormatter::formatStatus)
                 .collect(Collectors.joining(" or "));
+    }
+
+    private static String formatMethod(FulfilmentMethod method) {
+        return switch (method) {
+            case DELIVERY -> "Delivery";
+            case COLLECTION -> "Collection";
+        };
     }
 
     private static String formatStatus(ItemStatus status) {

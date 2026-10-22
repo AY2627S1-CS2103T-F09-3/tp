@@ -103,6 +103,11 @@ The area immediately above the customer list shows your active search:
   **Item: pineapple tarts · Any status**, including completed items.
 * A status-only search such as `find s/prepared` shows **Item status: Prepared**.
 * `track` shows **Item status: Pending or Prepared** in one badge. `track s/PENDING` shows **Item status: Pending**.
+* Date, method and handover-note searches have separate badges. For example,
+  `find f/2026-10-22 m/delivery h/arrival` shows **Date: 22 Oct 2026**, **Method: Delivery** and
+  **Handover notes: arrival**.
+
+Badges use this order: Name, Phone, Email, Address, Postal, Tag, Item (or Item status), Date, Method and Handover notes.
 
 The badges describe the search even when it matches every customer or no customers. Text searches show the
 case-normalized query used for matching. All badges and their full values remain available: badges wrap onto
