@@ -19,6 +19,7 @@ import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -142,6 +143,15 @@ public class PersonCardTest {
         assertEquals(ALICE.getPhone().value, ((Label) lookup(card, "#phone")).getText());
         assertEquals(ALICE.getAddress().value, ((Label) lookup(card, "#address")).getText());
         assertEquals(ALICE.getEmail().value, ((Label) lookup(card, "#email")).getText());
+    }
+
+    @Test
+    public void constructor_multipleTags_displaysTagsInSortedOrder() throws Exception {
+        PersonCard card = createCard(new PersonBuilder(ALICE).withTags("zeta", "alpha").build());
+        FlowPane tags = (FlowPane) lookup(card, "#tags");
+
+        assertEquals(List.of("alpha", "zeta"), tags.getChildren().stream()
+                .map(Label.class::cast).map(Label::getText).toList());
     }
 
     @Test

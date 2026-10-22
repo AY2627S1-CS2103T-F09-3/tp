@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -24,6 +26,8 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.Item;
+import seedu.address.model.search.ItemCriterion;
+import seedu.address.model.search.SearchCriteria;
 import seedu.address.testutil.AddressBookBuilder;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -104,6 +108,19 @@ public class ProductSummaryPanelTest {
     }
 
     @Test
+    public void refresh_productWithNoStatuses_showsEmptySelection() throws Exception {
+        onFxThread(() -> {
+            Model model = createModel();
+            ProductSummaryPanel panel = createPanel(model);
+            model.updateFilteredPersonList(new SearchCriteria(List.of(
+                    new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of()))));
+
+            assertEquals("Preparation: Pineapple Tarts | No statuses", text(panel, "productHeading"));
+            assertEquals("0 customer(s) | 0 matching item(s)", text(panel, "counts"));
+        });
+    }
+
+    @Test
     public void refresh_matchingCustomerChanged_updatesQuantityAndRemarks() throws Exception {
         onFxThread(() -> {
             Model model = createModel();
@@ -149,6 +166,10 @@ public class ProductSummaryPanelTest {
             assertTrue(shortHeight < 180);
             assertEquals(scroll.getContent().getBoundsInLocal().getHeight(),
                     scroll.getViewportBounds().getHeight(), 2);
+            KeyEvent noScroll = new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.DOWN,
+                    false, false, false, false);
+            scroll.fireEvent(noScroll);
+            assertFalse(noScroll.isConsumed());
 
             model.setPerson(ALICE, new PersonBuilder(ALICE).withPreorder(TARTS, TARTS, TARTS, TARTS, TARTS).build());
             root.layout();
@@ -184,6 +205,20 @@ public class ProductSummaryPanelTest {
             scroll.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.PAGE_DOWN,
                     false, false, false, false));
             assertTrue(scroll.getVvalue() > 0);
+            press(scroll, KeyCode.END);
+            assertEquals(1, scroll.getVvalue());
+            press(scroll, KeyCode.UP);
+            assertTrue(scroll.getVvalue() < 1);
+            press(scroll, KeyCode.HOME);
+            assertEquals(0, scroll.getVvalue());
+            press(scroll, KeyCode.DOWN);
+            assertTrue(scroll.getVvalue() > 0);
+            press(scroll, KeyCode.PAGE_UP);
+            assertEquals(0, scroll.getVvalue());
+            double previous = scroll.getVvalue();
+            KeyEvent unrelated = press(scroll, KeyCode.RIGHT);
+            assertFalse(unrelated.isConsumed());
+            assertEquals(previous, scroll.getVvalue());
         });
     }
 
@@ -232,6 +267,13 @@ public class ProductSummaryPanelTest {
 
     private String text(ProductSummaryPanel panel, String id) {
         return ((Label) ((ScrollPane) panel.getRoot()).getContent().lookup("#" + id)).getText();
+    }
+
+    private KeyEvent press(ScrollPane scroll, KeyCode key) {
+        KeyEvent event = new KeyEvent(KeyEvent.KEY_PRESSED, "", "", key,
+                false, false, false, false);
+        scroll.fireEvent(event);
+        return event;
     }
 
     private void onFxThread(FxAction action) throws Exception {

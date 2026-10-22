@@ -54,7 +54,8 @@ public class MainWindowTest {
             ModelManager model = new ModelManager();
             Person delivery = new PersonBuilder().withName("Alice Tan").withPostalCode("012345")
                     .withPreorder(new PreorderBuilder().withDate("2026-12-20").withMethod(FulfilmentMethod.DELIVERY)
-                            .withHandoverNotes("Call on arrival").withItems(new ItemBuilder().build()).build()).build();
+                            .withHandoverNotes("Call on arrival")
+                            .withItems(new ItemBuilder().withName("Pineapple Tarts").build()).build()).build();
             Person collection = new PersonBuilder().withName("Bob Tan").withPostalCode("530123")
                     .withPreorder(new PreorderBuilder().withMethod(FulfilmentMethod.COLLECTION)
                             .withItems(new ItemBuilder().build()).build()).build();
@@ -98,6 +99,14 @@ public class MainWindowTest {
                 assertEquals("1 outstanding customer stop(s) | 1 postal group(s)", totals(summary));
                 assertTrue(text(summary).contains("Alice Tan | " + delivery.getPhone().value));
                 assertSummaryVisible(root, placeholder, summary);
+
+                logic.execute("find d/Pineapple Tarts");
+                Label productHeading = (Label) root.lookup("#productHeading");
+                assertTrue(productHeading.isVisible());
+                assertEquals("Preparation: Pineapple Tarts | All statuses", productHeading.getText());
+                StackPane customerPlaceholder = (StackPane) root.lookup("#personListPanelPlaceholder");
+                VBox customerView = (VBox) customerPlaceholder.getChildren().get(0);
+                assertEquals(2, customerView.getChildren().size());
             } finally {
                 stage.close();
             }

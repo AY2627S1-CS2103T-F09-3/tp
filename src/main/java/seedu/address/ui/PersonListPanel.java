@@ -26,7 +26,7 @@ import seedu.address.model.search.SearchCriteria;
  */
 public class PersonListPanel extends UiPart<Region> {
     private static final String FXML = "PersonListPanel.fxml";
-    private final Logger logger = LogsCenter.getLogger(PersonListPanel.class);
+    private static final Logger logger = LogsCenter.getLogger(PersonListPanel.class);
 
     private final ReadOnlyObjectProperty<SearchCriteria> activeCriteria;
 
@@ -48,11 +48,17 @@ public class PersonListPanel extends UiPart<Region> {
         super(FXML);
         this.activeCriteria = requireNonNull(activeCriteria);
         requireNonNull(activeCriteria.get());
-        activeCriteria.addListener((observable, previous, current) -> personListView.refresh());
+        activeCriteria.addListener((observable, previous, current) -> {
+            logger.fine("Refreshing customer cards after search criteria changed.");
+            personListView.refresh();
+        });
         requireNonNull(personList);
         personListView.setItems(personList);
         personListView.setCellFactory(listView -> new PersonListViewCell());
-        personList.addListener((ListChangeListener<Person>) change -> personListView.refresh());
+        personList.addListener((ListChangeListener<Person>) change -> {
+            logger.fine("Refreshing customer cards after the displayed customer list changed.");
+            personListView.refresh();
+        });
         if (personList instanceof SortedList<?> sortedPersons) {
             sortedPersons.comparatorProperty().addListener((observable, oldValue, newValue) ->
                     personListView.refresh());

@@ -2,6 +2,7 @@ package seedu.address.model.summary;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.model.preorder.ItemStatus.PENDING;
 import static seedu.address.model.preorder.ItemStatus.PREPARED;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -125,6 +126,8 @@ public class ProductPreparationSummaryTest {
         assertEquals(match, match);
         assertEquals(match, equivalent);
         assertEquals(match.hashCode(), equivalent.hashCode());
+        assertEquals(match.toString(), equivalent.toString());
+        assertTrue(match.toString().contains("itemNumber=2"));
         assertNotEquals(match, new MatchingItem(ALICE, 3, TARTS));
         Person otherCustomer = new PersonBuilder(ALICE).withName("Other customer").build();
         assertNotEquals(match, new MatchingItem(otherCustomer, 2, TARTS));

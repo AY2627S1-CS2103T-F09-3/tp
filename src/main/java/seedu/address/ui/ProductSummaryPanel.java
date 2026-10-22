@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.EnumSet;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javafx.beans.InvalidationListener;
@@ -15,6 +16,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.ItemCriterion;
@@ -29,6 +31,7 @@ import seedu.address.model.summary.ProductPreparationSummary.MatchingItem;
 public class ProductSummaryPanel extends UiPart<Region> {
     private static final double KEY_SCROLL_PIXELS = 24;
     private static final String FXML = "ProductSummaryPanel.fxml";
+    private static final Logger logger = LogsCenter.getLogger(ProductSummaryPanel.class);
 
     private final ObservableList<Person> customers;
     private final ReadOnlyObjectProperty<SearchCriteria> activeCriteria;
@@ -93,11 +96,17 @@ public class ProductSummaryPanel extends UiPart<Region> {
                 .findFirst();
         getRoot().setVisible(product.isPresent());
         getRoot().setManaged(product.isPresent());
+        if (product.isEmpty()) {
+            logger.fine("Hiding product preparation summary because no product search is active.");
+        }
         product.ifPresent(this::showSummary);
     }
 
     private void showSummary(ItemCriterion criterion) {
         ProductPreparationSummary summary = ProductPreparationSummary.from(customers, criterion);
+        logger.fine("Refreshing product preparation summary for "
+                + criterion.getProductName().orElseThrow() + ": " + summary.getCustomerCount()
+                + " customer(s), " + summary.getMatchingItemCount() + " matching item(s).");
         productHeading.setText("Preparation: " + criterion.getProductName().orElseThrow()
                 + " | " + formatStatuses(criterion));
         counts.setText(summary.getCustomerCount() + " customer(s) | "
