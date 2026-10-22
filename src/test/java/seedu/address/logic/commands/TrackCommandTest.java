@@ -27,9 +27,9 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.PreorderStatusPredicate;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.testutil.AddressBookBuilder;
@@ -55,57 +55,61 @@ public class TrackCommandTest {
     @Test
     public void execute_noStatus_listsActivePreordersInOriginalOrder() {
         Model model = createMixedModel();
-        assertTrackResult(new TrackCommand(Optional.empty()), model, "3 order(s) listed!",
+        assertTrackResult(new TrackCommand(Optional.empty()), model, "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
-        assertEquals(new SearchCriteria(List.of(new PreorderStatusPredicate(Set.of(PENDING, PREPARED)))),
+        assertEquals(new SearchCriteria(List.of(new ItemCriterion(Optional.empty(), Set.of(PENDING, PREPARED)))),
                 model.getActiveSearchCriteria());
     }
 
     @Test
     public void execute_pendingStatus_listsPendingPreordersInOriginalOrder() {
         assertTrackResult(new TrackCommand(Optional.of(PENDING)), createMixedModel(),
-                "2 order(s) for PENDING listed!", List.of(PENDING_ELLE, PENDING_BENSON));
+                "2 customer(s) with 2 matching item(s) for PENDING listed!", List.of(PENDING_ELLE, PENDING_BENSON));
     }
 
     @Test
     public void execute_preparedStatus_listsPreparedPreorders() {
         assertTrackResult(new TrackCommand(Optional.of(PREPARED)), createMixedModel(),
-                "1 order(s) for PREPARED listed!", List.of(PREPARED_CARL));
+                "1 customer(s) with 1 matching item(s) for PREPARED listed!", List.of(PREPARED_CARL));
     }
 
     @Test
     public void execute_completedStatus_listsCompletedPreorders() {
         assertTrackResult(new TrackCommand(Optional.of(COMPLETED)), createMixedModel(),
-                "1 order(s) for COMPLETED listed!", List.of(COMPLETED_DANIEL));
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!", List.of(COMPLETED_DANIEL));
     }
 
     @Test
     public void execute_emptyAddressBook_listsNoPreorders() {
-        assertTrackResult(new TrackCommand(Optional.empty()), createModel(), "0 order(s) listed!", List.of());
+        assertTrackResult(new TrackCommand(Optional.empty()), createModel(),
+                "0 customer(s) with 0 matching item(s) listed!", List.of());
         for (ItemStatus status : ItemStatus.values()) {
-            assertTrackResult(new TrackCommand(Optional.of(status)), createModel(), "0 order(s) listed!", List.of());
+            assertTrackResult(new TrackCommand(Optional.of(status)), createModel(),
+                    "0 customer(s) with 0 matching item(s) for " + status + " listed!", List.of());
         }
     }
 
     @Test
     public void execute_customersWithoutPreorders_listsNoPreorders() {
         Model model = createModel(ALICE, BENSON);
-        assertTrackResult(new TrackCommand(Optional.empty()), model, "0 order(s) listed!", List.of());
+        assertTrackResult(new TrackCommand(Optional.empty()), model,
+                "0 customer(s) with 0 matching item(s) listed!", List.of());
         for (ItemStatus status : ItemStatus.values()) {
-            assertTrackResult(new TrackCommand(Optional.of(status)), model, "0 order(s) listed!", List.of());
+            assertTrackResult(new TrackCommand(Optional.of(status)), model,
+                    "0 customer(s) with 0 matching item(s) for " + status + " listed!", List.of());
         }
     }
 
     @Test
     public void execute_noActivePreorders_listsNoPreorders() {
         assertTrackResult(new TrackCommand(Optional.empty()), createModel(ALICE, COMPLETED_DANIEL),
-                "0 order(s) listed!", List.of());
+                "0 customer(s) with 0 matching item(s) listed!", List.of());
     }
 
     @Test
     public void execute_noMatchingStatus_listsNoPreorders() {
         assertTrackResult(new TrackCommand(Optional.of(COMPLETED)), createModel(ALICE, PENDING_BENSON, PREPARED_CARL),
-                "0 order(s) listed!", List.of());
+                "0 customer(s) with 0 matching item(s) for COMPLETED listed!", List.of());
     }
 
     @Test
@@ -114,7 +118,7 @@ public class TrackCommandTest {
         model.updateFilteredPersonList(new SearchCriteria(List.of(new TextContainsCriterion(NAME, "Alice"))));
         assertEquals(List.of(ALICE), model.getFilteredPersonList());
 
-        assertTrackResult(new TrackCommand(Optional.empty()), model, "3 order(s) listed!",
+        assertTrackResult(new TrackCommand(Optional.empty()), model, "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
     }
 
@@ -125,24 +129,24 @@ public class TrackCommandTest {
         assertEquals(List.of(PREPARED_CARL), model.getFilteredPersonList());
 
         assertTrackResult(new TrackCommand(Optional.of(PENDING)), model,
-                "2 order(s) for PENDING listed!", List.of(PENDING_ELLE, PENDING_BENSON));
+                "2 customer(s) with 2 matching item(s) for PENDING listed!", List.of(PENDING_ELLE, PENDING_BENSON));
     }
 
     @Test
     public void execute_differentStatus_replacesPreviousTrackFilter() {
         Model model = createMixedModel();
         assertTrackResult(new TrackCommand(Optional.of(COMPLETED)), model,
-                "1 order(s) for COMPLETED listed!", List.of(COMPLETED_DANIEL));
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!", List.of(COMPLETED_DANIEL));
         assertTrackResult(new TrackCommand(Optional.of(PENDING)), model,
-                "2 order(s) for PENDING listed!", List.of(PENDING_ELLE, PENDING_BENSON));
-        assertTrackResult(new TrackCommand(Optional.empty()), model, "3 order(s) listed!",
+                "2 customer(s) with 2 matching item(s) for PENDING listed!", List.of(PENDING_ELLE, PENDING_BENSON));
+        assertTrackResult(new TrackCommand(Optional.empty()), model, "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
     }
 
     @Test
     public void execute_noStatus_updatesListWhenItemStatusesChange() {
         Model model = createMixedModel();
-        assertTrackResult(new TrackCommand(Optional.empty()), model, "3 order(s) listed!",
+        assertTrackResult(new TrackCommand(Optional.empty()), model, "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
 
         Person preparedBenson = new PersonBuilder(PENDING_BENSON)
@@ -164,7 +168,7 @@ public class TrackCommandTest {
     public void execute_explicitStatus_updatesListWhenItemStatusesChange() {
         Model model = createMixedModel();
         assertTrackResult(new TrackCommand(Optional.of(PENDING)), model,
-                "2 order(s) for PENDING listed!", List.of(PENDING_ELLE, PENDING_BENSON));
+                "2 customer(s) with 2 matching item(s) for PENDING listed!", List.of(PENDING_ELLE, PENDING_BENSON));
 
         Person preparedElle = new PersonBuilder(PENDING_ELLE).withPreorder("1 strawberry cake", PREPARED).build();
         model.setPerson(PENDING_ELLE, preparedElle);
@@ -179,7 +183,8 @@ public class TrackCommandTest {
     public void execute_itemChanges_preservesCriteriaAndRefreshesMultiItemResults() {
         Person emptyAlice = new PersonBuilder(ALICE).withPreorder().build();
         Model model = createModel(emptyAlice, BENSON);
-        assertTrackResult(new TrackCommand(Optional.of(PENDING)), model, "0 order(s) listed!", List.of());
+        assertTrackResult(new TrackCommand(Optional.of(PENDING)), model,
+                "0 customer(s) with 0 matching item(s) for PENDING listed!", List.of());
         SearchCriteria criteria = model.getActiveSearchCriteria();
         List<SearchCriteria> observedCriteria = new ArrayList<>();
         model.activeSearchCriteriaProperty().addListener((observable, oldCriteria, newCriteria) ->
@@ -209,6 +214,33 @@ public class TrackCommandTest {
         assertEquals(List.of(emptyAlice, pendingBenson), model.getAddressBook().getPersonList());
         assertEquals(criteria, model.getActiveSearchCriteria());
         assertEquals(List.of(), observedCriteria);
+    }
+
+    @Test
+    public void execute_multipleItems_countsCustomersAndMatchingItemsSeparately() {
+        Item pending = new ItemBuilder().withStatus(PENDING).withQuantity("20").build();
+        Item prepared = new ItemBuilder().withStatus(PREPARED).withoutQuantity().build();
+        Item completed = new ItemBuilder().withStatus(COMPLETED).build();
+        Person alice = new PersonBuilder(ALICE).withPreorder(pending, pending, prepared, completed).build();
+        Person benson = new PersonBuilder(BENSON).withPreorder(prepared).build();
+        Model model = createModel(alice, benson);
+
+        assertTrackResult(new TrackCommand(Optional.empty()), model,
+                "2 customer(s) with 4 matching item(s) listed!", List.of(alice, benson));
+        assertTrackResult(new TrackCommand(Optional.of(PENDING)), model,
+                "1 customer(s) with 2 matching item(s) for PENDING listed!", List.of(alice));
+        assertTrackResult(new TrackCommand(Optional.of(PREPARED)), model,
+                "2 customer(s) with 2 matching item(s) for PREPARED listed!", List.of(alice, benson));
+        assertTrackResult(new TrackCommand(Optional.of(COMPLETED)), model,
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!", List.of(alice));
+    }
+
+    @Test
+    public void execute_emptyPreorder_excludedFromCounts() {
+        Person emptyAlice = new PersonBuilder(ALICE).withPreorder().build();
+        Model model = createModel(emptyAlice, BENSON, PENDING_ELLE);
+        assertTrackResult(new TrackCommand(Optional.empty()), model,
+                "1 customer(s) with 1 matching item(s) listed!", List.of(PENDING_ELLE));
     }
 
     @Test

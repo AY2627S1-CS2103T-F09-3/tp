@@ -3,10 +3,12 @@ package seedu.address.logic.parser;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -16,12 +18,17 @@ import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
 import static seedu.address.model.search.TextContainsCriterion.Field.PHONE;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
@@ -52,7 +59,7 @@ public class FindCommandParserTest {
     @Test
     public void parse_unsupportedPrefix_throwsParseException() {
         for (String input : List.of("x/Alice", "n/Alice x/unknown", "n/Alice\tunknown/value",
-                "N/Alice", "n/Alice P/8123", "s/pending", "n/Alice s/pending",
+                "N/Alice", "n/Alice P/8123", "S/pending", "n/Alice D/Tarts",
                 "o/Pineapple Tarts", "f/2026-10-22", "m/delivery", "C/012345")) {
             assertParseFailure(parser, input, FORMAT_ERROR);
         }
@@ -60,8 +67,9 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_blankValue_throwsParseException() {
-        for (Prefix prefix : List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
-                PREFIX_POSTAL_CODE, PREFIX_TAG)) {
+        for (Prefix prefix : List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_POSTAL_CODE,
+                PREFIX_TAG,
+                PREFIX_DETAILS, PREFIX_STATUS)) {
             assertParseFailure(parser, prefix + " \t\n ", FORMAT_ERROR);
             assertParseFailure(parser, prefix + " \t\n n/Alice", prefix.equals(PREFIX_NAME)
                     ? Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME) : FORMAT_ERROR);
@@ -70,8 +78,9 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_duplicatePrefix_throwsParseException() {
-        for (Prefix prefix : List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
-                PREFIX_POSTAL_CODE, PREFIX_TAG)) {
+        for (Prefix prefix : List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_POSTAL_CODE,
+                PREFIX_TAG,
+                PREFIX_DETAILS, PREFIX_STATUS)) {
             String expectedMessage = Messages.getErrorMessageForDuplicatePrefixes(prefix);
             assertParseFailure(parser, prefix + "first " + prefix + "second", expectedMessage);
             assertParseFailure(parser, prefix + "first " + prefix + "first", expectedMessage);
@@ -156,6 +165,15 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_postalProductAndStatus_returnsCombinedCriteria() {
+        FindCommand expected = new FindCommand(new SearchCriteria(List.of(
+                new PostalCodeCriterion("01"),
+                new ItemCriterion(Optional.of("Tarts"), Set.of(ItemStatus.PENDING)))));
+        assertParseSuccess(parser, "c/01 d/Tarts s/pending", expected);
+        assertParseSuccess(parser, "s/pending\td/Tarts\nc/01", expected);
+    }
+
+    @Test
     public void parse_invalidTag_throwsParseException() {
         for (String input : List.of("t/VIP!", "t/regular customer", "t/gluten-free")) {
             assertParseFailure(parser, input, Tag.MESSAGE_CONSTRAINTS);
@@ -191,6 +209,54 @@ public class FindCommandParserTest {
         assertParseSuccess(parser, "a/123 Sample Lane, #04/08", textCommand(ADDRESS, "123 Sample Lane, #04/08"));
         assertParseSuccess(parser, "e/alice/p@example.com", textCommand(EMAIL, "alice/p@example.com"));
         assertParseSuccess(parser, "a/https://example.com/path", textCommand(ADDRESS, "https://example.com/path"));
+    }
+
+    @Test
+    public void parse_productWithoutStatus_acceptsAllStatuses() {
+        FindCommand expected = itemCommand(Optional.of("Pineapple Tarts"), EnumSet.allOf(ItemStatus.class));
+        assertParseSuccess(parser, "d/Pineapple Tarts", expected);
+        assertParseSuccess(parser, " d/ PINEAPPLE TARTS ", expected);
+    }
+
+    @Test
+    public void parse_statusWithoutProduct_acceptsAnyProduct() {
+        for (ItemStatus status : ItemStatus.values()) {
+            FindCommand expected = itemCommand(Optional.empty(), Set.of(status));
+            assertParseSuccess(parser, "s/" + status, expected);
+        }
+        assertParseSuccess(parser, "s/pEnDiNg", itemCommand(Optional.empty(), Set.of(ItemStatus.PENDING)));
+    }
+
+    @Test
+    public void parse_productAndStatus_createsSingleItemCriterion() {
+        FindCommand expected = itemCommand(Optional.of("Pineapple Tarts"), Set.of(ItemStatus.PREPARED));
+        assertParseSuccess(parser, "d/Pineapple Tarts s/prepared", expected);
+        assertParseSuccess(parser, "s/PREPARED\td/ Pineapple Tarts", expected);
+    }
+
+    @Test
+    public void parse_customerAndItemCriteria_combinesConditions() {
+        FindCommand expected = new FindCommand(new SearchCriteria(List.of(
+                new TextContainsCriterion(NAME, "Alice"), new TagCriterion(new Tag("regular")),
+                new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of(ItemStatus.PENDING)))));
+        assertParseSuccess(parser, "n/Alice d/Pineapple Tarts t/regular s/pending", expected);
+    }
+
+    @Test
+    public void parse_invalidItemStatus_throwsParseException() {
+        for (String input : List.of("s/unknown", "s/pending prepared", "d/Tarts s/123")) {
+            assertParseFailure(parser, input, ItemStatus.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void parse_productSpacingAndPunctuation_preservesText() {
+        assertParseSuccess(parser, "d/Tarts  (Large)/Box",
+                itemCommand(Optional.of("Tarts  (Large)/Box"), EnumSet.allOf(ItemStatus.class)));
+    }
+
+    private FindCommand itemCommand(Optional<String> product, Set<ItemStatus> statuses) {
+        return new FindCommand(new SearchCriteria(List.of(new ItemCriterion(product, statuses))));
     }
 
     private FindCommand textCommand(Field field, String query) {
