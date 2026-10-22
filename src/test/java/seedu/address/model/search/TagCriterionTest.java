@@ -20,6 +20,12 @@ public class TagCriterionTest {
     }
 
     @Test
+    public void getTag_preservesTagCase() {
+        TagCriterion criterion = new TagCriterion(new Tag("VIP"));
+        assertEquals("VIP", criterion.getTag().tagName);
+    }
+
+    @Test
     public void test_completeTag_ignoresCase() {
         assertTrue(new TagCriterion(new Tag("REGULAR")).test(CUSTOMER));
         assertTrue(new TagCriterion(new Tag("vip")).test(CUSTOMER));

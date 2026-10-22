@@ -54,6 +54,18 @@ public class SearchCriteriaTest {
     }
 
     @Test
+    public void getCriteria_returnsImmutableSet() {
+        SearchCriteria search = new SearchCriteria(List.of(NAME_CRITERION, TAG_CRITERION));
+
+        assertEquals(Set.of(NAME_CRITERION, TAG_CRITERION), search.getCriteria());
+        assertThrows(UnsupportedOperationException.class, () -> search.getCriteria().clear());
+        assertThrows(UnsupportedOperationException.class, () ->
+                search.getCriteria().add(new TextContainsCriterion(PHONE, "9435")));
+        assertTrue(search.test(ALICE));
+        assertFalse(search.test(BENSON));
+    }
+
+    @Test
     public void test_emptyCriteria_matchesEveryPerson() {
         SearchCriteria search = new SearchCriteria(List.of());
         assertTrue(search.test(ALICE));

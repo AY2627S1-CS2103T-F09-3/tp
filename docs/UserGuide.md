@@ -92,6 +92,30 @@ Examples, using the customer's current displayed `INDEX`:
 
 Search criteria are not saved. Restarting the app begins with all saved customers displayed.
 
+The area immediately above the customer list shows your active search:
+
+* With no search criteria, it shows **Showing: All customers**.
+* After `find` or `track`, it shows **Filters · Match all**, with a separate read-only badge for each criterion.
+  For example, `find n/Alice t/regular` shows **Name: alice** and **Tag: regular**.
+* Postal searches show the supplied digits, including leading zeros: `find c/01` shows **Postal: 01** and
+  `find c/012345` shows **Postal: 012345**. Postal badges appear after Address and before Tag badges.
+* Product and status conditions stay together: `find d/Pineapple Tarts s/pending` shows
+  **Item: pineapple tarts · Pending** in one badge. `find d/Pineapple Tarts` shows
+  **Item: pineapple tarts · Any status**, including completed items.
+* A status-only search such as `find s/prepared` shows **Item status: Prepared**.
+* `track` shows **Item status: Pending or Prepared** in one badge. `track s/PENDING` shows **Item status: Pending**.
+* Date, method and handover-note searches have separate badges. For example,
+  `find f/2026-10-22 m/delivery h/arrival` shows **Date: 22 Oct 2026**, **Method: Delivery** and
+  **Handover notes: arrival**.
+
+Badges use this order: Name, Phone, Email, Address, Postal, Tag, Item (or Item status), Date, Method and Handover notes.
+
+The badges describe the search even when it matches every customer or no customers. Text searches show the
+case-normalized query used for matching. All badges and their full values remain available: badges wrap onto
+additional rows, and long values wrap within a badge as you resize the window. They do not need to be clicked or
+hovered over. Search updates leave keyboard focus in the command box, so you can enter your next command immediately.
+Use `list` to clear the badges and return to **Showing: All customers**.
+
 ### Viewing help: `help`
 
 Shows a window containing the [LeBake User Guide URL](https://ay2627s1-cs2103t-f09-3.github.io/tp/UserGuide.html).
