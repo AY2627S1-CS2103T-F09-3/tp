@@ -241,7 +241,7 @@ recompute the snapshot, including zero results. Labels wrap inside a focusable s
 handler supports arrows, Page Up/Down and Home/End with scroll values clamped to the valid range.
 
 `PersonListPanel` also refreshes its cells when active criteria change. Each `PersonCard` receives the
-current criteria and reuses the item matcher to add the `matching-item` style and a text marker. It keeps
+current criteria and reuses the item matcher to add the `matching-item` border style. It keeps
 all items, original numbering and status styles. Status-only criteria (including `track`) also highlight
 matching items; criteria without item conditions produce no highlights. The customer list uses native
 JavaFX keyboard navigation and selects its first entry when focused without an existing selection.

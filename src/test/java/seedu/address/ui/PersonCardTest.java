@@ -180,7 +180,7 @@ public class PersonCardTest {
             assertEquals(matches, chips.get(i).getStyleClass().contains(PersonCard.MATCH_STYLE_CLASS));
             Item item = List.of(prepared, pending, other, pending).get(i);
             Label name = (Label) chips.get(i).getChildren().getFirst();
-            assertEquals(PreorderDisplay.formatItemName(i + 1, item) + (matches ? " [Matches search]" : ""),
+            assertEquals(PreorderDisplay.formatItemName(i + 1, item),
                     name.getText());
             assertTrue(chips.get(i).getChildren().get(2).getStyleClass()
                     .contains(PreorderDisplay.getStatusStyleClass(item.getStatus())));

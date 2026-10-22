@@ -154,7 +154,6 @@ public class PersonCard extends UiPart<Region> {
         status.setAlignment(Pos.CENTER);
         if (!itemCriteria.isEmpty() && itemCriteria.stream().allMatch(criterion -> criterion.matches(item))) {
             row.getStyleClass().add(MATCH_STYLE_CLASS);
-            name.setText(name.getText() + " [Matches search]");
         }
         row.addRow(0, name, quantity, status);
 

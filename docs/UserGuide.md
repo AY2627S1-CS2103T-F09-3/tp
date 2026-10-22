@@ -314,7 +314,7 @@ An additional entry without a quantity raises the item count to three, leaves th
 and is reported as one item needing a quantity. Only customers in the current results contribute;
 customer fields such as `n/` and `t/` therefore also restrict the summary.
 
-Matching items on customer cards have a border and a `[Matches search]` marker while retaining their
+Matching items on customer cards have a highlight border while retaining their
 status colours. This applies to product/status searches and `track`. All other items remain visible,
 and item numbers remain unchanged. Customer-only searches and `list` remove the highlighting.
 
