@@ -119,6 +119,32 @@ public class ProductSummaryPanelTest {
     }
 
     @Test
+    public void layout_shortContent_usesContentHeightAndGrowsForMoreRemarks() throws Exception {
+        onFxThread(() -> {
+            Model model = createModel();
+            execute(model, "find d/Pineapple Tarts");
+            ScrollPane scroll = (ScrollPane) createPanel(model).getRoot();
+            VBox root = new VBox(scroll);
+            new Scene(root, 800, 800).getStylesheets().add(
+                    ProductSummaryPanel.class.getResource("/view/DarkTheme.css").toExternalForm());
+            root.applyCss();
+            root.layout();
+            double shortHeight = scroll.getHeight();
+            assertTrue(shortHeight < 180);
+            assertEquals(scroll.getContent().getBoundsInLocal().getHeight(),
+                    scroll.getViewportBounds().getHeight(), 2);
+
+            model.setPerson(ALICE, new PersonBuilder(ALICE).withPreorder(TARTS, TARTS, TARTS, TARTS, TARTS).build());
+            root.layout();
+            assertTrue(scroll.getHeight() > shortHeight);
+            assertTrue(scroll.getHeight() <= 180);
+            execute(model, "find d/Cookies");
+            root.layout();
+            assertTrue(scroll.getHeight() < 180);
+        });
+    }
+
+    @Test
     public void layout_longContent_wrapsAndSupportsKeyboardScrolling() throws Exception {
         onFxThread(() -> {
             Model model = createModel();

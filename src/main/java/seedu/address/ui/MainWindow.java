@@ -119,7 +119,8 @@ public class MainWindow extends UiPart<Stage> {
         personListPanel = new PersonListPanel(logic.getFilteredPersonList(), logic.activeSearchCriteriaProperty());
         ProductSummaryPanel summaryPanel = new ProductSummaryPanel(logic.getFilteredPersonList(),
                 logic.activeSearchCriteriaProperty());
-        VBox customerView = new VBox(summaryPanel.getRoot(),
+        // Match the padding above the summary; unmanaged summaries leave no extra gap.
+        VBox customerView = new VBox(5, summaryPanel.getRoot(),
                 personListPanel.getRoot());
         VBox.setVgrow(personListPanel.getRoot(), Priority.ALWAYS);
         personListPanelPlaceholder.getChildren().add(customerView);
