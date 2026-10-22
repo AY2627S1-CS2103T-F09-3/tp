@@ -51,6 +51,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "preorders-and-items": "Preorders and items",
         "preorder-item-addition-and-editing": "Preorder item addition and editing",
         "preorder-item-deletion": "Preorder item deletion",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
@@ -71,6 +72,7 @@
         "adding-and-editing-preorder-items": "Adding and editing preorder items",
         "deleting-a-preorder-item": "Deleting a preorder item",
         "deleting-a-preorder": "Deleting a preorder",
+        "loading-preorder-data": "Loading preorder data",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
@@ -107,7 +109,8 @@
       "headings": {
         "testing-guide": "Testing guide",
         "running-tests": "Running tests",
-        "types-of-tests": "Types of tests"
+        "types-of-tests": "Types of tests",
+        "gui-tests": "GUI tests"
       },
       "headingKeywords": {}
     },
