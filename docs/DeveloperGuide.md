@@ -166,10 +166,14 @@ preorder updates follow the same replacement path. Commands resolve their target
 making changes, and later commands use the resulting displayed indexes. Rejected updates preserve both criteria
 and results.
 
-`SearchCriteria` implements `Predicate<Person>` and combines `PersonCriterion` objects using **AND**. A customer must
-match every criterion. An empty search matches every customer. The constructor defensively copies its criteria into an
-immutable set, so changing the source collection cannot change an existing search. Criterion order and duplicate
-conditions do not affect matching or equality; rejecting repeated CLI prefixes is the parser's responsibility.
+`SearchCriteria` implements `Predicate<Person>` and combines zero or more `PersonCriterion` objects using **AND**.
+A customer must match every criterion. An empty search matches every customer. The constructor defensively copies its
+criteria into an immutable set, so changing the source collection cannot change an existing search. Criterion order and
+duplicate conditions do not affect matching or equality; rejecting repeated CLI prefixes is the parser's responsibility.
+
+The following diagram shows the criteria structure and its current implementations:
+
+<puml src="diagrams/SearchCriteriaClassDiagram.puml" width="550" alt="SearchCriteria combining zero or more PersonCriterion objects and the six criterion implementations" />
 
 For example, the following predicate matches customers whose name contains `Alice Tan` and who have the tag `regular`:
 
