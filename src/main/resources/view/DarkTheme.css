@@ -351,21 +351,69 @@
     -fx-font-size: 11;
 }
 
-/* Preorder chips. Each item takes its status colour, so items stand apart from the tags. */
-#preorder .label {
-    -fx-text-fill: white;
-    -fx-padding: 1 3 1 3;
-    -fx-border-radius: 2;
-    -fx-background-radius: 2;
-    -fx-font-size: 12;
+/* Preorder panel. One solid shade, so it looks the same on both row colors of the list. */
+#preorder {
+    -fx-background-color: #2e3031;
+    -fx-background-radius: 4;
+    -fx-border-color: #4a4d4f;
+    -fx-border-radius: 4;
+}
+
+#preorder .preorder-icon {
+    -fx-fill: transparent;
+    -fx-stroke: #d8b08c;
+    -fx-stroke-width: 1.5;
+}
+
+#preorder .preorder-header {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 13px;
+}
+
+#preorder .preorder-handover-notes {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-text-fill: #e3e3e3;
+}
+
+#preorder .preorder-divider {
+    -fx-background-color: #45484a;
+}
+
+#preorder .preorder-item-name, #preorder .preorder-quantity {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+}
+
+#preorder .preorder-quantity-missing {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+    -fx-text-fill: #f2c46b;
+}
+
+#preorder .preorder-remark {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-text-fill: #dcdcdc;
+    -fx-padding: 0 0 0 16;
 }
 
 #preorder .preorder-empty {
-    -fx-background-color: #7a5640;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-text-fill: #e3e3e3;
+}
+
+/* Each status keeps its color from the user guide, in a darker shade where white text was hard to read */
+#preorder .status-chip {
+    -fx-font-size: 12px;
+    -fx-padding: 1 3 1 3;
+    -fx-background-radius: 2;
 }
 
 #preorder .status-pending {
     -fx-background-color: #d08700;
+    -fx-text-fill: #1d1d1d;
 }
 
 #preorder .status-prepared {
@@ -373,5 +421,5 @@
 }
 
 #preorder .status-completed {
-    -fx-background-color: #2f8a4d;
+    -fx-background-color: #2a7a45;
 }

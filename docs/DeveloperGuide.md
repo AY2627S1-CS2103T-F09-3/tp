@@ -859,7 +859,7 @@ is customer 5 without a preorder.
 Start with the sample data. List all customers using the `list` command. The first customer is `Alex Yeoh`, whose preorder has two items.
 
 1. Run `deleteorder 1`.<br>
-   Expected: The status message shows `Deleted preorder for Alex Yeoh`. Both item chips disappear from the card. The name, phone number, email, address and tags are unchanged.
+   Expected: The status message shows `Deleted preorder for Alex Yeoh`. The preorder panel, with both of its items, disappears from the card. The name, phone number, email, address and tags are unchanged.
 1. Run `deleteorder 1` again.<br>
    Expected: The status message shows `Alex Yeoh has no preorder to delete.` Nothing changes.
 1. Try `deleteorder 0`, `deleteorder` and `deleteorder 1 2`.<br>
@@ -867,7 +867,7 @@ Start with the sample data. List all customers using the `list` command. The fir
 1. Run `deleteorder 100` (where 100 is larger than the list size).<br>
    Expected: Nothing changes. The status message shows `The person index provided is invalid.`
 1. Run `track`, then `deleteorder` with the displayed index of `Charlotte Oliveiro`.<br>
-   Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder chips.
+   Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder panel.
 
 ### Saving data
 
