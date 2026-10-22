@@ -2,9 +2,13 @@ package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -12,15 +16,25 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import seedu.address.logic.commands.GroupPostalCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.ItemCriterion;
+import seedu.address.model.search.SearchCriteria;
+import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 
 /** Checks postal headings against the current display ordering. */
@@ -161,6 +175,94 @@ public class PersonListPanelTest {
             cell.updateItem(null, true);
             assertNull(cell.getGraphic());
         });
+    }
+
+    @Test
+    public void keyboard_tabAndArrows_reachesAndNavigatesCustomerList() throws Exception {
+        runOnFxThread(() -> {
+            ObservableList<Person> customers = createCustomers();
+            PersonListPanel panel = new PersonListPanel(customers);
+            ListView<?> list = (ListView<?>) panel.getRoot().lookup("#personListView");
+            TextField before = new TextField();
+            TextField after = new TextField();
+            VBox root = new VBox(before, panel.getRoot(), after);
+            Scene scene = new Scene(root, 500, 400);
+            root.applyCss();
+            root.layout();
+            before.requestFocus();
+            press(before, KeyCode.TAB, false);
+            assertSame(list, scene.getFocusOwner());
+            press(list, KeyCode.DOWN, false);
+            assertTrue(list.getSelectionModel().getSelectedIndex() >= 0);
+            press(list, KeyCode.END, false);
+            assertEquals(customers.size() - 1, list.getSelectionModel().getSelectedIndex());
+            press(list, KeyCode.UP, false);
+            assertEquals(customers.size() - 2, list.getSelectionModel().getSelectedIndex());
+            press(list, KeyCode.HOME, false);
+            assertEquals(0, list.getSelectionModel().getSelectedIndex());
+            press(list, KeyCode.TAB, false);
+            assertSame(after, scene.getFocusOwner());
+            press(after, KeyCode.TAB, true);
+            assertSame(list, scene.getFocusOwner());
+        });
+    }
+
+    @Test
+    public void keyboard_emptyList_remainsTraversable() throws Exception {
+        runOnFxThread(() -> {
+            PersonListPanel panel = new PersonListPanel(FXCollections.observableArrayList());
+            ListView<?> list = (ListView<?>) panel.getRoot().lookup("#personListView");
+            TextField after = new TextField();
+            VBox root = new VBox(panel.getRoot(), after);
+            Scene scene = new Scene(root, 500, 400);
+            root.applyCss();
+            root.layout();
+            list.requestFocus();
+            for (KeyCode key : new KeyCode[] {KeyCode.UP, KeyCode.DOWN, KeyCode.HOME, KeyCode.END}) {
+                press(list, key, false);
+                assertTrue(list.getSelectionModel().isEmpty());
+            }
+            press(list, KeyCode.TAB, false);
+            assertSame(after, scene.getFocusOwner());
+        });
+    }
+
+    @Test
+    public void criteriaChange_sameCustomers_refreshesAndClearsHighlights() throws Exception {
+        runOnFxThread(() -> {
+            Person customer = new PersonBuilder().withPreorder(
+                    new ItemBuilder().withStatus(ItemStatus.PENDING).build(),
+                    new ItemBuilder().withStatus(ItemStatus.PREPARED).build()).build();
+            ReadOnlyObjectWrapper<SearchCriteria> criteria = new ReadOnlyObjectWrapper<>(
+                    new SearchCriteria(List.of()));
+            PersonListPanel panel = new PersonListPanel(FXCollections.observableArrayList(customer),
+                    criteria.getReadOnlyProperty());
+            VBox root = new VBox(panel.getRoot());
+            new Scene(root, 500, 600);
+            root.applyCss();
+            root.layout();
+            assertEquals(0, root.lookupAll("." + PersonCard.MATCH_STYLE_CLASS).size());
+            criteria.set(new SearchCriteria(List.of(new ItemCriterion(Optional.empty(),
+                    Set.of(ItemStatus.PENDING, ItemStatus.PREPARED)))));
+            root.layout();
+            assertEquals(2, root.lookupAll("." + PersonCard.MATCH_STYLE_CLASS).size());
+            criteria.set(new SearchCriteria(List.of(new ItemCriterion(Optional.empty(),
+                    Set.of(ItemStatus.PREPARED)))));
+            root.layout();
+            assertEquals(1, root.lookupAll("." + PersonCard.MATCH_STYLE_CLASS).size());
+            criteria.set(new SearchCriteria(List.of()));
+            root.layout();
+            assertEquals(0, root.lookupAll("." + PersonCard.MATCH_STYLE_CLASS).size());
+        });
+    }
+
+    private ObservableList<Person> createCustomers() {
+        return FXCollections.observableArrayList(new PersonBuilder().withName("Alice").build(),
+                new PersonBuilder().withName("Ben").build(), new PersonBuilder().withName("Chloe").build());
+    }
+
+    private void press(javafx.scene.Node target, KeyCode key, boolean shift) {
+        target.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", key, shift, false, false, false));
     }
 
     private static ModelManager createModel() {

@@ -111,35 +111,35 @@ public class SearchCriteriaFormatterTest {
     @Test
     public void format_productAndStatus_keepsSameItemConditionsInOneSegment() {
         assertSummary(List.of(new ItemCriterion(Optional.of(" PINEAPPLE TARTS "), Set.of(PENDING))),
-                "Item: pineapple tarts · Pending");
+                "Item: PINEAPPLE TARTS · Pending");
         assertSummary(List.of(new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of(PREPARED))),
-                "Item: pineapple tarts · Prepared");
+                "Item: Pineapple Tarts · Prepared");
         assertSummary(List.of(new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of(COMPLETED))),
-                "Item: pineapple tarts · Completed");
+                "Item: Pineapple Tarts · Completed");
     }
 
     @Test
     public void format_productWithoutStatus_showsAnyStatusIncludingCompleted() {
         assertSummary(List.of(new ItemCriterion(Optional.of("Pineapple Tarts"), EnumSet.allOf(ItemStatus.class))),
-                "Item: pineapple tarts · Any status");
+                "Item: Pineapple Tarts · Any status");
     }
 
     @Test
     public void format_productWithStatusAlternatives_keepsOrderedAlternativesTogether() {
         assertSummary(List.of(new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of(PREPARED, PENDING))),
-                "Item: pineapple tarts · Pending or Prepared");
+                "Item: Pineapple Tarts · Pending or Prepared");
     }
 
     @Test
     public void format_productWithEmptyStatusSet_retainsActiveFilter() {
         assertSummary(List.of(new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of())),
-                "Item: pineapple tarts · None");
+                "Item: Pineapple Tarts · None");
     }
 
     @Test
     public void format_productName_preservesSignificantSpacingAndPunctuation() {
         assertSummary(List.of(new ItemCriterion(Optional.of(" Tarts  (Large)/Box "), Set.of(PENDING))),
-                "Item: tarts  (large)/box · Pending");
+                "Item: Tarts  (Large)/Box · Pending");
     }
 
     @Test
@@ -180,7 +180,7 @@ public class SearchCriteriaFormatterTest {
                 new TagCriterion(new Tag("regular")),
                 new PostalCodeCriterion("01"),
                 new TextContainsCriterion(NAME, "Alice")));
-        String[] expected = {"Name: alice", "Postal: 01", "Tag: regular", "Item: pineapple tarts · Pending"};
+        String[] expected = {"Name: alice", "Postal: 01", "Tag: regular", "Item: Pineapple Tarts · Pending"};
 
         assertSummary(criteria, expected);
         Collections.reverse(criteria);
@@ -217,7 +217,7 @@ public class SearchCriteriaFormatterTest {
             assertSummary(List.of(new TextContainsCriterion(NAME, "ALICE"),
                     new ItemCriterion(Optional.empty(), Set.of(PENDING))), "Name: alice", "Item status: Pending");
             assertSummary(List.of(new ItemCriterion(Optional.of("PINEAPPLE TARTS"), Set.of(PENDING))),
-                    "Item: pineapple tarts · Pending");
+                    "Item: PINEAPPLE TARTS · Pending");
             assertSummary(List.of(new FulfilmentMethodCriterion(FulfilmentMethod.DELIVERY),
                     new FulfilmentDateCriterion(new FulfilmentDate("2026-10-22"))),
                     "Date: 22 Oct 2026", "Method: Delivery");

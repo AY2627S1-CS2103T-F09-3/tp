@@ -100,8 +100,8 @@ The area immediately above the customer list shows your active search:
 * Postal searches show the supplied digits, including leading zeros: `find c/01` shows **Postal: 01** and
   `find c/012345` shows **Postal: 012345**. Postal badges appear after Address and before Tag badges.
 * Product and status conditions stay together: `find d/Pineapple Tarts s/pending` shows
-  **Item: pineapple tarts · Pending** in one badge. `find d/Pineapple Tarts` shows
-  **Item: pineapple tarts · Any status**, including completed items.
+  **Item: Pineapple Tarts · Pending** in one badge. `find d/Pineapple Tarts` shows
+  **Item: Pineapple Tarts · Any status**, including completed items.
 * A status-only search such as `find s/prepared` shows **Item status: Prepared**.
 * `track` shows **Item status: Pending or Prepared** in one badge. `track s/PENDING` shows **Item status: Pending**.
 * Date, method and handover-note searches have separate badges. For example,
@@ -110,8 +110,9 @@ The area immediately above the customer list shows your active search:
 
 Badges use this order: Name, Phone, Email, Address, Postal, Tag, Item (or Item status), Date, Method and Handover notes.
 
-The badges describe the search even when it matches every customer or no customers. Text searches show the
-case-normalized query used for matching. All badges and their full values remain available: badges wrap onto
+The badges describe the search even when it matches every customer or no customers. Customer text searches show the
+case-normalized query used for matching, while product searches preserve the capitalization you typed. All badges
+and their full values remain available: badges wrap onto
 additional rows, and long values wrap within a badge as you resize the window. They do not need to be clicked or
 hovered over. Search updates leave keyboard focus in the command box, so you can enter your next command immediately.
 Use `list` to clear the badges and return to **Showing: All customers**.
@@ -382,6 +383,34 @@ Customer and preorder changes preserve the search and refresh the results. A cus
 | `find t/regular customer` or `find t/VIP!` | The tag constraint message is shown. |
 
 Rejected searches leave the current criteria and results unchanged. If no customers match a valid search, the list is empty and the feedback reports `0 person(s) listed!`. Use `list` to clear the search.
+
+### Reading the preparation summary and matching items
+
+A search containing `d/PRODUCT` shows a preparation summary above the customer list. The heading preserves
+the capitalization you typed, with surrounding whitespace removed. Product matching remains case-insensitive. It shows:
+
+* The selected product and statuses. Without `s/`, **all statuses**, including completed items, contribute.
+* The number of matching customers and matching item entries. Repeated entries count separately.
+* The total quantity of matching items. If migrated items have no quantity, the panel instead shows the
+  **known quantity** subtotal and how many matching items still need a quantity. This subtotal is incomplete.
+* Special requests from matching items, each labelled with the customer name and original item number.
+
+For example, two matching entries with quantities 2 and 3 contribute two items and a total quantity of 5.
+An additional entry without a quantity raises the item count to three, leaves the known quantity at 5,
+and is reported as one item needing a quantity. Only customers in the current results contribute;
+customer fields such as `n/` and `t/` therefore also restrict the summary.
+
+Matching items on customer cards have a highlight border while retaining their
+status colours. This applies to product/status searches and `track`. All other items remain visible,
+and item numbers remain unchanged. Customer-only searches and `list` remove the highlighting.
+
+The summary refreshes when the search or customer data changes, including when there are no matches.
+It is hidden for searches without a product, including status-only searches, `track`, and `list`.
+
+Use **Tab** or **Shift+Tab** to move between the command box, summary (when shown), and customer list.
+With the summary focused, use **Up/Down**, **Page Up/Page Down**, or **Home/End** to scroll long content.
+With the customer list focused, use **Up/Down** to select customers and **Home/End** to reach the first/last
+customer. Long summary text wraps to fit the panel.
 
 ### Adding a preorder item: `additem`
 

@@ -21,6 +21,7 @@ import seedu.address.model.preorder.Preorder;
  */
 public final class ItemCriterion implements PersonCriterion {
     private final Optional<String> productName;
+    private final Optional<String> normalizedProductName;
     private final Set<ItemStatus> statuses;
 
     /**
@@ -32,25 +33,30 @@ public final class ItemCriterion implements PersonCriterion {
      * @throws IllegalArgumentException If the supplied product name is blank.
      */
     public ItemCriterion(Optional<String> productName, Set<ItemStatus> statuses) {
-        this.productName = requireNonNull(productName).map(ItemCriterion::normalizeProductName);
+        this.productName = requireNonNull(productName).map(ItemCriterion::stripProductName);
+        this.normalizedProductName = this.productName.map(name -> name.toLowerCase(Locale.ROOT));
         this.statuses = Set.copyOf(requireNonNull(statuses));
     }
 
+    private static String stripProductName(String productName) {
+        String strippedName = productName.strip();
+        checkArgument(!strippedName.isEmpty(), "Product search text must not be blank.");
+        return strippedName;
+    }
+
+    /**
+     * Returns the stripped product name with the input capitalization preserved,
+     * or an empty value for a status-only criterion.
+     */
     public Optional<String> getProductName() {
         return productName;
     }
 
     /**
-     * Returns the immutable accepted statuses without exposing mutable search state.
+     * Returns the immutable set of accepted statuses.
      */
     public Set<ItemStatus> getStatuses() {
         return statuses;
-    }
-
-    private static String normalizeProductName(String productName) {
-        String strippedName = productName.strip();
-        checkArgument(!strippedName.isEmpty(), "Product search text must not be blank.");
-        return strippedName.toLowerCase(Locale.ROOT);
     }
 
     @Override
@@ -64,7 +70,7 @@ public final class ItemCriterion implements PersonCriterion {
     public boolean matches(Item item) {
         requireNonNull(item);
         boolean isMatchingProduct = productName.isEmpty()
-                || productName.get().equals(normalizeProductName(item.getName().value));
+                || normalizedProductName.get().equals(item.getName().value.strip().toLowerCase(Locale.ROOT));
         return isMatchingProduct && statuses.contains(item.getStatus());
     }
 
@@ -88,12 +94,13 @@ public final class ItemCriterion implements PersonCriterion {
         if (!(other instanceof ItemCriterion otherCriterion)) {
             return false;
         }
-        return productName.equals(otherCriterion.productName) && statuses.equals(otherCriterion.statuses);
+        return normalizedProductName.equals(otherCriterion.normalizedProductName)
+                && statuses.equals(otherCriterion.statuses);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(productName, statuses);
+        return Objects.hash(normalizedProductName, statuses);
     }
 
     @Override

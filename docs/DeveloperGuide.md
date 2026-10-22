@@ -91,8 +91,9 @@ stays separate from matching and does not parse diagnostic `toString()` output.
 `PostalCodeCriterion.getPostalCodePrefix()` exposes the immutable search digits for a `Postal` badge, preserving
 leading zeros and the supplied prefix length. Postal badges are ordered after Address and before Tag badges.
 
-`ItemCriterion` exposes its optional normalized product name and immutable accepted statuses. The formatter keeps
-both conditions in one `Item` badge after customer badges, reflecting same-item matching. All statuses on a product
+`ItemCriterion` exposes its stripped display product name and immutable accepted statuses. The formatter keeps
+the capitalization typed by the user and both conditions in one `Item` badge after customer badges, reflecting
+same-item matching. All statuses on a product
 criterion display as `Any status`; subsets display their readable labels joined by `or` in fulfilment order.
 A criterion without a product uses `Item status`, retaining the status-only search and tracking labels. An empty
 status set displays `None`, so a criterion matching no items is still visible.
@@ -253,7 +254,8 @@ in one criterion and one badge.
 `FindCommandParser` combines `d/` (`PREFIX_DETAILS`) and `s/` into **one** `ItemCriterion`. Separate predicates for
 "has this product" and "has this status" would incorrectly allow different items to satisfy the conditions.
 Product names match completely after stripping surrounding whitespace and normalizing case with `Locale.ROOT`;
-internal spacing and punctuation remain significant. Status input is validated with `ParserUtil.parseItemStatus`.
+internal spacing and punctuation remain significant. The criterion also retains the stripped input name for display;
+matching, equality and hash codes use the normalized name. Status input is validated with `ParserUtil.parseItemStatus`.
 
 The parser supplies `EnumSet.allOf(ItemStatus.class)` when `s/` is omitted. This is deliberate: an empty status set
 in `ItemCriterion` matches **nothing**, rather than meaning "any status". An absent product name accepts any product.
@@ -268,7 +270,30 @@ items without quantities. Explicit status feedback retains the requested status 
 The criterion rejects null arguments, null status elements and blank product queries, and defensively copies the
 status set. Its normalized conditions define value equality and hash codes for observable search state.
 Date/method and postal conditions remain separate customer criteria because they describe the preorder or customer
-rather than an individual item. Matching-item highlighting remains separate work.
+rather than an individual item.
+
+#### Preparation summary and matching-item highlighting
+
+`ProductPreparationSummary.from` creates an immutable snapshot from the filtered customers and a product
+`ItemCriterion`. It reuses `ItemCriterion.matches`, retaining matching entries in customer/item order,
+including duplicates. Each `MatchingItem` retains its customer and original one-based item number for
+remark attribution. Customer count is distinct, item count counts entries, and quantity is summed using
+`long`. Missing quantities from migrated data are counted separately so that a known subtotal is never
+presented as a complete total. Constructors reject null inputs and invalid item references; collections
+are defensively copied.
+
+`MainWindow` places `ProductSummaryPanel` above `PersonListPanel`. The summary listens to both the filtered
+customer list and `Logic.activeSearchCriteriaProperty()`, so changing criteria refreshes it even when the
+same customers remain visible. Its criteria invalidation listener also refreshes the heading for capitalization-only
+changes, which are equal for filtering purposes. It is visible and managed only when a product criterion exists. Updates
+recompute the snapshot, including zero results. Labels wrap inside a focusable scroll pane, whose key
+handler supports arrows, Page Up/Down and Home/End with scroll values clamped to the valid range.
+
+`PersonListPanel` also refreshes its cells when active criteria change. Each `PersonCard` receives the
+current criteria and reuses the item matcher to add the `matching-item` border style. It keeps
+all items, original numbering and status styles. Status-only criteria (including `track`) also highlight
+matching items; criteria without item conditions produce no highlights. The customer list uses native
+JavaFX keyboard navigation and selects its first entry when focused without an existing selection.
 
 #### Delivery preparation summary
 
@@ -837,7 +862,7 @@ testers are expected to do more *exploratory* testing.
 1. Run `track`, then `track s/PENDING`.<br>
    Expected: One status badge changes from `Item status: Pending or Prepared` to `Item status: Pending`.
 1. Run `find c/01`, then `find d/Pineapple Tarts s/PENDING`.<br>
-   Expected: A `Postal: 01` badge is replaced by one `Item: pineapple tarts · Pending` badge. Product and status
+   Expected: A `Postal: 01` badge is replaced by one `Item: Pineapple Tarts · Pending` badge. Product and status
    stay together, including when the search has no results.
 1. Run `find f/2026-10-22 m/delivery h/arrival`.<br>
    Expected: Separate `Date: 22 Oct 2026`, `Method: Delivery` and `Handover notes: arrival` badges appear in that order.

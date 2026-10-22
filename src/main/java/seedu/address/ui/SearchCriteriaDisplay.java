@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -33,7 +34,7 @@ public class SearchCriteriaDisplay extends UiPart<Region> {
         super(FXML);
         requireNonNull(criteria);
         updateDisplay(criteria.getValue());
-        criteria.addListener((observable, oldValue, newValue) -> updateDisplay(newValue));
+        criteria.addListener((InvalidationListener) observable -> updateDisplay(criteria.getValue()));
     }
 
     private void updateDisplay(SearchCriteria criteria) {

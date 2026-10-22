@@ -301,21 +301,24 @@ public class SearchCriteriaDisplayTest {
 
                 enterCommand(commandBox, "find d/PINEAPPLE TARTS");
                 assertEquals(List.of(alice, benson, carl), model.getFilteredPersonList());
-                assertDisplay(root, "Filters · Match all", "Item: pineapple tarts · Any status");
+                assertDisplay(root, "Filters · Match all", "Item: PINEAPPLE TARTS · Any status");
+                enterCommand(commandBox, "find d/Pineapple Tarts");
+                assertEquals(List.of(alice, benson, carl), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Item: Pineapple Tarts · Any status");
                 enterCommand(commandBox, "find d/Pineapple Tarts s/pending");
                 assertEquals(List.of(alice), model.getFilteredPersonList());
-                assertDisplay(root, "Filters · Match all", "Item: pineapple tarts · Pending");
+                assertDisplay(root, "Filters · Match all", "Item: Pineapple Tarts · Pending");
 
                 enterCommand(commandBox, "find n/Alice d/Pineapple Tarts s/prepared");
                 assertTrue(model.getFilteredPersonList().isEmpty());
-                assertDisplay(root, "Filters · Match all", "Name: alice", "Item: pineapple tarts · Prepared");
+                assertDisplay(root, "Filters · Match all", "Name: alice", "Item: Pineapple Tarts · Prepared");
                 enterCommand(commandBox, "find d/Pineapple Tarts s/prepared");
                 assertEquals(List.of(benson), model.getFilteredPersonList());
-                assertDisplay(root, "Filters · Match all", "Item: pineapple tarts · Prepared");
+                assertDisplay(root, "Filters · Match all", "Item: Pineapple Tarts · Prepared");
 
                 enterCommand(commandBox, "edititem 1 i/1 s/completed");
                 assertTrue(model.getFilteredPersonList().isEmpty());
-                assertDisplay(root, "Filters · Match all", "Item: pineapple tarts · Prepared");
+                assertDisplay(root, "Filters · Match all", "Item: Pineapple Tarts · Prepared");
 
                 enterCommand(commandBox, "find s/completed");
                 assertEquals(2, model.getFilteredPersonList().size());
@@ -330,11 +333,11 @@ public class SearchCriteriaDisplayTest {
                 enterCommand(commandBox, "find c/01 t/regular d/Pineapple Tarts s/pending n/Alice");
                 assertEquals(List.of(alice), model.getFilteredPersonList());
                 assertDisplay(root, "Filters · Match all", "Name: alice", "Postal: 01", "Tag: regular",
-                        "Item: pineapple tarts · Pending");
+                        "Item: Pineapple Tarts · Pending");
                 enterCommand(commandBox, "find s/unknown");
                 assertTrue(commandBox.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
                 assertDisplay(root, "Filters · Match all", "Name: alice", "Postal: 01", "Tag: regular",
-                        "Item: pineapple tarts · Pending");
+                        "Item: Pineapple Tarts · Pending");
 
                 enterCommand(commandBox, "list");
                 assertEquals(3, model.getFilteredPersonList().size());
@@ -418,7 +421,7 @@ public class SearchCriteriaDisplayTest {
                         + "t/regular c/53 a/Hougang e/example.com p/8123 n/Benson");
                 assertEquals(List.of(benson), model.getFilteredPersonList());
                 String[] fullSearchBadges = {"Name: benson", "Phone: 8123", "Email: example.com", "Address: hougang",
-                    "Postal: 53", "Tag: regular", "Item: pineapple tarts · Pending", "Date: 22 Oct 2026",
+                    "Postal: 53", "Tag: regular", "Item: Pineapple Tarts · Pending", "Date: 22 Oct 2026",
                     "Method: Collection", "Handover notes: side gate"};
                 assertDisplay(root, "Filters · Match all", fullSearchBadges);
 
@@ -456,7 +459,7 @@ public class SearchCriteriaDisplayTest {
             Region root = display.getRoot();
             attachToScene(root);
             String[] expected = {"Name: alice", "Phone: 8123", "Email: example.com", "Address: hougang", "Postal: 01",
-                "Tag: regular", "Item: pineapple tarts · Pending", "Date: 22 Oct 2026", "Method: Delivery",
+                "Tag: regular", "Item: Pineapple Tarts · Pending", "Date: 22 Oct 2026", "Method: Delivery",
                 "Handover notes: call on arrival"};
 
             layoutAtWidth(root, 250);
