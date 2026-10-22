@@ -88,6 +88,16 @@ public class SortCommandTest {
         assertFalse(sortCommand.equals(new ListCommand()));
     }
 
+    @Test
+    public void hashCodeMethod() {
+        assertEquals(new SortCommand().hashCode(), new SortCommand().hashCode());
+    }
+
+    @Test
+    public void toStringMethod() {
+        assertEquals(SortCommand.class.getCanonicalName() + "{}", new SortCommand().toString());
+    }
+
     private static Person personWithDate(String name, String date) {
         Preorder preorder = new PreorderBuilder().withDate(date).build();
         return new PersonBuilder().withName(name).withPreorder(preorder).build();
