@@ -867,7 +867,7 @@ Start with the sample data. List all customers using the `list` command. The fir
 1. Run `deleteorder 100` (where 100 is larger than the list size).<br>
    Expected: Nothing changes. The status message shows `The person index provided is invalid.`
 1. Run `track`, then `deleteorder` with the displayed index of `Charlotte Oliveiro`.<br>
-   Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder chips.
+   Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder panel.
 
 ### Saving data
 
