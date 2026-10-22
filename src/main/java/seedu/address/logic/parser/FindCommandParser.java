@@ -5,6 +5,9 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FULFILMENT_DATE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FULFILMENT_METHOD;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_HANDOVER_NOTES;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
@@ -22,6 +25,8 @@ import java.util.regex.Pattern;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.FulfilmentDateCriterion;
+import seedu.address.model.search.FulfilmentMethodCriterion;
 import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PersonCriterion;
 import seedu.address.model.search.PostalCodeCriterion;
@@ -36,7 +41,8 @@ import seedu.address.model.search.TextContainsCriterion.Field;
 public class FindCommandParser implements Parser<FindCommand> {
     private static final List<Prefix> SUPPORTED_PREFIXES =
             List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_POSTAL_CODE, PREFIX_TAG,
-                    PREFIX_DETAILS, PREFIX_STATUS);
+                    PREFIX_DETAILS, PREFIX_STATUS, PREFIX_FULFILMENT_DATE, PREFIX_FULFILMENT_METHOD,
+                    PREFIX_HANDOVER_NOTES);
     private static final Pattern PARAMETER_PREFIX = Pattern.compile("(?<!\\S)([A-Za-z]+/)");
 
     /**
@@ -82,6 +88,15 @@ public class FindCommandParser implements Parser<FindCommand> {
         addTextCriterion(criteria, arguments, PREFIX_PHONE, Field.PHONE);
         addTextCriterion(criteria, arguments, PREFIX_EMAIL, Field.EMAIL);
         addTextCriterion(criteria, arguments, PREFIX_ADDRESS, Field.ADDRESS);
+        addTextCriterion(criteria, arguments, PREFIX_HANDOVER_NOTES, Field.HANDOVER_NOTES);
+        if (arguments.getValue(PREFIX_FULFILMENT_DATE).isPresent()) {
+            criteria.add(new FulfilmentDateCriterion(
+                    ParserUtil.parseFulfilmentDate(arguments.getValue(PREFIX_FULFILMENT_DATE).get())));
+        }
+        if (arguments.getValue(PREFIX_FULFILMENT_METHOD).isPresent()) {
+            criteria.add(new FulfilmentMethodCriterion(
+                    ParserUtil.parseFulfilmentMethod(arguments.getValue(PREFIX_FULFILMENT_METHOD).get())));
+        }
         if (arguments.getValue(PREFIX_POSTAL_CODE).isPresent()) {
             String postalCodePrefix = arguments.getValue(PREFIX_POSTAL_CODE).get().strip();
             if (!PostalCodeCriterion.isValidPrefix(postalCodePrefix)) {

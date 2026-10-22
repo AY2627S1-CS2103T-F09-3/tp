@@ -183,6 +183,21 @@ and punctuation remain significant. Queries must be nonblank, but may be fragmen
 they do not use the validation rules for creating complete contact fields. `TagCriterion` accepts a validated `Tag` and
 uses its complete, case-insensitive equality rule.
 
+`FulfilmentDateCriterion` and `FulfilmentMethodCriterion` inspect the optional shared fields on `Preorder`, independently
+of its items. `TextContainsCriterion.Field.HANDOVER_NOTES` reads `Preorder.getHandoverNotes()` and uses the existing
+case-insensitive substring matcher. Missing preorders or missing requested fields do not match; empty preorders with
+matching fields do. Searches for handover notes do not inspect item remarks.
+
+The `f/` and `m/` values are parsed through `ParserUtil.parseFulfilmentDate` and `parseFulfilmentMethod`. Dates must be
+real calendar dates in `YYYY-MM-DD` format; methods are stripped and normalized with `Locale.ROOT` to `DELIVERY` or
+`COLLECTION`. Invalid values produce the corresponding model constraint message. The shared `PREFIX_HANDOVER_NOTES`
+constant defines `h/` for handover notes. These queries follow existing text search rules: surrounding whitespace is
+stripped, while internal spacing and punctuation remain significant. Blank values, repeated prefixes and unsupported
+prefixes retain the shared parser's error handling.
+
+All `find` searches require a supported prefix, including `n/` for names. Unprefixed searches and bare preambles are
+rejected; `find Alice m/delivery` must use `find n/Alice m/delivery` instead.
+
 `PostalCodeCriterion` accepts a search prefix stored as a string. `FindCommandParser` strips surrounding whitespace
 from the `c/` value and validates it using `PostalCodeCriterion.isValidPrefix`, which accepts one to six ASCII digits
 (`[0-9]{1,6}`). Blank values produce the existing invalid-command-format error; other invalid values produce
@@ -222,9 +237,29 @@ items without quantities. Explicit status feedback retains the requested status 
 
 The criterion rejects null arguments, null status elements and blank product queries, and defensively copies the
 status set. Its normalized conditions define value equality and hash codes for observable search state.
-Future summaries and highlighting should reuse this matcher to stay consistent with customer filtering.
-Date/method conditions can remain separate customer criteria. Those extensions, the preparation summary,
-matching-item highlighting and the active-criteria display are outside this search change.
+Date/method and postal conditions remain separate customer criteria because they describe the preorder or customer
+rather than an individual item. Matching-item highlighting and the active-criteria display remain separate work.
+
+#### Delivery preparation summary
+
+`DeliveryPreparationSummary` takes a snapshot of the current displayed customer results. It reuses
+`ItemCriterion` with no product condition and statuses `PENDING` and `PREPARED`, then requires the preorder's method
+to be `DELIVERY`. It counts customers, not matching items. Collection, unset methods, empty wrappers and completed-only
+preorders are excluded. Missing postal codes remain represented by one additional group; dates and notes may be unset
+without excluding an otherwise outstanding delivery. The immutable snapshot orders contacts by postal code and name,
+without mutating the address book or the active search criteria.
+
+`MainWindow` installs a `DeliverySummaryPanel` above `PersonListPanel`. The panel observes the existing
+`Logic.getFilteredPersonList()` observable view and rebuilds its snapshot when results or customer records change.
+It reuses `GroupPostalCommand.getPostalGroupKey` for contact headings and `FulfilmentDate.toDisplayString` for dates.
+Names, phones, addresses, postal codes and shared handover notes are shown in a bounded, keyboard-scrollable area
+with wrapped text. Missing dates display `Not scheduled`; absent handover notes display `Handover notes: None`.
+The panel stays installed and visible when there are no outstanding deliveries, showing zero totals and
+`No outstanding deliveries in the current results.` The UI tests cover exclusion of ineligible preorders, one contact
+per customer with multiple outstanding items, postal headings, and layout at the minimum FXML window dimensions.
+
+This adds a derived model snapshot and a UI part within the existing Model/Logic/UI boundaries. It does not introduce
+stored summary state or change the fulfilment fields, JSON schema, customer reconstruction, or grouping command.
 
 ### Storage component
 
@@ -553,7 +588,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *`    | home baker                                           | identify customer profiles with missing essential information                     | complete them before fulfilment begins                              |
 | `* *`    | home baker migrating from another system             | import existing customer contacts                                                 | avoid re-entering every profile manually                            |
 | `* *`    | home baker                                           | export my customer contacts                                                       | keep a backup or use them outside LeBake                            |
-| `* *`    | home baker                                           | record delivery instructions with an address                                      | remember access details such as gate codes or drop-off directions   |
+| `* *`    | home baker                                           | record handover notes for a delivery                                              | remember access details such as gate codes or drop-off directions   |
 | `* *`    | home baker preparing deliveries                      | mark an address as verified or unverified                                         | identify addresses that still require confirmation                  |
 | `* *`    | home baker                                           | find customers using an address or postal-code keyword                            | retrieve contacts based on delivery location                        |
 | `* *`    | home baker planning deliveries                       | filter customers by neighbourhood or postal area                                  | focus on customers in the same vicinity                             |
