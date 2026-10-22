@@ -31,6 +31,14 @@ public class ItemCriterionTest {
             .withPreorder(PENDING_TARTS, PREPARED_COOKIES).build();
 
     @Test
+    public void getProductName_preservesCapitalizationAndStripsSurroundingWhitespace() {
+        ItemCriterion criterion = productCriterion("  Pineapple TARTS  ", PENDING);
+        assertEquals(Optional.of("Pineapple TARTS"), criterion.getProductName());
+        assertTrue(criterion.matches(PENDING_TARTS));
+        assertEquals(Optional.empty(), new ItemCriterion(Optional.empty(), Set.of(PENDING)).getProductName());
+    }
+
+    @Test
     public void constructor_invalidArguments_rejected() {
         assertThrows(NullPointerException.class, () -> new ItemCriterion(null, Set.of(PENDING)));
         assertThrows(NullPointerException.class, () -> new ItemCriterion(Optional.empty(), null));

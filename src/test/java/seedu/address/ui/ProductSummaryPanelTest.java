@@ -51,7 +51,7 @@ public class ProductSummaryPanelTest {
             execute(model, "find d/Pineapple Tarts");
             assertTrue(panel.getRoot().isVisible());
             assertTrue(panel.getRoot().isManaged());
-            assertEquals("Preparation: pineapple tarts | All statuses", text(panel, "productHeading"));
+            assertEquals("Preparation: Pineapple Tarts | All statuses", text(panel, "productHeading"));
             assertEquals("1 customer(s) | 1 matching item(s)", text(panel, "counts"));
             assertEquals("Total quantity: 2", text(panel, "quantity"));
             assertEquals("Alice, item 2 - Less sugar", text(panel, "remarks"));
@@ -65,10 +65,26 @@ public class ProductSummaryPanelTest {
             ProductSummaryPanel panel = createPanel(model);
             execute(model, "find d/Pineapple Tarts");
             execute(model, "find d/Pineapple Tarts s/pending");
-            assertEquals("Preparation: pineapple tarts | PENDING", text(panel, "productHeading"));
+            assertEquals("Preparation: Pineapple Tarts | PENDING", text(panel, "productHeading"));
             execute(model, "find d/Cookies");
-            assertEquals("Preparation: cookies | All statuses", text(panel, "productHeading"));
+            assertEquals("Preparation: Cookies | All statuses", text(panel, "productHeading"));
             assertEquals("No special requests for matching items.", text(panel, "remarks"));
+        });
+    }
+
+    @Test
+    public void refresh_capitalizationOnlyChange_updatesHeadingIncludingNoMatches() throws Exception {
+        onFxThread(() -> {
+            Model model = createModel();
+            ProductSummaryPanel panel = createPanel(model);
+            execute(model, "find d/Pineapple Tarts");
+            execute(model, "find d/  PINEAPPLE TARTS  ");
+            assertEquals("Preparation: PINEAPPLE TARTS | All statuses", text(panel, "productHeading"));
+            assertEquals("1 customer(s) | 1 matching item(s)", text(panel, "counts"));
+            execute(model, "find d/Unknown Product");
+            execute(model, "find d/UNKNOWN PRODUCT");
+            assertEquals("Preparation: UNKNOWN PRODUCT | All statuses", text(panel, "productHeading"));
+            assertEquals("0 customer(s) | 0 matching item(s)", text(panel, "counts"));
         });
     }
 

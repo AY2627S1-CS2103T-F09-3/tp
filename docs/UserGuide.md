@@ -301,7 +301,8 @@ Rejected searches leave the current criteria and results unchanged. If no custom
 
 ### Reading the preparation summary and matching items
 
-A search containing `d/PRODUCT` shows a preparation summary above the customer list. It shows:
+A search containing `d/PRODUCT` shows a preparation summary above the customer list. The heading preserves
+the capitalization you typed, with surrounding whitespace removed. Product matching remains case-insensitive. It shows:
 
 * The selected product and statuses. Without `s/`, **all statuses**, including completed items, contribute.
 * The number of matching customers and matching item entries. Repeated entries count separately.

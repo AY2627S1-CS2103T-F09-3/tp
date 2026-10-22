@@ -207,7 +207,8 @@ There is no need to filter the previous search's results or execute another sear
 `FindCommandParser` combines `d/` (`PREFIX_DETAILS`) and `s/` into **one** `ItemCriterion`. Separate predicates for
 "has this product" and "has this status" would incorrectly allow different items to satisfy the conditions.
 Product names match completely after stripping surrounding whitespace and normalizing case with `Locale.ROOT`;
-internal spacing and punctuation remain significant. Status input is validated with `ParserUtil.parseItemStatus`.
+internal spacing and punctuation remain significant. The criterion also retains the stripped input name for display;
+matching, equality and hash codes use the normalized name. Status input is validated with `ParserUtil.parseItemStatus`.
 
 The parser supplies `EnumSet.allOf(ItemStatus.class)` when `s/` is omitted. This is deliberate: an empty status set
 in `ItemCriterion` matches **nothing**, rather than meaning "any status". An absent product name accepts any product.
@@ -236,7 +237,8 @@ are defensively copied.
 
 `MainWindow` places `ProductSummaryPanel` above `PersonListPanel`. The summary listens to both the filtered
 customer list and `Logic.activeSearchCriteriaProperty()`, so changing criteria refreshes it even when the
-same customers remain visible. It is visible and managed only when a product criterion exists. Updates
+same customers remain visible. Its criteria invalidation listener also refreshes the heading for capitalization-only
+changes, which are equal for filtering purposes. It is visible and managed only when a product criterion exists. Updates
 recompute the snapshot, including zero results. Labels wrap inside a focusable scroll pane, whose key
 handler supports arrows, Page Up/Down and Home/End with scroll values clamped to the valid range.
 

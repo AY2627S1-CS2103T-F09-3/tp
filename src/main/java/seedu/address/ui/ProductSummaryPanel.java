@@ -6,6 +6,7 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -54,7 +55,8 @@ public class ProductSummaryPanel extends UiPart<Region> {
         this.activeCriteria = requireNonNull(activeCriteria);
         requireNonNull(activeCriteria.get());
         customers.addListener((ListChangeListener<Person>) change -> refresh());
-        activeCriteria.addListener((observable, previous, current) -> refresh());
+        // Equivalent searches can still use different capitalization in the heading.
+        activeCriteria.addListener((InvalidationListener) observable -> refresh());
         productSummary.addEventFilter(KeyEvent.KEY_PRESSED, this::handleScrollKey);
         refresh();
     }
