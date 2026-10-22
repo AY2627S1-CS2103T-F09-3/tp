@@ -310,7 +310,6 @@ Customer and preorder changes preserve the search and refresh the results. A cus
 | `find` or `find Alice Bob` | Invalid command format; supply at least one prefixed criterion. |
 | `find n/`, `find c/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
 | `find x/Alice` or `find o/Pineapple Tarts` | Invalid command format; only the eleven prefixes above are supported. |
-| `find i/arrival` | Invalid command format; use `h/` for handover notes. |
 | `find Alice m/delivery` | Invalid command format; use `find n/Alice m/delivery`. |
 | `find f/2026-02-30` or `find f/2026-2-03` | The date constraint message is shown; supply a real date in `YYYY-MM-DD` format. |
 | `find m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |

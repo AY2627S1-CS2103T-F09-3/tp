@@ -54,8 +54,7 @@ public class FindCommandParser implements Parser<FindCommand> {
     public FindCommand parse(String args) throws ParseException {
         requireNonNull(args);
         String formatError = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
-        String strippedArgs = args.strip();
-        String preparedArgs = prepareArguments(strippedArgs, formatError);
+        String preparedArgs = prepareArguments(args.strip(), formatError);
         Prefix[] prefixes = SUPPORTED_PREFIXES.toArray(Prefix[]::new);
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(preparedArgs, prefixes);
 
