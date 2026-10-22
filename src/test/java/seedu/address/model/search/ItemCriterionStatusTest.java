@@ -55,6 +55,17 @@ public class ItemCriterionStatusTest {
     }
 
     @Test
+    public void getStatuses_returnsImmutableSet() {
+        ItemCriterion predicate = new ItemCriterion(Optional.empty(), Set.of(PENDING));
+
+        assertEquals(Set.of(PENDING), predicate.getStatuses());
+        assertThrows(UnsupportedOperationException.class, () -> predicate.getStatuses().clear());
+        assertThrows(UnsupportedOperationException.class, () -> predicate.getStatuses().add(PREPARED));
+        assertTrue(predicate.test(PENDING_PERSON));
+        assertFalse(predicate.test(PREPARED_PERSON));
+    }
+
+    @Test
     public void test_nullPerson_throwsNullPointerException() {
         ItemCriterion predicate = new ItemCriterion(Optional.empty(), Set.of(PENDING));
         assertThrows(NullPointerException.class, () -> predicate.test(null));

@@ -35,6 +35,14 @@ public class TextContainsCriterionTest {
     }
 
     @Test
+    public void getters_exposeFieldAndNormalizedQuery() {
+        TextContainsCriterion criterion = new TextContainsCriterion(ADDRESS, "  HOUGANG  Avenue, #04-08 \t");
+
+        assertEquals(ADDRESS, criterion.getField());
+        assertEquals("hougang  avenue, #04-08", criterion.getQuery());
+    }
+
+    @Test
     public void test_nameSubstring_ignoresCaseAndSurroundingWhitespace() {
         assertTrue(new TextContainsCriterion(NAME, " ALICE tan ").test(CUSTOMER));
         assertTrue(new TextContainsCriterion(NAME, "lic").test(CUSTOMER));

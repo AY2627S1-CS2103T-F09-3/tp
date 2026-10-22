@@ -36,6 +36,17 @@ public final class ItemCriterion implements PersonCriterion {
         this.statuses = Set.copyOf(requireNonNull(statuses));
     }
 
+    public Optional<String> getProductName() {
+        return productName;
+    }
+
+    /**
+     * Returns the immutable accepted statuses without exposing mutable search state.
+     */
+    public Set<ItemStatus> getStatuses() {
+        return statuses;
+    }
+
     private static String normalizeProductName(String productName) {
         String strippedName = productName.strip();
         checkArgument(!strippedName.isEmpty(), "Product search text must not be blank.");

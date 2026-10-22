@@ -29,6 +29,13 @@ public final class PostalCodeCriterion implements PersonCriterion {
     }
 
     /**
+     * Returns the search digits, preserving leading zeros and the supplied prefix length.
+     */
+    public String getPostalCodePrefix() {
+        return postalCodePrefix;
+    }
+
+    /**
      * Returns whether {@code prefix} contains one to six ASCII digits.
      */
     public static boolean isValidPrefix(String prefix) {

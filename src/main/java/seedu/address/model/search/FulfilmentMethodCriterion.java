@@ -15,6 +15,10 @@ public final class FulfilmentMethodCriterion implements PersonCriterion {
         this.method = requireNonNull(method);
     }
 
+    public FulfilmentMethod getMethod() {
+        return method;
+    }
+
     @Override
     public boolean test(Person person) {
         return requireNonNull(person).getPreorder().flatMap(Preorder::getMethod).filter(method::equals).isPresent();

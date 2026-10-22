@@ -15,6 +15,10 @@ public final class FulfilmentDateCriterion implements PersonCriterion {
         this.date = requireNonNull(date);
     }
 
+    public FulfilmentDate getDate() {
+        return date;
+    }
+
     @Override
     public boolean test(Person person) {
         return requireNonNull(person).getPreorder().flatMap(Preorder::getDate).filter(date::equals).isPresent();

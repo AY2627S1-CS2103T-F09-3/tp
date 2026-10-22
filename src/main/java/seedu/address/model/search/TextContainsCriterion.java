@@ -39,6 +39,17 @@ public final class TextContainsCriterion implements PersonCriterion {
         this.query = strippedQuery.toLowerCase(Locale.ROOT);
     }
 
+    public Field getField() {
+        return field;
+    }
+
+    /**
+     * Returns the normalized text used for matching, including significant internal whitespace and punctuation.
+     */
+    public String getQuery() {
+        return query;
+    }
+
     @Override
     public boolean test(Person person) {
         requireNonNull(person);

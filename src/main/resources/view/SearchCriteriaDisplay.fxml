@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="searchCriteriaDisplay" spacing="8" minWidth="0" mouseTransparent="true"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <minHeight>
+    <Region fx:constant="USE_PREF_SIZE" />
+  </minHeight>
+  <padding>
+    <Insets top="2" right="0" bottom="10" left="0" />
+  </padding>
+  <Label fx:id="criteriaHeading" styleClass="search-criteria-heading" wrapText="true" minWidth="0">
+    <minHeight>
+      <Region fx:constant="USE_PREF_SIZE" />
+    </minHeight>
+  </Label>
+  <FlowPane fx:id="criteriaBadges" hgap="6" vgap="6" minWidth="0" alignment="TOP_LEFT">
+    <minHeight>
+      <Region fx:constant="USE_PREF_SIZE" />
+    </minHeight>
+  </FlowPane>
+</VBox>
