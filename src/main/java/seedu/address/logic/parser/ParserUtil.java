@@ -16,6 +16,9 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.PostalCode;
+import seedu.address.model.preorder.FulfilmentDate;
+import seedu.address.model.preorder.FulfilmentMethod;
+import seedu.address.model.preorder.HandoverNotes;
 import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
@@ -100,6 +103,32 @@ public class ParserUtil {
             throw new ParseException(PostalCode.MESSAGE_CONSTRAINTS);
         }
         return new PostalCode(trimmedPostalCode);
+    }
+
+    /**
+     * Parses a real fulfilment date in YYYY-MM-DD format, ignoring surrounding whitespace.
+     *
+     * @throws ParseException If the date is invalid.
+     */
+    public static FulfilmentDate parseFulfilmentDate(String date) throws ParseException {
+        String strippedDate = requireNonNull(date).strip();
+        if (!FulfilmentDate.isValidDate(strippedDate)) {
+            throw new ParseException(FulfilmentDate.MESSAGE_CONSTRAINTS);
+        }
+        return new FulfilmentDate(strippedDate);
+    }
+
+    /**
+     * Parses DELIVERY or COLLECTION, ignoring case and surrounding whitespace.
+     *
+     * @throws ParseException If the method is invalid.
+     */
+    public static FulfilmentMethod parseFulfilmentMethod(String method) throws ParseException {
+        String normalizedMethod = requireNonNull(method).strip().toUpperCase(Locale.ROOT);
+        if (!FulfilmentMethod.isValidMethod(normalizedMethod)) {
+            throw new ParseException(FulfilmentMethod.MESSAGE_CONSTRAINTS);
+        }
+        return FulfilmentMethod.valueOf(normalizedMethod);
     }
 
     /**
@@ -239,5 +268,20 @@ public class ParserUtil {
             throw new ParseException(ItemStatus.MESSAGE_CONSTRAINTS);
         }
         return ItemStatus.valueOf(normalizedStatus);
+    }
+
+    /**
+     * Parses a {@code String handoverNotes} into a {@code HandoverNotes}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code handoverNotes} is invalid.
+     */
+    public static HandoverNotes parseHandoverNotes(String handoverNotes) throws ParseException {
+        requireNonNull(handoverNotes);
+        String trimmedHandoverNotes = handoverNotes.trim();
+        if (!HandoverNotes.isValidHandoverNotes(trimmedHandoverNotes)) {
+            throw new ParseException(HandoverNotes.MESSAGE_CONSTRAINTS);
+        }
+        return new HandoverNotes(trimmedHandoverNotes);
     }
 }

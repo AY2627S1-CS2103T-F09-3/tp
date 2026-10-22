@@ -1,0 +1,73 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant "p:PreorderCommand" as PreorderCommand LOGIC_COLOR
+participant "r:CommandResult" as CommandResult LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+participant "updatedPreorder:Preorder" as Preorder MODEL_COLOR
+participant "updatedPerson:Person" as Person MODEL_COLOR
+end box
+
+[-> PreorderCommand : execute(m)
+activate PreorderCommand
+
+PreorderCommand -> Model : getFilteredPersonList()
+activate Model
+
+Model --> PreorderCommand : lastShownList
+deactivate Model
+
+note right of PreorderCommand
+identifiedPerson is at the index in lastShownList;
+currentPreorder is the customer's preorder,
+or an empty one if they have none
+end note
+
+PreorderCommand -> PreorderCommand : createUpdatedPreorder(currentPreorder, descriptor)
+activate PreorderCommand
+
+'Details that were not supplied are copied from the current preorder.
+create Preorder
+PreorderCommand -> Preorder : current items, current date,\nDELIVERY, current handover notes
+activate Preorder
+
+Preorder --> PreorderCommand
+deactivate Preorder
+
+PreorderCommand --> PreorderCommand : updatedPreorder
+deactivate PreorderCommand
+
+PreorderCommand -> PreorderCommand : createPersonWithPreorder(identifiedPerson, updatedPreorder)
+activate PreorderCommand
+
+create Person
+PreorderCommand -> Person : identifiedPerson's details,\nupdatedPreorder
+activate Person
+
+Person --> PreorderCommand
+deactivate Person
+
+PreorderCommand --> PreorderCommand : updatedPerson
+deactivate PreorderCommand
+
+PreorderCommand -> Model : setPerson(identifiedPerson, updatedPerson)
+activate Model
+
+Model --> PreorderCommand
+deactivate Model
+
+create CommandResult
+PreorderCommand -> CommandResult
+activate CommandResult
+
+CommandResult --> PreorderCommand
+deactivate CommandResult
+
+[<-- PreorderCommand : r
+deactivate PreorderCommand
+@enduml
