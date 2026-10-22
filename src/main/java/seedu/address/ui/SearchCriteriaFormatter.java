@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import seedu.address.model.person.PreorderStatusPredicate;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PersonCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
@@ -27,7 +27,7 @@ public final class SearchCriteriaFormatter {
      * Defines display order independently of the model's unordered criterion set.
      */
     private enum Position {
-        NAME, PHONE, EMAIL, ADDRESS, TAG, ITEM_STATUS
+        NAME, PHONE, EMAIL, ADDRESS, TAG, ITEM_STATUS, HANDOVER_NOTES
     }
 
     /**
@@ -59,7 +59,7 @@ public final class SearchCriteriaFormatter {
         return switch (criterion) {
             case TextContainsCriterion text -> formatText(text);
             case TagCriterion tag -> new Segment(Position.TAG, "Tag: " + tag.getTag().tagName);
-            case PreorderStatusPredicate status ->
+            case ItemCriterion status when status.getProductName().isEmpty() ->
                 new Segment(Position.ITEM_STATUS, "Item status: " + formatStatuses(status.getStatuses()));
             default -> throw new IllegalArgumentException("Unsupported search criterion: "
                     + criterion.getClass().getName());
@@ -73,6 +73,7 @@ public final class SearchCriteriaFormatter {
             case PHONE -> new Segment(Position.PHONE, "Phone: " + query);
             case EMAIL -> new Segment(Position.EMAIL, "Email: " + query);
             case ADDRESS -> new Segment(Position.ADDRESS, "Address: " + query);
+            case HANDOVER_NOTES -> new Segment(Position.HANDOVER_NOTES, "Handover notes: " + query);
         };
     }
 

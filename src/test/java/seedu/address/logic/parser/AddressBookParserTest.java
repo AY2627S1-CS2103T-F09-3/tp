@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DeleteItemCommand;
 import seedu.address.logic.commands.DeleteOrderCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
@@ -25,16 +26,20 @@ import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.PreorderCommand;
+import seedu.address.logic.commands.PreorderCommand.EditFulfilmentDescriptor;
 import seedu.address.logic.commands.TagCommand;
 import seedu.address.logic.commands.TrackCommand;
 import seedu.address.logic.commands.UntagCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.model.tag.Tag;
+import seedu.address.testutil.EditFulfilmentDescriptorBuilder;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -45,7 +50,7 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_add() throws Exception {
-        Person person = new PersonBuilder().build();
+        Person person = new PersonBuilder().withPostalCode("123456").build();
         AddCommand command = (AddCommand) parser.parseCommand(PersonUtil.getAddCommand(person));
         assertEquals(new AddCommand(person), command);
     }
@@ -64,10 +69,26 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_deleteItem() throws Exception {
+        DeleteItemCommand command = (DeleteItemCommand) parser.parseCommand(
+                DeleteItemCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased() + " i/1");
+        assertEquals(new DeleteItemCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON), command);
+    }
+
+    @Test
     public void parseCommand_deleteOrder() throws Exception {
         DeleteOrderCommand command = (DeleteOrderCommand) parser.parseCommand(
                 DeleteOrderCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());
         assertEquals(new DeleteOrderCommand(INDEX_FIRST_PERSON), command);
+    }
+
+    @Test
+    public void parseCommand_preorder() throws Exception {
+        PreorderCommand command = (PreorderCommand) parser.parseCommand(PreorderCommand.COMMAND_WORD + " "
+                + INDEX_FIRST_PERSON.getOneBased() + " f/2026-12-20 m/delivery h/Call on arrival");
+        EditFulfilmentDescriptor descriptor = new EditFulfilmentDescriptorBuilder().withDate("2026-12-20")
+                .withMethod(FulfilmentMethod.DELIVERY).withHandoverNotes("Call on arrival").build();
+        assertEquals(new PreorderCommand(INDEX_FIRST_PERSON, descriptor), command);
     }
 
     @Test

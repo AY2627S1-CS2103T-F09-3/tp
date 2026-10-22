@@ -8,9 +8,10 @@ import java.util.Objects;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.Preorder;
 
 /**
- * Tests whether one customer field contains the complete search text, ignoring case.
+ * Tests whether a customer field or their preorder's handover notes contain the search text, ignoring case.
  * Search text is a fragment, so it need not be a valid complete name, phone number, email or address.
  */
 public final class TextContainsCriterion implements PersonCriterion {
@@ -18,7 +19,7 @@ public final class TextContainsCriterion implements PersonCriterion {
      * Identifies the customer fields that support substring searches.
      */
     public enum Field {
-        NAME, PHONE, EMAIL, ADDRESS
+        NAME, PHONE, EMAIL, ADDRESS, HANDOVER_NOTES
     }
 
     private final Field field;
@@ -61,6 +62,8 @@ public final class TextContainsCriterion implements PersonCriterion {
             case PHONE -> person.getPhone().value;
             case EMAIL -> person.getEmail().value;
             case ADDRESS -> person.getAddress().value;
+            case HANDOVER_NOTES -> person.getPreorder().flatMap(Preorder::getHandoverNotes)
+                    .map(notes -> notes.value).orElse("");
         };
     }
 

@@ -15,13 +15,13 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.address.model.person.Person;
-import seedu.address.model.person.PreorderStatusPredicate;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PersonCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
@@ -49,6 +49,8 @@ public class SearchCriteriaFormatterTest {
         assertSummary(List.of(new TextContainsCriterion(EMAIL, " EXAMPLE.COM ")), "Email: example.com");
         assertSummary(List.of(new TextContainsCriterion(ADDRESS, " HOUGANG  Avenue, #04-08 ")),
                 "Address: hougang  avenue, #04-08");
+        assertSummary(List.of(new TextContainsCriterion(TextContainsCriterion.Field.HANDOVER_NOTES,
+                " Call on arrival ")), "Handover notes: call on arrival");
     }
 
     @Test
@@ -58,32 +60,32 @@ public class SearchCriteriaFormatterTest {
 
     @Test
     public void format_eachStatus_usesReadableStatusLabel() {
-        assertSummary(List.of(new PreorderStatusPredicate(Set.of(PENDING))), "Item status: Pending");
-        assertSummary(List.of(new PreorderStatusPredicate(Set.of(PREPARED))), "Item status: Prepared");
-        assertSummary(List.of(new PreorderStatusPredicate(Set.of(COMPLETED))), "Item status: Completed");
+        assertSummary(List.of(new ItemCriterion(Optional.empty(), Set.of(PENDING))), "Item status: Pending");
+        assertSummary(List.of(new ItemCriterion(Optional.empty(), Set.of(PREPARED))), "Item status: Prepared");
+        assertSummary(List.of(new ItemCriterion(Optional.empty(), Set.of(COMPLETED))), "Item status: Completed");
     }
 
     @Test
     public void format_defaultTracking_keepsAlternativesInOneSegment() {
         Set<ItemStatus> statuses = new LinkedHashSet<>(List.of(PREPARED, PENDING));
-        assertSummary(List.of(new PreorderStatusPredicate(statuses)), "Item status: Pending or Prepared");
+        assertSummary(List.of(new ItemCriterion(Optional.empty(), statuses)), "Item status: Pending or Prepared");
     }
 
     @Test
     public void format_allStatuses_ordersByProgress() {
-        assertSummary(List.of(new PreorderStatusPredicate(Set.of(COMPLETED, PREPARED, PENDING))),
+        assertSummary(List.of(new ItemCriterion(Optional.empty(), Set.of(COMPLETED, PREPARED, PENDING))),
                 "Item status: Pending or Prepared or Completed");
     }
 
     @Test
     public void format_emptyStatusSet_retainsActiveFilter() {
-        assertSummary(List.of(new PreorderStatusPredicate(Set.of())), "Item status: None");
+        assertSummary(List.of(new ItemCriterion(Optional.empty(), Set.of())), "Item status: None");
     }
 
     @Test
     public void format_combinedCriteria_usesStableFieldOrder() {
         List<PersonCriterion> criteria = new ArrayList<>(List.of(
-                new PreorderStatusPredicate(Set.of(PREPARED, PENDING)),
+                new ItemCriterion(Optional.empty(), Set.of(PREPARED, PENDING)),
                 new TagCriterion(new Tag("regular")),
                 new TextContainsCriterion(ADDRESS, "hougang"),
                 new TextContainsCriterion(EMAIL, "example.com"),
@@ -134,27 +136,17 @@ public class SearchCriteriaFormatterTest {
         try {
             Locale.setDefault(Locale.forLanguageTag("tr-TR"));
             assertSummary(List.of(new TextContainsCriterion(NAME, "ALICE"),
-                    new PreorderStatusPredicate(Set.of(PENDING))), "Name: alice", "Item status: Pending");
+                    new ItemCriterion(Optional.empty(), Set.of(PENDING))), "Name: alice", "Item status: Pending");
         } finally {
             Locale.setDefault(originalLocale);
         }
     }
 
     @Test
-    public void format_statusCriterion_readsStructuredDataWithoutMatchingOrDiagnosticText() {
-        PreorderStatusPredicate criterion = new PreorderStatusPredicate(Set.of(PENDING)) {
-            @Override
-            public boolean test(Person person) {
-                throw new AssertionError("Formatting must not evaluate a search.");
-            }
-
-            @Override
-            public String toString() {
-                throw new AssertionError("Formatting must not parse diagnostic text.");
-            }
-        };
-
-        assertSummary(List.of(criterion), "Item status: Pending");
+    public void format_productCriterion_throwsInsteadOfHidingProductCondition() {
+        ItemCriterion criterion = new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of(PENDING));
+        assertThrows(IllegalArgumentException.class, () ->
+                SearchCriteriaFormatter.format(new SearchCriteria(List.of(criterion))));
     }
 
     @Test

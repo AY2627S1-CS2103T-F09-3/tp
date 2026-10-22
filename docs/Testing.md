@@ -39,3 +39,18 @@ This project has three types of tests:
    For example: `seedu.address.storage.StorageManagerTest`
 1. *Hybrid tests* combine unit and integration testing. These tests check both the individual units and how they work together.<br>
    For example: `seedu.address.logic.LogicManagerTest`
+
+--------------------------------------------------------------------------------------------------------------------
+
+## GUI tests
+
+Some tests in `seedu.address.ui`, such as `PersonCardTest`, start JavaFX to build real UI components and check
+their layout. JavaFX needs a display, so these tests cannot run on a machine without one.
+
+* On Windows, macOS and Linux desktops, they run like any other test.
+* The Linux CI runner has no display, so `.github/workflows/gradle.yml` runs Gradle inside `xvfb-run`, which
+  provides a virtual display. To do the same on a Linux machine without a desktop, install `xvfb` and run
+  `xvfb-run ./gradlew clean test`.
+* CI uses a JDK that includes JavaFX 25. If your JDK does not include JavaFX, Gradle uses the JavaFX 17 libraries
+  in `build.gradle` instead. Layouts can differ between the two versions, so a GUI test that passes locally can
+  still fail in CI.

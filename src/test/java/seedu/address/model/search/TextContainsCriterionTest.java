@@ -14,7 +14,9 @@ import java.util.Locale;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.person.Person;
+import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
+import seedu.address.testutil.PreorderBuilder;
 
 public class TextContainsCriterionTest {
     private static final Person CUSTOMER = new PersonBuilder().withName("Alice Tanaka").withPhone("81234567")
@@ -83,6 +85,20 @@ public class TextContainsCriterionTest {
         assertFalse(new TextContainsCriterion(PHONE, "Alice").test(CUSTOMER));
         assertFalse(new TextContainsCriterion(EMAIL, "Hougang").test(CUSTOMER));
         assertFalse(new TextContainsCriterion(ADDRESS, "example.com").test(CUSTOMER));
+    }
+
+    @Test
+    public void test_handoverNotes_matchesSharedNotesIncludingEmptyPreorders() {
+        TextContainsCriterion criterion = new TextContainsCriterion(TextContainsCriterion.Field.HANDOVER_NOTES,
+                " CALL on ");
+        Person customer = new PersonBuilder().withPreorder(new PreorderBuilder()
+                .withHandoverNotes("Please call on arrival!").build()).build();
+        assertTrue(criterion.test(customer));
+        assertFalse(criterion.test(CUSTOMER));
+        assertFalse(criterion.test(new PersonBuilder().withPreorder().build()));
+        assertFalse(criterion.test(new PersonBuilder().withPreorder(new ItemBuilder()
+                .withRemark("Call on arrival").build()).build()));
+        assertFalse(new TextContainsCriterion(TextContainsCriterion.Field.HANDOVER_NOTES, "call  on").test(customer));
     }
 
     @Test

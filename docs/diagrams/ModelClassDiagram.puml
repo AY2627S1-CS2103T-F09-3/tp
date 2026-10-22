@@ -18,7 +18,10 @@ Class Address
 Class Email
 Class Name
 Class Phone
+Class PostalCode
 Class Tag
+Class Preorder
+Class Item
 
 Class I #FFFFFF
 }
@@ -41,14 +44,18 @@ Person *--> Name
 Person *--> Phone
 Person *--> Email
 Person *--> Address
+Person *--> PostalCode
 Person *--> "*" Tag
+Person *--> "0..1" Preorder
+Preorder *--> "*" Item
 
 Person -[hidden]up--> I
 UniquePersonList -[hidden]right-> I
 
 Name -[hidden]right-> Phone
 Phone -[hidden]right-> Address
-Address -[hidden]right-> Email
+Address -[hidden]right-> PostalCode
+PostalCode -[hidden]right-> Email
 
-ModelManager --> "~* filtered" Person
+ModelManager --> "~* filtered, sorted" Person
 @enduml
