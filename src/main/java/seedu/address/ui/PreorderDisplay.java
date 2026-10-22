@@ -3,6 +3,7 @@ package seedu.address.ui;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import seedu.address.logic.Messages;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Preorder;
@@ -16,7 +17,7 @@ public class PreorderDisplay {
 
     public static final String NOT_SCHEDULED_TEXT = "Not scheduled | Method not set";
     public static final String NO_ITEMS_TEXT = "No items yet";
-    public static final String MISSING_QUANTITY_TEXT = "Quantity needed";
+    public static final String MISSING_QUANTITY_TEXT = Messages.MISSING_QUANTITY_TEXT;
     public static final String REMARK_PREFIX = "Remark: ";
 
     /** A 16 px calendar outline, shown beside a preorder that has no handover date. */

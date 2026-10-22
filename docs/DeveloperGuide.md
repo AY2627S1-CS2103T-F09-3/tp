@@ -141,7 +141,7 @@ The `Model` component,
 #### Customer search criteria
 
 The `seedu.address.model.search` package provides reusable search predicates. `FindCommandParser` constructs a
-`SearchCriteria` from prefixed customer fields, and `FindCommand` applies it through the existing model filtering API.
+`SearchCriteria` from prefixed customer and item fields, and `FindCommand` applies it through the existing model filtering API.
 
 `ModelManager` keeps the active `SearchCriteria` in a `ReadOnlyObjectWrapper`. The filtered list's predicate is bound
 to this value, so replacing the criteria updates both the search state and the results. All filtering calls supply
@@ -152,8 +152,9 @@ and is not saved with customer data.
 
 Each successful `find` or `track` replaces the active criteria. `list` applies `SEARCH_CRITERIA_SHOW_ALL_PERSONS`,
 an empty search, to reset the state and show every customer. Rejected commands leave the active criteria unchanged.
-`track` wraps the immutable `PreorderStatusPredicate` as a `PersonCriterion`. It accepts a customer when any item
-in their preorder has an accepted `ItemStatus`; customers without a preorder or with an empty preorder never match.
+`find` and `track` use the immutable `ItemCriterion` for item matching. It accepts a customer when any single item
+satisfies both its optional product name and accepted statuses. Customers without a preorder or with an empty
+preorder never match item criteria.
 
 Customer changes preserve the active criteria. `addPerson` inserts into the observable backing list, while
 `setPerson` replaces an immutable customer; `FilteredList` re-evaluates the affected entry automatically. A new
@@ -181,20 +182,48 @@ and punctuation remain significant. Queries must be nonblank, but may be fragmen
 they do not use the validation rules for creating complete contact fields. `TagCriterion` accepts a validated `Tag` and
 uses its complete, case-insensitive equality rule.
 
+`PostalCodeCriterion` accepts a search prefix stored as a string. `FindCommandParser` strips surrounding whitespace
+from the `c/` value and validates it using `PostalCodeCriterion.isValidPrefix`, which accepts one to six ASCII digits
+(`[0-9]{1,6}`). Blank values produce the existing invalid-command-format error; other invalid values produce
+`PostalCodeCriterion.MESSAGE_CONSTRAINTS`. The criterion also validates its constructor argument and matches using
+`postalCode.value.startsWith(postalCodePrefix)`. Leading zeros remain significant, a six-digit query is an exact match,
+and customers whose postal code is null do not match. This criterion joins the same `SearchCriteria` collection as
+other conditions, so `find n/Alice c/53` requires both conditions and each new `find` replaces the previous criteria.
+
+Customer-record validation remains separate: `add` and `edit` continue to use `ParserUtil.parsePostalCode` and
+`PostalCode`, which require exactly six digits. A valid search prefix is never used as a customer's stored postal code.
+
 To add a search condition with different matching rules, implement `PersonCriterion` and include it in a
 `SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
 CLI prefixes belong in the parser, not in the criteria. Add the prefix to `FindCommandParser`'s supported-prefix list
 and construct its criterion there. The parser accepts each supported prefix once, requires a prefix before the first
-value, rejects blank or unsupported parameters, and validates tags using `ParserUtil.parseTag`. It recognizes prefixes
-at whitespace boundaries without collapsing internal query spacing. `FindCommand` passes `SearchCriteria` directly to
+value, rejects blank or unsupported parameters, and validates tags using `ParserUtil.parseTag` and postal search
+prefixes using `PostalCodeCriterion.isValidPrefix`.
+It recognizes prefixes at whitespace boundaries without collapsing internal query spacing, including `c/o` inside an
+address. `FindCommand` passes `SearchCriteria` directly to
 `Model.updateFilteredPersonList`, which replaces the active criteria on the list backed by the full address book.
 There is no need to filter the previous search's results or execute another search command as an intermediate step.
 
-For future multi-item searches, product and status conditions must be grouped inside **one** `PersonCriterion` that
-checks whether any single item satisfies both conditions. Separate customer predicates for "has this product" and
-"has this status" could incorrectly match different items. Date/method and postal conditions can be separate criteria,
-because they describe the preorder or customer rather than an individual item. These extensions, `find s/` support,
-final multi-item tracking rules and the active-criteria display remain deferred.
+`FindCommandParser` combines `d/` (`PREFIX_DETAILS`) and `s/` into **one** `ItemCriterion`. Separate predicates for
+"has this product" and "has this status" would incorrectly allow different items to satisfy the conditions.
+Product names match completely after stripping surrounding whitespace and normalizing case with `Locale.ROOT`;
+internal spacing and punctuation remain significant. Status input is validated with `ParserUtil.parseItemStatus`.
+
+The parser supplies `EnumSet.allOf(ItemStatus.class)` when `s/` is omitted. This is deliberate: an empty status set
+in `ItemCriterion` matches **nothing**, rather than meaning "any status". An absent product name accepts any product.
+Bare `track` supplies only `PENDING` and `PREPARED`; explicit `track s/STATUS` and `find s/STATUS` produce equivalent
+item criteria. Each new command still replaces the previous search, rather than accumulating conditions.
+
+`ItemCriterion.matches(Item)` is the shared item-level check. `getMatchingItems(Person)` returns an unmodifiable list
+that preserves item order and duplicate entries. `TrackCommand` counts filtered customers once each, then sums the
+sizes of their matching-item lists using a `long` total. It counts item entries, not quantities, including migrated
+items without quantities. Explicit status feedback retains the requested status even when both counts are zero.
+
+The criterion rejects null arguments, null status elements and blank product queries, and defensively copies the
+status set. Its normalized conditions define value equality and hash codes for observable search state.
+Future summaries and highlighting should reuse this matcher to stay consistent with customer filtering.
+Date/method conditions can remain separate customer criteria. Those extensions, the preparation summary,
+matching-item highlighting and the active-criteria display are outside this search change.
 
 ### Storage component
 
@@ -216,6 +245,49 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Preorder item addition and editing
+
+`AddItemCommandParser` parses a customer index and the required name, quantity and status, with an optional remark.
+`EditItemCommandParser` additionally requires `i/ITEM_INDEX` and constructs an `EditItemDescriptor` for supplied fields.
+Both parsers validate the customer-index syntax first, reject duplicate prefixes, check required inputs, and validate
+item fields in the order name, quantity, status, remark. They reuse the model validators through `ParserUtil`.
+
+The edit descriptor distinguishes an omitted remark (`null`), removal (`Optional.empty()`) and replacement
+(`Optional.of(remark)`). The command copies the descriptor defensively. Empty remarks are rejected when adding.
+New items must have quantities; editing preserves a migrated missing quantity unless a quantity is supplied.
+
+Both commands resolve the customer against the filtered list, copy the immutable item list, and rebuild the preorder
+and person before calling `model.setPerson`. Addition appends an item, creating a preorder if absent. Editing validates
+preorder existence and the full item-list index before replacing only the selected item. No explicit filter reset occurs.
+User errors produce exceptions before mutation; assertions check already-validated internal assumptions.
+
+Success messages use `Added/Edited item NUMBER for CUSTOMER: NAME (quantity: QUANTITY, STATUS)`.
+For migrated items without a quantity, the quantity portion is `quantity needed`, matching the customer card.
+Remarks remain visible on the customer card. A missing `i/` produces usage instructions; a supplied but invalid
+item index produces `Item index must be a positive integer.`
+`deleteorder` still removes the whole preorder; its item-level replacement is a separate feature.
+
+### Preorder item deletion
+
+`DeleteItemCommandParser` parses `deleteitem INDEX i/ITEM_INDEX`. It validates the customer-index preamble,
+rejects duplicate `i/` prefixes, and parses the required item index using `ParserUtil.parseIndex`.
+A missing `i/` shows usage instructions; a supplied empty or invalid value shows
+`Item index must be a positive integer.`
+`AddressBookParser` dispatches `deleteitem` to this parser.
+
+`DeleteItemCommand` resolves the customer from `model.getFilteredPersonList()`, checks that a preorder exists,
+and validates the item index against its full item list. Invalid input raises `ParseException` or `CommandException`
+before the model changes. Constructor arguments are checked for null, and assertions verify already-validated
+preconditions in the update helper.
+
+The command copies the immutable item list, removes only the selected position, and constructs a replacement
+`Preorder` and `Person`. It preserves other customer fields and calls `model.setPerson` without resetting the filter.
+An empty item list remains wrapped in a preorder. The success message uses the deleted item's original number,
+name, quantity and status; missing quantities are displayed as blank values.
+
+The replacement person preserves the customer's postal code. `Preorder.withItems` preserves the fulfilment date,
+method and handover notes, including when the final item is removed. Missing optional fields remain absent.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -586,13 +658,13 @@ testers are expected to do more *exploratory* testing.
 Use a test address book without customers whose names contain `SearchTest` or `OtherTest`.
 
 1. Add two customers:
-   * `add n/SearchTest Alice p/81111111 e/searchalice@example.com a/Test Street`
-   * `add n/SearchTest Ben p/82222222 e/searchben@example.com a/Test Street`
+   * `add n/SearchTest Alice p/81111111 e/searchalice@example.com a/Test Street c/123456`
+   * `add n/SearchTest Ben p/82222222 e/searchben@example.com a/Test Street c/123456`
 1. Run `find n/SearchTest`.<br>
    Expected: Only those two customers are shown.
-1. Run `add n/SearchTest Cara p/83333333 e/searchcara@example.com a/Test Street`.<br>
+1. Run `add n/SearchTest Cara p/83333333 e/searchcara@example.com a/Test Street c/123456`.<br>
    Expected: The new customer joins the results; only the three matching customers are shown.
-1. Run `add n/OtherTest Dana p/84444444 e/otherdana@example.com a/Other Street`.<br>
+1. Run `add n/OtherTest Dana p/84444444 e/otherdana@example.com a/Other Street c/123456`.<br>
    Expected: The customer is saved, and the three search results remain displayed.
 1. Run `edit 1 n/OtherTest Alice`.<br>
    Expected: The edited customer disappears. `SearchTest Ben` and `SearchTest Cara` remain at indexes 1 and 2.
@@ -719,6 +791,68 @@ Run each group below independently, starting with the sample data unless stated 
 
    1. Test case: Close and relaunch the application, then locate the same customer.<br>
       Expected: The removed tag remains absent. The customer's other tags, contact details, and preorder are preserved.
+
+### Adding and editing preorder items
+
+Use a disposable data copy. Run `list` and choose a customer without a preorder, noting their displayed index as `INDEX`.
+Record their contact details and tags before starting. Replace `INDEX` in the examples with the displayed number.
+
+1. Run `additem INDEX d/Cake q/2 s/pending r/Less sugar`.<br>
+   Expected: A preorder is created with item 1. The success message includes item number, customer, name, quantity and status.
+   The card displays the remark. Contact details and tags are unchanged.
+1. Repeat the same command.<br>
+   Expected: A separate identical item 2 is appended; item 1 is unchanged.
+1. Run `edititem INDEX i/2 q/3`, followed by `edititem INDEX i/2 r/`.<br>
+   Expected: Only item 2 changes. Its quantity becomes 3 and its remark is removed. Its name and status are preserved.
+1. Try `additem INDEX d/Cake q/0 s/invalid`, then `edititem INDEX i/2 q/0 s/invalid`.<br>
+   Expected: Both report the quantity constraint first, with no data changes.
+1. Try `additem INDEX d/Cake d/Tarts`, then `edititem INDEX d/Cake d/Tarts`.<br>
+   Expected: Both report duplicate `d/` before the missing required fields, with no data changes.
+1. Try `additem INDEX d/Cake q/2 s/pending r/`, `edititem INDEX i/2`, and `edititem INDEX i/999 q/1`.<br>
+   Expected: Respectively, a remark constraint error, no-changes error, and invalid-item-index error. No data changes.
+1. Run `track s/pending`. Using the current displayed indices, mark both Cake items completed with `edititem`.<br>
+   Expected: The customer remains until their final pending item is completed, then leaves that filtered view.
+   Run `list` to confirm that both items and the customer remain stored.
+1. Close and reopen the application.<br>
+   Expected: Both items retain their quantities and statuses; the second item's remark remains absent.
+1. With a v1.3 migrated item lacking a quantity, edit only its status.<br>
+   Expected: Its success message and card both show `quantity needed`.
+   Supply `q/1` to correct it; subsequent success messages and the card show the recorded quantity.
+
+### Deleting a preorder item
+
+Use a disposable copy of the sample data and run `list`. Initially, Alex Yeoh is customer 1 with two items,
+Charlotte Oliveiro is customer 3 with one item, David Li is customer 4 with an empty preorder, and Irfan Ibrahim
+is customer 5 without a preorder.
+
+1. Run `deleteitem 1 i/2`.<br>
+   Expected: `Deleted item 2 for Alex Yeoh: Almond Cookies (quantity: 1, PREPARED)`.
+   Only Almond Cookies disappears. Pineapple Tarts and its quantity, status and remark remain unchanged.
+   Alex's contact details and tags are unchanged.
+1. Run `deleteitem 1 i/1`.<br>
+   Expected: The final item is removed. Alex remains a customer with an empty preorder.
+1. Run `deleteitem 1 i/1` again, then `deleteitem 4 i/1`.<br>
+   Expected: Both show `The item index provided is invalid.` because both preorders are empty. Nothing changes.
+1. Run `deleteitem 5 i/1`.<br>
+   Expected: `Identified person has no preorder.` Nothing changes.
+1. Try `deleteitem`, `deleteitem 0 i/1`, `deleteitem 1`, and `deleteitem 1 o/1`.<br>
+   Expected: An invalid-command-format error followed by usage instructions. Nothing changes.
+1. Try `deleteitem 1 i/`, `deleteitem 1 i/0`, and `deleteitem 1 i/abc`.<br>
+   Expected: `Item index must be a positive integer.` Nothing changes.
+1. Run `deleteitem 1 i/1 i/2`.<br>
+   Expected: `Multiple values specified for the following single-valued field(s): i/`. Nothing changes.
+1. Run `deleteitem 100 i/1`, where 100 exceeds the displayed list size.<br>
+   Expected: `The person index provided is invalid.` Nothing changes.
+1. Run `track`, then delete Charlotte's item using her current displayed customer index and `i/1`.<br>
+   Expected: Charlotte disappears from the tracked view because her preorder is now empty. Run `list` to confirm
+   that she remains a customer. The success message identifies her deleted item, quantity and status.
+1. Close and reopen the app.<br>
+   Expected: Alex's and Charlotte's preorders remain empty. Their other customer details are preserved.
+1. Using a fresh sample-data copy, run `list`, then `deleteitem 1 i/1`.<br>
+   Expected: Only Pineapple Tarts is removed. Almond Cookies remains and is renumbered from 2 to 1.
+1. With a migrated v1.3 item lacking quantity, delete it using its displayed indices.<br>
+   Expected: Deletion succeeds, and the success message shows a blank quantity value. An empty preorder remains
+   if this was the only item.
 
 ### Deleting a preorder
 

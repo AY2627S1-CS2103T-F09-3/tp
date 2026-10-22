@@ -3,20 +3,28 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PersonCriterion;
+import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
@@ -27,7 +35,8 @@ import seedu.address.model.search.TextContainsCriterion.Field;
  */
 public class FindCommandParser implements Parser<FindCommand> {
     private static final List<Prefix> SUPPORTED_PREFIXES =
-            List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG);
+            List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_POSTAL_CODE, PREFIX_TAG,
+                    PREFIX_DETAILS, PREFIX_STATUS);
     private static final Pattern PARAMETER_PREFIX = Pattern.compile("(?<!\\S)([A-Za-z]+/)");
 
     /**
@@ -43,6 +52,17 @@ public class FindCommandParser implements Parser<FindCommand> {
         Prefix[] prefixes = SUPPORTED_PREFIXES.toArray(Prefix[]::new);
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(preparedArgs, prefixes);
 
+        validateArguments(arguments, prefixes, formatError);
+        List<PersonCriterion> criteria = createCustomerCriteria(arguments);
+        addItemCriterion(criteria, arguments);
+        if (criteria.isEmpty()) {
+            throw new ParseException(formatError);
+        }
+        return new FindCommand(new SearchCriteria(criteria));
+    }
+
+    private void validateArguments(ArgumentMultimap arguments, Prefix[] prefixes, String formatError)
+            throws ParseException {
         if (!arguments.getPreamble().isEmpty()) {
             throw new ParseException(formatError);
         }
@@ -54,20 +74,41 @@ public class FindCommandParser implements Parser<FindCommand> {
                 throw new ParseException(formatError);
             }
         }
+    }
 
+    private List<PersonCriterion> createCustomerCriteria(ArgumentMultimap arguments) throws ParseException {
         List<PersonCriterion> criteria = new ArrayList<>();
         addTextCriterion(criteria, arguments, PREFIX_NAME, Field.NAME);
         addTextCriterion(criteria, arguments, PREFIX_PHONE, Field.PHONE);
         addTextCriterion(criteria, arguments, PREFIX_EMAIL, Field.EMAIL);
         addTextCriterion(criteria, arguments, PREFIX_ADDRESS, Field.ADDRESS);
+        if (arguments.getValue(PREFIX_POSTAL_CODE).isPresent()) {
+            String postalCodePrefix = arguments.getValue(PREFIX_POSTAL_CODE).get().strip();
+            if (!PostalCodeCriterion.isValidPrefix(postalCodePrefix)) {
+                throw new ParseException(PostalCodeCriterion.MESSAGE_CONSTRAINTS);
+            }
+            criteria.add(new PostalCodeCriterion(postalCodePrefix));
+        }
         if (arguments.getValue(PREFIX_TAG).isPresent()) {
             criteria.add(new TagCriterion(ParserUtil.parseTag(arguments.getValue(PREFIX_TAG).get().strip())));
         }
 
-        if (criteria.isEmpty()) {
-            throw new ParseException(formatError);
+        return criteria;
+    }
+
+    private void addItemCriterion(List<PersonCriterion> criteria, ArgumentMultimap arguments) throws ParseException {
+        Optional<String> productName = arguments.getValue(PREFIX_DETAILS);
+        Optional<String> status = arguments.getValue(PREFIX_STATUS);
+        if (productName.isEmpty() && status.isEmpty()) {
+            return;
         }
-        return new FindCommand(new SearchCriteria(criteria));
+
+        // Omitting s/ accepts all statuses. An empty set would instead match no items.
+        Set<ItemStatus> statuses = status.isPresent()
+                ? Set.of(ParserUtil.parseItemStatus(status.get().strip()))
+                : EnumSet.allOf(ItemStatus.class);
+        // Both conditions belong in one criterion so they cannot match different items.
+        criteria.add(new ItemCriterion(productName, statuses));
     }
 
     private String prepareArguments(String args, String formatError) throws ParseException {
@@ -78,9 +119,9 @@ public class FindCommandParser implements Parser<FindCommand> {
             }
         }
 
-        // Let the shared tokenizer recognize the first prefix and prefixes after tabs or newlines.
-        // Only add separator spaces before prefixes; preserve the text inside search values.
-        return matcher.replaceAll(" $1");
+        // Supply a separator for the first prefix; the shared tokenizer handles whitespace boundaries.
+        // Leave all text inside search values unchanged, including whitespace before literal c/o in an address.
+        return " " + args;
     }
 
     private void addTextCriterion(List<PersonCriterion> criteria, ArgumentMultimap arguments,
