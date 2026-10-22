@@ -1,0 +1,25 @@
+@startuml
+!include style.puml
+skinparam arrowThickness 1.1
+skinparam arrowColor MODEL_COLOR
+skinparam classBackgroundColor MODEL_COLOR
+left to right direction
+
+Class SearchCriteria
+Class "<<interface>>\nPersonCriterion" as PersonCriterion
+Class TextContainsCriterion
+Class TagCriterion
+Class PostalCodeCriterion
+Class ItemCriterion
+Class FulfilmentDateCriterion
+Class FulfilmentMethodCriterion
+
+SearchCriteria -up-> "0..*" PersonCriterion
+
+TextContainsCriterion ..|> PersonCriterion
+TagCriterion ..|> PersonCriterion
+PostalCodeCriterion ..|> PersonCriterion
+ItemCriterion ..|> PersonCriterion
+FulfilmentDateCriterion ..|> PersonCriterion
+FulfilmentMethodCriterion ..|> PersonCriterion
+@enduml

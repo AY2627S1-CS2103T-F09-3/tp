@@ -15,6 +15,9 @@ Class PersonListPanel
 Class PersonCard
 Class StatusBarFooter
 Class CommandBox
+Class SearchCriteriaDisplay
+Class SearchCriteriaFormatter
+Class SearchCriteriaSummary
 }
 
 package Model <<Rectangle>> {
@@ -34,6 +37,7 @@ MainWindow *-down->  "1" CommandBox
 MainWindow *-down-> "1" ResultDisplay
 MainWindow *-down-> "1" PersonListPanel
 MainWindow *-down-> "1" StatusBarFooter
+MainWindow *-down-> "1" SearchCriteriaDisplay
 MainWindow --> "0..1" HelpWindow
 
 PersonListPanel -down-> "*" PersonCard
@@ -46,12 +50,18 @@ PersonListPanel --|> UiPart
 PersonCard --|> UiPart
 StatusBarFooter --|> UiPart
 HelpWindow --|> UiPart
+SearchCriteriaDisplay --|> UiPart
+
+SearchCriteriaDisplay .down.> SearchCriteriaFormatter
+SearchCriteriaDisplay ..> SearchCriteriaSummary
+SearchCriteriaFormatter .right.> SearchCriteriaSummary : <<create>>
 
 PersonCard ..> Model
 UiManager -right-> Logic
 MainWindow -left-> Logic
 
-PersonListPanel -[hidden]left- HelpWindow
+PersonListPanel -[hidden]left- SearchCriteriaDisplay
+SearchCriteriaDisplay -[hidden]left- HelpWindow
 HelpWindow -[hidden]left- CommandBox
 CommandBox -[hidden]left- ResultDisplay
 ResultDisplay -[hidden]left- StatusBarFooter
