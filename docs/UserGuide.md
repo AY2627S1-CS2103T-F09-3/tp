@@ -98,6 +98,10 @@ The area immediately above the customer list shows your active search:
   For example, `find n/Alice t/regular` shows **Name: alice** and **Tag: regular**.
 * Postal searches show the supplied digits, including leading zeros: `find c/01` shows **Postal: 01** and
   `find c/012345` shows **Postal: 012345**. Postal badges appear after Address and before Tag badges.
+* Product and status conditions stay together: `find d/Pineapple Tarts s/pending` shows
+  **Item: pineapple tarts · Pending** in one badge. `find d/Pineapple Tarts` shows
+  **Item: pineapple tarts · Any status**, including completed items.
+* A status-only search such as `find s/prepared` shows **Item status: Prepared**.
 * `track` shows **Item status: Pending or Prepared** in one badge. `track s/PENDING` shows **Item status: Pending**.
 
 The badges describe the search even when it matches every customer or no customers. Text searches show the

@@ -12,6 +12,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -91,6 +92,40 @@ public class SearchCriteriaFormatterTest {
     }
 
     @Test
+    public void format_productAndStatus_keepsSameItemConditionsInOneSegment() {
+        assertSummary(List.of(new ItemCriterion(Optional.of(" PINEAPPLE TARTS "), Set.of(PENDING))),
+                "Item: pineapple tarts · Pending");
+        assertSummary(List.of(new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of(PREPARED))),
+                "Item: pineapple tarts · Prepared");
+        assertSummary(List.of(new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of(COMPLETED))),
+                "Item: pineapple tarts · Completed");
+    }
+
+    @Test
+    public void format_productWithoutStatus_showsAnyStatusIncludingCompleted() {
+        assertSummary(List.of(new ItemCriterion(Optional.of("Pineapple Tarts"), EnumSet.allOf(ItemStatus.class))),
+                "Item: pineapple tarts · Any status");
+    }
+
+    @Test
+    public void format_productWithStatusAlternatives_keepsOrderedAlternativesTogether() {
+        assertSummary(List.of(new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of(PREPARED, PENDING))),
+                "Item: pineapple tarts · Pending or Prepared");
+    }
+
+    @Test
+    public void format_productWithEmptyStatusSet_retainsActiveFilter() {
+        assertSummary(List.of(new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of())),
+                "Item: pineapple tarts · None");
+    }
+
+    @Test
+    public void format_productName_preservesSignificantSpacingAndPunctuation() {
+        assertSummary(List.of(new ItemCriterion(Optional.of(" Tarts  (Large)/Box "), Set.of(PENDING))),
+                "Item: tarts  (large)/box · Pending");
+    }
+
+    @Test
     public void format_combinedCriteria_usesStableFieldOrder() {
         List<PersonCriterion> criteria = new ArrayList<>(List.of(
                 new ItemCriterion(Optional.empty(), Set.of(PREPARED, PENDING)),
@@ -115,6 +150,20 @@ public class SearchCriteriaFormatterTest {
         assertSummary(List.of(new TextContainsCriterion(NAME, "bob"), new TextContainsCriterion(NAME, "alice"),
                 new TagCriterion(new Tag("vip")), new TagCriterion(new Tag("regular"))),
                 "Name: alice", "Name: bob", "Tag: regular", "Tag: vip");
+    }
+
+    @Test
+    public void format_productWithCustomerCriteria_showsOneItemBadgeAfterCustomerBadges() {
+        List<PersonCriterion> criteria = new ArrayList<>(List.of(
+                new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of(PENDING)),
+                new TagCriterion(new Tag("regular")),
+                new PostalCodeCriterion("01"),
+                new TextContainsCriterion(NAME, "Alice")));
+        String[] expected = {"Name: alice", "Postal: 01", "Tag: regular", "Item: pineapple tarts · Pending"};
+
+        assertSummary(criteria, expected);
+        Collections.reverse(criteria);
+        assertSummary(criteria, expected);
     }
 
     @Test
@@ -146,16 +195,11 @@ public class SearchCriteriaFormatterTest {
             Locale.setDefault(Locale.forLanguageTag("tr-TR"));
             assertSummary(List.of(new TextContainsCriterion(NAME, "ALICE"),
                     new ItemCriterion(Optional.empty(), Set.of(PENDING))), "Name: alice", "Item status: Pending");
+            assertSummary(List.of(new ItemCriterion(Optional.of("PINEAPPLE TARTS"), Set.of(PENDING))),
+                    "Item: pineapple tarts · Pending");
         } finally {
             Locale.setDefault(originalLocale);
         }
-    }
-
-    @Test
-    public void format_productCriterion_throwsInsteadOfHidingProductCondition() {
-        ItemCriterion criterion = new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of(PENDING));
-        assertThrows(IllegalArgumentException.class, () ->
-                SearchCriteriaFormatter.format(new SearchCriteria(List.of(criterion))));
     }
 
     @Test

@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.model.preorder.ItemStatus.COMPLETED;
+import static seedu.address.model.preorder.ItemStatus.PENDING;
+import static seedu.address.model.preorder.ItemStatus.PREPARED;
 import static seedu.address.model.search.TextContainsCriterion.Field.ADDRESS;
 import static seedu.address.model.search.TextContainsCriterion.Field.EMAIL;
 import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
@@ -15,6 +18,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -39,6 +44,8 @@ import seedu.address.logic.LogicManager;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.Item;
+import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PersonCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
@@ -259,6 +266,104 @@ public class SearchCriteriaDisplayTest {
             } finally {
                 stage.close();
             }
+        });
+    }
+
+    @Test
+    public void mainWindow_productAndStatusSearches_showSameItemConditionsAndKeepCommandBoxFocus() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Item pendingTarts = new ItemBuilder().withName("Pineapple Tarts").withStatus(PENDING).build();
+            Item preparedTarts = new ItemBuilder(pendingTarts).withStatus(PREPARED).build();
+            Item completedTarts = new ItemBuilder(pendingTarts).withStatus(COMPLETED).build();
+            Item preparedCookies = new ItemBuilder().withName("Almond Cookies").withStatus(PREPARED).build();
+            Person alice = new PersonBuilder(ALICE).withPostalCode("012345").withTags("regular")
+                    .withPreorder(pendingTarts, preparedCookies).build();
+            Person benson = new PersonBuilder(BENSON).withPreorder(preparedTarts).build();
+            Person carl = new PersonBuilder().withName("Carl").withPhone("83456789")
+                    .withPreorder(completedTarts).build();
+            model.addPerson(alice);
+            model.addPerson(benson);
+            model.addPerson(carl);
+            Path dataPath = temporaryFolder.resolve("item-addressbook.json");
+            Logic logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(dataPath),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("item-preferences.json"))));
+            Stage stage = new Stage();
+            try {
+                MainWindow window = new MainWindow(stage, logic, dataPath);
+                window.fillInnerParts();
+                Parent root = stage.getScene().getRoot();
+                TextField commandBox = (TextField) root.lookup("#commandTextField");
+                commandBox.requestFocus();
+
+                enterCommand(commandBox, "find d/PINEAPPLE TARTS");
+                assertEquals(List.of(alice, benson, carl), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Item: pineapple tarts · Any status");
+                enterCommand(commandBox, "find d/Pineapple Tarts s/pending");
+                assertEquals(List.of(alice), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Item: pineapple tarts · Pending");
+
+                enterCommand(commandBox, "find n/Alice d/Pineapple Tarts s/prepared");
+                assertTrue(model.getFilteredPersonList().isEmpty());
+                assertDisplay(root, "Filters · Match all", "Name: alice", "Item: pineapple tarts · Prepared");
+                enterCommand(commandBox, "find d/Pineapple Tarts s/prepared");
+                assertEquals(List.of(benson), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Item: pineapple tarts · Prepared");
+
+                enterCommand(commandBox, "edititem 1 i/1 s/completed");
+                assertTrue(model.getFilteredPersonList().isEmpty());
+                assertDisplay(root, "Filters · Match all", "Item: pineapple tarts · Prepared");
+
+                enterCommand(commandBox, "find s/completed");
+                assertEquals(2, model.getFilteredPersonList().size());
+                assertDisplay(root, "Filters · Match all", "Item status: Completed");
+                enterCommand(commandBox, "track s/COMPLETED");
+                assertEquals(2, model.getFilteredPersonList().size());
+                assertDisplay(root, "Filters · Match all", "Item status: Completed");
+                enterCommand(commandBox, "track");
+                assertEquals(List.of(alice), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Item status: Pending or Prepared");
+
+                enterCommand(commandBox, "find c/01 t/regular d/Pineapple Tarts s/pending n/Alice");
+                assertEquals(List.of(alice), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Name: alice", "Postal: 01", "Tag: regular",
+                        "Item: pineapple tarts · Pending");
+                enterCommand(commandBox, "find s/unknown");
+                assertTrue(commandBox.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertDisplay(root, "Filters · Match all", "Name: alice", "Postal: 01", "Tag: regular",
+                        "Item: pineapple tarts · Pending");
+
+                enterCommand(commandBox, "list");
+                assertEquals(3, model.getFilteredPersonList().size());
+                assertDisplay(root, "Showing: All customers");
+                assertFalse(getBadgePane(root).isManaged());
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
+    public void layout_longProductAndStatus_wrapsFullValueInOneBadge() throws Exception {
+        runOnFxThread(() -> {
+            String product = "pineapple".repeat(24);
+            SearchCriteriaDisplay display = new SearchCriteriaDisplay(new ReadOnlyObjectWrapper<>(
+                    new SearchCriteria(List.of(new ItemCriterion(Optional.of(product), Set.of(PENDING))))));
+            Region root = display.getRoot();
+            attachToScene(root);
+
+            layoutAtWidth(root, 250);
+            assertDisplay(root, "Filters · Match all", "Item: " + product + " · Pending");
+            assertBadgesFit(root);
+            Label badge = getBadges(root).getFirst();
+            assertEquals(badge.getText(), ((Text) badge.lookup(".text")).getText());
+            assertTrue(badge.getHeight() > 40);
+
+            double narrowHeight = root.getHeight();
+            layoutAtWidth(root, 720);
+            assertTrue(root.getHeight() < narrowHeight);
+            assertBadgesFit(root);
+            assertEquals(badge.getText(), ((Text) badge.lookup(".text")).getText());
         });
     }
 

@@ -91,6 +91,12 @@ stays separate from matching and does not parse diagnostic `toString()` output.
 `PostalCodeCriterion.getPostalCodePrefix()` exposes the immutable search digits for a `Postal` badge, preserving
 leading zeros and the supplied prefix length. Postal badges are ordered after Address and before Tag badges.
 
+`ItemCriterion` exposes its optional normalized product name and immutable accepted statuses. The formatter keeps
+both conditions in one `Item` badge after customer badges, reflecting same-item matching. All statuses on a product
+criterion display as `Any status`; subsets display their readable labels joined by `or` in fulfilment order.
+A criterion without a product uses `Item status`, retaining the status-only search and tracking labels. An empty
+status set displays `None`, so a criterion matching no items is still visible.
+
 The display uses a `FlowPane` of read-only labels. Badges wrap onto additional rows without a row limit, and each
 badge is limited to the available width so long values wrap inside it. Its preferred-height measurement also accounts
 for wrapping when `FlowPane` measures a row without supplying a width. Empty searches hide the badge container and

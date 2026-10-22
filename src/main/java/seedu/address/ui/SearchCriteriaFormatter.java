@@ -3,6 +3,7 @@ package seedu.address.ui;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,7 +19,7 @@ import seedu.address.model.search.TextContainsCriterion;
 /**
  * Formats structured search state into a heading and separate badge labels, independently of JavaFX and matching.
  * Add formatting and a display position here when introducing a new criterion type. Each criterion stays in one
- * segment so that future product and status conditions on the same item can be displayed together.
+ * segment so that product and status conditions on the same item are displayed together.
  */
 public final class SearchCriteriaFormatter {
     public static final String FILTERS_HEADING = "Filters · Match all";
@@ -28,7 +29,7 @@ public final class SearchCriteriaFormatter {
      * Defines display order independently of the model's unordered criterion set.
      */
     private enum Position {
-        NAME, PHONE, EMAIL, ADDRESS, POSTAL, TAG, ITEM_STATUS, HANDOVER_NOTES
+        NAME, PHONE, EMAIL, ADDRESS, POSTAL, TAG, ITEM, HANDOVER_NOTES
     }
 
     /**
@@ -61,8 +62,7 @@ public final class SearchCriteriaFormatter {
             case TextContainsCriterion text -> formatText(text);
             case PostalCodeCriterion postal -> new Segment(Position.POSTAL, "Postal: " + postal.getPostalCodePrefix());
             case TagCriterion tag -> new Segment(Position.TAG, "Tag: " + tag.getTag().tagName);
-            case ItemCriterion status when status.getProductName().isEmpty() ->
-                new Segment(Position.ITEM_STATUS, "Item status: " + formatStatuses(status.getStatuses()));
+            case ItemCriterion item -> formatItem(item);
             default -> throw new IllegalArgumentException("Unsupported search criterion: "
                     + criterion.getClass().getName());
         };
@@ -77,6 +77,15 @@ public final class SearchCriteriaFormatter {
             case ADDRESS -> new Segment(Position.ADDRESS, "Address: " + query);
             case HANDOVER_NOTES -> new Segment(Position.HANDOVER_NOTES, "Handover notes: " + query);
         };
+    }
+
+    private static Segment formatItem(ItemCriterion criterion) {
+        if (criterion.getProductName().isEmpty()) {
+            return new Segment(Position.ITEM, "Item status: " + formatStatuses(criterion.getStatuses()));
+        }
+        String statuses = criterion.getStatuses().equals(EnumSet.allOf(ItemStatus.class))
+                ? "Any status" : formatStatuses(criterion.getStatuses());
+        return new Segment(Position.ITEM, "Item: " + criterion.getProductName().orElseThrow() + " · " + statuses);
     }
 
     private static String formatStatuses(Set<ItemStatus> statuses) {
