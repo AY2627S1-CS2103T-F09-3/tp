@@ -25,6 +25,7 @@ public class Person {
 
     // Data fields
     private final Address address;
+    private final PostalCode postalCode;
     private final Set<Tag> tags = new HashSet<>();
     private final Preorder preorder; // null when the customer has no current preorder
 
@@ -33,7 +34,7 @@ public class Person {
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags) {
-        this(name, phone, email, address, tags, Optional.empty());
+        this(name, phone, email, address, null, tags, Optional.empty());
     }
 
     /**
@@ -42,11 +43,26 @@ public class Person {
      */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags,
             Optional<Preorder> preorder) {
+        this(name, phone, email, address, null, tags, preorder);
+    }
+
+    /** Creates a person with an optional postal code and no preorder. */
+    public Person(Name name, Phone phone, Email email, Address address, PostalCode postalCode, Set<Tag> tags) {
+        this(name, phone, email, address, postalCode, tags, Optional.empty());
+    }
+
+    /**
+     * Creates a person with the given details and preorder.
+     * The postal code may be null for legacy data; all other arguments must be non-null.
+     */
+    public Person(Name name, Phone phone, Email email, Address address, PostalCode postalCode, Set<Tag> tags,
+            Optional<Preorder> preorder) {
         requireAllNonNull(name, phone, email, address, tags, preorder);
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.address = address;
+        this.postalCode = postalCode;
         this.tags.addAll(tags);
         this.preorder = preorder.orElse(null);
     }
@@ -65,6 +81,10 @@ public class Person {
 
     public Address getAddress() {
         return address;
+    }
+
+    public PostalCode getPostalCode() {
+        return postalCode;
     }
 
     /**
@@ -115,6 +135,7 @@ public class Person {
                 && phone.equals(otherPerson.phone)
                 && email.equals(otherPerson.email)
                 && address.equals(otherPerson.address)
+                && Objects.equals(postalCode, otherPerson.postalCode)
                 && tags.equals(otherPerson.tags)
                 && Objects.equals(preorder, otherPerson.preorder);
     }
@@ -122,7 +143,7 @@ public class Person {
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, tags, preorder);
+        return Objects.hash(name, phone, email, address, postalCode, tags, preorder);
     }
 
     @Override
@@ -132,6 +153,7 @@ public class Person {
                 .add("phone", phone)
                 .add("email", email)
                 .add("address", address)
+                .add("postalCode", postalCode)
                 .add("tags", tags)
                 .add("preorder", getPreorder())
                 .toString();

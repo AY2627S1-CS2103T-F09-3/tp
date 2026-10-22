@@ -16,6 +16,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.PostalCode;
 import seedu.address.model.preorder.Preorder;
 import seedu.address.model.tag.Tag;
 
@@ -32,6 +33,7 @@ class JsonAdaptedPerson {
     private final String phone;
     private final String email;
     private final String address;
+    private final String postalCode;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     // Saved as a list so that customers can have more than one preorder in a later version
     private final List<JsonAdaptedPreorder> preorders = new ArrayList<>();
@@ -43,13 +45,14 @@ class JsonAdaptedPerson {
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("address") String address,
-            @JsonProperty("tags") List<JsonAdaptedTag> tags,
+            @JsonProperty("postalCode") String postalCode, @JsonProperty("tags") List<JsonAdaptedTag> tags,
             @JsonProperty("preorders") List<JsonAdaptedPreorder> preorders,
             @JsonProperty("preorder") JsonAdaptedLegacyPreorder legacyPreorder) {
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.address = address;
+        this.postalCode = postalCode;
         if (tags != null) {
             this.tags.addAll(tags);
         }
@@ -64,7 +67,19 @@ class JsonAdaptedPerson {
     /** Backwards-compatible constructor for customers without a preorder. */
     public JsonAdaptedPerson(String name, String phone, String email, String address,
             List<JsonAdaptedTag> tags) {
-        this(name, phone, email, address, tags, null, null);
+        this(name, phone, email, address, null, tags, null, null);
+    }
+
+    /** Creates an adapted customer with a postal code and no preorder. */
+    public JsonAdaptedPerson(String name, String phone, String email, String address, String postalCode,
+            List<JsonAdaptedTag> tags) {
+        this(name, phone, email, address, postalCode, tags, null, null);
+    }
+
+    /** Creates an adapted customer from preorder data without a postal code. */
+    public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags,
+            List<JsonAdaptedPreorder> preorders, JsonAdaptedLegacyPreorder legacyPreorder) {
+        this(name, phone, email, address, null, tags, preorders, legacyPreorder);
     }
 
     /**
@@ -75,6 +90,7 @@ class JsonAdaptedPerson {
         phone = source.getPhone().value;
         email = source.getEmail().value;
         address = source.getAddress().value;
+        postalCode = source.getPostalCode() == null ? null : source.getPostalCode().value;
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -123,6 +139,10 @@ class JsonAdaptedPerson {
             throw new IllegalValueException(Address.MESSAGE_CONSTRAINTS);
         }
         final Address modelAddress = new Address(address);
+        if (postalCode != null && !PostalCode.isValidPostalCode(postalCode)) {
+            throw new IllegalValueException(PostalCode.MESSAGE_CONSTRAINTS);
+        }
+        final PostalCode modelPostalCode = postalCode == null ? null : new PostalCode(postalCode);
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
 
@@ -136,7 +156,7 @@ class JsonAdaptedPerson {
                 ? Optional.empty()
                 : Optional.of(preorders.get(0).toModelType());
 
-        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelTags, modelPreorder);
+        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelPostalCode, modelTags, modelPreorder);
     }
 
 }

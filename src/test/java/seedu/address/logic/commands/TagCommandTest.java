@@ -52,7 +52,7 @@ public class TagCommandTest {
     public void execute_personWithPreorder_preorderKept() {
         Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person personWithPreorder = new PersonBuilder(firstPerson)
-                .withPreorder("2 chocolate cakes", ItemStatus.PENDING).build();
+                .withPostalCode("012345").withPreorder("2 chocolate cakes", ItemStatus.PENDING).build();
         model.setPerson(firstPerson, personWithPreorder);
 
         Person taggedPerson = new PersonBuilder(personWithPreorder)

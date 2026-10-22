@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
+import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.HOON;
 import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
@@ -23,10 +24,12 @@ import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
+import seedu.address.testutil.PreorderBuilder;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
@@ -117,8 +120,32 @@ public class JsonAddressBookStorageTest {
         assertThrows(DataLoadingException.class, () -> readPreorderFixture("nullItem.json"));
     }
 
+    @Test
+    public void readAddressBook_invalidFulfilmentDate_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, () -> readPreorderFixture("invalidFulfilmentDate.json"));
+    }
+
     private void readPreorderFixture(String fileName) throws Exception {
         new JsonAddressBookStorage(TEST_DATA_FOLDER.resolve(fileName)).readAddressBook();
+    }
+
+    @Test
+    public void readAndSaveAddressBook_fulfilmentDetails_preservesAllDetails() throws Exception {
+        ReadOnlyAddressBook loaded = new JsonAddressBookStorage(TEST_DATA_FOLDER.resolve("fulfilmentDetails.json"))
+                .readAddressBook().get();
+
+        AddressBook expected = new AddressBook();
+        expected.addPerson(new PersonBuilder(ALICE).withPreorder(new PreorderBuilder()
+                .withItems(new ItemBuilder().build()).withDate("2026-12-20")
+                .withMethod(FulfilmentMethod.DELIVERY).withHandoverNotes("Call on arrival").build()).build());
+        expected.addPerson(new PersonBuilder(BENSON).withPreorder(new PreorderBuilder()
+                .withDate("2026-12-23").build()).build());
+        assertEquals(expected, new AddressBook(loaded));
+
+        Path savedPath = testFolder.resolve("fulfilmentDetailsSaved.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(savedPath);
+        storage.saveAddressBook(loaded);
+        assertEquals(expected, new AddressBook(storage.readAddressBook().get()));
     }
 
     @Test
@@ -182,6 +209,25 @@ public class JsonAddressBookStorageTest {
         readBack = jsonAddressBookStorage.readAddressBook().get(); // file path not specified
         assertEquals(original, new AddressBook(readBack));
 
+    }
+
+    @Test
+    public void readAndSaveAddressBook_currentPostalCodeData_preservesAllFields() throws Exception {
+        Path filePath = testFolder.resolve("CurrentAddressBook.json");
+        AddressBook original = new AddressBook();
+        original.addPerson(new PersonBuilder().withName("Current Customer")
+                .withPhone("81234567").withEmail("current@example.com")
+                .withAddress("123 Example Street").withPostalCode("012345")
+                .withTags("friends", "owesMoney")
+                .withPreorder(new ItemBuilder().withName("Chocolate cake").build()).build());
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        storage.saveAddressBook(original, filePath);
+
+        ReadOnlyAddressBook readBack = storage.readAddressBook(filePath).get();
+        assertEquals(original, new AddressBook(readBack));
+        assertEquals("012345", readBack.getPersonList().get(0).getPostalCode().value);
+        assertEquals(2, readBack.getPersonList().get(0).getTags().size());
     }
 
     @Test

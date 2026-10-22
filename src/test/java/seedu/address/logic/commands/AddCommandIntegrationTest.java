@@ -6,6 +6,7 @@ import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_MARY_JANE_WITH_EXTRA_SPACES;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.POSTAL_CODE_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_MARY_JANE;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
@@ -85,9 +86,10 @@ public class AddCommandIntegrationTest {
 
     @Test
     public void execute_newNameWithPunctuationAndExtraSpaces_success() throws Exception {
-        Person expectedPerson = new PersonBuilder(BOB).withName(VALID_NAME_MARY_JANE).withTags().build();
+        Person expectedPerson = new PersonBuilder(BOB).withPostalCode("654321")
+                .withName(VALID_NAME_MARY_JANE).withTags().build();
         AddCommand command = new AddCommandParser().parse(NAME_DESC_MARY_JANE_WITH_EXTRA_SPACES
-                + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB);
+                + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB);
 
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         expectedModel.addPerson(expectedPerson);
@@ -101,7 +103,7 @@ public class AddCommandIntegrationTest {
     public void execute_nameDiffersOnlyInCaseOrSpaces_failure() throws Exception {
         for (String nameVariant : new String[]{"alice pauline", "  Alice   Pauline  ", "  aLiCe   pAuLiNe  "}) {
             AddCommand command = new AddCommandParser().parse(" " + PREFIX_NAME + nameVariant
-                    + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB);
+                    + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB);
 
             assertCommandFailure(command, model, AddCommand.MESSAGE_DUPLICATE_PERSON);
         }
@@ -112,7 +114,7 @@ public class AddCommandIntegrationTest {
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
 
         AddCommand command = new AddCommandParser().parse(" " + PREFIX_NAME + "  ALICE   PAULINE  "
-                + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB);
+                + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB);
 
         assertCommandFailure(command, model, AddCommand.MESSAGE_DUPLICATE_PERSON);
     }

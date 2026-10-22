@@ -3,6 +3,7 @@ package seedu.address.ui;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import seedu.address.logic.Messages;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 
@@ -13,7 +14,7 @@ import seedu.address.model.preorder.ItemStatus;
 public class PreorderDisplay {
 
     public static final String NO_ITEMS_TEXT = "Preorder: no items yet";
-    public static final String MISSING_QUANTITY_TEXT = "Quantity needed";
+    public static final String MISSING_QUANTITY_TEXT = Messages.MISSING_QUANTITY_TEXT;
     public static final String NO_ITEMS_STYLE_CLASS = "preorder-empty";
 
     private PreorderDisplay() {} // prevents instantiation

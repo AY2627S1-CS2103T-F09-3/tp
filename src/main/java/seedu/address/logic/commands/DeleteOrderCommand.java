@@ -79,7 +79,8 @@ public class DeleteOrderCommand extends Command {
         assert personWithPreorder.getPreorder().isPresent();
 
         return new Person(personWithPreorder.getName(), personWithPreorder.getPhone(),
-                personWithPreorder.getEmail(), personWithPreorder.getAddress(), personWithPreorder.getTags(),
+                personWithPreorder.getEmail(), personWithPreorder.getAddress(), personWithPreorder.getPostalCode(),
+                personWithPreorder.getTags(),
                 Optional.empty());
     }
 

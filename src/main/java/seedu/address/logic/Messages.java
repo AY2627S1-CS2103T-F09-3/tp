@@ -11,7 +11,8 @@ import seedu.address.model.person.Person;
  * Container for user visible messages.
  */
 public class Messages {
-
+    public static final String MISSING_QUANTITY_TEXT = "quantity needed";
+    public static final String MESSAGE_INVALID_ITEM_INDEX = "Item index must be a positive integer.";
     public static final String MESSAGE_UNKNOWN_COMMAND = "Unknown command.";
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
     public static final String MESSAGE_INVALID_PERSON_DISPLAYED_INDEX = "The person index provided is invalid.";
@@ -43,6 +44,8 @@ public class Messages {
                 .append(person.getEmail())
                 .append("; Address: ")
                 .append(person.getAddress())
+                .append("; Postal code: ")
+                .append(person.getPostalCode() == null ? "Postal code needed" : person.getPostalCode())
                 .append("; Tags: ");
         person.getTags().forEach(builder::append);
         return builder.toString();

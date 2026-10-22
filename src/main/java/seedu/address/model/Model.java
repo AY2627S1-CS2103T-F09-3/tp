@@ -1,5 +1,6 @@
 package seedu.address.model;
 
+import java.util.Comparator;
 import java.util.List;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -84,4 +85,9 @@ public interface Model {
      * @throws NullPointerException If {@code criteria} is null.
      */
     void updateFilteredPersonList(SearchCriteria criteria);
+
+    /** Updates the display ordering without changing persisted address-book order. */
+    default void updatePersonListComparator(Comparator<Person> comparator) {
+        // Models that support display ordering may override this method.
+    }
 }
