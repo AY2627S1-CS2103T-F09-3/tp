@@ -411,7 +411,7 @@ Format: `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`
 | Prefix | Detail | Rules |
 |--------|--------|-------|
 | `f/` | Fulfilment date: the day of delivery or collection | A real calendar date in `YYYY-MM-DD` format, e.g. `2026-12-20` |
-| `m/` | Method | `delivery` or `collection`, in any capitalisation. Stored and shown as `DELIVERY` or `COLLECTION` |
+| `m/` | Method | `delivery` or `collection`, in any capitalisation |
 | `h/` | Handover notes, e.g. `Call on arrival` or `Collect from side gate` | One line of at most 100 characters |
 
 * `INDEX` is a positive integer identifying a customer in the **currently displayed list**, including results of `find` or `track`.
