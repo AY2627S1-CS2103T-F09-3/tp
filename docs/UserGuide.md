@@ -233,7 +233,7 @@ For example, `find n/Alex` followed by `group postal` groups only the matching c
 
 ### Preparing deliveries
 
-The **Delivery preparation** panel above the customer list summarises outstanding deliveries in the current results. It refreshes after searches, customer changes, and preorder changes. No extra command is needed.
+The **Delivery preparation** panel above the customer list summarises outstanding deliveries in the current results. It refreshes after searches, customer changes, and preorder changes. No extra command is needed. When there are no outstanding deliveries, the panel remains visible with zero totals and `No outstanding deliveries in the current results.`
 
 * A customer counts as one outstanding stop when their preorder uses `DELIVERY` and has at least one `PENDING` or `PREPARED` item. Multiple items still count as one stop.
 * Collection, empty preorders, completed-only preorders, and preorders without a method do not contribute to the totals.

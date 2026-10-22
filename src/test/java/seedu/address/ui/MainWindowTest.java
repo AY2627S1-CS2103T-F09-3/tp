@@ -15,6 +15,8 @@ import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.api.io.TempDir;
 
 import javafx.application.Platform;
+import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -47,7 +49,7 @@ public class MainWindowTest {
     }
 
     @Test
-    public void fillInnerParts_deliverySummaryFollowsDisplayedSearchResults() throws Exception {
+    public void fillInnerParts_deliverySummaryRemainsVisibleAndFollowsDisplayedSearchResults() throws Exception {
         runOnFxThread(() -> {
             ModelManager model = new ModelManager();
             Person delivery = new PersonBuilder().withName("Alice Tan").withPostalCode("012345")
@@ -72,6 +74,7 @@ public class MainWindowTest {
                 StackPane placeholder = (StackPane) root.lookup("#deliverySummaryPlaceholder");
                 assertEquals(1, placeholder.getChildren().size());
                 Parent summary = (Parent) placeholder.getChildren().get(0);
+                assertSummaryVisible(root, placeholder, summary);
                 ListView<?> customers = (ListView<?>) window.getPersonListPanel().getRoot().lookup("#personListView");
                 assertEquals(List.of(delivery, collection), customers.getItems());
                 assertEquals("1 outstanding customer stop(s) | 1 postal group(s)", totals(summary));
@@ -82,15 +85,39 @@ public class MainWindowTest {
                 assertEquals(List.of(collection), customers.getItems());
                 assertEquals("0 outstanding customer stop(s) | 0 postal group(s)", totals(summary));
                 assertEquals("No outstanding deliveries in the current results.", text(summary));
+                assertSummaryVisible(root, placeholder, summary);
+
+                logic.execute("find n/Nobody");
+                assertEquals(List.of(), customers.getItems());
+                assertEquals("0 outstanding customer stop(s) | 0 postal group(s)", totals(summary));
+                assertEquals("No outstanding deliveries in the current results.", text(summary));
+                assertSummaryVisible(root, placeholder, summary);
 
                 logic.execute("list");
                 assertEquals(List.of(delivery, collection), customers.getItems());
                 assertEquals("1 outstanding customer stop(s) | 1 postal group(s)", totals(summary));
                 assertTrue(text(summary).contains("Alice Tan | " + delivery.getPhone().value));
+                assertSummaryVisible(root, placeholder, summary);
             } finally {
                 stage.close();
             }
         });
+    }
+
+    private static void assertSummaryVisible(Parent root, StackPane placeholder, Parent summary) {
+        // Exercise the layout at the minimum FXML window dimensions without opening a test window.
+        root.resize(450, 600);
+        root.applyCss();
+        root.layout();
+        assertEquals(List.of(summary), placeholder.getChildren());
+        for (Node node = summary; node != null; node = node.getParent()) {
+            assertTrue(node.isVisible());
+            assertTrue(node.isManaged());
+        }
+        Bounds bounds = summary.localToScene(summary.getBoundsInLocal());
+        assertTrue(bounds.getWidth() > 0);
+        assertTrue(bounds.getHeight() > 0);
+        assertTrue(root.localToScene(root.getLayoutBounds()).contains(bounds));
     }
 
     private static String totals(Parent summary) {

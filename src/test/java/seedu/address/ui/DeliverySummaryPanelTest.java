@@ -20,6 +20,7 @@ import seedu.address.logic.commands.GroupPostalCommand;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.FulfilmentMethod;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -70,7 +71,46 @@ public class DeliverySummaryPanelTest {
     }
 
     @Test
-    public void customersSharingPostalCode_shareOneHeaderAndKeepSortedContacts() throws Exception {
+    public void outstandingDeliveries_renderCustomersOnceAndExcludeIneligiblePreorders() throws Exception {
+        runOnFxThread(() -> {
+            ModelManager model = new ModelManager();
+            Person delivery = new PersonBuilder().withName("Active Delivery").withPostalCode("012345")
+                    .withPreorder(new PreorderBuilder().withMethod(FulfilmentMethod.DELIVERY).withItems(
+                            new ItemBuilder().build(), new ItemBuilder().withStatus(ItemStatus.PREPARED).build(),
+                            new ItemBuilder().withStatus(ItemStatus.COMPLETED).build()).build()).build();
+            Person empty = new PersonBuilder().withName("Empty Delivery").withPostalCode("539999")
+                    .withPreorder(new PreorderBuilder().withDate("2026-12-20")
+                            .withMethod(FulfilmentMethod.DELIVERY).build()).build();
+            Person collection = new PersonBuilder().withName("Active Collection").withPostalCode("659999")
+                    .withPreorder(new PreorderBuilder().withMethod(FulfilmentMethod.COLLECTION)
+                            .withItems(new ItemBuilder().build()).build()).build();
+            Person completed = new PersonBuilder().withName("Completed Delivery").withPostalCode("789999")
+                    .withPreorder(new PreorderBuilder().withMethod(FulfilmentMethod.DELIVERY)
+                            .withItems(new ItemBuilder().withStatus(ItemStatus.COMPLETED).build()).build()).build();
+            Person unset = new PersonBuilder().withName("Unset Method").withPreorder(new ItemBuilder().build()).build();
+            List.of(empty, collection, completed, unset, delivery,
+                    new PersonBuilder().withName("No Preorder").build()).forEach(model::addPerson);
+            DeliverySummaryPanel panel = new DeliverySummaryPanel(model.getFilteredPersonList());
+            new Scene(panel.getRoot(), 410, 200);
+            panel.getRoot().applyCss();
+            panel.getRoot().layout();
+
+            assertEquals(List.of("Active Delivery"), contactNames(panel));
+            assertEquals(List.of("POSTAL PREFIX 01"), groupHeaders(panel));
+            assertEquals("1 outstanding customer stop(s) | 1 postal group(s)", totals(panel));
+
+            model.setPerson(delivery, new PersonBuilder(delivery).withPreorder(completed.getPreorder().orElseThrow())
+                    .build());
+            assertEquals("0 outstanding customer stop(s) | 0 postal group(s)", totals(panel));
+            assertEquals(List.of(), groupHeaders(panel));
+            assertEquals("No outstanding deliveries in the current results.", text(panel));
+            assertTrue(panel.getRoot().isVisible());
+            assertTrue(panel.getRoot().isManaged());
+        });
+    }
+
+    @Test
+    public void customersSharingPostalPrefix_shareOneHeaderAndKeepSortedContacts() throws Exception {
         runOnFxThread(() -> {
             ModelManager model = new ModelManager();
             Person first = new PersonBuilder().withName("Alice Tan").withPostalCode("012345")
@@ -78,9 +118,12 @@ public class DeliverySummaryPanelTest {
                             .withItems(new ItemBuilder().build()).build()).build();
             Person sameGroup = new PersonBuilder().withName("Ben Tan").withPostalCode("012345")
                     .withPreorder(first.getPreorder().orElseThrow()).build();
+            Person samePrefix = new PersonBuilder().withName("Cathy Tan").withPostalCode("019876")
+                    .withPreorder(first.getPreorder().orElseThrow()).build();
             Person otherGroup = new PersonBuilder().withName("Charlie Tan").withPostalCode("530123")
                     .withPreorder(first.getPreorder().orElseThrow()).build();
             model.addPerson(otherGroup);
+            model.addPerson(samePrefix);
             model.addPerson(sameGroup);
             model.addPerson(first);
             DeliverySummaryPanel panel = new DeliverySummaryPanel(model.getFilteredPersonList());
@@ -88,14 +131,14 @@ public class DeliverySummaryPanelTest {
             panel.getRoot().applyCss();
             panel.getRoot().layout();
 
-            assertEquals("3 outstanding customer stop(s) | 2 postal group(s)", totals(panel));
+            assertEquals("4 outstanding customer stop(s) | 2 postal group(s)", totals(panel));
             assertEquals(List.of("POSTAL PREFIX 01", "POSTAL PREFIX 53"), groupHeaders(panel));
-            assertEquals(List.of("Alice Tan", "Ben Tan", "Charlie Tan"), contactNames(panel));
+            assertEquals(List.of("Alice Tan", "Ben Tan", "Cathy Tan", "Charlie Tan"), contactNames(panel));
 
             model.deletePerson(first);
-            assertEquals("2 outstanding customer stop(s) | 2 postal group(s)", totals(panel));
+            assertEquals("3 outstanding customer stop(s) | 2 postal group(s)", totals(panel));
             assertEquals(List.of("POSTAL PREFIX 01", "POSTAL PREFIX 53"), groupHeaders(panel));
-            assertEquals(List.of("Ben Tan", "Charlie Tan"), contactNames(panel));
+            assertEquals(List.of("Ben Tan", "Cathy Tan", "Charlie Tan"), contactNames(panel));
         });
     }
 

@@ -253,6 +253,9 @@ without mutating the address book or the active search criteria.
 It reuses `GroupPostalCommand.getPostalGroupKey` for contact headings and `FulfilmentDate.toDisplayString` for dates.
 Names, phones, addresses, postal codes and shared handover notes are shown in a bounded, keyboard-scrollable area
 with wrapped text. Missing dates display `Not scheduled`; absent handover notes display `Handover notes: None`.
+The panel stays installed and visible when there are no outstanding deliveries, showing zero totals and
+`No outstanding deliveries in the current results.` The UI tests cover exclusion of ineligible preorders, one contact
+per customer with multiple outstanding items, postal headings, and layout at the minimum FXML window dimensions.
 
 This adds a derived model snapshot and a UI part within the existing Model/Logic/UI boundaries. It does not introduce
 stored summary state or change the fulfilment fields, JSON schema, customer reconstruction, or grouping command.
