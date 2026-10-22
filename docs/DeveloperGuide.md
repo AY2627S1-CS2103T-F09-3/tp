@@ -125,6 +125,7 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+* stores each customer's preorder, if any, as a `Preorder` holding the `Item`s they ordered (see [Preorders and items](#preorders-and-items)).
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -270,6 +271,7 @@ The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+* saves preorders through `JsonAdaptedPreorder` and `JsonAdaptedItem`, and reads preorders saved by v1.3 through `JsonAdaptedLegacyPreorder` (see [Saving preorders](#saving-preorders)).
 
 ### Common classes
 
@@ -280,6 +282,108 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Preorders and items
+
+A customer's preorder records the products they ordered and how they will be handed over. Each customer has at most
+one `Preorder`, and each `Preorder` holds the customer's `Item`s in the order they were added.
+
+<puml src="diagrams/PreorderClassDiagram.puml" width="600" />
+
+* `Person` stores its preorder as an `Optional<Preorder>`, which is empty for a customer without one.
+* `Preorder` keeps an unmodifiable copy of its items and may have none yet. The number shown before an item on
+  the customer's card is its position in this list, starting from 1.
+* `Preorder` also has an optional `FulfilmentDate`, `FulfilmentMethod` (`DELIVERY` or `COLLECTION`) and
+  `HandoverNotes`, such as "Call on arrival". They belong to the whole preorder, so all of its items are handed
+  over together. `Preorder#withItems()` keeps them when a command changes the items.
+* `Item` has an `ItemName` of up to 200 characters, an `ItemStatus`, and an optional `Quantity` and `Remark`.
+  A `Quantity` is a whole number from 1 to 999, and a `Remark` is a special request of up to 100 characters.
+* New items always have a quantity. `Item#getQuantity()` is empty only for items converted from v1.3 data, as
+  described under "Loading v1.3 data" below.
+* `ItemStatus` belongs to each item, so a customer can have one item `PREPARED` while another is still
+  `PENDING`. There is no overall status for a customer or a preorder. `track` matches a customer when any item
+  has one of the requested statuses.
+
+`Preorder` and `Item` are immutable. A command that changes a customer creates a new `Person` and replaces the old
+one through `Model#setPerson`. Commands that do this for other reasons, such as `edit`, `tag` and `untag`, pass the
+existing preorder to the new `Person`, so it is not lost.
+
+#### Saving preorders
+
+`JsonAdaptedPerson` saves a customer's preorder in a `"preorders"` list, which holds one `JsonAdaptedPreorder`, or
+none for a customer without a preorder. Each `JsonAdaptedPreorder` holds its `JsonAdaptedItem`s, and saves the date
+in `YYYY-MM-DD` form, the method by its name, and the handover notes. Each `JsonAdaptedItem` saves each field as a
+string. A missing fulfilment detail or remark, or the missing quantity of a converted item, is saved as `null`.
+
+```json
+"preorders" : [ {
+  "items" : [ {
+    "name" : "Pineapple Tarts",
+    "quantity" : "2",
+    "status" : "PENDING",
+    "remark" : "Less sugar"
+  } ],
+  "date" : "2026-12-20",
+  "method" : "DELIVERY",
+  "handoverNotes" : "Call on arrival"
+} ]
+```
+
+When the file is loaded, a customer with more than one preorder, a `null` preorder or item, or a preorder or item
+field that breaks its rules is reported as invalid data, in the same way as an invalid name or phone number. A preorder without
+an `"items"` field loads as a preorder with no items.
+
+#### Loading v1.3 data
+
+LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and one `"status"`.
+`JsonAdaptedPerson` still reads that field through `JsonAdaptedLegacyPreorder`, which turns it into a preorder with
+one item named after the old details, with the old status. v1.3 did not record a quantity, and guessing one from the
+details could be wrong, so the item has no quantity and its card shows `quantity needed`. The converted preorder has
+no date, method or handover notes, as v1.3 had none. The old field is never written back, so the next save stores
+the customer in the current format.
+
+#### Design considerations
+
+**Aspect: where the status is kept**
+
+* **Alternative 1 (current choice):** each `Item` has its own `ItemStatus`.
+  * Pros: Items that are prepared at different times can be tracked separately.
+  * Cons: There is no single status for a customer, so a summary has to look at every item.
+* **Alternative 2:** one status per `Preorder`.
+  * Pros: Simpler to display and to filter by.
+  * Cons: Cannot show that one product is ready while another is not, which is common when a customer orders
+    several products.
+
+**Aspect: where the date and method are kept**
+
+* **Alternative 1 (current choice):** one date, method and set of handover notes per `Preorder`.
+  * Pros: A preorder is handed over in one trip, so its items cannot disagree on when or how.
+  * Cons: Items for different days cannot share a preorder. As the data file already saves a list of preorders
+    (see "how preorders are saved" below), a later version can give such a customer a second preorder instead.
+* **Alternative 2:** a date and method on each `Item`.
+  * Pros: Each product can be handed over on its own day.
+  * Cons: The same details are repeated on every item, and changing the date of an order means editing each item.
+
+**Aspect: how a quantity is stored**
+
+* **Alternative 1 (current choice):** a `Quantity` class.
+  * Pros: The rule and its error message are in one place, shared by `ParserUtil#parseQuantity` and the JSON
+    loader. An item without a quantity is an empty `Optional<Quantity>`, the same way an item without a remark is
+    an empty `Optional<Remark>`.
+  * Cons: One more small class.
+* **Alternative 2:** a plain `int`.
+  * Pros: Less code.
+  * Cons: Each place that creates an item has to repeat the range check, and a missing quantity needs a special
+    value such as 0.
+
+**Aspect: how preorders are saved**
+
+* **Alternative 1 (current choice):** a list of preorders in the data file, while the model allows only one.
+  * Pros: Allowing several preorders per customer later will not change the file format again.
+  * Cons: The loader has to reject a list with more than one preorder.
+* **Alternative 2:** a single `"preorder"` object, as in v1.3.
+  * Pros: Matches the model exactly.
+  * Cons: Supporting several preorders later would need another conversion of saved data.
 
 ### Preorder item addition and editing
 
@@ -647,14 +751,15 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Glossary
 
-* **Active order**: A pre-order whose fulfilment status is `PENDING` or `PREPARED`
+* **Active order**: A pre-order with at least one item whose fulfilment status is `PENDING` or `PREPARED`
 * **Archived customer**: A customer hidden from the active customer list but kept, so that it can be restored for a future seasonal campaign
 * **Customer**: A person whose contact and delivery details are stored in LeBake, represented by the `Person` class in the code
 * **Duplicate customer**: A customer with the same name as an existing customer, ignoring case and extra spaces (phone number, email and address are not compared)
-* **Fulfilment status**: The stage a pre-order has reached, which is `PENDING` (recorded but not ready), `PREPARED` (ready for collection or delivery), or `COMPLETED` (collected or delivered)
+* **Fulfilment status**: The stage an item in a pre-order has reached, which is `PENDING` (recorded but not ready), `PREPARED` (ready for collection or delivery), or `COMPLETED` (collected or delivered). Each item has its own status, represented by `ItemStatus` in the code; a pre-order has no overall status
+* **Item**: One product in a pre-order, with its name, quantity, fulfilment status and an optional remark
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Postal area**: A group of nearby addresses that share the same leading digits of their postal code, used to group deliveries
-* **Pre-order**: An order placed in advance for a later collection or delivery, with each customer having at most one current pre-order
+* **Pre-order**: An order placed in advance for a later collection or delivery, made up of the items the customer ordered, with each customer having at most one current pre-order
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 * **Seasonal campaign**: A period of high order demand tied to an occasion, such as Chinese New Year or Christmas
 
@@ -903,6 +1008,33 @@ Start with the sample data. List all customers using the `list` command. The fir
    Expected: Nothing changes. The status message shows `The person index provided is invalid.`
 1. Run `track`, then `deleteorder` with the displayed index of `Charlotte Oliveiro`.<br>
    Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder panel.
+
+### Loading preorder data
+
+These steps edit the data file, so use a copy of LeBake in an empty folder. Launch it once and run `list` to create
+`data/addressbook.json`, then close LeBake before each edit.
+
+1. Loading a preorder saved by v1.3
+
+   1. Prerequisites: In `data/addressbook.json`, replace the first customer's `"preorders"` list with
+      `"preorder" : { "details" : "2 chocolate cakes", "status" : "PENDING" }`.
+
+   1. Test case: Launch LeBake.<br>
+      Expected: The first customer's card shows one item, `2 chocolate cakes`, with `quantity needed` and the
+      status `PENDING`. Their other details are unchanged.
+
+   1. Test case: Run `list`, close LeBake, then open `data/addressbook.json` again.<br>
+      Expected: The customer has a `"preorders"` list holding one item whose `"quantity"` is `null`, and no
+      `"preorder"` field.
+
+1. Loading a data file with an invalid item
+
+   1. Prerequisites: In `data/addressbook.json`, change one item's `"quantity"` to `"0"`. Keep a copy of the file.
+
+   1. Test case: Launch LeBake.<br>
+      Expected: The data file cannot be loaded, so LeBake starts with an empty customer list, and the log warns
+      that the data file could not be loaded. Restore the file from your copy before running a command, as the
+      next command saves the empty list over it.
 
 ### Saving data
 

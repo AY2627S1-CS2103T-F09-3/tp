@@ -18,6 +18,7 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.preorder.FulfilmentDate;
 import seedu.address.model.preorder.FulfilmentMethod;
+import seedu.address.model.preorder.HandoverNotes;
 import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
@@ -44,6 +45,8 @@ public class ParserUtilTest {
     private static final String VALID_ITEM_NAME = "Pineapple Tarts";
     private static final String VALID_QUANTITY = "12";
     private static final String VALID_REMARK = "Less sugar";
+    private static final String VALID_HANDOVER_NOTES = "Call on arrival";
+    private static final String INVALID_HANDOVER_NOTES = "Call on arrival\nLeave at door"; // more than one line
 
     private static final String WHITESPACE = " \t\r\n";
 
@@ -328,5 +331,32 @@ public class ParserUtilTest {
         assertEquals(ItemStatus.PENDING, ParserUtil.parseItemStatus("pending"));
         assertEquals(ItemStatus.PREPARED, ParserUtil.parseItemStatus("Prepared"));
         assertEquals(ItemStatus.COMPLETED, ParserUtil.parseItemStatus(WHITESPACE + "completed" + WHITESPACE));
+    }
+
+    @Test
+    public void parseHandoverNotes_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseHandoverNotes(null));
+    }
+
+    @Test
+    public void parseHandoverNotes_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, HandoverNotes.MESSAGE_CONSTRAINTS, ()
+            -> ParserUtil.parseHandoverNotes(INVALID_HANDOVER_NOTES));
+        assertThrows(ParseException.class, () -> ParserUtil.parseHandoverNotes(WHITESPACE));
+        assertThrows(ParseException.class, ()
+            -> ParserUtil.parseHandoverNotes("a".repeat(HandoverNotes.MAX_LENGTH + 1)));
+    }
+
+    @Test
+    public void parseHandoverNotes_validValueWithWhitespace_returnsTrimmedHandoverNotes() throws Exception {
+        String handoverNotesWithWhitespace = WHITESPACE + VALID_HANDOVER_NOTES + WHITESPACE;
+        assertEquals(new HandoverNotes(VALID_HANDOVER_NOTES),
+                ParserUtil.parseHandoverNotes(handoverNotesWithWhitespace));
+    }
+
+    @Test
+    public void parseHandoverNotes_maximumLength_returnsHandoverNotes() throws Exception {
+        String longestHandoverNotes = "a".repeat(HandoverNotes.MAX_LENGTH);
+        assertEquals(new HandoverNotes(longestHandoverNotes), ParserUtil.parseHandoverNotes(longestHandoverNotes));
     }
 }

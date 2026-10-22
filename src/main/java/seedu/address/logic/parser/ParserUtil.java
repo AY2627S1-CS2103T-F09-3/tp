@@ -18,6 +18,7 @@ import seedu.address.model.person.Phone;
 import seedu.address.model.person.PostalCode;
 import seedu.address.model.preorder.FulfilmentDate;
 import seedu.address.model.preorder.FulfilmentMethod;
+import seedu.address.model.preorder.HandoverNotes;
 import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
@@ -267,5 +268,20 @@ public class ParserUtil {
             throw new ParseException(ItemStatus.MESSAGE_CONSTRAINTS);
         }
         return ItemStatus.valueOf(normalizedStatus);
+    }
+
+    /**
+     * Parses a {@code String handoverNotes} into a {@code HandoverNotes}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code handoverNotes} is invalid.
+     */
+    public static HandoverNotes parseHandoverNotes(String handoverNotes) throws ParseException {
+        requireNonNull(handoverNotes);
+        String trimmedHandoverNotes = handoverNotes.trim();
+        if (!HandoverNotes.isValidHandoverNotes(trimmedHandoverNotes)) {
+            throw new ParseException(HandoverNotes.MESSAGE_CONSTRAINTS);
+        }
+        return new HandoverNotes(trimmedHandoverNotes);
     }
 }

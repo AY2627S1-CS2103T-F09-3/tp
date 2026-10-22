@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +17,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.preorder.Preorder;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -170,6 +172,59 @@ public class FulfilmentSearchIntegrationTest {
         logic.execute("deleteorder 1");
         assertEquals(List.of(missingPostal), logic.getFilteredPersonList());
         assertEquals(1, new DeliveryPreparationSummary(logic.getFilteredPersonList()).getStopCount());
+    }
+
+    @Test
+    public void preorderDateUpdate_preservesOtherFieldsAndRefreshesFulfilmentSearch() throws Exception {
+        find("find c/01 f/2026-12-20 m/delivery h/arrival d/Pineapple Tarts s/pending", List.of(alice));
+        SearchCriteria criteria = logic.getActiveSearchCriteria();
+        Preorder expectedPreorder = new PreorderBuilder(alice.getPreorder().orElseThrow())
+                .withDate("2026-12-21").build();
+        Person updatedAlice = new PersonBuilder(alice).withPreorder(expectedPreorder).build();
+        List<Person> expectedCustomers = new ArrayList<>(model.getAddressBook().getPersonList());
+        expectedCustomers.set(0, updatedAlice);
+
+        logic.execute("preorder 1 f/2026-12-21");
+
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        assertEquals(List.of(), logic.getFilteredPersonList());
+        assertEquals(expectedCustomers, model.getAddressBook().getPersonList());
+        assertEquals(0, new DeliveryPreparationSummary(logic.getFilteredPersonList()).getStopCount());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+
+        find("find c/01 f/2026-12-21 m/delivery h/arrival d/Pineapple Tarts s/pending", List.of(updatedAlice));
+        assertEquals(List.of(updatedAlice), new DeliveryPreparationSummary(logic.getFilteredPersonList()).getStops());
+    }
+
+    @Test
+    public void preorderClearAndSet_refreshDeliveryStopsWithoutLosingItemsOrCustomerDetails() throws Exception {
+        find("find c/012345 f/2026-12-20 m/delivery h/arrival", List.of(alice));
+        logic.execute("group postal");
+        SearchCriteria criteria = logic.getActiveSearchCriteria();
+        Preorder clearedPreorder = new Preorder(alice.getPreorder().orElseThrow().getItems());
+        Person clearedAlice = new PersonBuilder(alice).withPreorder(clearedPreorder).build();
+        List<Person> expectedCustomers = new ArrayList<>(model.getAddressBook().getPersonList());
+        expectedCustomers.set(0, clearedAlice);
+
+        logic.execute("preorder 1 f/ m/ h/");
+
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        assertEquals(List.of(), logic.getFilteredPersonList());
+        assertEquals(expectedCustomers, model.getAddressBook().getPersonList());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+        find("find c/012345", List.of(clearedAlice));
+        assertEquals(0, new DeliveryPreparationSummary(logic.getFilteredPersonList()).getStopCount());
+
+        criteria = logic.getActiveSearchCriteria();
+        logic.execute("preorder 1 m/delivery");
+        Person deliveryAlice = new PersonBuilder(alice).withPreorder(new PreorderBuilder(clearedPreorder)
+                .withMethod(FulfilmentMethod.DELIVERY).build()).build();
+        expectedCustomers.set(0, deliveryAlice);
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        assertEquals(List.of(deliveryAlice), logic.getFilteredPersonList());
+        assertEquals(expectedCustomers, model.getAddressBook().getPersonList());
+        assertEquals(List.of(deliveryAlice), new DeliveryPreparationSummary(logic.getFilteredPersonList()).getStops());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
 
     private void find(String command, List<Person> expected) throws Exception {
