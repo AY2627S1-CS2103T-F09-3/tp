@@ -82,11 +82,12 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Person` objects and structured search criteria.
 
-`MainWindow` places `SearchCriteriaDisplay` above the customer list and supplies
+`MainWindow` owns one `SearchCriteriaDisplay`, places it above the customer list and supplies
 `Logic.activeSearchCriteriaProperty()`. The display renders the current value immediately and observes criteria
-changes directly, including searches with identical results. It uses `SearchCriteriaFormatter` to obtain an immutable
-`SearchCriteriaSummary` containing a heading and one complete label per criterion, in predictable order. Formatting
-stays separate from matching and does not parse diagnostic `toString()` output.
+changes directly, including searches with identical results. It delegates formatting to `SearchCriteriaFormatter`,
+which creates an immutable `SearchCriteriaSummary`. The display uses the summary's heading and complete criterion
+labels to render its badges in predictable order. These dependencies are shown with dashed arrows in the UI diagram.
+Formatting stays separate from matching and does not parse diagnostic `toString()` output.
 
 `PostalCodeCriterion.getPostalCodePrefix()` exposes the immutable search digits for a `Postal` badge, preserving
 leading zeros and the supplied prefix length. Postal badges are ordered after Address and before Tag badges.
@@ -154,6 +155,8 @@ The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
 * stores each customer's preorder, if any, as a `Preorder` holding the `Item`s they ordered (see [Preorders and items](#preorders-and-items)).
+* retains one active `SearchCriteria` in `ModelManager` to select which customers appear in the filtered list
+  (see [Customer search criteria](#customer-search-criteria)).
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -192,10 +195,14 @@ preorder updates follow the same replacement path. Commands resolve their target
 making changes, and later commands use the resulting displayed indexes. Rejected updates preserve both criteria
 and results.
 
-`SearchCriteria` implements `Predicate<Person>` and combines `PersonCriterion` objects using **AND**. A customer must
-match every criterion. An empty search matches every customer. The constructor defensively copies its criteria into an
-immutable set, so changing the source collection cannot change an existing search. Criterion order and duplicate
-conditions do not affect matching or equality; rejecting repeated CLI prefixes is the parser's responsibility.
+`SearchCriteria` implements `Predicate<Person>` and combines zero or more `PersonCriterion` objects using **AND**.
+A customer must match every criterion. An empty search matches every customer. The constructor defensively copies its
+criteria into an immutable set, so changing the source collection cannot change an existing search. Criterion order and
+duplicate conditions do not affect matching or equality; rejecting repeated CLI prefixes is the parser's responsibility.
+
+The following diagram shows the criteria structure and its current implementations:
+
+<puml src="diagrams/SearchCriteriaClassDiagram.puml" width="550" alt="SearchCriteria combining zero or more PersonCriterion objects and the six criterion implementations" />
 
 For example, the following predicate matches customers whose name contains `Alice Tan` and who have the tag `regular`:
 
