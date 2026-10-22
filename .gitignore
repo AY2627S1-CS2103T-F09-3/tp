@@ -29,4 +29,7 @@ CLAUDE.md
 
 # Temp files
 _temp/
+/tmp_audit_pdf/
+/tmp_pdf_plan/
+/package-lock.json
 docs/_markbind/logs/

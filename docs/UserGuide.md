@@ -266,11 +266,11 @@ Common errors:
 | --- | --- |
 | `sort`, `sort name`, or `sort date 2026-12-20` | `Invalid command format!` followed by the sort usage instructions. |
 
-### Finding customers by their attributes: `find`
+### Finding customers by their attributes and preorder items: `find`
 
 Finds customers matching **every** supplied criterion.
 
-Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]`
+Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE_PREFIX] [t/TAG] [d/PRODUCT] [s/STATUS]`
 
 Supply at least one criterion. Each prefix may appear at most once, in any order.
 
@@ -280,14 +280,24 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 | `p/` | Phone number | Substring |
 | `e/` | Email | Case-insensitive substring |
 | `a/` | Address | Case-insensitive substring |
+| `c/` | Postal code | Starts with the supplied one to six digits, preserving leading zeros |
 | `t/` | Tag | Complete tag name, ignoring case |
+| `d/` | Preorder item product name | Complete product name, ignoring case |
+| `s/` | Item status | `PENDING`, `PREPARED` or `COMPLETED`, ignoring case |
 
 * Different criteria combine using **AND**. For example, `find n/Alice t/regular` requires both a matching name and the complete tag `regular`.
 * Names support partial matching: `find n/Han` can match `Hans Gruber`.
 * Multiword text is one substring: `find n/Alice Tan` can match `Alice Tanaka`, but does not match `Alice Lim` or `Tan Alice`.
 * Surrounding whitespace is ignored. Internal spacing and punctuation remain significant.
 * Phone and email fragments are accepted: `p/8123` and `e/example.com` need not be complete contact details.
+* Postal searches accept one to six digits. `find c/53` matches codes beginning with `53`, such as `530123` and `531234`; `find c/530` narrows this to codes beginning with `530`. A six-digit query such as `find c/012345` matches only that complete code. Customers without a postal code do not match a postal-code criterion.
+* When adding a customer or editing their postal code, supply all six digits. Shorter prefixes are accepted only for searching; leading zeros are preserved in both cases.
 * Tags must be single alphanumeric words. `t/reg` does not match a tag named `regular`.
+* Product names match completely: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Surrounding whitespace is ignored; internal spacing and punctuation remain significant.
+* Omitting `s/` includes **all statuses**, including `COMPLETED`. A blank `s/` is invalid. A status-only search such as `find s/prepared` accepts any product with that status.
+* Product and status must match the **same item**. A customer with pending Pineapple Tarts and prepared Almond Cookies does not match `find d/Pineapple Tarts s/prepared`.
+* Customers without a preorder or with an empty preorder cannot match item criteria. Customer-only searches can still find them.
+* All items on matching customer cards remain visible with their existing item numbers, including items that did not match. Searches do not change stored items.
 * Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
 * Results use the current displayed indices. Use `list` to show all customers again.
 * Use lowercase prefixes. A prefix starts at the beginning of the arguments or after whitespace. Unknown letter-based prefixes such as `x/` are rejected; embedded slashes such as `#04/08` remain ordinary text.
@@ -297,16 +307,28 @@ Examples:
 * `find n/Alice Tan` finds names containing the phrase `Alice Tan`.
 * `find p/8123` finds phone numbers containing `8123`.
 * `find e/example.com` finds emails containing `example.com`.
+* `find c/53` finds customers whose postal code starts with `53`.
+* `find c/01` finds customers whose postal code starts with `01`, including `012345`.
+* `find c/123456` finds customers whose postal code is exactly `123456`.
+* `find n/Alice c/53` requires both a name containing `Alice` and a postal code starting with `53`.
 * `find a/Hougang t/regular` finds regular customers whose addresses contain `Hougang`.
 * `find n/Alice p/8123 t/regular` requires all three criteria to match.
+* `find d/Pineapple Tarts` finds customers with that product in any status.
+* `find n/Alice d/Pineapple Tarts s/pending` finds customers whose names contain Alice and who have a pending Pineapple Tarts item.
+
+Customer and preorder changes preserve the search and refresh the results. A customer disappears when their last matching item is removed or stops matching. Displayed customer indexes can change, so check them before the next command.
 
 **Invalid inputs**
 
 | Input | Result |
 |-------|--------|
 | `find` | Invalid command format; supply at least one prefixed criterion. |
-| `find n/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
-| `find x/Alice` or `find n/Alice s/pending` | Invalid command format; only the five prefixes above are supported. |
+| `find n/`, `find c/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
+| `find x/Alice` or `find o/Pineapple Tarts` | Invalid command format; only the eight prefixes above are supported. |
+| `find s/unknown` | The item-status constraint message is shown. |
+| `find d/Tarts d/Cookies` or `find s/pending s/prepared` | Repeated single-valued prefixes are rejected. |
+| `find c/1234567`, `find c/01234a` or `find c/5 3` | `Postal-code search values must contain one to six digits.` |
+| `find c/012345 c/123456` | `Multiple values specified for the following single-valued field(s): c/` |
 | `find t/regular t/vip` | `Multiple values specified for the following single-valued field(s): t/` |
 | `find t/regular customer` or `find t/VIP!` | The tag constraint message is shown. |
 
@@ -387,6 +409,10 @@ Format: `track [s/STATUS]`
 * `track s/COMPLETED` shows customers with at least one `COMPLETED` item. You can also filter by `PENDING` or `PREPARED`; status input is case-insensitive.
 * Each successful `track` searches all customers and replaces the previous `find` or `track` criteria. Rejected commands preserve the current criteria and results.
 * Customers without preorders, or whose preorder has no items yet, are excluded. Use `list` to show all customers again.
+
+`track` accepts only the optional `s/` field. Use `find` for product or customer combinations. `track s/prepared` and `find s/prepared` select the same customers. Bare `track` includes only active statuses, whereas `find d/Pineapple Tarts` includes all statuses.
+
+Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count, and an item with a missing quantity still counts as one item. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
 
 Each item in a preorder appears on the customer's card on its own line, for example `1. Pineapple Tarts - Quantity 2 - PENDING - "Less sugar"`. Its colour shows its status:
 
@@ -533,8 +559,8 @@ Action     | Format, Examples
 **Delete item** | `deleteitem INDEX i/ITEM_INDEX`<br> e.g., `deleteitem 1 i/2`
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE_PREFIX] [t/TAG] [d/PRODUCT] [s/STATUS]` (at least one criterion)<br> e.g., `find n/James c/53 t/regular`
 **Group postal** | `group postal`
-**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]` (at least one criterion)<br> e.g., `find n/James t/regular`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
 **Tag**    | `tag INDEX t/TAG`<br> e.g., `tag 1 t/regular`
