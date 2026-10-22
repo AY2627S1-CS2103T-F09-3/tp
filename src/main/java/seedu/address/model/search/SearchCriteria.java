@@ -34,6 +34,13 @@ public final class SearchCriteria implements Predicate<Person> {
     }
 
     /**
+     * Returns whether this search contains no criteria.
+     */
+    public boolean isEmpty() {
+        return criteria.isEmpty();
+    }
+
+    /**
      * Returns the stored criterion count and sorted, distinct criterion type names for diagnostic logging.
      */
     public String getLogSummary() {

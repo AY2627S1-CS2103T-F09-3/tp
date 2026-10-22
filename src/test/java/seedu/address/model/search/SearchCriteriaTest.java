@@ -12,6 +12,7 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,6 @@ import org.junit.jupiter.api.Test;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.PreorderStatusPredicate;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
@@ -99,9 +99,9 @@ public class SearchCriteriaTest {
     @Test
     public void getLogSummary_statusAlternatives_reportsOneCriterion() {
         SearchCriteria search = new SearchCriteria(List.of(
-                new PreorderStatusPredicate(Set.of(ItemStatus.PENDING, ItemStatus.PREPARED))));
+                new ItemCriterion(Optional.empty(), Set.of(ItemStatus.PENDING, ItemStatus.PREPARED))));
 
-        assertEquals("count=1, types=[PreorderStatusPredicate]", search.getLogSummary());
+        assertEquals("count=1, types=[ItemCriterion]", search.getLogSummary());
     }
 
     @Test

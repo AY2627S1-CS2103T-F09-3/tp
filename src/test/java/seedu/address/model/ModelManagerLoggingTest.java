@@ -146,7 +146,7 @@ public class ModelManagerLoggingTest {
 
         assertLogMessages(
                 "Search criteria applied: count=1, types=[TextContainsCriterion], matchingCustomers=1",
-                "Search criteria applied: count=1, types=[PreorderStatusPredicate], matchingCustomers=0",
+                "Search criteria applied: count=1, types=[ItemCriterion], matchingCustomers=0",
                 "Search criteria reset: count=0, types=[], matchingCustomers=2");
     }
 
