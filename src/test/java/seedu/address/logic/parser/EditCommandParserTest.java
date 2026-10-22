@@ -116,7 +116,9 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_invalidPostalCode_failure() {
-        assertParseFailure(parser, "1 c/12345", PostalCode.MESSAGE_CONSTRAINTS);
+        for (String postalCode : new String[]{"5", "53", "530", "5301", "53012", "1234567"}) {
+            assertParseFailure(parser, "1 c/" + postalCode, PostalCode.MESSAGE_CONSTRAINTS);
+        }
     }
 
     @Test
