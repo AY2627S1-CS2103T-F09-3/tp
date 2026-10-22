@@ -20,11 +20,15 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.SVGPath;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.preorder.Preorder;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
+import seedu.address.testutil.PreorderBuilder;
 
 /**
  * Checks how a {@code PersonCard} shows a customer's preorder.
@@ -63,10 +67,26 @@ public class PersonCardTest {
     }
 
     @Test
-    public void constructor_anyPreorder_showsHeaderLine() throws Exception {
+    public void constructor_preorderWithFulfilmentDetails_showsThemAboveItems() throws Exception {
+        Preorder preorder = new PreorderBuilder().withItems(new ItemBuilder().build()).withDate("2026-12-20")
+                .withMethod(FulfilmentMethod.DELIVERY).withHandoverNotes("Call on arrival").build();
+        PersonCard card = createCard(new PersonBuilder(ALICE).withPreorder(preorder).build());
+
+        assertEquals("20 Dec 2026 | Delivery", ((Label) lookup(card, "#preorderHeader")).getText());
+        assertEquals(PreorderDisplay.DELIVERY_ICON, ((SVGPath) lookup(card, "#preorderIcon")).getContent());
+        Node handoverNotes = lookup(card, "#handoverNotes");
+        assertEquals("Handover notes: Call on arrival", ((Label) handoverNotes).getText());
+        assertTrue(handoverNotes.isManaged());
+    }
+
+    @Test
+    public void constructor_preorderWithoutFulfilmentDetails_notScheduledAndNoNotesLine() throws Exception {
         PersonCard card = createCard(new PersonBuilder(ALICE).withPreorder(new ItemBuilder().build()).build());
 
-        assertEquals(PreorderDisplay.NOT_SCHEDULED_TEXT, ((Label) lookup(card, "#preorderHeader")).getText());
+        assertEquals("Not scheduled | Method not set", ((Label) lookup(card, "#preorderHeader")).getText());
+        Node handoverNotes = lookup(card, "#handoverNotes");
+        assertFalse(handoverNotes.isVisible());
+        assertFalse(handoverNotes.isManaged());
     }
 
     @Test
@@ -121,10 +141,12 @@ public class PersonCardTest {
     }
 
     @Test
-    public void prefHeight_wrappingRemark_sameAsContent() throws Exception {
+    public void prefHeight_wrappingRemarkAndNotes_sameAsContent() throws Exception {
         Item tarts = new ItemBuilder().withRemark("Less sugar, and pack the tarts in two separate boxes for gifting")
                 .build();
-        PersonCard card = createCard(new PersonBuilder(ALICE).withPreorder(tarts).build());
+        Preorder preorder = new PreorderBuilder().withItems(tarts)
+                .withHandoverNotes("Leave the boxes with the concierge at the lobby if nobody answers").build();
+        PersonCard card = createCard(new PersonBuilder(ALICE).withPreorder(preorder).build());
 
         double[] heights = onFxThread(() -> {
             Region root = card.getRoot();

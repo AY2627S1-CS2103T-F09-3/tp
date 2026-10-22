@@ -5,6 +5,7 @@ import java.util.List;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.FlowPane;
@@ -69,6 +70,8 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label preorderHeader;
     @FXML
+    private Label handoverNotes;
+    @FXML
     private VBox preorderItems;
 
     /**
@@ -86,16 +89,18 @@ public class PersonCard extends UiPart<Region> {
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
-        person.getPreorder().ifPresentOrElse(this::showPreorder, this::hidePreorder);
+        person.getPreorder().ifPresentOrElse(this::showPreorder, () -> removeFromLayout(preorder));
     }
 
     /**
-     * Fills the preorder panel: how the preorder will be handed over, then one row per item,
-     * numbered in the order the items were added.
+     * Fills the preorder panel: how the preorder will be handed over and any handover notes,
+     * then one row per item, numbered in the order the items were added.
      */
     private void showPreorder(Preorder currentPreorder) {
         preorderIcon.setContent(PreorderDisplay.getHeaderIcon(currentPreorder));
         preorderHeader.setText(PreorderDisplay.formatHeader(currentPreorder));
+        currentPreorder.getHandoverNotes().map(PreorderDisplay::formatHandoverNotes)
+                .ifPresentOrElse(handoverNotes::setText, () -> removeFromLayout(handoverNotes));
 
         List<Item> items = currentPreorder.getItems();
         if (items.isEmpty()) {
@@ -154,11 +159,11 @@ public class PersonCard extends UiPart<Region> {
     }
 
     /**
-     * Removes the preorder panel from the layout, so a customer without a preorder
-     * shows no empty panel or blank gap.
+     * Removes {@code node} from the layout, such as the preorder panel of a customer without a preorder,
+     * so that it leaves no empty panel or blank gap.
      */
-    private void hidePreorder() {
-        preorder.setVisible(false);
-        preorder.setManaged(false);
+    private static void removeFromLayout(Node node) {
+        node.setVisible(false);
+        node.setManaged(false);
     }
 }

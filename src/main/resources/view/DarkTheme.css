@@ -370,6 +370,12 @@
     -fx-font-size: 13px;
 }
 
+#preorder .preorder-handover-notes {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-text-fill: #e3e3e3;
+}
+
 #preorder .preorder-divider {
     -fx-background-color: #45484a;
 }

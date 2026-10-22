@@ -45,6 +45,7 @@
         <SVGPath fx:id="preorderIcon" styleClass="preorder-icon" />
         <Label fx:id="preorderHeader" styleClass="preorder-header" wrapText="true" />
       </HBox>
+      <Label fx:id="handoverNotes" styleClass="preorder-handover-notes" wrapText="true" />
       <Region styleClass="preorder-divider" minHeight="1" prefHeight="1" maxHeight="1" />
       <VBox fx:id="preorderItems" spacing="2" />
     </VBox>

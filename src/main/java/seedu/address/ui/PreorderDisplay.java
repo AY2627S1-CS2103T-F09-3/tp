@@ -4,6 +4,9 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import seedu.address.logic.Messages;
+import seedu.address.model.preorder.FulfilmentDate;
+import seedu.address.model.preorder.FulfilmentMethod;
+import seedu.address.model.preorder.HandoverNotes;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Preorder;
@@ -15,33 +18,57 @@ import seedu.address.model.preorder.Remark;
  */
 public class PreorderDisplay {
 
-    public static final String NOT_SCHEDULED_TEXT = "Not scheduled | Method not set";
+    public static final String NO_DATE_TEXT = "Not scheduled";
+    public static final String NO_METHOD_TEXT = "Method not set";
+    public static final String HANDOVER_NOTES_PREFIX = "Handover notes: ";
     public static final String NO_ITEMS_TEXT = "No items yet";
     public static final String MISSING_QUANTITY_TEXT = Messages.MISSING_QUANTITY_TEXT;
     public static final String REMARK_PREFIX = "Remark: ";
 
-    /** A 16 px calendar outline, shown beside a preorder that has no handover date. */
+    /** A 16 px calendar outline, shown beside a preorder that has no method yet. */
     public static final String CALENDAR_ICON =
             "M3 3.5h10a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1z"
             + "M2 6.5h12M5.5 2v3M10.5 2v3";
+    /** A 16 px delivery truck outline. */
+    public static final String DELIVERY_ICON = "M1.5 4h8v6.5h-8zM9.5 6.5h3l2 2v2h-5"
+            + "M3.25 12.25a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0z"
+            + "M10.25 12.25a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0z";
+    /** A 16 px shopping bag outline, for a preorder the customer collects. */
+    public static final String COLLECTION_ICON = "M3.5 5.5h9l-0.75 8h-7.5zM6 5.5v-1.5a2 2 0 0 1 4 0v1.5";
 
     private PreorderDisplay() {} // prevents instantiation
 
     /**
-     * Returns the first line of the preorder panel, which says how the preorder will be handed over.
-     * Preorders do not record a handover date or method yet, so every preorder is not scheduled.
+     * Returns the first line of the preorder panel, which says when and how the preorder will be handed over,
+     * e.g. {@code 20 Dec 2026 | Delivery}. A part that is not set yet is shown as not scheduled or not set.
      */
     public static String formatHeader(Preorder preorder) {
         requireNonNull(preorder);
-        return NOT_SCHEDULED_TEXT;
+        String date = preorder.getDate().map(FulfilmentDate::toDisplayString).orElse(NO_DATE_TEXT);
+        String method = preorder.getMethod().map(PreorderDisplay::formatMethod).orElse(NO_METHOD_TEXT);
+        return date + " | " + method;
     }
 
     /**
-     * Returns the SVG path of the icon shown before {@link #formatHeader(Preorder)}.
+     * Returns the SVG path of the icon shown before {@link #formatHeader(Preorder)}, which matches the method.
      */
     public static String getHeaderIcon(Preorder preorder) {
         requireNonNull(preorder);
-        return CALENDAR_ICON;
+        return preorder.getMethod()
+                .map(method -> switch (method) {
+                    case DELIVERY -> DELIVERY_ICON;
+                    case COLLECTION -> COLLECTION_ICON;
+                })
+                .orElse(CALENDAR_ICON);
+    }
+
+    /**
+     * Returns the line shown under the header of a preorder with handover notes,
+     * e.g. {@code Handover notes: Call on arrival}.
+     */
+    public static String formatHandoverNotes(HandoverNotes handoverNotes) {
+        requireNonNull(handoverNotes);
+        return HANDOVER_NOTES_PREFIX + handoverNotes;
     }
 
     /**
@@ -83,6 +110,13 @@ public class PreorderDisplay {
             case PENDING -> "status-pending";
             case PREPARED -> "status-prepared";
             case COMPLETED -> "status-completed";
+        };
+    }
+
+    private static String formatMethod(FulfilmentMethod method) {
+        return switch (method) {
+            case DELIVERY -> "Delivery";
+            case COLLECTION -> "Collection";
         };
     }
 }
