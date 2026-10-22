@@ -8,6 +8,7 @@ import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.model.Model.SEARCH_CRITERIA_SHOW_ALL_PERSONS;
 import static seedu.address.model.preorder.ItemStatus.PENDING;
@@ -27,6 +28,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -47,8 +49,9 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.PreorderStatusPredicate;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.ItemCriterion;
+import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
@@ -57,6 +60,7 @@ import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
 import seedu.address.testutil.AddressBookBuilder;
+import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 
 public class LogicManagerTest {
@@ -166,12 +170,13 @@ public class LogicManagerTest {
                 observedCriteria.add(newCriteria));
         SearchCriteria findCriteria = new SearchCriteria(List.of(
                 new TextContainsCriterion(NAME, "Alice"), new TagCriterion(new Tag("friends"))));
-        SearchCriteria trackCriteria = new SearchCriteria(List.of(new PreorderStatusPredicate(Set.of(PENDING))));
+        SearchCriteria trackCriteria =
+                new SearchCriteria(List.of(new ItemCriterion(Optional.empty(), Set.of(PENDING))));
 
         assertFilteringCommandSuccess("find n/Alice t/friends", "1 person(s) listed!", List.of(ALICE));
         assertEquals(findCriteria, logic.getActiveSearchCriteria());
 
-        assertFilteringCommandSuccess("track s/pending", "2 order(s) for PENDING listed!",
+        assertFilteringCommandSuccess("track s/pending", "2 customer(s) with 2 matching item(s) for PENDING listed!",
                 List.of(PENDING_ELLE, PENDING_BENSON));
         assertEquals(trackCriteria, logic.getActiveSearchCriteria());
 
@@ -236,7 +241,7 @@ public class LogicManagerTest {
     @Test
     public void execute_customerAndPreorderChanges_preservesTrackingCriteriaAndRefreshesResults() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track s/pending", "2 order(s) for PENDING listed!",
+        assertFilteringCommandSuccess("track s/pending", "2 customer(s) with 2 matching item(s) for PENDING listed!",
                 List.of(PENDING_ELLE, PENDING_BENSON));
         SearchCriteria criteria = logic.getActiveSearchCriteria();
         List<SearchCriteria> observedCriteria = new ArrayList<>();
@@ -299,7 +304,7 @@ public class LogicManagerTest {
         setUpTrackPersons();
         assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
 
-        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+        assertFilteringCommandSuccess("track", "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
     }
 
@@ -308,7 +313,7 @@ public class LogicManagerTest {
         setUpTrackPersons();
         assertFilteringCommandSuccess("find n/Carl", "1 person(s) listed!", List.of(PREPARED_CARL));
 
-        assertFilteringCommandSuccess("track s/pending", "2 order(s) for PENDING listed!",
+        assertFilteringCommandSuccess("track s/pending", "2 customer(s) with 2 matching item(s) for PENDING listed!",
                 List.of(PENDING_ELLE, PENDING_BENSON));
     }
 
@@ -318,6 +323,115 @@ public class LogicManagerTest {
         assertFilteringCommandSuccess("find t/FRIENDS a/jurong", "1 person(s) listed!", List.of(ALICE));
         assertFilteringCommandSuccess("find p/9876 e/EXAMPLE.COM", "1 person(s) listed!", List.of(PENDING_BENSON));
         assertFilteringCommandSuccess("find n/Alice t/owesMoney", "0 person(s) listed!", List.of());
+    }
+
+    @Test
+    public void execute_postalPrefixSearchAndGrouping_preservesSavedOrderAndLeadingZeros() throws Exception {
+        Person zoe = new PersonBuilder().withName("Zoe Tan").withPostalCode("019876").build();
+        Person differentCode = new PersonBuilder().withName("Alex Lim").withPostalCode("654321").build();
+        Person amy = new PersonBuilder().withName("Amy Tan").withPostalCode("012345").build();
+        Person missingCode = new PersonBuilder().withName("Legacy Customer").build();
+        List<Person> savedOrder = List.of(zoe, differentCode, amy, missingCode);
+        savedOrder.forEach(model::addPerson);
+
+        assertFilteringCommandSuccess("find c/01", "2 person(s) listed!", List.of(zoe, amy));
+        logic.execute("group postal");
+        assertEquals(List.of(amy, zoe), logic.getFilteredPersonList());
+        assertFilteringCommandSuccess("list", ListCommand.MESSAGE_SUCCESS, savedOrder);
+        logic.execute("group postal");
+        assertFilteringCommandSuccess("find c/01", "2 person(s) listed!", List.of(amy, zoe));
+
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        ReadOnlyAddressBook reloaded = storage.readAddressBook().orElseThrow();
+        assertEquals(savedOrder, reloaded.getPersonList());
+        assertEquals("019876", reloaded.getPersonList().getFirst().getPostalCode().value);
+    }
+
+    @Test
+    public void execute_successivePostalPrefixSearches_replacesPreviousCriteria() throws Exception {
+        Person alice = new PersonBuilder().withName("Alice Tan").withPostalCode("530123").build();
+        Person bob = new PersonBuilder().withName("Bob Tan").withPostalCode("531234").build();
+        Person leadingZero = new PersonBuilder().withName("Charlie Tan").withPostalCode("012345").build();
+        Person middleDigits = new PersonBuilder().withName("David Tan").withPostalCode("155300").build();
+        Person missingCode = new PersonBuilder().withName("Legacy Customer").build();
+        List.of(alice, bob, leadingZero, middleDigits, missingCode).forEach(model::addPerson);
+
+        assertFilteringCommandSuccess("find n/Alice c/53", "1 person(s) listed!", List.of(alice));
+        assertFilteringCommandSuccess("find c/53", "2 person(s) listed!", List.of(alice, bob));
+        assertFilteringCommandSuccess("find c/530", "1 person(s) listed!", List.of(alice));
+        assertFilteringCommandSuccess("find c/01", "1 person(s) listed!", List.of(leadingZero));
+    }
+
+    @Test
+    public void execute_postalSearchWithAllCriteria_deleteTargetsDisplayedCustomer() throws Exception {
+        Person match = new PersonBuilder().withName("Alice Tan").withPhone("81234567")
+                .withEmail("alice@example.com").withAddress("123 Hougang Avenue")
+                .withPostalCode("012345").withTags("regular").build();
+        Person differentCode = new PersonBuilder(match).withName("Alice Lim").withPostalCode("123456").build();
+        Person differentTag = new PersonBuilder(match).withName("Alice Tanaka").withTags("vip").build();
+        Person missingCode = new PersonBuilder(match).withName("Alice Lee").withPostalCode(null).build();
+        List.of(differentCode, differentTag, missingCode, match).forEach(model::addPerson);
+
+        assertFilteringCommandSuccess("find n/Alice p/8123 e/EXAMPLE.COM a/hougang c/012345 t/REGULAR",
+                "1 person(s) listed!", List.of(match));
+        logic.execute("delete 1");
+
+        assertEquals(List.of(differentCode, differentTag, missingCode), model.getAddressBook().getPersonList());
+        assertEquals(List.of(), logic.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_postalProductAndStatusSearch_requiresSameItemAndMatchingPostalCode() throws Exception {
+        Person match = new PersonBuilder().withName("Match").withPostalCode("012345")
+                .withPreorder(new ItemBuilder().withName("Tarts").build()).build();
+        Person wrongCode = new PersonBuilder(match).withName("Wrong Code").withPostalCode("530123").build();
+        Person missingCode = new PersonBuilder(match).withName("Missing Code").withPostalCode(null).build();
+        Person splitMatch = new PersonBuilder(match).withName("Split Match").withPreorder(
+                new ItemBuilder().withName("Tarts").withStatus(ItemStatus.COMPLETED).build(),
+                new ItemBuilder().withName("Cookies").build()).build();
+        List.of(match, wrongCode, missingCode, splitMatch).forEach(model::addPerson);
+
+        assertFilteringCommandSuccess("find c/01 d/TARTS s/pending", "1 person(s) listed!", List.of(match));
+        assertFilteringCommandSuccess("find d/tarts c/01", "2 person(s) listed!", List.of(match, splitMatch));
+        assertFilteringCommandSuccess("track s/pending",
+                "4 customer(s) with 4 matching item(s) for PENDING listed!",
+                List.of(match, wrongCode, missingCode, splitMatch));
+    }
+
+    @Test
+    public void execute_groupedProductSearchThenItemAndPostalEdits_preservesCriteria() throws Exception {
+        Person later = new PersonBuilder().withName("Later").withPostalCode("019876")
+                .withPreorder(new ItemBuilder().withName("Tarts").build()).build();
+        Person earlier = new PersonBuilder(later).withName("Earlier").withPostalCode("012345").build();
+        List.of(later, earlier).forEach(model::addPerson);
+        logic.execute("find c/01 d/Tarts s/pending");
+        SearchCriteria criteria = logic.getActiveSearchCriteria();
+        logic.execute("group postal");
+        assertEquals(List.of(earlier, later), logic.getFilteredPersonList());
+
+        logic.execute("edititem 1 i/1 s/completed");
+        assertEquals(List.of(later), logic.getFilteredPersonList());
+        assertEquals(earlier.getPostalCode(), model.getAddressBook().getPersonList().get(1).getPostalCode());
+        logic.execute("edit 1 c/530123");
+        assertEquals(List.of(), logic.getFilteredPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        assertEquals(later.getPreorder(), model.getAddressBook().getPersonList().getFirst().getPreorder());
+    }
+
+    @Test
+    public void execute_invalidPostalSearch_preservesDataAndFilteredList() throws Exception {
+        model.addPerson(new PersonBuilder().withName("Alice Tan").withPostalCode("012345").build());
+        model.addPerson(new PersonBuilder().withName("Bob Tan").withPostalCode("654321").build());
+        logic.execute("find c/012345");
+
+        for (String value : List.of("1234567", "abcdef", "123 456", "01234a", "-53")) {
+            assertCommandFailurePreservesFilteredList("find c/" + value,
+                    ParseException.class, PostalCodeCriterion.MESSAGE_CONSTRAINTS);
+        }
+        assertCommandFailurePreservesFilteredList("find n/Alice c/", ParseException.class,
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertCommandFailurePreservesFilteredList("find c/012345 c/654321", ParseException.class,
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_POSTAL_CODE));
     }
 
     @Test
@@ -331,7 +445,8 @@ public class LogicManagerTest {
     @Test
     public void execute_trackThenFind_searchesAllCustomers() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track s/completed", "1 order(s) for COMPLETED listed!",
+        assertFilteringCommandSuccess("track s/completed",
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!",
                 List.of(COMPLETED_DANIEL));
         assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
     }
@@ -350,8 +465,9 @@ public class LogicManagerTest {
         assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
 
-        for (String input : List.of("find", "find Alice t/friends", "find n/",
-                "find n/Alice p/", "find n/Alice x/value", "find s/pending", "find n/Alice\ts/pending")) {
+        for (String input : List.of("find", "find Alice", "find Alice Bob", "find Alice t/friends", "find n/",
+                "find n/Alice p/", "find n/Alice x/value", "find s/", "find n/Alice\td/",
+                "find h/", "find m/", "find f/", "find i/arrival", "find Alice m/delivery")) {
             assertCommandFailurePreservesFilteredList(input, ParseException.class, expectedMessage);
         }
     }
@@ -389,20 +505,21 @@ public class LogicManagerTest {
     @Test
     public void execute_successiveTrackCommands_replacesPreviousFilter() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track s/COMPLETED", "1 order(s) for COMPLETED listed!",
+        assertFilteringCommandSuccess("track s/COMPLETED",
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!",
                 List.of(COMPLETED_DANIEL));
-        assertFilteringCommandSuccess("track s/PENDING", "2 order(s) for PENDING listed!",
+        assertFilteringCommandSuccess("track s/PENDING", "2 customer(s) with 2 matching item(s) for PENDING listed!",
                 List.of(PENDING_ELLE, PENDING_BENSON));
-        assertFilteringCommandSuccess("track s/PREPARED", "1 order(s) for PREPARED listed!",
+        assertFilteringCommandSuccess("track s/PREPARED", "1 customer(s) with 1 matching item(s) for PREPARED listed!",
                 List.of(PREPARED_CARL));
-        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+        assertFilteringCommandSuccess("track", "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
     }
 
     @Test
     public void execute_trackThenList_restoresAllCustomersInOriginalOrder() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+        assertFilteringCommandSuccess("track", "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
 
         assertFilteringCommandSuccess("list", ListCommand.MESSAGE_SUCCESS,
@@ -412,7 +529,8 @@ public class LogicManagerTest {
     @Test
     public void execute_invalidTrackFormat_preservesDataAndFilteredList() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track s/COMPLETED", "1 order(s) for COMPLETED listed!",
+        assertFilteringCommandSuccess("track s/COMPLETED",
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!",
                 List.of(COMPLETED_DANIEL));
 
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, TrackCommand.MESSAGE_USAGE);
@@ -424,7 +542,8 @@ public class LogicManagerTest {
     @Test
     public void execute_invalidTrackStatus_preservesDataAndFilteredList() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track s/COMPLETED", "1 order(s) for COMPLETED listed!",
+        assertFilteringCommandSuccess("track s/COMPLETED",
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!",
                 List.of(COMPLETED_DANIEL));
 
         for (String input : List.of("track s/", "track s/UNKNOWN", "track s/PENDING p/123",
@@ -436,7 +555,8 @@ public class LogicManagerTest {
     @Test
     public void execute_duplicateTrackStatuses_preservesDataAndFilteredList() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track s/COMPLETED", "1 order(s) for COMPLETED listed!",
+        assertFilteringCommandSuccess("track s/COMPLETED",
+                "1 customer(s) with 1 matching item(s) for COMPLETED listed!",
                 List.of(COMPLETED_DANIEL));
 
         assertCommandFailurePreservesFilteredList("track s/PENDING s/PREPARED", ParseException.class,
@@ -446,7 +566,7 @@ public class LogicManagerTest {
     @Test
     public void execute_trackThenDelete_deletesCustomerAtDisplayedIndex() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+        assertFilteringCommandSuccess("track", "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
 
         CommandResult result = logic.execute("delete 1");
@@ -462,7 +582,7 @@ public class LogicManagerTest {
     @Test
     public void execute_trackThenDeleteHiddenIndex_preservesDataAndFilteredList() throws Exception {
         setUpTrackPersons();
-        assertFilteringCommandSuccess("track", "3 order(s) listed!",
+        assertFilteringCommandSuccess("track", "3 customer(s) with 3 matching item(s) listed!",
                 List.of(PENDING_ELLE, PREPARED_CARL, PENDING_BENSON));
 
         assertCommandFailurePreservesFilteredList("delete 4", CommandException.class,

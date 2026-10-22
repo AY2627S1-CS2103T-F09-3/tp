@@ -2,12 +2,15 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FULFILMENT_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FULFILMENT_METHOD;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_HANDOVER_NOTES;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -25,14 +28,19 @@ public class FindCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Finds customers matching all supplied criteria and displays them with index numbers.\n"
             + "Parameters: [" + PREFIX_NAME + "NAME] [" + PREFIX_PHONE + "PHONE] ["
-            + PREFIX_EMAIL + "EMAIL] [" + PREFIX_ADDRESS + "ADDRESS] [" + PREFIX_TAG + "TAG] ["
+            + PREFIX_EMAIL + "EMAIL] [" + PREFIX_ADDRESS + "ADDRESS] ["
+            + PREFIX_POSTAL_CODE + "POSTAL_CODE_PREFIX] [" + PREFIX_TAG + "TAG] ["
+            + PREFIX_DETAILS + "PRODUCT] [" + PREFIX_STATUS + "STATUS] ["
             + PREFIX_FULFILMENT_DATE + "YYYY-MM-DD] [" + PREFIX_FULFILMENT_METHOD + "METHOD] ["
             + PREFIX_HANDOVER_NOTES + "HANDOVER_NOTES]\n"
-            + "Supply at least one criterion; use each prefix at most once. "
+            + "Supply at least one prefixed criterion; use each prefix at most once.\n"
+            + "Postal-code searches accept one to six digits.\n"
+            + "Products match complete names ignoring case. Product and status must match the same item.\n"
+            + "Omit s/ to include all statuses; otherwise use PENDING, PREPARED or COMPLETED.\n"
             + "Method is delivery or collection. Handover notes match a case-insensitive substring.\n"
-            + "Alternatively, find NAME_KEYWORD [MORE_KEYWORDS] matches any name keyword.\n"
-            + "Example: " + COMMAND_WORD + " " + PREFIX_FULFILMENT_DATE + "2026-12-20 "
-            + PREFIX_FULFILMENT_METHOD + "delivery " + PREFIX_HANDOVER_NOTES + "arrival";
+            + "Example: " + COMMAND_WORD + " " + PREFIX_POSTAL_CODE + "53 "
+            + PREFIX_FULFILMENT_DATE + "2026-12-20 " + PREFIX_FULFILMENT_METHOD + "delivery "
+            + PREFIX_HANDOVER_NOTES + "arrival";
 
     private final SearchCriteria criteria;
 

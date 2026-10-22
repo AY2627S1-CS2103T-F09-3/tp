@@ -20,10 +20,13 @@ import org.junit.jupiter.api.Test;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Person;
+import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.model.tag.Tag;
+import seedu.address.testutil.PersonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) for {@code FindCommand}.
@@ -103,6 +106,54 @@ public class FindCommandTest {
         assertCommandSuccess(new FindCommand(criteria), model,
                 String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 1), expectedModel);
         assertEquals(List.of(BENSON), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_postalCode_returnsOnlyExactMatches() {
+        Person firstMatch = new PersonBuilder(BENSON).withPostalCode("123456").build();
+        Person secondMatch = new PersonBuilder(DANIEL).withPostalCode("123456").build();
+        Person differentCode = new PersonBuilder(ELLE).withPostalCode("123457").build();
+        Person missingCode = new PersonBuilder().withName("Missing Code").build();
+        Model searchModel = new ModelManager();
+        List.of(firstMatch, differentCode, missingCode, secondMatch).forEach(searchModel::addPerson);
+        SearchCriteria criteria = new SearchCriteria(List.of(new PostalCodeCriterion("123456")));
+
+        CommandResult result = new FindCommand(criteria).execute(searchModel);
+
+        assertEquals(String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 2), result.getFeedbackToUser());
+        assertEquals(List.of(firstMatch, secondMatch), searchModel.getFilteredPersonList());
+        assertEquals(List.of(firstMatch, differentCode, missingCode, secondMatch),
+                searchModel.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_postalCodePrefixWithName_requiresBothCriteria() {
+        Person match = new PersonBuilder().withName("Alice Tan").withPostalCode("012345").build();
+        Person differentName = new PersonBuilder().withName("Bob Tan").withPostalCode("012345").build();
+        Person differentCode = new PersonBuilder().withName("Alice Lim").withPostalCode("123456").build();
+        Person missingCode = new PersonBuilder().withName("Alice Lee").build();
+        Model searchModel = new ModelManager();
+        List.of(match, differentName, differentCode, missingCode).forEach(searchModel::addPerson);
+        SearchCriteria criteria = new SearchCriteria(List.of(
+                new TextContainsCriterion(NAME, "Alice"),
+                new PostalCodeCriterion("01")));
+
+        CommandResult result = new FindCommand(criteria).execute(searchModel);
+
+        assertEquals(String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 1), result.getFeedbackToUser());
+        assertEquals(List.of(match), searchModel.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_unmatchedPostalCode_returnsEmptyList() {
+        Model searchModel = new ModelManager();
+        searchModel.addPerson(new PersonBuilder().withPostalCode("012345").build());
+        SearchCriteria criteria = new SearchCriteria(List.of(new PostalCodeCriterion("654321")));
+
+        CommandResult result = new FindCommand(criteria).execute(searchModel);
+
+        assertEquals(String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 0), result.getFeedbackToUser());
+        assertEquals(List.of(), searchModel.getFilteredPersonList());
     }
 
     @Test

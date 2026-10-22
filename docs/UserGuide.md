@@ -244,13 +244,13 @@ The **Delivery preparation** panel above the customer list summarises outstandin
 
 For the sample data, `list` shows two outstanding delivery stops in two postal groups. `find f/2026-12-20 m/delivery` selects the deliveries for that date; `group postal` groups those results while keeping the search. An empty scheduled preorder may appear in the customer results but does not count as an outstanding stop.
 
-### Finding customers by their attributes: `find`
+### Finding customers by their attributes and preorder items: `find`
 
 Finds customers matching **every** supplied criterion.
 
-Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG] [f/YYYY-MM-DD] [m/METHOD] [h/HANDOVER_NOTES]`
+Format: `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE_PREFIX] [t/TAG] [d/PRODUCT] [s/STATUS] [f/YYYY-MM-DD] [m/METHOD] [h/HANDOVER_NOTES]`
 
-Supply at least one criterion. Each prefix may appear at most once, in any order.
+Supply at least one prefixed criterion. Each prefix may appear at most once, in any order. Name searches require `n/`.
 
 | Prefix | Searches | Matching rule |
 |--------|----------|---------------|
@@ -258,7 +258,10 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 | `p/` | Phone number | Substring |
 | `e/` | Email | Case-insensitive substring |
 | `a/` | Address | Case-insensitive substring |
+| `c/` | Postal code | Starts with the supplied one to six digits, preserving leading zeros |
 | `t/` | Tag | Complete tag name, ignoring case |
+| `d/` | Preorder item product name | Complete product name, ignoring case |
+| `s/` | Item status | `PENDING`, `PREPARED` or `COMPLETED`, ignoring case |
 | `f/` | Shared preorder fulfilment date | Exact real date in `YYYY-MM-DD` format |
 | `m/` | Shared preorder method | `delivery` or `collection`, ignoring case |
 | `h/` | Shared preorder handover notes | Case-insensitive substring |
@@ -268,9 +271,15 @@ Supply at least one criterion. Each prefix may appear at most once, in any order
 * Multiword text is one substring: `find n/Alice Tan` can match `Alice Tanaka`, but does not match `Alice Lim` or `Tan Alice`.
 * Surrounding whitespace is ignored. Internal spacing and punctuation remain significant.
 * Phone and email fragments are accepted: `p/8123` and `e/example.com` need not be complete contact details.
+* Postal searches accept one to six digits. `find c/53` matches codes beginning with `53`, such as `530123` and `531234`; `find c/530` narrows this to codes beginning with `530`. A six-digit query such as `find c/012345` matches only that complete code. Customers without a postal code do not match a postal-code criterion.
+* When adding a customer or editing their postal code, supply all six digits. Shorter prefixes are accepted only for searching; leading zeros are preserved in both cases.
 * Tags must be single alphanumeric words. `t/reg` does not match a tag named `regular`.
 * Fulfilment conditions check the preorder's shared information. They can find empty preorders; customers without a preorder or without the requested field do not match. Handover notes are separate from an individual item's request notes.
-* Unprefixed name searches are also supported: `find Alice Bob` matches names containing either `Alice` or `Bob`, ignoring case. To combine a name with other criteria, use `n/`; bare name keywords cannot be mixed with prefixes.
+* Product names match completely: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Surrounding whitespace is ignored; internal spacing and punctuation remain significant.
+* Omitting `s/` includes **all statuses**, including `COMPLETED`. A blank `s/` is invalid. A status-only search such as `find s/prepared` accepts any product with that status.
+* Product and status must match the **same item**. A customer with pending Pineapple Tarts and prepared Almond Cookies does not match `find d/Pineapple Tarts s/prepared`.
+* Customers without a preorder or with an empty preorder cannot match item criteria. Customer-only searches can still find them.
+* All items on matching customer cards remain visible with their existing item numbers, including items that did not match. Searches do not change stored items.
 * Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
 * Results use the current displayed indices. Use `list` to show all customers again.
 * Use lowercase prefixes. A prefix starts at the beginning of the arguments or after whitespace. Unknown letter-based prefixes such as `x/` are rejected; embedded slashes such as `#04/08` remain ordinary text.
@@ -280,28 +289,107 @@ Examples:
 * `find n/Alice Tan` finds names containing the phrase `Alice Tan`.
 * `find p/8123` finds phone numbers containing `8123`.
 * `find e/example.com` finds emails containing `example.com`.
+* `find c/53` finds customers whose postal code starts with `53`.
+* `find c/01` finds customers whose postal code starts with `01`, including `012345`.
+* `find c/123456` finds customers whose postal code is exactly `123456`.
+* `find n/Alice c/53` requires both a name containing `Alice` and a postal code starting with `53`.
 * `find a/Hougang t/regular` finds regular customers whose addresses contain `Hougang`.
 * `find n/Alice p/8123 t/regular` requires all three criteria to match.
 * `find f/2026-12-20 m/delivery` finds delivery preorders scheduled for that date, including ones without items.
 * `find n/Alice m/collection h/side gate` requires a matching name, collection method, and handover notes containing `side gate`.
-* `find Alice Bob` finds customers matching either name keyword.
+* `find c/53 f/2026-12-20 m/delivery h/arrival` combines a postal prefix with the shared date, method, and handover notes.
+* `find d/Pineapple Tarts` finds customers with that product in any status.
+* `find n/Alice d/Pineapple Tarts s/pending` finds customers whose names contain Alice and who have a pending Pineapple Tarts item.
+
+Customer and preorder changes preserve the search and refresh the results. A customer disappears when their last matching item is removed or stops matching. Displayed customer indexes can change, so check them before the next command.
 
 **Invalid inputs**
 
 | Input | Result |
 |-------|--------|
-| `find` | Invalid command format; supply name keywords or at least one prefixed criterion. |
-| `find n/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
-| `find x/Alice` or `find n/Alice s/pending` | Invalid command format; only the eight prefixes above are supported. |
+| `find` or `find Alice Bob` | Invalid command format; supply at least one prefixed criterion. |
+| `find n/`, `find c/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
+| `find x/Alice` or `find o/Pineapple Tarts` | Invalid command format; only the eleven prefixes above are supported. |
 | `find i/arrival` | Invalid command format; use `h/` for handover notes. |
 | `find Alice m/delivery` | Invalid command format; use `find n/Alice m/delivery`. |
 | `find f/2026-02-30` or `find f/2026-2-03` | The date constraint message is shown; supply a real date in `YYYY-MM-DD` format. |
 | `find m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
 | `find h/` or `find m/` | Invalid command format; every supplied prefix needs a value. |
+| `find s/unknown` | The item-status constraint message is shown. |
+| `find d/Tarts d/Cookies` or `find s/pending s/prepared` | Repeated single-valued prefixes are rejected. |
+| `find c/1234567`, `find c/01234a` or `find c/5 3` | `Postal-code search values must contain one to six digits.` |
+| `find c/012345 c/123456` | `Multiple values specified for the following single-valued field(s): c/` |
 | `find t/regular t/vip` | `Multiple values specified for the following single-valued field(s): t/` |
 | `find t/regular customer` or `find t/VIP!` | The tag constraint message is shown. |
 
 Rejected searches leave the current criteria and results unchanged. If no customers match a valid search, the list is empty and the feedback reports `0 person(s) listed!`. Use `list` to clear the search.
+
+### Adding a preorder item: `additem`
+
+Adds one item to a customer's preorder. If the customer has no preorder, one is created automatically.
+
+Format: `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`
+
+* `INDEX` is a positive integer identifying a customer in the **currently displayed list**.
+* Name, quantity and status are required. A name must be non-blank, on one line and at most 200 characters long.
+* Quantity must be a whole number from 1 to 999, without leading zeros.
+* Status must be `PENDING`, `PREPARED` or `COMPLETED`, ignoring capitalisation.
+* Remarks are optional. If supplied, a remark must be non-blank, on one line and at most 100 characters long.
+* Surrounding spaces in values are trimmed. Prefixes may appear in any order, but each can appear only once.
+* The item is appended to the preorder. Repeated product names, including identical items, remain separate entries.
+* Existing items, contact details and tags are preserved. The current filter remains active.
+
+Example: `additem 1 d/Cake q/2 s/pending r/Less sugar`
+
+If customer 1 is Alice and this is her first item, the success message is:
+`Added item 1 for Alice: Cake (quantity: 2, PENDING)`.
+The remark appears on the customer card, rather than in the success message.
+
+Omitting a required prefix displays `Invalid command format!` followed by usage instructions.
+Supplying an empty value displays that field's validation error. In particular, `r/` without text is invalid when adding.
+An index beyond the displayed customer list produces `The person index provided is invalid.`
+
+### Editing a preorder item: `edititem`
+
+Edits one numbered item, preserving omitted fields and all other items.
+
+Format: `edititem INDEX i/ITEM_INDEX [d/NAME] [q/QUANTITY] [s/STATUS] [r/REMARK]`
+
+* `INDEX` identifies a customer in the currently displayed list. `ITEM_INDEX` identifies an item by the number on that
+  customer's card. Both must be positive integers.
+* At least one edit field must be supplied. Names, quantities, statuses and non-empty remarks follow the rules for `additem`.
+* Omitted fields retain their values. An empty `r/` **clears** the remark; omitting `r/` preserves it.
+* An item migrated from v1.3 keeps its missing quantity until a valid `q/QUANTITY` is supplied.
+* Supplying an existing value is accepted and reports success, even if the item does not change.
+* Other items, contact details and tags are preserved. The current filter remains active. Changing an item's status can
+  remove its customer from a tracked view, so check the displayed customer indices before the next command.
+
+Examples:
+
+* `edititem 1 i/2 q/3` changes the quantity of customer 1's second item.
+* `edititem 1 i/2 s/prepared` changes only that item's status.
+* `edititem 1 i/2 r/` clears only that item's remark.
+
+For Alice's second item, Cake, the success message could be:
+`Edited item 2 for Alice: Cake (quantity: 3, PREPARED)`.
+If its quantity is still missing, the message uses the same wording as the card:
+`Edited item 2 for Alice: Cake (quantity needed, PREPARED)`.
+The card continues to display `quantity needed` for that item.
+
+| Situation | Message |
+|-----------|---------|
+| No edit fields, e.g. `edititem 1 i/2` | `No item changes specified.` |
+| Customer has no preorder | `Identified person has no preorder.` |
+| Preorder is empty or item number exceeds the item count | `The item index provided is invalid.` |
+| Customer index exceeds the displayed list | `The person index provided is invalid.` |
+| Missing or malformed customer index, or missing `i/` prefix | `Invalid command format!` followed by usage instructions |
+| Present but empty or invalid item index, e.g. `i/0` or `i/abc` | `Item index must be a positive integer.` |
+
+For both commands, repeated prefixes produce `Multiple values specified for the following single-valued field(s): `
+followed by the repeated prefixes. Input validation reports the first error: customer-index syntax, duplicate prefixes,
+required fields/item-index syntax, then name, quantity, status and remark values. Customer and item existence are checked
+only after parsing succeeds. An edit with no supplied changes is rejected before those existence checks.
+Validation failures leave the data unchanged. The former `order` command is no longer supported.
 
 ### Viewing preorders: `track`
 
@@ -312,7 +400,11 @@ Format: `track [s/STATUS]`
 * Each successful `track` searches all customers and replaces the previous `find` or `track` criteria. Rejected commands preserve the current criteria and results.
 * Customers without preorders, or whose preorder has no items yet, are excluded. Use `list` to show all customers again.
 
-Each item in a preorder appears on the customer's card on its own line, for example `1. Pineapple Tarts - Quantity 2 - PENDING - "Less sugar"`. Its colour shows its status:
+`track` accepts only the optional `s/` field. Use `find` for product or customer combinations. `track s/prepared` and `find s/prepared` select the same customers. Bare `track` includes only active statuses, whereas `find d/Pineapple Tarts` includes all statuses.
+
+Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count, and an item with a missing quantity still counts as one item. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
+
+A customer's preorder appears in a dark panel at the bottom of their card. Its first line shows when and how the preorder will be handed over, for example `20 Dec 2026 | Delivery`. A date that is not recorded yet shows as `Not scheduled`, and a method as `Method not set`. Any handover notes appear on the next line, for example `Handover notes: Call on arrival`. Below them, each item has its own row with its number and name, its quantity and its status, for example `1. Pineapple Tarts`, `Qty 2` and `PENDING`. A special request appears under the item, for example `Remark: Less sugar`, and a preorder with no items shows `No items yet`. The status badge's colour shows the status:
 
 Status | Meaning | Badge colour
 -------|---------|-------------
@@ -320,7 +412,46 @@ Status | Meaning | Badge colour
 `PREPARED` | Ready for collection or delivery | Blue
 `COMPLETED` | Collected or delivered | Green
 
-If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Quantity needed` instead of a quantity.
+If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `quantity needed` instead of a quantity.
+
+### Deleting a preorder item: `deleteitem`
+
+Deletes one item from a customer's preorder, for example when the customer cancels a product, while keeping the customer and the remaining items.
+
+Format: `deleteitem INDEX i/ITEM_INDEX`
+
+* `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
+* `ITEM_INDEX` must be a positive integer referring to the item number shown on that customer's card. It refers to the customer's full item list.
+* Only the selected item is removed. Remaining items keep their relative order and are renumbered from 1. Identical items remain separate: deleting one does not delete the others.
+* Deleting the final item retains an **empty preorder**. The customer's name, phone number, email, address, postal code and tags are unchanged. The preorder's fulfilment date, method and handover notes are also preserved.
+* Both indices are required. The `i/` prefix must appear exactly once; `o/` is not accepted for item selection.
+* Deletion cannot be undone through the app.
+* The current filter is preserved. A customer may disappear from a tracked view if no remaining item matches it. Check the displayed customer and item numbers before your next command. Use `list` to show all customers again.
+
+For example, deleting Alex Yeoh's second sample item shows:
+
+```text
+Deleted item 2 for Alex Yeoh: Almond Cookies (quantity: 1, PREPARED)
+```
+
+The message uses the item's number before deletion. For a migrated item with no recorded quantity, the quantity value is blank, for example `(quantity: , PENDING)`.
+
+| Situation | Message |
+|-----------|---------|
+| Customer index exceeds the displayed list | `The person index provided is invalid.` |
+| Customer has no preorder | `Identified person has no preorder.` |
+| Preorder is empty or item index exceeds the item count | `The item index provided is invalid.` |
+| Missing or invalid customer index, or missing `i/` prefix | `Invalid command format!` followed by usage instructions |
+| Present but empty or invalid item index, e.g. `i/0` or `i/abc` | `Item index must be a positive integer.` |
+| Repeated `i/` prefix | `Multiple values specified for the following single-valued field(s): i/` |
+
+Validation failures leave the data unchanged. If several inputs are invalid, customer-index syntax is checked first, then duplicate prefixes, then item-index syntax. Customer, preorder and item existence are checked after parsing succeeds.
+
+Examples:
+
+* `deleteitem 1 i/2` deletes the second item of the first displayed customer.
+* `find n/Bernice` followed by `deleteitem 1 i/1` deletes the first item of the first matching customer.
+* `track` followed by `deleteitem 1 i/1` deletes the first item of the first displayed customer, whether or not that particular item is active.
 
 ### Deleting a preorder: `deleteorder`
 
@@ -411,12 +542,15 @@ _Details coming soon ..._
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS c/POSTAL_CODE` <br> e.g., `add n/James Ho p/92224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 c/123456`
+**Add item** | `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`<br> e.g., `additem 1 d/Cake q/2 s/pending`
+**Edit item** | `edititem INDEX i/ITEM_INDEX [d/NAME] [q/QUANTITY] [s/STATUS] [r/REMARK]`<br> e.g., `edititem 1 i/2 q/3`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Delete item** | `deleteitem INDEX i/ITEM_INDEX`<br> e.g., `deleteitem 1 i/2`
 **Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE_PREFIX] [t/TAG] [d/PRODUCT] [s/STATUS] [f/YYYY-MM-DD] [m/METHOD] [h/HANDOVER_NOTES]` (at least one prefixed criterion)<br> e.g., `find c/53 f/2026-12-20 m/delivery`
 **Group postal** | `group postal`
-**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG] [f/YYYY-MM-DD] [m/METHOD] [h/HANDOVER_NOTES]` (at least one criterion), or `find NAME_KEYWORD [MORE_KEYWORDS]`<br> e.g., `find f/2026-12-20 m/delivery`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
 **Tag**    | `tag INDEX t/TAG`<br> e.g., `tag 1 t/regular`

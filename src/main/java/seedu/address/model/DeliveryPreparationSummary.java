@@ -5,18 +5,19 @@ import static java.util.Objects.requireNonNull;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.model.person.Person;
-import seedu.address.model.person.PreorderStatusPredicate;
 import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Preorder;
+import seedu.address.model.search.ItemCriterion;
 
 /** An immutable snapshot of outstanding delivery stops in the current customer results. */
 public final class DeliveryPreparationSummary {
-    private static final PreorderStatusPredicate OUTSTANDING_ITEMS =
-            new PreorderStatusPredicate(Set.of(ItemStatus.PENDING, ItemStatus.PREPARED));
+    private static final ItemCriterion OUTSTANDING_ITEMS =
+            new ItemCriterion(Optional.empty(), Set.of(ItemStatus.PENDING, ItemStatus.PREPARED));
 
     private final List<Person> stops;
 

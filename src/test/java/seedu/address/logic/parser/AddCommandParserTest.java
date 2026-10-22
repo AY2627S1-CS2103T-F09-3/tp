@@ -211,9 +211,11 @@ public class AddCommandParserTest {
                 + POSTAL_CODE_DESC_BOB,
                 Address.MESSAGE_CONSTRAINTS);
 
-        // invalid postal code
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
-                + " c/12345", PostalCode.MESSAGE_CONSTRAINTS);
+        // Search prefixes must not be accepted as complete customer postal codes.
+        for (String postalCode : new String[]{"5", "53", "530", "5301", "53012", "1234567"}) {
+            assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
+                    + " c/" + postalCode, PostalCode.MESSAGE_CONSTRAINTS);
+        }
 
         // two invalid values, only first invalid value reported
         assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + EMAIL_DESC_BOB + INVALID_ADDRESS_DESC

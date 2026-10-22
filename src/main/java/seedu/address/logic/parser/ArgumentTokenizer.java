@@ -6,6 +6,8 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -73,9 +75,8 @@ public class ArgumentTokenizer {
      * {@code fromIndex} = 0, this method returns 5.
      */
     private static int findPrefixPosition(String argsString, String prefix, int fromIndex) {
-        int prefixIndex = argsString.indexOf(" " + prefix, fromIndex);
-        return prefixIndex == -1 ? -1
-                : prefixIndex + 1; // +1 as offset for whitespace
+        Matcher matcher = Pattern.compile("\\s" + Pattern.quote(prefix)).matcher(argsString);
+        return matcher.find(fromIndex) ? matcher.start() + 1 : -1; // +1 as offset for whitespace
     }
 
     /**

@@ -87,10 +87,10 @@ public class FulfilmentSearchIntegrationTest {
     }
 
     @Test
-    public void successiveFindAndTrack_replacePreviousCriteriaAndKeepLegacyNameSearch() throws Exception {
+    public void successiveFindAndTrack_replacePreviousCriteria() throws Exception {
         find("find m/collection", List.of(collection));
         find("find h/arrival", List.of(alice, missingPostal));
-        find("find Alice Charlie", List.of(alice, missingPostal));
+        find("find n/Alice", List.of(alice));
         logic.execute("track");
         assertEquals(List.of(alice, missingPostal, unset), logic.getFilteredPersonList());
         find("find m/collection", List.of(collection));
@@ -104,12 +104,49 @@ public class FulfilmentSearchIntegrationTest {
         SearchCriteria criteria = logic.getActiveSearchCriteria();
         List<Person> customers = List.copyOf(model.getAddressBook().getPersonList());
         for (String input : List.of("find f/2026-02-30", "find m/pickup", "find h/", "find f/",
-                "find m/delivery m/collection", "find n/Alice h/", "find i/arrival", "find h/arrival i/1")) {
+                "find m/delivery m/collection", "find n/Alice h/", "find i/arrival", "find h/arrival i/1",
+                "find Alice Charlie", "find Alice m/delivery")) {
             assertThrows(ParseException.class, () -> logic.execute(input));
             assertEquals(criteria, logic.getActiveSearchCriteria());
             assertEquals(List.of(alice, missingPostal, emptyDelivery), logic.getFilteredPersonList());
             assertEquals(customers, model.getAddressBook().getPersonList());
         }
+    }
+
+    @Test
+    public void postalFulfilmentAndItemSearch_requiresEveryConditionAndRefreshesSummary() throws Exception {
+        PreorderBuilder preorder = new PreorderBuilder(alice.getPreorder().orElseThrow());
+        Person wrongCode = new PersonBuilder(alice).withName("Wrong Code").withPostalCode("530123").build();
+        Person wrongDate = new PersonBuilder(alice).withName("Wrong Date")
+                .withPreorder(preorder.withDate("2026-12-21").build()).build();
+        Person wrongMethod = new PersonBuilder(alice).withName("Wrong Method")
+                .withPreorder(preorder.withDate("2026-12-20").withMethod(FulfilmentMethod.COLLECTION).build()).build();
+        Person wrongNotes = new PersonBuilder(alice).withName("Wrong Notes")
+                .withPreorder(preorder.withMethod(FulfilmentMethod.DELIVERY)
+                        .withHandoverNotes("Use the gate").build()).build();
+        Person splitMatch = new PersonBuilder(alice).withName("Split Match")
+                .withPreorder(preorder.withHandoverNotes("Call on arrival").withItems(
+                        new ItemBuilder().withStatus(ItemStatus.COMPLETED).build(),
+                        new ItemBuilder().withName("Cookies").build()).build()).build();
+        List.of(wrongCode, wrongDate, wrongMethod, wrongNotes, splitMatch).forEach(model::addPerson);
+
+        find("find c/01 f/2026-12-20 m/delivery h/arrival d/Pineapple Tarts s/pending", List.of(alice));
+        SearchCriteria criteria = logic.getActiveSearchCriteria();
+        logic.execute("group postal");
+        DeliveryPreparationSummary summary = new DeliveryPreparationSummary(logic.getFilteredPersonList());
+        assertEquals(List.of(alice), summary.getStops());
+        assertEquals(1, summary.getPostalGroupCount());
+
+        logic.execute("edititem 1 i/1 s/completed");
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        assertEquals(List.of(), logic.getFilteredPersonList());
+        assertEquals(0, new DeliveryPreparationSummary(logic.getFilteredPersonList()).getStopCount());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+
+        Person updatedAlice = model.getAddressBook().getPersonList().getFirst();
+        find("find c/012345 f/2026-12-20 m/delivery h/arrival d/Pineapple Tarts s/completed",
+                List.of(updatedAlice, splitMatch));
+        assertEquals(List.of(splitMatch), new DeliveryPreparationSummary(logic.getFilteredPersonList()).getStops());
     }
 
     @Test

@@ -9,30 +9,34 @@ import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.Model;
-import seedu.address.model.person.PreorderStatusPredicate;
+import seedu.address.model.person.Person;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.SearchCriteria;
 
 /**
- * Lists customers with active preorders, or with preorders matching a specified fulfillment status.
+ * Lists customers with active items, or items matching a specified status.
  */
 public class TrackCommand extends Command {
 
     public static final String COMMAND_WORD = "track";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Displays customers with orders, optionally filtered by fulfilment status.\n"
+            + ": Displays customers with matching preorder items.\n"
             + "Parameters: [" + PREFIX_STATUS + "STATUS]\n"
+            + "Omit status for PENDING and PREPARED items; otherwise use PENDING, PREPARED or COMPLETED.\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_STATUS + "PENDING";
 
-    public static final String MESSAGE_ORDERS_LISTED_OVERVIEW = "%1$d order(s) listed!";
-    public static final String MESSAGE_ORDERS_BY_STATUS_LISTED_OVERVIEW = "%1$d order(s) for %2$s listed!";
+    public static final String MESSAGE_ITEMS_LISTED_OVERVIEW =
+            "%1$d customer(s) with %2$d matching item(s) listed!";
+    public static final String MESSAGE_ITEMS_BY_STATUS_LISTED_OVERVIEW =
+            "%1$d customer(s) with %2$d matching item(s) for %3$s listed!";
 
     private final Optional<ItemStatus> status;
 
     /**
-     * Creates a command that lists preorders with the specified {@code status}.
-     * An empty {@code status} lists active preorders: PENDING and PREPARED.
+     * Creates a command that lists customers with items of the specified {@code status}.
+     * An empty {@code status} lists active items: PENDING and PREPARED.
      */
     public TrackCommand(Optional<ItemStatus> status) {
         this.status = requireNonNull(status);
@@ -41,16 +45,24 @@ public class TrackCommand extends Command {
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
+        ItemCriterion criterion = createItemCriterion();
+        model.updateFilteredPersonList(new SearchCriteria(List.of(criterion)));
+        List<Person> customers = model.getFilteredPersonList();
+        long itemCount = customers.stream().mapToLong(person -> criterion.getMatchingItems(person).size()).sum();
+        return new CommandResult(formatFeedback(customers.size(), itemCount));
+    }
+
+    private ItemCriterion createItemCriterion() {
         Set<ItemStatus> statuses = status.map(Set::of)
                 .orElse(Set.of(ItemStatus.PENDING, ItemStatus.PREPARED));
-        model.updateFilteredPersonList(new SearchCriteria(List.of(new PreorderStatusPredicate(statuses))));
+        return new ItemCriterion(Optional.empty(), statuses);
+    }
 
-        int orderCount = model.getFilteredPersonList().size();
-        String feedback = String.format(MESSAGE_ORDERS_LISTED_OVERVIEW, orderCount);
-        if (orderCount > 0 && status.isPresent()) {
-            feedback = String.format(MESSAGE_ORDERS_BY_STATUS_LISTED_OVERVIEW, orderCount, status.get());
+    private String formatFeedback(int customerCount, long itemCount) {
+        if (status.isPresent()) {
+            return String.format(MESSAGE_ITEMS_BY_STATUS_LISTED_OVERVIEW, customerCount, itemCount, status.get());
         }
-        return new CommandResult(feedback);
+        return String.format(MESSAGE_ITEMS_LISTED_OVERVIEW, customerCount, itemCount);
     }
 
     @Override
