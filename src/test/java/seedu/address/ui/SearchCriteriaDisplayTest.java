@@ -38,6 +38,7 @@ import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.person.Person;
 import seedu.address.model.search.PersonCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
@@ -203,6 +204,61 @@ public class SearchCriteriaDisplayTest {
             assertEquals(2, model.getFilteredPersonList().size());
             assertDisplay(root, "Showing: All customers");
             assertFalse(getBadgePane(root).isManaged());
+        });
+    }
+
+    @Test
+    public void mainWindow_postalSearches_updateFullBadgeAndKeepCommandBoxFocus() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Person alice = new PersonBuilder(ALICE).withPostalCode("012345").build();
+            Person benson = new PersonBuilder(BENSON).withPostalCode("530123").build();
+            model.addPerson(alice);
+            model.addPerson(benson);
+            Path dataPath = temporaryFolder.resolve("postal-addressbook.json");
+            Logic logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(dataPath),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("postal-preferences.json"))));
+            Stage stage = new Stage();
+            try {
+                MainWindow window = new MainWindow(stage, logic, dataPath);
+                window.fillInnerParts();
+                Parent root = stage.getScene().getRoot();
+                TextField commandBox = (TextField) root.lookup("#commandTextField");
+                commandBox.requestFocus();
+
+                enterCommand(commandBox, "find c/01");
+                assertEquals(List.of(alice), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Postal: 01");
+
+                enterCommand(commandBox, "find c/012345");
+                assertEquals(List.of(alice), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Postal: 012345");
+
+                enterCommand(commandBox, "find c/99");
+                assertTrue(model.getFilteredPersonList().isEmpty());
+                assertDisplay(root, "Filters · Match all", "Postal: 99");
+                enterCommand(commandBox, "find c/98");
+                assertTrue(model.getFilteredPersonList().isEmpty());
+                assertDisplay(root, "Filters · Match all", "Postal: 98");
+
+                enterCommand(commandBox, "find c/1234567");
+                assertTrue(commandBox.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertDisplay(root, "Filters · Match all", "Postal: 98");
+
+                enterCommand(commandBox, "find c/53 n/Benson");
+                assertEquals(List.of(benson), model.getFilteredPersonList());
+                assertDisplay(root, "Filters · Match all", "Name: benson", "Postal: 53");
+                enterCommand(commandBox, "edit 1 c/012346");
+                assertTrue(model.getFilteredPersonList().isEmpty());
+                assertDisplay(root, "Filters · Match all", "Name: benson", "Postal: 53");
+
+                enterCommand(commandBox, "list");
+                assertEquals(2, model.getFilteredPersonList().size());
+                assertDisplay(root, "Showing: All customers");
+                assertFalse(getBadgePane(root).isManaged());
+            } finally {
+                stage.close();
+            }
         });
     }
 

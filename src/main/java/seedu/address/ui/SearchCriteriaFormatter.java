@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PersonCriterion;
+import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
@@ -27,7 +28,7 @@ public final class SearchCriteriaFormatter {
      * Defines display order independently of the model's unordered criterion set.
      */
     private enum Position {
-        NAME, PHONE, EMAIL, ADDRESS, TAG, ITEM_STATUS, HANDOVER_NOTES
+        NAME, PHONE, EMAIL, ADDRESS, POSTAL, TAG, ITEM_STATUS, HANDOVER_NOTES
     }
 
     /**
@@ -58,6 +59,7 @@ public final class SearchCriteriaFormatter {
     private static Segment formatCriterion(PersonCriterion criterion) {
         return switch (criterion) {
             case TextContainsCriterion text -> formatText(text);
+            case PostalCodeCriterion postal -> new Segment(Position.POSTAL, "Postal: " + postal.getPostalCodePrefix());
             case TagCriterion tag -> new Segment(Position.TAG, "Tag: " + tag.getTag().tagName);
             case ItemCriterion status when status.getProductName().isEmpty() ->
                 new Segment(Position.ITEM_STATUS, "Item status: " + formatStatuses(status.getStatuses()));

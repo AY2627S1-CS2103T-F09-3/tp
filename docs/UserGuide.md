@@ -96,6 +96,8 @@ The area immediately above the customer list shows your active search:
 * With no search criteria, it shows **Showing: All customers**.
 * After `find` or `track`, it shows **Filters · Match all**, with a separate read-only badge for each criterion.
   For example, `find n/Alice t/regular` shows **Name: alice** and **Tag: regular**.
+* Postal searches show the supplied digits, including leading zeros: `find c/01` shows **Postal: 01** and
+  `find c/012345` shows **Postal: 012345**. Postal badges appear after Address and before Tag badges.
 * `track` shows **Item status: Pending or Prepared** in one badge. `track s/PENDING` shows **Item status: Pending**.
 
 The badges describe the search even when it matches every customer or no customers. Text searches show the

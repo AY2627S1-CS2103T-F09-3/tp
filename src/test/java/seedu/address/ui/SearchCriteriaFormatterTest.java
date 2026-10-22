@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PersonCriterion;
+import seedu.address.model.search.PostalCodeCriterion;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
@@ -59,6 +60,13 @@ public class SearchCriteriaFormatterTest {
     }
 
     @Test
+    public void format_postalCriterion_preservesLeadingZerosAndCompleteValue() {
+        for (String prefix : List.of("0", "01", "53", "012345")) {
+            assertSummary(List.of(new PostalCodeCriterion(prefix)), "Postal: " + prefix);
+        }
+    }
+
+    @Test
     public void format_eachStatus_usesReadableStatusLabel() {
         assertSummary(List.of(new ItemCriterion(Optional.empty(), Set.of(PENDING))), "Item status: Pending");
         assertSummary(List.of(new ItemCriterion(Optional.empty(), Set.of(PREPARED))), "Item status: Prepared");
@@ -87,12 +95,13 @@ public class SearchCriteriaFormatterTest {
         List<PersonCriterion> criteria = new ArrayList<>(List.of(
                 new ItemCriterion(Optional.empty(), Set.of(PREPARED, PENDING)),
                 new TagCriterion(new Tag("regular")),
+                new PostalCodeCriterion("01"),
                 new TextContainsCriterion(ADDRESS, "hougang"),
                 new TextContainsCriterion(EMAIL, "example.com"),
                 new TextContainsCriterion(PHONE, "8123"),
                 new TextContainsCriterion(NAME, "alice")));
-        String[] expected = {"Name: alice", "Phone: 8123", "Email: example.com", "Address: hougang", "Tag: regular",
-            "Item status: Pending or Prepared"};
+        String[] expected = {"Name: alice", "Phone: 8123", "Email: example.com", "Address: hougang", "Postal: 01",
+            "Tag: regular", "Item status: Pending or Prepared"};
 
         assertSummary(criteria, expected);
         Collections.reverse(criteria);

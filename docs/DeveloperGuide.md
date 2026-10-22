@@ -88,6 +88,9 @@ changes directly, including searches with identical results. It uses `SearchCrit
 `SearchCriteriaSummary` containing a heading and one complete label per criterion, in predictable order. Formatting
 stays separate from matching and does not parse diagnostic `toString()` output.
 
+`PostalCodeCriterion.getPostalCodePrefix()` exposes the immutable search digits for a `Postal` badge, preserving
+leading zeros and the supplied prefix length. Postal badges are ordered after Address and before Tag badges.
+
 The display uses a `FlowPane` of read-only labels. Badges wrap onto additional rows without a row limit, and each
 badge is limited to the available width so long values wrap inside it. Its preferred-height measurement also accounts
 for wrapping when `FlowPane` measures a row without supplying a width. Empty searches hide the badge container and
