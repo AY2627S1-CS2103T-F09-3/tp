@@ -82,11 +82,12 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Person` objects and structured search criteria.
 
-`MainWindow` places `SearchCriteriaDisplay` above the customer list and supplies
+`MainWindow` owns one `SearchCriteriaDisplay`, places it above the customer list and supplies
 `Logic.activeSearchCriteriaProperty()`. The display renders the current value immediately and observes criteria
-changes directly, including searches with identical results. It uses `SearchCriteriaFormatter` to obtain an immutable
-`SearchCriteriaSummary` containing a heading and one complete label per criterion, in predictable order. Formatting
-stays separate from matching and does not parse diagnostic `toString()` output.
+changes directly, including searches with identical results. It delegates formatting to `SearchCriteriaFormatter`,
+which creates an immutable `SearchCriteriaSummary`. The display uses the summary's heading and complete criterion
+labels to render its badges in predictable order. These dependencies are shown with dashed arrows in the UI diagram.
+Formatting stays separate from matching and does not parse diagnostic `toString()` output.
 
 `PostalCodeCriterion.getPostalCodePrefix()` exposes the immutable search digits for a `Postal` badge, preserving
 leading zeros and the supplied prefix length. Postal badges are ordered after Address and before Tag badges.
