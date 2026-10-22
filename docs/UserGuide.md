@@ -77,7 +77,7 @@ Search criteria determine which customers are displayed. Keeping the criteria pr
 | Commands | Effect on the current search |
 |----------|------------------------------|
 | `find`, `track` | Each successful command replaces the previous criteria and searches all stored customers. |
-| `add`, `edit`, `delete`, `tag`, `untag`, `deleteorder` | Preserve the active criteria and refresh the matching results. |
+| `add`, `edit`, `delete`, `tag`, `untag`, `preorder`, `deleteorder` | Preserve the active criteria and refresh the matching results. |
 | `sort date`, `group postal` | Preserve the active criteria and reorder the displayed results. A later `find` or `track` keeps this order. |
 | `list` | Clears the criteria, sorting and grouping, and shows all customers in their saved order. |
 
@@ -415,7 +415,7 @@ Format: `track [s/STATUS]`
 
 Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count, and an item with a missing quantity still counts as one item. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
 
-Each item in a preorder appears on the customer's card on its own line, for example `1. Pineapple Tarts - Quantity 2 - PENDING - "Less sugar"`. Its colour shows its status:
+A customer's preorder appears in a dark panel at the bottom of their card. Its first line shows when and how the preorder will be handed over, for example `20 Dec 2026 | Delivery`. A date that is not recorded yet shows as `Not scheduled`, and a method as `Method not set`. Any handover notes appear on the next line, for example `Handover notes: Call on arrival`. Below them, each item has its own row with its number and name, its quantity and its status, for example `1. Pineapple Tarts`, `Qty 2` and `PENDING`. A special request appears under the item, for example `Remark: Less sugar`, and a preorder with no items shows `No items yet`. The status badge's colour shows the status:
 
 Status | Meaning | Badge colour
 -------|---------|-------------
@@ -463,6 +463,52 @@ Examples:
 * `deleteitem 1 i/2` deletes the second item of the first displayed customer.
 * `find Bernice` followed by `deleteitem 1 i/1` deletes the first item of the first matching customer.
 * `track` followed by `deleteitem 1 i/1` deletes the first item of the first displayed customer, whether or not that particular item is active.
+
+### Setting delivery or collection details: `preorder`
+
+Records when and how a customer receives their preorder, plus a short note for the handover. These details are shared by **every item** in the customer's preorder, so you set them once per customer rather than once per item.
+
+Format: `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`
+
+| Prefix | Detail | Rules |
+|--------|--------|-------|
+| `f/` | Fulfilment date: the day of delivery or collection | A real calendar date in `YYYY-MM-DD` format, e.g. `2026-12-20` |
+| `m/` | Method | `delivery` or `collection`, in any capitalisation |
+| `h/` | Handover notes, e.g. `Call on arrival` or `Collect from side gate` | One line of at most 100 characters |
+
+* `INDEX` is a positive integer identifying a customer in the **currently displayed list**, including results of `find` or `track`.
+* Supply at least one of `f/`, `m/` and `h/`, in any order. Each can appear only once.
+* Only the details you supply change. For example, `preorder 1 m/collection` changes the method and keeps the date and handover notes.
+* A prefix with no value **clears** that detail. For example, `preorder 1 h/` removes the handover notes and `preorder 1 f/ m/ h/` clears all three.
+* If the customer has no preorder yet, one is created with no items, so you can record the arrangements before adding items with [`additem`](#adding-a-preorder-item-additem).
+* A past date is accepted, so you can still record late orders. The success message then adds a note on a new line, for example `Note: 20 Dec 2025 is in the past.`
+* The customer's items (with their quantities, statuses and remarks), contact details, postal code and tags are not changed. The current filter remains active.
+* Surrounding spaces in values are trimmed. Text that starts a new prefix after a space, such as ` m/`, ends the previous value, so avoid it inside handover notes.
+
+On success, the app shows the customer's details after the change, for example:
+`Updated preorder details for Alex Yeoh: Date: 21 Dec 2026 | Method: COLLECTION | Handover notes: Collect from side gate`.
+A detail that is not set is shown as `Date: Not scheduled`, `Method: Not set` or `Handover notes: None`.
+
+Examples, using the sample data:
+
+* `preorder 1 f/2026-12-21 m/collection h/Collect from side gate` changes Alex Yeoh's preorder to a collection on 21 Dec 2026, keeping the two items already in it.
+* `preorder 5 f/2026-12-24 m/delivery` creates a preorder with no items for Irfan Ibrahim and shows `Updated preorder details for Irfan Ibrahim: Date: 24 Dec 2026 | Method: DELIVERY | Handover notes: None`.
+* `preorder 2 h/` clears Bernice Yu's handover notes and keeps the date and method.
+
+Common errors:
+
+| Input or situation | Feedback |
+| --- | --- |
+| `preorder 1` | `At least one of f/DATE, m/METHOD or h/HANDOVER_NOTES must be provided.` |
+| `preorder 1 f/2026-02-30` or `preorder 1 f/20-12-2026` | `Invalid date! Dates must be real calendar dates in YYYY-MM-DD format, e.g. 2026-12-20.` |
+| `preorder 1 m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
+| Handover notes longer than 100 characters | `Invalid handover notes! Handover notes must not be blank, must be on a single line, and must be at most 100 characters long.` |
+| `preorder 1 f/2026-12-20 f/2026-12-21` | `Multiple values specified for the following single-valued field(s): f/` |
+| `preorder`, `preorder 0 m/delivery`, `preorder abc m/delivery`, `preorder 1 2 m/delivery`, or a prefix of another command such as `preorder 1 d/Cake` | `Invalid command format!` followed by the preorder usage instructions. |
+| `preorder 7 m/delivery` when fewer than seven customers are displayed | `The person index provided is invalid.` |
+| `preorder 6 h/` when Roy Balakrishnan has no preorder | `Roy Balakrishnan has no preorder, so there is nothing to clear. No changes made.` |
+
+If several inputs are invalid, only the first detected error is shown, in this order: the index format, repeated prefixes, the date, method and handover notes values, then the missing details. Whether the index exists in the displayed list is checked last.
 
 ### Deleting a preorder: `deleteorder`
 
@@ -564,6 +610,7 @@ Action     | Format, Examples
 **Group postal** | `group postal`
 **Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
 **List**   | `list`
+**Preorder** | `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`<br> e.g., `preorder 1 f/2026-12-20 m/delivery h/Call on arrival`
 **Tag**    | `tag INDEX t/TAG`<br> e.g., `tag 1 t/regular`
 **Untag**  | `untag INDEX t/TAG`<br> e.g., `untag 1 t/friends`
 **Sort by date** | `sort date`
