@@ -181,19 +181,32 @@ and punctuation remain significant. Queries must be nonblank, but may be fragmen
 they do not use the validation rules for creating complete contact fields. `TagCriterion` accepts a validated `Tag` and
 uses its complete, case-insensitive equality rule.
 
+`PostalCodeCriterion` accepts a search prefix stored as a string. `FindCommandParser` strips surrounding whitespace
+from the `c/` value and validates it using `PostalCodeCriterion.isValidPrefix`, which accepts one to six ASCII digits
+(`[0-9]{1,6}`). Blank values produce the existing invalid-command-format error; other invalid values produce
+`PostalCodeCriterion.MESSAGE_CONSTRAINTS`. The criterion also validates its constructor argument and matches using
+`postalCode.value.startsWith(postalCodePrefix)`. Leading zeros remain significant, a six-digit query is an exact match,
+and customers whose postal code is null do not match. This criterion joins the same `SearchCriteria` collection as
+other conditions, so `find n/Alice c/53` requires both conditions and each new `find` replaces the previous criteria.
+
+Customer-record validation remains separate: `add` and `edit` continue to use `ParserUtil.parsePostalCode` and
+`PostalCode`, which require exactly six digits. A valid search prefix is never used as a customer's stored postal code.
+
 To add a search condition with different matching rules, implement `PersonCriterion` and include it in a
 `SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
 CLI prefixes belong in the parser, not in the criteria. Add the prefix to `FindCommandParser`'s supported-prefix list
 and construct its criterion there. The parser accepts each supported prefix once, requires a prefix before the first
-value, rejects blank or unsupported parameters, and validates tags using `ParserUtil.parseTag`. It recognizes prefixes
-at whitespace boundaries without collapsing internal query spacing. `FindCommand` passes `SearchCriteria` directly to
+value, rejects blank or unsupported parameters, and validates tags using `ParserUtil.parseTag` and postal search
+prefixes using `PostalCodeCriterion.isValidPrefix`.
+It recognizes prefixes at whitespace boundaries without collapsing internal query spacing, including `c/o` inside an
+address. `FindCommand` passes `SearchCriteria` directly to
 `Model.updateFilteredPersonList`, which replaces the active criteria on the list backed by the full address book.
 There is no need to filter the previous search's results or execute another search command as an intermediate step.
 
 For future multi-item searches, product and status conditions must be grouped inside **one** `PersonCriterion` that
 checks whether any single item satisfies both conditions. Separate customer predicates for "has this product" and
-"has this status" could incorrectly match different items. Date/method and postal conditions can be separate criteria,
-because they describe the preorder or customer rather than an individual item. These extensions, `find s/` support,
+"has this status" could incorrectly match different items. Date/method conditions can be separate criteria,
+because they describe the preorder rather than an individual item. These extensions, `find s/` support,
 final multi-item tracking rules and the active-criteria display remain deferred.
 
 ### Storage component
@@ -629,13 +642,13 @@ testers are expected to do more *exploratory* testing.
 Use a test address book without customers whose names contain `SearchTest` or `OtherTest`.
 
 1. Add two customers:
-   * `add n/SearchTest Alice p/81111111 e/searchalice@example.com a/Test Street`
-   * `add n/SearchTest Ben p/82222222 e/searchben@example.com a/Test Street`
+   * `add n/SearchTest Alice p/81111111 e/searchalice@example.com a/Test Street c/123456`
+   * `add n/SearchTest Ben p/82222222 e/searchben@example.com a/Test Street c/123456`
 1. Run `find n/SearchTest`.<br>
    Expected: Only those two customers are shown.
-1. Run `add n/SearchTest Cara p/83333333 e/searchcara@example.com a/Test Street`.<br>
+1. Run `add n/SearchTest Cara p/83333333 e/searchcara@example.com a/Test Street c/123456`.<br>
    Expected: The new customer joins the results; only the three matching customers are shown.
-1. Run `add n/OtherTest Dana p/84444444 e/otherdana@example.com a/Other Street`.<br>
+1. Run `add n/OtherTest Dana p/84444444 e/otherdana@example.com a/Other Street c/123456`.<br>
    Expected: The customer is saved, and the three search results remain displayed.
 1. Run `edit 1 n/OtherTest Alice`.<br>
    Expected: The edited customer disappears. `SearchTest Ben` and `SearchTest Cara` remain at indexes 1 and 2.

@@ -41,6 +41,18 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
+    public void tokenize_whitespaceSeparators_preservesCareOfAddressAndPostalCode() {
+        for (String separator : new String[]{"\t", "\n", "\r\n"}) {
+            String address = "Block 123" + separator + "c/o Alice";
+            ArgumentMultimap values = ArgumentTokenizer.tokenize(" a/" + address + separator + "c/012345",
+                    PREFIX_ADDRESS, PREFIX_POSTAL_CODE);
+            assertPreambleEmpty(values);
+            assertArgumentPresent(values, PREFIX_ADDRESS, address);
+            assertArgumentPresent(values, PREFIX_POSTAL_CODE, "012345");
+        }
+    }
+
+    @Test
     public void tokenize_careOfOutsideAddress_remainsPostalCodeInput() {
         ArgumentMultimap values = ArgumentTokenizer.tokenize(" c/o", PREFIX_ADDRESS, PREFIX_POSTAL_CODE);
         assertArgumentPresent(values, PREFIX_POSTAL_CODE, "o");
