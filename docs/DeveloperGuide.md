@@ -456,6 +456,11 @@ and person before calling `model.setPerson`. Addition appends an item, creating 
 preorder existence and the full item-list index before replacing only the selected item. No explicit filter reset occurs.
 User errors produce exceptions before mutation; assertions check already-validated internal assumptions.
 
+The sequence diagram below shows the item replacement performed by `EditItemCommand`. Addition and deletion use the
+same immutable preorder/person replacement path, with the item list appended or removed instead.
+
+<puml src="diagrams/EditItemSequenceDiagram.puml" alt="Interactions for editing one preorder item" />
+
 Success messages use `Added/Edited item NUMBER for CUSTOMER: NAME (quantity: QUANTITY, STATUS)`.
 For migrated items without a quantity, the quantity portion is `quantity needed`, matching the customer card.
 Remarks remain visible on the customer card. A missing `i/` produces usage instructions; a supplied but invalid

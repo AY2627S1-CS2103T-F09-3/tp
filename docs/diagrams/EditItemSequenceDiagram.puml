@@ -1,0 +1,97 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant "c:EditItemCommand" as EditItemCommand LOGIC_COLOR
+participant "r:CommandResult" as CommandResult LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+participant "existingPreorder:Preorder" as ExistingPreorder MODEL_COLOR
+participant "updatedItem:Item" as Item MODEL_COLOR
+participant "updatedPreorder:Preorder" as UpdatedPreorder MODEL_COLOR
+participant "updatedPerson:Person" as Person MODEL_COLOR
+end box
+
+[-> EditItemCommand : execute(m)
+activate EditItemCommand
+
+EditItemCommand -> Model : getFilteredPersonList()
+activate Model
+Model --> EditItemCommand : displayedCustomers
+deactivate Model
+
+note right of EditItemCommand
+The customer index is resolved against the displayed list.
+The item index is validated against that customer's
+complete preorder item list.
+end note
+
+EditItemCommand -> ExistingPreorder : getItems()
+activate ExistingPreorder
+ExistingPreorder --> EditItemCommand : originalItems
+deactivate ExistingPreorder
+
+EditItemCommand -> EditItemCommand : createUpdatedItem(originalItem)
+activate EditItemCommand
+note right of EditItemCommand
+Supplied fields replace their old values;
+omitted fields are preserved.
+end note
+create Item
+EditItemCommand -> Item : new Item(name, quantity, status, remark)
+activate Item
+Item --> EditItemCommand : updatedItem
+deactivate Item
+EditItemCommand --> EditItemCommand : updatedItem
+deactivate EditItemCommand
+
+EditItemCommand -> EditItemCommand : createUpdatedOrderPerson(identifiedPerson, updatedItem)
+activate EditItemCommand
+EditItemCommand -> EditItemCommand : new ArrayList<>(existingPreorder.getItems())
+activate EditItemCommand
+EditItemCommand --> EditItemCommand : items
+deactivate EditItemCommand
+EditItemCommand -> EditItemCommand : items.set(itemIndex.getZeroBased(), updatedItem)
+activate EditItemCommand
+EditItemCommand --> EditItemCommand : updatedItems
+deactivate EditItemCommand
+EditItemCommand -> ExistingPreorder : withItems(updatedItems)
+activate ExistingPreorder
+create UpdatedPreorder
+ExistingPreorder -> UpdatedPreorder : updatedItems and existing fulfilment details
+activate UpdatedPreorder
+UpdatedPreorder --> ExistingPreorder
+deactivate UpdatedPreorder
+ExistingPreorder --> EditItemCommand : updatedPreorder
+deactivate ExistingPreorder
+
+create Person
+EditItemCommand -> Person : new Person(existing details, Optional.of(updatedPreorder))
+activate Person
+Person --> EditItemCommand : updatedPerson
+deactivate Person
+EditItemCommand --> EditItemCommand : updatedPerson
+deactivate EditItemCommand
+
+EditItemCommand -> Model : setPerson(identifiedPerson, updatedPerson)
+activate Model
+note right of Model
+The active search criteria remain in place.
+The filtered observable list updates if the
+replacement customer matches the search.
+end note
+Model --> EditItemCommand
+deactivate Model
+
+create CommandResult
+EditItemCommand -> CommandResult : edited item number and details
+activate CommandResult
+CommandResult --> EditItemCommand
+deactivate CommandResult
+
+[<-- EditItemCommand : result
+deactivate EditItemCommand
+@enduml
