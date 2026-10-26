@@ -15,12 +15,12 @@ public class GroupPostalCommand extends Command {
     public static final String POSTAL_ARGUMENT = "postal";
     public static final String MESSAGE_SUCCESS = "Customers grouped by postal code.";
 
-    /** Orders customers by postal prefix, then full postal code, then name, with missing codes last. */
+    /** Orders customers by postal prefix, then full postal code, then name ignoring case, with missing codes last. */
     public static final Comparator<Person> POSTAL_COMPARATOR = Comparator
             .comparing(GroupPostalCommand::getPostalGroupKey)
             .thenComparing(person -> person.getPostalCode() == null
                     ? "" : person.getPostalCode().value)
-            .thenComparing(person -> person.getName().fullName);
+            .thenComparing(person -> person.getName().fullName, String.CASE_INSENSITIVE_ORDER);
 
     private static final String MISSING_POSTAL_CODE = "\uffff";
     private static final Logger logger = LogsCenter.getLogger(GroupPostalCommand.class);
