@@ -30,7 +30,7 @@
     </HBox>
     <FlowPane fx:id="tags" />
     <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
-    <Label fx:id="address" styleClass="cell_small_label" text="\$address" />
+    <Label fx:id="address" styleClass="cell_small_label" text="\$address" wrapText="true" />
     <Label fx:id="postalCode" styleClass="cell_small_label" text="\$postalCode" />
     <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
     <!-- The preorder panel: how it will be handed over, then one row per item, added by PersonCard -->
