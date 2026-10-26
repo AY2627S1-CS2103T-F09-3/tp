@@ -155,6 +155,31 @@ public class MainWindowTest {
     }
 
     @Test
+    public void layout_narrowWindow_tightensGapsAroundCustomerList() throws Exception {
+        runInWindow((window, logic, root) -> {
+            layOut(root, 1000, 700);
+            double defaultLeftGap = cardTextLeft(root);
+            assertFalse(root.getStyleClass().contains("compact"));
+
+            layOut(root, MIN_CONTENT_WIDTH, MIN_CONTENT_HEIGHT);
+            assertTrue(root.getStyleClass().contains("compact"));
+            assertTrue(cardTextLeft(root) < defaultLeftGap - 20);
+
+            layOut(root, 1000, 700);
+            assertFalse(root.getStyleClass().contains("compact"));
+            assertEquals(defaultLeftGap, cardTextLeft(root), 0.5);
+        });
+    }
+
+    /**
+     * Returns how far the first card's name is from the left edge of the window.
+     */
+    private static double cardTextLeft(Parent root) {
+        Node name = root.lookup("#nameAndTags");
+        return name.localToScene(name.getBoundsInLocal()).getMinX();
+    }
+
+    @Test
     public void commandBox_invalidCommandAtMinimumSize_showsWholeUsageMessage() throws Exception {
         runInWindow((window, logic, root) -> {
             TextArea resultDisplay = (TextArea) root.lookup("#resultDisplay");

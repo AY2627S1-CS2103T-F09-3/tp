@@ -9,6 +9,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
@@ -25,6 +26,10 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class MainWindow extends UiPart<Stage> {
 
     private static final String FXML = "MainWindow.fxml";
+
+    // Below this content width, such as at the window's minimum width, the gaps around the customer list shrink
+    private static final double COMPACT_WIDTH = 900;
+    private static final String COMPACT_STYLE_CLASS = "compact";
 
     private final Logger logger = LogsCenter.getLogger(getClass());
 
@@ -53,6 +58,9 @@ public class MainWindow extends UiPart<Stage> {
     private StackPane sidePanelPlaceholder;
 
     @FXML
+    private Region windowContent;
+
+    @FXML
     private StackPane resultDisplayPlaceholder;
 
     @FXML
@@ -74,6 +82,21 @@ public class MainWindow extends UiPart<Stage> {
         setWindowDefaultSize(logic.getGuiSettings());
 
         setAccelerators();
+
+        // The whole window's width, unlike a column's, does not change when the compact gaps are applied
+        windowContent.widthProperty().addListener((observable, oldWidth, newWidth) ->
+                setCompact(newWidth.doubleValue() < COMPACT_WIDTH));
+    }
+
+    /**
+     * Adds or removes the style class that tightens the gaps around the customer list.
+     */
+    private void setCompact(boolean isCompact) {
+        if (isCompact && !windowContent.getStyleClass().contains(COMPACT_STYLE_CLASS)) {
+            windowContent.getStyleClass().add(COMPACT_STYLE_CLASS);
+        } else if (!isCompact) {
+            windowContent.getStyleClass().remove(COMPACT_STYLE_CLASS);
+        }
     }
 
     public Stage getPrimaryStage() {

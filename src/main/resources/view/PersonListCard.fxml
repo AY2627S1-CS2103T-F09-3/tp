@@ -11,21 +11,15 @@
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.text.TextFlow?>
 
-<!-- The GridPane is the root, as an HBox around it gets a wrapping card's height wrong on JavaFX 25 -->
-<GridPane id="cardPane" fx:id="cardPane" hgap="12" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<!-- The GridPane is the root, as an HBox around it gets a wrapping card's height wrong on JavaFX 25.
+     Its padding and gap, and the index's width, are in DarkTheme.css, as a narrow window makes them smaller. -->
+<GridPane id="cardPane" fx:id="cardPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
   <columnConstraints>
-    <ColumnConstraints minWidth="28" />
+    <ColumnConstraints />
     <ColumnConstraints hgrow="ALWAYS" minWidth="10" prefWidth="150" />
   </columnConstraints>
-  <padding>
-    <Insets top="14" right="18" bottom="16" left="12" />
-  </padding>
-  <Label fx:id="id" styleClass="card-index" maxWidth="Infinity" alignment="TOP_RIGHT" GridPane.valignment="TOP">
-    <minWidth>
-      <!-- Ensures that the label text is never truncated -->
-      <Region fx:constant="USE_PREF_SIZE" />
-    </minWidth>
-  </Label>
+  <!-- The column is never narrower than the index's text, so a long index is never truncated -->
+  <Label fx:id="id" styleClass="card-index" maxWidth="Infinity" alignment="TOP_RIGHT" GridPane.valignment="TOP" />
   <VBox spacing="3" GridPane.columnIndex="1">
     <!-- TextFlows wrap long names, emails and addresses, and work out their height for the card's width -->
     <TextFlow fx:id="nameAndTags" lineSpacing="4">

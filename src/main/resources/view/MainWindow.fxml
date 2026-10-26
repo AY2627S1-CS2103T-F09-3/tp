@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.net.URL?>
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.Scene?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
@@ -25,7 +24,8 @@
         <URL value="@Extensions.css" />
       </stylesheets>
 
-      <VBox>
+      <!-- Gets the "compact" style class in a narrow window, which makes the gaps around the customer list smaller -->
+      <VBox fx:id="windowContent">
         <MenuBar fx:id="menuBar" VBox.vgrow="NEVER">
           <Menu mnemonicParsing="false" text="File">
             <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Exit" />
@@ -35,16 +35,10 @@
           </Menu>
         </MenuBar>
 
-        <HBox fx:id="columns" spacing="10" VBox.vgrow="ALWAYS">
-          <padding>
-            <Insets top="4" right="10" bottom="10" left="10" />
-          </padding>
-
+        <!-- The paddings and gaps of both columns are in DarkTheme.css -->
+        <HBox fx:id="columns" styleClass="window-columns" VBox.vgrow="ALWAYS">
           <!-- Wide enough that cards keep whole words on a line; the column takes any extra width -->
           <VBox fx:id="mainColumn" styleClass="window-column" spacing="8" minWidth="450" HBox.hgrow="ALWAYS">
-            <padding>
-              <Insets top="10" right="10" bottom="0" left="10" />
-            </padding>
             <StackPane fx:id="commandBoxPlaceholder" VBox.vgrow="NEVER" />
             <!-- Takes the height of the whole message, and the customer list below gives up the space -->
             <StackPane fx:id="resultDisplayPlaceholder" VBox.vgrow="NEVER">
