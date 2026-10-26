@@ -9,9 +9,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -37,7 +35,7 @@ public class MainWindow extends UiPart<Stage> {
     // Independent Ui parts residing in this Ui container
     private PersonListPanel personListPanel;
     private ResultDisplay resultDisplay;
-    private HelpWindow helpWindow;
+    private SidePanel sidePanel;
 
     @FXML
     private StackPane commandBoxPlaceholder;
@@ -52,7 +50,7 @@ public class MainWindow extends UiPart<Stage> {
     private StackPane searchCriteriaDisplayPlaceholder;
 
     @FXML
-    private StackPane deliverySummaryPlaceholder;
+    private StackPane sidePanelPlaceholder;
 
     @FXML
     private StackPane resultDisplayPlaceholder;
@@ -76,8 +74,6 @@ public class MainWindow extends UiPart<Stage> {
         setWindowDefaultSize(logic.getGuiSettings());
 
         setAccelerators();
-
-        helpWindow = new HelpWindow();
     }
 
     public Stage getPrimaryStage() {
@@ -125,17 +121,14 @@ public class MainWindow extends UiPart<Stage> {
         SearchCriteriaDisplay searchCriteriaDisplay = new SearchCriteriaDisplay(logic.activeSearchCriteriaProperty());
         searchCriteriaDisplayPlaceholder.getChildren().add(searchCriteriaDisplay.getRoot());
 
-        DeliverySummaryPanel deliverySummary = new DeliverySummaryPanel(logic.getFilteredPersonList());
-        deliverySummaryPlaceholder.getChildren().add(deliverySummary.getRoot());
-
         personListPanel = new PersonListPanel(logic.getFilteredPersonList(), logic.activeSearchCriteriaProperty());
-        ProductSummaryPanel summaryPanel = new ProductSummaryPanel(logic.getFilteredPersonList(),
+        personListPanelPlaceholder.getChildren().add(personListPanel.getRoot());
+
+        ProductSummaryPanel productSummary = new ProductSummaryPanel(logic.getFilteredPersonList(),
                 logic.activeSearchCriteriaProperty());
-        // Match the padding above the summary; unmanaged summaries leave no extra gap.
-        VBox customerView = new VBox(10, summaryPanel.getRoot(),
-                personListPanel.getRoot());
-        VBox.setVgrow(personListPanel.getRoot(), Priority.ALWAYS);
-        personListPanelPlaceholder.getChildren().add(customerView);
+        DeliverySummaryPanel deliverySummary = new DeliverySummaryPanel(logic.getFilteredPersonList());
+        sidePanel = new SidePanel(new HelpPanel().getRoot(), productSummary.getRoot(), deliverySummary.getRoot());
+        sidePanelPlaceholder.getChildren().add(sidePanel.getRoot());
 
         resultDisplay = new ResultDisplay();
         resultDisplayPlaceholder.getChildren().add(resultDisplay.getRoot());
@@ -151,8 +144,9 @@ public class MainWindow extends UiPart<Stage> {
      * Sets the default size based on {@code guiSettings}.
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
-        primaryStage.setHeight(guiSettings.getWindowHeight());
-        primaryStage.setWidth(guiSettings.getWindowWidth());
+        // A size saved before the side panel was added can be narrower than the window now allows
+        primaryStage.setHeight(Math.max(guiSettings.getWindowHeight(), primaryStage.getMinHeight()));
+        primaryStage.setWidth(Math.max(guiSettings.getWindowWidth(), primaryStage.getMinWidth()));
         if (guiSettings.getWindowCoordinates() != null) {
             primaryStage.setX(guiSettings.getWindowCoordinates().getX());
             primaryStage.setY(guiSettings.getWindowCoordinates().getY());
@@ -160,15 +154,11 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
-     * Opens the help window or focuses on it if it's already opened.
+     * Shows help in the side panel, until the next command is run.
      */
     @FXML
     public void handleHelp() {
-        if (!helpWindow.isShowing()) {
-            helpWindow.show();
-        } else {
-            helpWindow.focus();
-        }
+        sidePanel.showHelp();
     }
 
     void show() {
@@ -183,7 +173,6 @@ public class MainWindow extends UiPart<Stage> {
         GuiSettings guiSettings = new GuiSettings(primaryStage.getWidth(), primaryStage.getHeight(),
                 (int) primaryStage.getX(), (int) primaryStage.getY());
         logic.setGuiSettings(guiSettings);
-        helpWindow.hide();
         primaryStage.hide();
     }
 
@@ -204,6 +193,8 @@ public class MainWindow extends UiPart<Stage> {
 
             if (commandResult.isShowHelp()) {
                 handleHelp();
+            } else {
+                sidePanel.showSummary();
             }
 
             if (commandResult.isExit()) {

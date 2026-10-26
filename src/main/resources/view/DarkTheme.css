@@ -352,32 +352,58 @@
     -fx-padding: 4 9 4 9;
 }
 
-/* Product and delivery preparation summaries, styled like the cards */
-.product-summary, .product-summary > .viewport {
-    -fx-background-color: -lb-card;
+/* The two columns: the command box, results and customer list, and the side panel beside them */
+.window-column {
+    -fx-background-color: -lb-ground;
+    -fx-background-radius: 10;
+    -fx-border-color: -lb-border;
+    -fx-border-radius: 10;
 }
 
-.product-summary {
-    -fx-background-radius: 8;
+/* The side panel is styled like a card, so the views inside it need no frame of their own */
+.side-panel {
+    -fx-background-color: -lb-card;
+    -fx-background-radius: 10;
     -fx-border-color: -lb-border;
-    -fx-border-radius: 8;
+    -fx-border-radius: 10;
+}
+
+.side-panel-content, .side-panel-content > .viewport, .delivery-summary {
+    -fx-background-color: transparent;
+}
+
+/* Inset from the panel's rounded border, which shows the accent color while the view has focus */
+.side-panel-content {
+    -fx-background-insets: 1;
+    -fx-border-color: transparent;
+    -fx-border-radius: 10;
     -fx-border-width: 1;
 }
 
-.product-summary:focused {
+.side-panel-content:focused {
     -fx-border-color: -lb-accent;
 }
 
-.product-summary-heading {
+.side-panel-title {
     -fx-font-family: "Bricolage Grotesque SemiBold";
-    -fx-font-size: 15px;
+    -fx-font-size: 16px;
 }
 
-.delivery-summary {
-    -fx-background-color: -lb-card;
-    -fx-background-radius: 8;
-    -fx-border-color: -lb-border;
-    -fx-border-radius: 8;
+.side-panel-heading {
+    -fx-font-weight: bold;
+    -fx-text-fill: -lb-accent;
+}
+
+.help-command {
+    -fx-font-size: 12.5px;
+    -fx-background-color: -lb-panel;
+    -fx-background-radius: 4;
+    -fx-padding: 3 8 3 8;
+}
+
+.help-url {
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -lb-muted;
 }
 
 .delivery-summary .scroll-pane, .delivery-summary .scroll-pane > .viewport {
@@ -392,11 +418,6 @@
 
 .delivery-summary .scroll-pane:focused {
     -fx-border-color: -lb-accent;
-}
-
-.delivery-summary .delivery-title {
-    -fx-font-family: "Bricolage Grotesque SemiBold";
-    -fx-font-size: 15px;
 }
 
 .delivery-summary .delivery-group {
