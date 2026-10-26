@@ -665,12 +665,17 @@ _Details coming soon ..._
 **Q**: How do I transfer my data to another computer?<br>
 **A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous LeBake home folder.
 
+**Q**: Nothing happens when I double-click `LeBake.jar`. How do I start LeBake?<br>
+**A**: On some computers, double-clicking a JAR file does not run it with Java. Start LeBake from a terminal instead, as described in [Quick start](#quick-start).
+
+**Q**: LeBake shows an error, or my changes are not saved, when I run it from some folders. Why?<br>
+**A**: LeBake saves its data in a `data` folder next to the JAR file, so it needs permission to write there. Move the JAR file to a folder you can write to, such as one in your home folder, and start it from there.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -695,3 +700,4 @@ Action     | Format, Examples
 **Untag**  | `untag INDEX t/TAG`<br> e.g., `untag 1 t/friends`
 **Sort by date** | `sort date`
 **Help**   | `help`
+**Exit**   | `exit`

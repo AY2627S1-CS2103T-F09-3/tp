@@ -865,17 +865,44 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+   1. Open a terminal in that folder and run `java -jar LeBake.jar`.<br>
+      Expected: The GUI opens with a set of sample customers. The window size may not be optimal.
 
 1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with `java -jar LeBake.jar`.<br>
        Expected: The most recent window size and location are retained.
 
-1. _{ more test cases … }_
+1. Using the smallest window
+
+   1. Make the window as narrow as it allows.<br>
+      Expected: The window stops at 800 px wide. The customer list and the side panel are both still readable,
+      and long names and addresses wrap between words. The gaps to the left of the cards become smaller.
+
+### Using the side panel
+
+Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`.
+
+1. Look at the side panel on the right.<br>
+   Expected: It shows **Delivery preparation** with `2 outstanding customer stop(s) | 2 postal group(s)`, and stops for
+   `Alex Yeoh` and `Charlotte Oliveiro`.
+1. Run `find d/Pineapple Tarts`.<br>
+   Expected: The side panel shows `Preparation: Pineapple Tarts | All statuses`, `2 customer(s) | 2 matching item(s)`
+   and `Total quantity: 5` instead of the delivery summary. The Pineapple Tarts rows of both customers are in a yellow box.
+1. Run `help`.<br>
+   Expected: `Showing help in the side panel.` The side panel shows **Help**, with the format of every command and the
+   User Guide URL.
+1. Click **Copy URL**, then paste into a text editor.<br>
+   Expected: The User Guide URL is pasted.
+1. Run `add` with nothing after it.<br>
+   Expected: An invalid command format error. Help stays in the side panel.
+1. Run `list`.<br>
+   Expected: The side panel shows the delivery summary again, and only `Showing: All customers` is above the customer
+   list.
+1. Press F1.<br>
+   Expected: Help shows in the side panel again.
 
 ### Displaying active search criteria
 
