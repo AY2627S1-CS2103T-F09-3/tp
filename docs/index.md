@@ -21,3 +21,4 @@ LeBake is designed for bakers who prefer a CLI-focused workflow, with text-based
 This project is based on the AddressBook-Level3 project created by the [SE-EDU initiative](https://se-education.org).
 
 * Libraries used: [JavaFX](https://openjfx.io/), [Jackson](https://github.com/FasterXML/jackson), [JUnit5](https://github.com/junit-team/junit5)
+* Fonts used: [Atkinson Hyperlegible](https://www.brailleinstitute.org/freefont/) and [Bricolage Grotesque](https://github.com/ateliertriay/bricolage), under the [SIL Open Font License 1.1](https://openfontlicense.org)
