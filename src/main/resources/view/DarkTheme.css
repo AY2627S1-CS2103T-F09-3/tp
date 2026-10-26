@@ -1,293 +1,440 @@
+/*
+ * LeBake's warm brown theme. The fonts are bundled under /fonts with their licences (SIL OFL 1.1).
+ * If a font fails to load, JavaFX falls back to the system font.
+ */
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    src: url("../fonts/AtkinsonHyperlegible-Regular.ttf");
+}
+
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    src: url("../fonts/AtkinsonHyperlegible-Bold.ttf");
+}
+
+@font-face {
+    font-family: "Bricolage Grotesque SemiBold";
+    src: url("../fonts/BricolageGrotesque-SemiBold.ttf");
+}
+
+/* Each color is defined once here and used by name below */
+.root {
+    -lb-ground: #211d1a;
+    -lb-card: #2f2925;
+    -lb-border: #433a34;
+    -lb-ink: #f3ece4;
+    -lb-muted: #c4b6aa;
+    -lb-accent: #e9a35e;
+    -lb-panel: #3a322d;
+    -lb-panel-border: #4d433c;
+    -lb-divider: #4a403a;
+    -lb-tag: #463c35;
+    -lb-tag-ink: #eadccf;
+    -lb-warn: #f2c46b;
+    -lb-match: #4b4024;
+    -lb-match-border: #f4dc8a;
+    -lb-selected: #8a5a34;
+    -fx-font-family: "Atkinson Hyperlegible";
+    -fx-background-color: -lb-ground;
+}
+
 .background {
-    -fx-background-color: derive(#1d1d1d, 20%);
-    background-color: #383838; /* Used in the default.html file */
+    -fx-background-color: -lb-ground;
+    background-color: #211d1a; /* Used in the default.html file */
 }
 
 .label {
-    -fx-font-size: 11pt;
-    -fx-font-family: "Segoe UI Semibold";
-    -fx-text-fill: #555555;
-    -fx-opacity: 0.9;
-}
-
-.label-bright {
-    -fx-font-size: 11pt;
-    -fx-font-family: "Segoe UI Semibold";
-    -fx-text-fill: white;
-    -fx-opacity: 1;
-}
-
-.label-header {
-    -fx-font-size: 32pt;
-    -fx-font-family: "Segoe UI Light";
-    -fx-text-fill: white;
-    -fx-opacity: 1;
+    -fx-font-size: 13px;
+    -fx-text-fill: -lb-ink;
 }
 
 .text-field {
-    -fx-font-size: 12pt;
-    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 15px;
 }
 
-.tab-pane {
-    -fx-padding: 0 0 0 1;
+.stack-pane {
+    -fx-background-color: -lb-ground;
 }
 
-.tab-pane .tab-header-area {
-    -fx-padding: 0 0 0 0;
-    -fx-min-height: 0;
-    -fx-max-height: 0;
+.pane-with-border {
+    -fx-background-color: -lb-ground;
+    -fx-border-color: -lb-border;
+    -fx-border-width: 1 0 0 0;
 }
 
-.table-view {
-    -fx-base: #1d1d1d;
-    -fx-control-inner-background: #1d1d1d;
-    -fx-background-color: #1d1d1d;
-    -fx-table-cell-border-color: transparent;
-    -fx-table-header-border-color: transparent;
-    -fx-padding: 5;
+.menu-bar {
+    -fx-background-color: -lb-ground;
 }
 
-.table-view .column-header-background {
-    -fx-background-color: transparent;
+.menu-bar .label {
+    -fx-font-size: 14px;
+    -fx-text-fill: -lb-ink;
 }
 
-.table-view .column-header, .table-view .filler {
-    -fx-size: 35;
-    -fx-border-width: 0 0 1 0;
-    -fx-background-color: transparent;
-    -fx-border-color:
-        transparent
-        transparent
-        derive(-fx-base, 80%)
-        transparent;
-    -fx-border-insets: 0 10 1 0;
+.menu-bar .menu:hover, .menu-bar .menu:showing {
+    -fx-background-color: -lb-card;
 }
 
-.table-view .column-header .label {
-    -fx-font-size: 20pt;
-    -fx-font-family: "Segoe UI Light";
-    -fx-text-fill: white;
-    -fx-alignment: center-left;
-    -fx-opacity: 1;
+.context-menu {
+    -fx-background-color: -lb-card;
+    -fx-border-color: -lb-border;
 }
 
-.table-view:focused .table-row-cell:filled:focused:selected {
-    -fx-background-color: -fx-focus-color;
+.context-menu .label {
+    -fx-text-fill: -lb-ink;
 }
 
-.split-pane:horizontal .split-pane-divider {
-    -fx-background-color: derive(#1d1d1d, 20%);
-    -fx-border-color: transparent transparent transparent #4d4d4d;
+.menu-item:focused {
+    -fx-background-color: -lb-panel;
 }
 
-.split-pane {
-    -fx-border-radius: 1;
+.menu .left-container {
+    -fx-background-color: -lb-ground;
+}
+
+/* Command box */
+#commandTextField {
+    -fx-background-color: -lb-card;
+    -fx-background-radius: 6;
+    -fx-border-color: -lb-border;
+    -fx-border-radius: 6;
     -fx-border-width: 1;
-    -fx-background-color: derive(#1d1d1d, 20%);
+    -fx-padding: 6 10 6 10;
+    -fx-text-fill: -lb-ink;
+    -fx-prompt-text-fill: -lb-muted;
+    -fx-highlight-fill: -lb-accent;
+    -fx-highlight-text-fill: -lb-ground;
 }
 
+#commandTextField:focused {
+    -fx-border-color: -lb-accent;
+}
+
+#commandTypeLabel {
+    -fx-font-size: 11px;
+    -fx-text-fill: #f28b6b;
+}
+
+/* Result box. It wraps long lines, and ResultDisplay grows it to fit the whole message. */
+.result-display {
+    -fx-font-size: 14px;
+    -fx-text-fill: -lb-ink;
+    -fx-background-color: -lb-card;
+    -fx-background-radius: 6;
+    -fx-border-color: -lb-border;
+    -fx-border-radius: 6;
+    -fx-highlight-fill: -lb-accent;
+    -fx-highlight-text-fill: -lb-ground;
+}
+
+.result-display .content {
+    -fx-background-color: transparent;
+}
+
+.result-display .scroll-pane, .result-display .scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Customer list */
 .list-view {
     -fx-background-insets: 0;
     -fx-padding: 0;
-    -fx-background-color: derive(#1d1d1d, 20%);
+    -fx-background-color: -lb-ground;
+}
+
+.customer-list {
+    -fx-border-color: transparent;
+    -fx-border-width: 1;
+}
+
+.customer-list:focused {
+    -fx-border-color: -lb-border;
 }
 
 .list-cell {
     -fx-label-padding: 0 0 0 0;
-    -fx-graphic-text-gap : 0;
-    -fx-padding: 0 0 0 0;
+    -fx-graphic-text-gap: 0;
+    -fx-padding: 0 0 10 0;
+    -fx-background-color: transparent;
 }
 
-.list-cell:filled:even {
-    -fx-background-color: #3c3e3f;
+.list-cell:empty {
+    -fx-background-color: transparent;
 }
 
-.list-cell:filled:odd {
-    -fx-background-color: #515658;
+.postal-group-heading {
+    -fx-font-family: "Bricolage Grotesque SemiBold";
+    -fx-font-size: 14px;
+    -fx-text-fill: -lb-accent;
+    -fx-padding: 4 0 8 2;
 }
 
-.list-cell:filled:selected {
-    -fx-background-color: #424d5f;
-}
-
-.list-cell:filled:selected #cardPane {
-    -fx-border-color: #3e7b91;
+/* Customer card */
+#cardPane {
+    -fx-background-color: -lb-card;
+    -fx-background-radius: 8;
+    -fx-border-color: -lb-border;
+    -fx-border-radius: 8;
     -fx-border-width: 1;
 }
 
-.list-cell .label {
-    -fx-text-fill: white;
+.list-cell:filled:selected #cardPane {
+    -fx-border-color: -lb-selected;
 }
 
-.cell_big_label {
-    -fx-font-family: "Segoe UI Semibold";
-    -fx-font-size: 16px;
-    -fx-text-fill: #010504;
+.customer-list:focused .list-cell:filled:selected #cardPane {
+    -fx-border-color: -lb-accent;
 }
 
-.cell_small_label {
-    -fx-font-family: "Segoe UI";
-    -fx-font-size: 13px;
-    -fx-text-fill: #010504;
+.card-index {
+    -fx-font-family: "Bricolage Grotesque SemiBold";
+    -fx-font-size: 18px;
+    -fx-text-fill: -lb-accent;
 }
 
-.stack-pane {
-     -fx-background-color: derive(#1d1d1d, 20%);
+.card-name {
+    -fx-font-family: "Bricolage Grotesque SemiBold";
+    -fx-font-size: 18px;
+    -fx-fill: -lb-ink;
 }
 
-.pane-with-border {
-     -fx-background-color: derive(#1d1d1d, 20%);
-     -fx-border-color: derive(#1d1d1d, 10%);
-     -fx-border-top-width: 1px;
+.card-text {
+    -fx-font-size: 13.5px;
+    -fx-fill: -lb-ink;
 }
 
-.status-bar {
-    -fx-background-color: derive(#1d1d1d, 30%);
+.card-muted {
+    -fx-font-size: 13.5px;
+    -fx-fill: -lb-muted;
 }
 
-.result-display {
+.card-tag {
+    -fx-font-size: 12px;
+    -fx-text-fill: -lb-tag-ink;
+    -fx-background-color: -lb-tag;
+    -fx-background-radius: 4;
+    -fx-padding: 0 7 0 7;
+}
+
+.card-postal-code {
+    -fx-font-size: 13.5px;
+    -fx-text-fill: -lb-muted;
+    -fx-graphic-text-gap: 4;
+}
+
+.card-postal-code-missing {
+    -fx-text-fill: -lb-warn;
+}
+
+.card-no-preorder {
+    -fx-text-fill: -lb-muted;
+}
+
+.warning-icon {
+    -fx-fill: transparent;
+    -fx-stroke: -lb-warn;
+    -fx-stroke-width: 1.3;
+    -fx-stroke-line-cap: round;
+}
+
+/* Preorder panel, which uses one solid shade inside every card */
+#preorder {
+    -fx-background-color: -lb-panel;
+    -fx-background-radius: 6;
+    -fx-border-color: -lb-panel-border;
+    -fx-border-radius: 6;
+}
+
+#preorder .preorder-icon {
+    -fx-fill: transparent;
+    -fx-stroke: -lb-accent;
+    -fx-stroke-width: 1.5;
+    -fx-stroke-line-cap: round;
+    -fx-stroke-line-join: round;
+}
+
+#preorder .preorder-header {
+    -fx-font-weight: bold;
+}
+
+#preorder .preorder-handover-notes, #preorder .preorder-remark {
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -lb-muted;
+}
+
+#preorder .preorder-divider {
+    -fx-background-color: -lb-divider;
+}
+
+#preorder .preorder-empty {
+    -fx-text-fill: -lb-muted;
+    -fx-padding: 0 6 0 6;
+}
+
+/* The transparent border keeps every row the same size as a highlighted one */
+#preorder .preorder-item-row {
+    -fx-padding: 4 6 4 6;
+    -fx-background-radius: 4;
+    -fx-border-color: transparent;
+    -fx-border-radius: 4;
+    -fx-border-width: 1;
+}
+
+/* A matching item keeps its status color, inside a yellow box */
+#preorder .matching-item {
+    -fx-background-color: -lb-match;
+    -fx-border-color: -lb-match-border;
+}
+
+#preorder .preorder-item-number {
+    -fx-font-family: "Bricolage Grotesque SemiBold";
+    -fx-text-fill: -lb-accent;
+}
+
+#preorder .preorder-item-name {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+#preorder .preorder-quantity-missing {
+    -fx-text-fill: -lb-warn;
+    -fx-graphic-text-gap: 4;
+}
+
+/* Each status keeps its color from the user guide */
+#preorder .status-chip {
+    -fx-font-size: 11.5px;
+    -fx-font-weight: bold;
+    -fx-padding: 1 8 1 8;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-border-width: 1;
+    -fx-graphic-text-gap: 4;
+}
+
+#preorder .status-pending {
+    -fx-background-color: #f2c46b;
+    -fx-border-color: #f2c46b;
+    -fx-text-fill: #3a2500;
+}
+
+#preorder .status-prepared {
+    -fx-background-color: #2f68ad;
+    -fx-border-color: #2f68ad;
+    -fx-text-fill: #ffffff;
+}
+
+#preorder .status-completed {
     -fx-background-color: transparent;
-    -fx-font-family: "Segoe UI Light";
-    -fx-font-size: 13pt;
-    -fx-text-fill: white;
+    -fx-border-color: #86b98f;
+    -fx-text-fill: #a9d6b1;
 }
 
-.result-display .label {
-    -fx-text-fill: black !important;
+#preorder .completed-icon {
+    -fx-fill: transparent;
+    -fx-stroke: #a9d6b1;
+    -fx-stroke-width: 1.6;
+    -fx-stroke-line-cap: round;
+    -fx-stroke-line-join: round;
+}
+
+/* Active search criteria */
+.search-criteria-heading {
+    -fx-font-weight: bold;
+}
+
+.search-criterion-badge {
+    -fx-text-fill: -lb-tag-ink;
+    -fx-background-color: -lb-tag;
+    -fx-border-color: -lb-panel-border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 4 9 4 9;
+}
+
+/* Product and delivery preparation summaries, styled like the cards */
+.product-summary, .product-summary > .viewport {
+    -fx-background-color: -lb-card;
+}
+
+.product-summary {
+    -fx-background-radius: 8;
+    -fx-border-color: -lb-border;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+}
+
+.product-summary:focused {
+    -fx-border-color: -lb-accent;
+}
+
+.product-summary-heading {
+    -fx-font-family: "Bricolage Grotesque SemiBold";
+    -fx-font-size: 15px;
+}
+
+.delivery-summary {
+    -fx-background-color: -lb-card;
+    -fx-background-radius: 8;
+    -fx-border-color: -lb-border;
+    -fx-border-radius: 8;
+}
+
+.delivery-summary .scroll-pane, .delivery-summary .scroll-pane > .viewport {
+    -fx-background-color: -lb-panel;
+}
+
+.delivery-summary .scroll-pane {
+    -fx-background-radius: 6;
+    -fx-border-color: -lb-panel-border;
+    -fx-border-radius: 6;
+}
+
+.delivery-summary .scroll-pane:focused {
+    -fx-border-color: -lb-accent;
+}
+
+.delivery-summary .delivery-title {
+    -fx-font-family: "Bricolage Grotesque SemiBold";
+    -fx-font-size: 15px;
+}
+
+.delivery-summary .delivery-group {
+    -fx-font-weight: bold;
+    -fx-text-fill: -lb-accent;
+}
+
+.delivery-summary .delivery-stop {
+    -fx-font-size: 12.5px;
+}
+
+/* Status bar */
+.status-bar {
+    -fx-background-color: -lb-ground;
+    -fx-border-color: -lb-border;
+    -fx-border-width: 1 0 0 0;
 }
 
 .status-bar .label {
-    -fx-font-family: "Segoe UI Light";
-    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-text-fill: -lb-muted;
     -fx-padding: 4px;
     -fx-pref-height: 30px;
 }
 
-.status-bar-with-border {
-    -fx-background-color: derive(#1d1d1d, 30%);
-    -fx-border-color: derive(#1d1d1d, 25%);
-    -fx-border-width: 1px;
-}
-
-.status-bar-with-border .label {
-    -fx-text-fill: white;
-}
-
-.grid-pane {
-    -fx-background-color: derive(#1d1d1d, 30%);
-    -fx-border-color: derive(#1d1d1d, 30%);
-    -fx-border-width: 1px;
-}
-
-.grid-pane .stack-pane {
-    -fx-background-color: derive(#1d1d1d, 30%);
-}
-
-.context-menu {
-    -fx-background-color: derive(#1d1d1d, 50%);
-}
-
-.context-menu .label {
-    -fx-text-fill: white;
-}
-
-.menu-bar {
-    -fx-background-color: derive(#1d1d1d, 20%);
-}
-
-.menu-bar .label {
-    -fx-font-size: 14pt;
-    -fx-font-family: "Segoe UI Light";
-    -fx-text-fill: white;
-    -fx-opacity: 0.9;
-}
-
-.menu .left-container {
-    -fx-background-color: black;
-}
-
-/*
- * Metro style Push Button
- * Author: Pedro Duque Vieira
- * http://pixelduke.wordpress.com/2012/10/23/jmetro-windows-8-controls-on-java/
- */
-.button {
-    -fx-padding: 5 22 5 22;
-    -fx-border-color: #e2e2e2;
-    -fx-border-width: 2;
-    -fx-background-radius: 0;
-    -fx-background-color: #1d1d1d;
-    -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
-    -fx-font-size: 11pt;
-    -fx-text-fill: #d8d8d8;
-    -fx-background-insets: 0 0 0 0, 0, 1, 2;
-}
-
-.button:hover {
-    -fx-background-color: #3a3a3a;
-}
-
-.button:pressed, .button:default:hover:pressed {
-  -fx-background-color: white;
-  -fx-text-fill: #1d1d1d;
-}
-
-.button:focused {
-    -fx-border-color: white, white;
-    -fx-border-width: 1, 1;
-    -fx-border-style: solid, segments(1, 1);
-    -fx-border-radius: 0, 0;
-    -fx-border-insets: 1 1 1 1, 0;
-}
-
-.button:disabled, .button:default:disabled {
-    -fx-opacity: 0.4;
-    -fx-background-color: #1d1d1d;
-    -fx-text-fill: white;
-}
-
-.button:default {
-    -fx-background-color: -fx-focus-color;
-    -fx-text-fill: #ffffff;
-}
-
-.button:default:hover {
-    -fx-background-color: derive(-fx-focus-color, 30%);
-}
-
-.dialog-pane {
-    -fx-background-color: #1d1d1d;
-}
-
-.dialog-pane > *.button-bar > *.container {
-    -fx-background-color: #1d1d1d;
-}
-
-.dialog-pane > *.label.content {
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-text-fill: white;
-}
-
-.dialog-pane:header *.header-panel {
-    -fx-background-color: derive(#1d1d1d, 25%);
-}
-
-.dialog-pane:header *.header-panel *.label {
-    -fx-font-size: 18px;
-    -fx-font-style: italic;
-    -fx-fill: white;
-    -fx-text-fill: white;
-}
-
+/* Scroll bars */
 .scroll-bar {
-    -fx-background-color: derive(#1d1d1d, 20%);
+    -fx-background-color: transparent;
 }
 
 .scroll-bar .thumb {
-    -fx-background-color: derive(#1d1d1d, 50%);
+    -fx-background-color: -lb-panel-border;
     -fx-background-insets: 3;
+    -fx-background-radius: 4;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: -lb-muted;
 }
 
 .scroll-bar .increment-button, .scroll-bar .decrement-button {
@@ -307,199 +454,61 @@
     -fx-padding: 8 1 8 1;
 }
 
-#cardPane {
+.corner {
     -fx-background-color: transparent;
-    -fx-border-width: 0;
 }
 
-#commandTypeLabel {
-    -fx-font-size: 11px;
-    -fx-text-fill: #F70D1A;
-}
-
-#commandTextField {
-    -fx-background-color: transparent #383838 transparent #383838;
-    -fx-background-insets: 0;
-    -fx-border-color: #383838 #383838 #ffffff #383838;
-    -fx-border-insets: 0;
-    -fx-border-width: 1;
-    -fx-font-family: "Segoe UI Light";
-    -fx-font-size: 13pt;
-    -fx-text-fill: white;
-}
-
-#filterField, #personListPanel, #personWebpage {
-    -fx-effect: innershadow(gaussian, black, 10, 0, 0, 0);
-}
-
-#resultDisplay .content {
-    -fx-background-color: transparent, #383838, transparent, #383838;
-    -fx-background-radius: 0;
-}
-
-#tags {
-    -fx-hgap: 7;
-    -fx-vgap: 3;
-}
-
-#tags .label {
-    -fx-text-fill: white;
-    -fx-background-color: #3e7b91;
-    -fx-padding: 1 3 1 3;
-    -fx-border-radius: 2;
-    -fx-background-radius: 2;
-    -fx-font-size: 11;
-}
-
-.search-criteria-heading {
-    -fx-text-fill: #e2e8ef;
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-    -fx-opacity: 1;
-}
-
-.search-criterion-badge {
-    -fx-text-fill: #f2f5f8;
-    -fx-background-color: #424d5f;
-    -fx-border-color: #66758a;
-    -fx-border-radius: 6;
+/* Buttons and dialogs, such as the alert shown when LeBake fails to start */
+.button {
+    -fx-padding: 5 18 5 18;
+    -fx-background-color: -lb-card;
     -fx-background-radius: 6;
-    -fx-padding: 5 9 5 9;
-    -fx-font-size: 13px;
-    -fx-opacity: 1;
+    -fx-border-color: -lb-border;
+    -fx-border-radius: 6;
+    -fx-text-fill: -lb-ink;
 }
 
-/* Preorder panel. One solid shade, so it looks the same on both row colors of the list. */
-#preorder {
-    -fx-background-color: #2e3031;
-    -fx-background-radius: 4;
-    -fx-border-color: #4a4d4f;
-    -fx-border-radius: 4;
+.button:hover {
+    -fx-background-color: -lb-panel;
 }
 
-#preorder .preorder-icon {
-    -fx-fill: transparent;
-    -fx-stroke: #d8b08c;
-    -fx-stroke-width: 1.5;
+.button:focused {
+    -fx-border-color: -lb-accent;
 }
 
-#preorder .preorder-header {
-    -fx-font-family: "Segoe UI Semibold";
-    -fx-font-size: 13px;
+.button:pressed, .button:default:hover:pressed {
+    -fx-background-color: -lb-accent;
+    -fx-text-fill: -lb-ground;
 }
 
-#preorder .preorder-handover-notes {
-    -fx-font-family: "Segoe UI";
-    -fx-font-size: 12px;
-    -fx-text-fill: #e3e3e3;
+.button:default {
+    -fx-background-color: -lb-accent;
+    -fx-text-fill: -lb-ground;
 }
 
-#preorder .preorder-divider {
-    -fx-background-color: #45484a;
+.button:disabled, .button:default:disabled {
+    -fx-opacity: 0.4;
 }
 
-#preorder .preorder-item-name, #preorder .preorder-quantity {
-    -fx-font-family: "Segoe UI";
-    -fx-font-size: 13px;
+.dialog-pane {
+    -fx-background-color: -lb-ground;
 }
 
-#preorder .preorder-quantity-missing {
-    -fx-font-family: "Segoe UI";
-    -fx-font-size: 13px;
-    -fx-text-fill: #f2c46b;
+.dialog-pane > *.button-bar > *.container {
+    -fx-background-color: -lb-ground;
 }
 
-#preorder .preorder-remark {
-    -fx-font-family: "Segoe UI";
-    -fx-font-size: 12px;
-    -fx-text-fill: #dcdcdc;
-    -fx-padding: 0 0 0 16;
-}
-
-#preorder .preorder-empty {
-    -fx-font-family: "Segoe UI";
-    -fx-font-size: 12px;
-    -fx-text-fill: #e3e3e3;
-}
-
-/* Each status keeps its color from the user guide, in a darker shade where white text was hard to read */
-#preorder .status-chip {
-    -fx-font-size: 12px;
-    -fx-padding: 1 3 1 3;
-    -fx-background-radius: 2;
-}
-
-#preorder .status-pending {
-    -fx-background-color: #d08700;
-    -fx-text-fill: #1d1d1d;
-}
-
-#preorder .status-prepared {
-    -fx-background-color: #2f68ad;
-}
-
-#preorder .status-completed {
-    -fx-background-color: #2a7a45;
-}
-
-.product-summary, .product-summary > .viewport {
-    -fx-background-color: #303840;
-}
-
-.product-summary {
-    -fx-border-color: #667889;
-    -fx-border-width: 1;
-}
-
-.product-summary:focused {
-    -fx-border-color: #9bc9f5;
-    -fx-border-width: 2;
-}
-
-.product-summary .label {
-    -fx-text-fill: #f0f0f0;
-    -fx-opacity: 1;
-    -fx-font-size: 13px;
-}
-
-.product-summary-heading {
+.dialog-pane > *.label.content {
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
+    -fx-text-fill: -lb-ink;
 }
 
-.customer-list {
-    -fx-border-color: transparent;
-    -fx-border-width: 2;
+.dialog-pane:header *.header-panel {
+    -fx-background-color: -lb-card;
 }
 
-.customer-list:focused {
-    -fx-border-color: #9bc9f5;
-}
-
-.customer-list:focused .list-cell:filled:selected {
-    -fx-background-color: #385875;
-}
-
-/* Retain the status colour; the border identifies search matches. */
-.matching-item {
-    -fx-border-color: #f4dc8a;
-    -fx-border-width: 2;
-    -fx-border-radius: 4;
-    -fx-font-weight: bold;
-}
-
-.delivery-summary, .delivery-summary .viewport, .delivery-summary .scroll-pane {
-    -fx-background-color: #383838;
-}
-
-.delivery-summary .label {
-    -fx-text-fill: white;
-    -fx-font-size: 12;
-}
-
-.delivery-summary .delivery-title, .delivery-summary .delivery-group {
-    -fx-font-weight: bold;
-}
-
-.delivery-summary .delivery-title {
-    -fx-font-size: 15;
+.dialog-pane:header *.header-panel *.label {
+    -fx-font-size: 18px;
+    -fx-text-fill: -lb-ink;
 }

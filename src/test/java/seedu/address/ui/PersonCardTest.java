@@ -19,11 +19,12 @@ import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.Item;
@@ -61,14 +62,36 @@ public class PersonCardTest {
         PersonCard card = createCard(new PersonBuilder(ALICE).withPostalCode("012345")
                 .withPreorder(tarts, cookies).build());
 
-        assertEquals("012345", ((Label) lookup(card, "#postalCode")).getText());
+        assertEquals("Postal 012345", ((Label) lookup(card, "#postalCode")).getText());
         assertTrue(lookup(card, "#preorder").isVisible());
         assertTrue(lookup(card, "#preorder").isManaged());
+        assertFalse(lookup(card, "#noPreorder").isManaged());
 
         List<GridPane> rows = getRows(card);
         assertEquals(2, rows.size());
-        assertEquals(List.of("1. Pineapple Tarts", "Qty 2", "PENDING", "Remark: Less sugar"), getTexts(rows.get(0)));
-        assertEquals(List.of("2. Almond Cookies", "Qty 1", "PREPARED"), getTexts(rows.get(1)));
+        assertEquals(List.of("1", "Pineapple Tarts", "Qty 2", "PENDING", "Remark: Less sugar"), getTexts(rows.get(0)));
+        assertEquals(List.of("2", "Almond Cookies", "Qty 1", "PREPARED"), getTexts(rows.get(1)));
+    }
+
+    @Test
+    public void constructor_personWithoutPostalCode_showsWarning() throws Exception {
+        PersonCard card = createCard(new PersonBuilder(ALICE).withPostalCode(null).build());
+        Label postalCode = (Label) lookup(card, "#postalCode");
+
+        assertEquals(PersonCard.MISSING_POSTAL_CODE_TEXT, postalCode.getText());
+        assertTrue(postalCode.getStyleClass().contains(PersonCard.MISSING_POSTAL_CODE_STYLE_CLASS));
+        assertTrue(postalCode.getGraphic() instanceof SVGPath);
+    }
+
+    @Test
+    public void constructor_eachStatus_onlyCompletedChipHasTick() throws Exception {
+        for (ItemStatus status : ItemStatus.values()) {
+            Item item = new ItemBuilder().withStatus(status).build();
+            GridPane row = getRows(createCard(new PersonBuilder(ALICE).withPreorder(item).build())).get(0);
+            Label chip = (Label) row.lookup("." + PersonCard.STATUS_CHIP_STYLE_CLASS);
+
+            assertEquals(status == ItemStatus.COMPLETED, chip.getGraphic() != null);
+        }
     }
 
     @Test
@@ -112,6 +135,7 @@ public class PersonCardTest {
         Label quantity = (Label) row.lookup("." + PersonCard.MISSING_QUANTITY_STYLE_CLASS);
 
         assertEquals(PreorderDisplay.MISSING_QUANTITY_TEXT, quantity.getText());
+        assertTrue(quantity.getGraphic() instanceof SVGPath);
     }
 
     @Test
@@ -133,24 +157,27 @@ public class PersonCardTest {
         assertFalse(preorder.isVisible());
         // not managed, so the hidden section leaves no blank gap in the card
         assertFalse(preorder.isManaged());
+        assertTrue(lookup(card, "#noPreorder").isManaged());
     }
 
     @Test
     public void constructor_anyPerson_keepsContactDetails() throws Exception {
         PersonCard card = createCard(new PersonBuilder(ALICE).build());
 
-        assertEquals(ALICE.getName().fullName, ((Label) lookup(card, "#name")).getText());
-        assertEquals(ALICE.getPhone().value, ((Label) lookup(card, "#phone")).getText());
-        assertEquals(ALICE.getAddress().value, ((Label) lookup(card, "#address")).getText());
-        assertEquals(ALICE.getEmail().value, ((Label) lookup(card, "#email")).getText());
+        assertEquals("1", ((Label) lookup(card, "#id")).getText());
+        assertEquals(ALICE.getName().fullName, ((Text) lookup(card, "#name")).getText());
+        assertEquals(ALICE.getPhone().value, ((Text) lookup(card, "#phone")).getText());
+        assertEquals(ALICE.getAddress().value, ((Text) lookup(card, "#address")).getText());
+        assertEquals(ALICE.getEmail().value, ((Text) lookup(card, "#email")).getText());
     }
 
     @Test
     public void constructor_multipleTags_displaysTagsInSortedOrder() throws Exception {
         PersonCard card = createCard(new PersonBuilder(ALICE).withTags("zeta", "alpha").build());
-        FlowPane tags = (FlowPane) lookup(card, "#tags");
+        TextFlow nameAndTags = (TextFlow) lookup(card, "#nameAndTags");
 
-        assertEquals(List.of("alpha", "zeta"), tags.getChildren().stream()
+        assertEquals(List.of("alpha", "zeta"), nameAndTags.getChildren().stream()
+                .filter(node -> node.getStyleClass().contains(PersonCard.TAG_STYLE_CLASS))
                 .map(Label.class::cast).map(Label::getText).toList());
     }
 
@@ -160,17 +187,40 @@ public class PersonCardTest {
                 .build();
         Preorder preorder = new PreorderBuilder().withItems(tarts)
                 .withHandoverNotes("Leave the boxes with the concierge at the lobby if nobody answers").build();
-        PersonCard card = createCard(new PersonBuilder(ALICE).withPreorder(preorder).build());
 
+        assertCardNotTallerThanContent(new PersonBuilder(ALICE).withPreorder(preorder).build());
+    }
+
+    @Test
+    public void prefHeight_wrappingNameTagsAndAddress_sameAsContent() throws Exception {
+        Person person = new PersonBuilder(ALICE).withName("Alexandra Catherine Wilhelmina Tan-Rodriguez")
+                .withTags("wholesale", "corporateclient", "vip")
+                .withEmail("alexandra.catherine.tanrodriguez@exampledomain.com")
+                .withAddress("Block 123 Example Avenue 6, The Very Long Residential Building Name, Tower North")
+                .withPostalCode(null).build();
+
+        assertCardNotTallerThanContent(person);
+    }
+
+    /**
+     * Checks that the card asks for no more height than its content needs at the width the content gets.
+     * A card that asks for more leaves a blank gap at the bottom of its list cell, as it did on JavaFX 25.
+     */
+    private static void assertCardNotTallerThanContent(Person person) throws Exception {
+        PersonCard card = createCard(person);
         double[] heights = onFxThread(() -> {
-            Region root = card.getRoot();
+            GridPane root = (GridPane) card.getRoot();
             new Scene(root).getStylesheets().add(PersonCard.class.getResource("/view/DarkTheme.css").toExternalForm());
             root.applyCss();
-            Region content = (Region) root.getChildrenUnmodifiable().get(0);
-            return new double[] {root.prefHeight(CARD_WIDTH), content.prefHeight(CARD_WIDTH)};
+            Region index = (Region) root.getChildren().get(0);
+            Region content = (Region) root.getChildren().get(1);
+            double indexWidth = Math.max(root.getColumnConstraints().get(0).getMinWidth(), index.prefWidth(-1));
+            double contentWidth = CARD_WIDTH - root.getInsets().getLeft() - root.getInsets().getRight()
+                    - root.getHgap() - indexWidth;
+            return new double[] {root.prefHeight(CARD_WIDTH),
+                content.prefHeight(contentWidth) + root.getInsets().getTop() + root.getInsets().getBottom()};
         });
 
-        // A card that asks for more height than its content leaves a blank gap at the bottom of its list cell
         assertEquals(heights[1], heights[0], 0.5);
     }
 
@@ -189,10 +239,10 @@ public class PersonCardTest {
             boolean matches = i == 1 || i == 3;
             assertEquals(matches, chips.get(i).getStyleClass().contains(PersonCard.MATCH_STYLE_CLASS));
             Item item = List.of(prepared, pending, other, pending).get(i);
-            Label name = (Label) chips.get(i).getChildren().getFirst();
-            assertEquals(PreorderDisplay.formatItemName(i + 1, item),
-                    name.getText());
-            assertTrue(chips.get(i).getChildren().get(2).getStyleClass()
+            List<String> texts = getTexts(chips.get(i));
+            assertEquals(String.valueOf(i + 1), texts.get(0));
+            assertEquals(item.getName().toString(), texts.get(1));
+            assertTrue(chips.get(i).getChildren().get(3).getStyleClass()
                     .contains(PreorderDisplay.getStatusStyleClass(item.getStatus())));
         }
     }

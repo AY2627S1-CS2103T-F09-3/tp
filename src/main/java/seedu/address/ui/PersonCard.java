@@ -11,14 +11,17 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.PostalCode;
 import seedu.address.model.preorder.Item;
+import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Preorder;
 import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.SearchCriteria;
@@ -28,7 +31,12 @@ import seedu.address.model.search.SearchCriteria;
  */
 public class PersonCard extends UiPart<Region> {
 
+    public static final String TAG_STYLE_CLASS = "card-tag";
+    public static final String MISSING_POSTAL_CODE_STYLE_CLASS = "card-postal-code-missing";
+    public static final String MISSING_POSTAL_CODE_TEXT = "Postal code needed";
+    public static final String POSTAL_CODE_PREFIX = "Postal ";
     public static final String ITEM_ROW_STYLE_CLASS = "preorder-item-row";
+    public static final String ITEM_NUMBER_STYLE_CLASS = "preorder-item-number";
     public static final String ITEM_NAME_STYLE_CLASS = "preorder-item-name";
     public static final String QUANTITY_STYLE_CLASS = "preorder-quantity";
     public static final String MISSING_QUANTITY_STYLE_CLASS = "preorder-quantity-missing";
@@ -38,10 +46,16 @@ public class PersonCard extends UiPart<Region> {
 
     public static final String MATCH_STYLE_CLASS = "matching-item";
     private static final String FXML = "PersonListCard.fxml";
+    private static final String WARNING_ICON_STYLE_CLASS = "warning-icon";
+    private static final String COMPLETED_ICON_STYLE_CLASS = "completed-icon";
 
-    // Wide enough for "COMPLETED", so the chips line up from row to row
-    private static final double STATUS_CHIP_WIDTH = 80;
-    private static final double ITEM_ROW_GAP = 12;
+    // Wide enough for "COMPLETED" and its tick, so the chips line up from row to row
+    private static final double STATUS_CHIP_WIDTH = 104;
+    private static final double ITEM_NUMBER_WIDTH = 20;
+    private static final double ITEM_ROW_GAP = 10;
+    // About 10 px in the name's font
+    private static final String TAG_GAP_TEXT = "  ";
+    private static final String NAME_STYLE_CLASS = "card-name";
 
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
@@ -57,19 +71,21 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private GridPane cardPane;
     @FXML
-    private Label name;
-    @FXML
     private Label id;
     @FXML
-    private Label phone;
+    private TextFlow nameAndTags;
     @FXML
-    private Label address;
+    private Text name;
+    @FXML
+    private Text phone;
+    @FXML
+    private Text email;
+    @FXML
+    private Text address;
     @FXML
     private Label postalCode;
     @FXML
-    private Label email;
-    @FXML
-    private FlowPane tags;
+    private Label noPreorder;
     @FXML
     private VBox preorder;
     @FXML
@@ -99,16 +115,48 @@ public class PersonCard extends UiPart<Region> {
         this.person = person;
         itemCriteria = criteria.getCriteria().stream().filter(ItemCriterion.class::isInstance)
                 .map(ItemCriterion.class::cast).toList();
-        id.setText(displayedIndex + ". ");
+        id.setText(String.valueOf(displayedIndex));
         name.setText(person.getName().fullName);
-        phone.setText(person.getPhone().value);
-        address.setText(person.getAddress().value);
-        postalCode.setText(person.getPostalCode() == null ? "Postal code needed" : person.getPostalCode().value);
-        email.setText(person.getEmail().value);
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
-                .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
-        person.getPreorder().ifPresentOrElse(this::showPreorder, () -> removeFromLayout(preorder));
+                .forEach(tag -> nameAndTags.getChildren().addAll(createTagGap(), createTag(tag.tagName)));
+        phone.setText(person.getPhone().value);
+        email.setText(person.getEmail().value);
+        address.setText(person.getAddress().value);
+        showPostalCode(person.getPostalCode());
+        person.getPreorder().ifPresentOrElse(currentPreorder -> {
+            removeFromLayout(noPreorder);
+            showPreorder(currentPreorder);
+        }, () -> removeFromLayout(preorder));
+    }
+
+    /**
+     * Returns the space before a tag. Being plain spaces, it stays at the end of a line when the tag wraps,
+     * so a tag that starts a new line is not indented.
+     */
+    private static Text createTagGap() {
+        Text gap = new Text(TAG_GAP_TEXT);
+        gap.getStyleClass().add(NAME_STYLE_CLASS);
+        return gap;
+    }
+
+    /**
+     * Returns a tag chip. A label inside a TextFlow is never split, so a long tag moves to the next line whole.
+     */
+    private static Label createTag(String tagName) {
+        Label tag = new Label(tagName);
+        tag.getStyleClass().add(TAG_STYLE_CLASS);
+        return tag;
+    }
+
+    private void showPostalCode(PostalCode code) {
+        if (code != null) {
+            postalCode.setText(POSTAL_CODE_PREFIX + code.value);
+            return;
+        }
+        postalCode.setText(MISSING_POSTAL_CODE_TEXT);
+        postalCode.setGraphic(createIcon(PreorderDisplay.WARNING_ICON, WARNING_ICON_STYLE_CLASS));
+        postalCode.getStyleClass().add(MISSING_POSTAL_CODE_STYLE_CLASS);
     }
 
     /**
@@ -133,36 +181,62 @@ public class PersonCard extends UiPart<Region> {
     }
 
     /**
-     * Returns an item's row: its number and name, its quantity and a status chip, with any remark underneath.
+     * Returns an item's row: its number, name, quantity and a status chip, with any remark underneath.
      */
     private GridPane createItemRow(int itemNumber, Item item) {
         GridPane row = new GridPane();
         row.getStyleClass().add(ITEM_ROW_STYLE_CLASS);
         row.setHgap(ITEM_ROW_GAP);
 
-        // The name takes the spare width and wraps, while the quantity and status keep their own width
+        // The name takes the spare width and wraps, while the other columns keep their own width
+        ColumnConstraints numberColumn = new ColumnConstraints(ITEM_NUMBER_WIDTH);
         ColumnConstraints nameColumn = new ColumnConstraints();
         nameColumn.setHgrow(Priority.ALWAYS);
-        row.getColumnConstraints().addAll(nameColumn, new ColumnConstraints(), new ColumnConstraints());
+        ColumnConstraints statusColumn = new ColumnConstraints();
+        statusColumn.setMinWidth(STATUS_CHIP_WIDTH);
+        row.getColumnConstraints().addAll(numberColumn, nameColumn, new ColumnConstraints(), statusColumn);
 
-        Label name = createWrappingLabel(PreorderDisplay.formatItemName(itemNumber, item), ITEM_NAME_STYLE_CLASS);
-        Label quantity = createLabel(PreorderDisplay.formatQuantity(item),
-                item.getQuantity().isPresent() ? QUANTITY_STYLE_CLASS : MISSING_QUANTITY_STYLE_CLASS);
-        Label status = createLabel(item.getStatus().name(), STATUS_CHIP_STYLE_CLASS);
-        status.getStyleClass().add(PreorderDisplay.getStatusStyleClass(item.getStatus()));
-        status.setMinWidth(STATUS_CHIP_WIDTH);
-        status.setAlignment(Pos.CENTER);
+        Label number = createLabel(PreorderDisplay.formatItemNumber(itemNumber), ITEM_NUMBER_STYLE_CLASS);
+        Label name = createWrappingLabel(item.getName().toString(), ITEM_NAME_STYLE_CLASS);
+        row.addRow(0, number, name, createQuantity(item), createStatusChip(item.getStatus()));
         if (!itemCriteria.isEmpty() && itemCriteria.stream().allMatch(criterion -> criterion.matches(item))) {
             row.getStyleClass().add(MATCH_STYLE_CLASS);
         }
-        row.addRow(0, name, quantity, status);
 
         item.getRemark().ifPresent(remark -> {
             Label remarkLabel = createWrappingLabel(PreorderDisplay.formatRemark(remark), REMARK_STYLE_CLASS);
-            // On the line below, across all the columns
-            row.add(remarkLabel, 0, 1, row.getColumnCount(), 1);
+            // On the line below, under the name, quantity and status
+            row.add(remarkLabel, 1, 1, row.getColumnCount() - 1, 1);
         });
         return row;
+    }
+
+    private static Label createQuantity(Item item) {
+        if (item.getQuantity().isPresent()) {
+            return createLabel(PreorderDisplay.formatQuantity(item), QUANTITY_STYLE_CLASS);
+        }
+        Label quantity = createLabel(PreorderDisplay.formatQuantity(item), MISSING_QUANTITY_STYLE_CLASS);
+        quantity.setGraphic(createIcon(PreorderDisplay.WARNING_ICON, WARNING_ICON_STYLE_CLASS));
+        return quantity;
+    }
+
+    private static Label createStatusChip(ItemStatus status) {
+        Label chip = createLabel(status.name(), STATUS_CHIP_STYLE_CLASS);
+        chip.getStyleClass().add(PreorderDisplay.getStatusStyleClass(status));
+        // Fills the status column, so the chips line up from row to row
+        chip.setMaxWidth(Double.MAX_VALUE);
+        chip.setAlignment(Pos.CENTER);
+        if (status == ItemStatus.COMPLETED) {
+            chip.setGraphic(createIcon(PreorderDisplay.COMPLETED_ICON, COMPLETED_ICON_STYLE_CLASS));
+        }
+        return chip;
+    }
+
+    private static SVGPath createIcon(String content, String styleClass) {
+        SVGPath icon = new SVGPath();
+        icon.setContent(content);
+        icon.getStyleClass().add(styleClass);
+        return icon;
     }
 
     private static Label createLabel(String text, String styleClass) {
