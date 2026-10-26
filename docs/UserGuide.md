@@ -32,7 +32,7 @@ information.
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
    ![Ui](images/Ui.png)
 
-1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
+1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to show help in the side panel.<br>
    Some example commands you can try:
 
    * `list` : Lists all contacts.
@@ -119,10 +119,9 @@ Use `list` to clear the badges and return to **Showing: All customers**.
 
 ### Viewing help: `help`
 
-Shows a window containing the [LeBake User Guide URL](https://ay2627s1-cs2103t-f09-3.github.io/tp/UserGuide.html).
-Click **Copy URL** to copy the link to your clipboard.
+Shows the format of every command and the [LeBake User Guide URL](https://ay2627s1-cs2103t-f09-3.github.io/tp/UserGuide.html) in the side panel, on the right of the window. Click **Copy URL** to copy the link to your clipboard. Help stays in the side panel until you run your next command. Pressing F1 or choosing **Help** from the menu also shows it.
 
-![LeBake Help window showing the User Guide URL and Copy URL button](images/helpMessage.png)
+![LeBake side panel showing the command formats and the User Guide URL](images/helpPanel.png)
 
 Format: `help`
 
@@ -294,7 +293,7 @@ Common errors:
 
 ### Preparing deliveries
 
-The **Delivery preparation** panel above the customer list summarises outstanding deliveries in the current results. It refreshes after searches, customer changes, and preorder changes. No extra command is needed. When there are no outstanding deliveries, the panel remains visible with zero totals and `No outstanding deliveries in the current results.`
+The **Delivery preparation** summary in the side panel, on the right of the window, summarises outstanding deliveries in the current results. It refreshes after searches, customer changes, and preorder changes. No extra command is needed. When there are no outstanding deliveries, the summary remains visible with zero totals and `No outstanding deliveries in the current results.` During a product search, the side panel shows the product's preparation summary instead, and after `help` it shows help until your next command.
 
 * A customer counts as one outstanding stop when their preorder uses `DELIVERY` and has at least one `PENDING` or `PREPARED` item. Multiple items still count as one stop.
 * Collection, empty preorders, completed-only preorders, and preorders without a method do not contribute to the totals.
@@ -386,7 +385,7 @@ Rejected searches leave the current criteria and results unchanged. If no custom
 
 ### Reading the preparation summary and matching items
 
-A search containing `d/PRODUCT` shows a preparation summary above the customer list. The heading preserves
+A search containing `d/PRODUCT` shows a preparation summary in the side panel, in place of the delivery summary. The heading preserves
 the capitalization you typed, with surrounding whitespace removed. Product matching remains case-insensitive. It shows:
 
 * The selected product and statuses. Without `s/`, **all statuses**, including completed items, contribute.

@@ -71,7 +71,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `SearchCriteriaDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `SearchCriteriaDisplay`, `PersonListPanel`, `SidePanel` and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -81,6 +81,14 @@ The `UI` component,
 * listens for changes to `Model` data so that the UI can be updated with the modified data.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Person` objects and structured search criteria.
+
+`MainWindow` lays out two columns. The left one holds the `CommandBox`, `ResultDisplay`, `SearchCriteriaDisplay` and
+`PersonListPanel`, and keeps at least 450 px so that cards still wrap whole words. The right one is the `SidePanel`,
+at least 300 px wide, which shows one long output at a time: the `HelpPanel` after `help`, the `ProductSummaryPanel`
+while it is visible during a product search, and the `DeliverySummaryPanel` otherwise. `MainWindow` shows help when a
+`CommandResult` asks for it, and returns the panel to the summaries after the next successful command. A window
+narrower than 900 px gets the `compact` style class, which `DarkTheme.css` uses to tighten the gaps around the
+customer list.
 
 `MainWindow` owns one `SearchCriteriaDisplay`, places it above the customer list and supplies
 `Logic.activeSearchCriteriaProperty()`. The display renders the current value immediately and observes criteria
@@ -289,7 +297,7 @@ remark attribution. Customer count is distinct, item count counts entries, and q
 presented as a complete total. Constructors reject null inputs and invalid item references; collections
 are defensively copied.
 
-`MainWindow` places `ProductSummaryPanel` above `PersonListPanel`. The summary listens to both the filtered
+`MainWindow` puts `ProductSummaryPanel` in the `SidePanel`. The summary listens to both the filtered
 customer list and `Logic.activeSearchCriteriaProperty()`, so changing criteria refreshes it even when the
 same customers remain visible. Its criteria invalidation listener also refreshes the heading for capitalization-only
 changes, which are equal for filtering purposes. It is visible and managed only when a product criterion exists. Updates
@@ -311,10 +319,10 @@ preorders are excluded. Missing postal codes remain represented by one additiona
 without excluding an otherwise outstanding delivery. The immutable snapshot orders contacts by postal code and name,
 without mutating the address book or the active search criteria.
 
-`MainWindow` installs a `DeliverySummaryPanel` above `PersonListPanel`. The panel observes the existing
+`MainWindow` puts a `DeliverySummaryPanel` in the `SidePanel`. The panel observes the existing
 `Logic.getFilteredPersonList()` observable view and rebuilds its snapshot when results or customer records change.
 It reuses `GroupPostalCommand.getPostalGroupKey` for contact headings and `FulfilmentDate.toDisplayString` for dates.
-Names, phones, addresses, postal codes and shared handover notes are shown in a bounded, keyboard-scrollable area
+Names, phones, addresses, postal codes and shared handover notes are shown in a keyboard-scrollable area
 with wrapped text. Missing dates display `Not scheduled`; absent handover notes display `Handover notes: None`.
 The panel stays installed and visible when there are no outstanding deliveries, showing zero totals and
 `No outstanding deliveries in the current results.` The UI tests cover exclusion of ineligible preorders, one contact
