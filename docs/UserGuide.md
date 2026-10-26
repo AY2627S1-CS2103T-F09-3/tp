@@ -400,7 +400,7 @@ An additional entry without a quantity raises the item count to three, leaves th
 and is reported as one item needing a quantity. Only customers in the current results contribute;
 customer fields such as `n/` and `t/` therefore also restrict the summary.
 
-Matching items on customer cards have a highlight border while retaining their
+Matching items on customer cards are shown in a yellow box while retaining their
 status colours. This applies to product/status searches and `track`. All other items remain visible,
 and item numbers remain unchanged. Customer-only searches and `list` remove the highlighting.
 
@@ -460,9 +460,9 @@ Examples:
 
 For Alice's second item, Cake, the success message could be:
 `Edited item 2 for Alice: Cake (quantity: 3, PREPARED)`.
-If its quantity is still missing, the message uses the same wording as the card:
+If its quantity is still missing, the message says so:
 `Edited item 2 for Alice: Cake (quantity needed, PREPARED)`.
-The card continues to display `quantity needed` for that item.
+The card continues to display `Qty needed` for that item.
 
 | Situation | Message |
 |-----------|---------|
@@ -492,15 +492,17 @@ Format: `track [s/STATUS]`
 
 Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count, and an item with a missing quantity still counts as one item. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
 
-A customer's preorder appears in a dark panel at the bottom of their card. Its first line shows when and how the preorder will be handed over, for example `20 Dec 2026 | Delivery`. A date that is not recorded yet shows as `Not scheduled`, and a method as `Method not set`. Any handover notes appear on the next line, for example `Handover notes: Call on arrival`. Below them, each item has its own row with its number and name, its quantity and its status, for example `1. Pineapple Tarts`, `Qty 2` and `PENDING`. A special request appears under the item, for example `Remark: Less sugar`, and a preorder with no items shows `No items yet`. The status badge's colour shows the status:
+Each customer card shows the customer's number on the left, then their name and tags, their phone number and email on one line, and their address with its postal code, for example `Postal 389030`. A customer without a postal code shows `Postal code needed` with a warning icon, and a customer without a preorder shows `No preorder`.
+
+A customer's preorder appears in a panel at the bottom of their card. Its first line shows when and how the preorder will be handed over, for example `20 Dec 2026 | Delivery`. A date that is not recorded yet shows as `Not scheduled`, and a method as `Method not set`. Any handover notes appear on the next line, for example `Handover notes: Call on arrival`. Below them, each item has its own row with its number, name, quantity and status, for example `1`, `Pineapple Tarts`, `Qty 2` and `PENDING`. A special request appears under the item, for example `Remark: Less sugar`, and a preorder with no items shows `No items yet`. The status badge's colour shows the status:
 
 Status | Meaning | Badge colour
 -------|---------|-------------
 `PENDING` | Recorded but not ready | Amber
 `PREPARED` | Ready for collection or delivery | Blue
-`COMPLETED` | Collected or delivered | Green
+`COMPLETED` | Collected or delivered | Green outline with a tick
 
-If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `quantity needed` instead of a quantity.
+If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Qty needed` with a warning icon instead of a quantity.
 
 ### Deleting a preorder item: `deleteitem`
 

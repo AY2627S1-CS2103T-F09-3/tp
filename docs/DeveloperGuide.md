@@ -297,7 +297,7 @@ recompute the snapshot, including zero results. Labels wrap inside a focusable s
 handler supports arrows, Page Up/Down and Home/End with scroll values clamped to the valid range.
 
 `PersonListPanel` also refreshes its cells when active criteria change. Each `PersonCard` receives the
-current criteria and reuses the item matcher to add the `matching-item` border style. It keeps
+current criteria and reuses the item matcher to add the `matching-item` style, a yellow box. It keeps
 all items, original numbering and status styles. Status-only criteria (including `track`) also highlight
 matching items; criteria without item conditions produce no highlights. The customer list uses native
 JavaFX keyboard navigation and selects its first entry when focused without an existing selection.
@@ -400,7 +400,7 @@ an `"items"` field loads as a preorder with no items.
 LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and one `"status"`.
 `JsonAdaptedPerson` still reads that field through `JsonAdaptedLegacyPreorder`, which turns it into a preorder with
 one item named after the old details, with the old status. v1.3 did not record a quantity, and guessing one from the
-details could be wrong, so the item has no quantity and its card shows `quantity needed`. The converted preorder has
+details could be wrong, so the item has no quantity and its card shows `Qty needed`. The converted preorder has
 no date, method or handover notes, as v1.3 had none. The old field is never written back, so the next save stores
 the customer in the current format.
 
@@ -469,7 +469,7 @@ same immutable preorder/person replacement path, with the item list appended or 
 <puml src="diagrams/EditItemSequenceDiagram.puml" alt="Interactions for editing one preorder item" />
 
 Success messages use `Added/Edited item NUMBER for CUSTOMER: NAME (quantity: QUANTITY, STATUS)`.
-For migrated items without a quantity, the quantity portion is `quantity needed`, matching the customer card.
+For migrated items without a quantity, the quantity portion is `quantity needed`; the card shows `Qty needed`.
 Remarks remain visible on the customer card. A missing `i/` produces usage instructions; a supplied but invalid
 item index produces `Item index must be a positive integer.`
 `deleteorder` still removes the whole preorder; its item-level replacement is a separate feature.
@@ -1050,7 +1050,7 @@ Record their contact details and tags before starting. Replace `INDEX` in the ex
 1. Close and reopen the application.<br>
    Expected: Both items retain their quantities and statuses; the second item's remark remains absent.
 1. With a v1.3 migrated item lacking a quantity, edit only its status.<br>
-   Expected: Its success message and card both show `quantity needed`.
+   Expected: Its success message shows `quantity needed`, and its card shows `Qty needed`.
    Supply `q/1` to correct it; subsequent success messages and the card show the recorded quantity.
 
 ### Deleting a preorder item
@@ -1114,7 +1114,7 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
       `"preorder" : { "details" : "2 chocolate cakes", "status" : "PENDING" }`.
 
    1. Test case: Launch LeBake.<br>
-      Expected: The first customer's card shows one item, `2 chocolate cakes`, with `quantity needed` and the
+      Expected: The first customer's card shows one item, `2 chocolate cakes`, with `Qty needed` and the
       status `PENDING`. Their other details are unchanged.
 
    1. Test case: Run `list`, close LeBake, then open `data/addressbook.json` again.<br>
