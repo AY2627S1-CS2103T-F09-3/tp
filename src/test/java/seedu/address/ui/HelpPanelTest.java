@@ -13,7 +13,11 @@ import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.logic.commands.AddCommand;
@@ -72,19 +76,48 @@ public class HelpPanelTest {
 
     @Test
     public void constructor_showsEveryFormatAndUserGuideLink() throws Exception {
-        Region root = onFxThread(() -> {
-            Region panel = new HelpPanel().getRoot();
-            // The scroll pane adds its content to the scene graph only once it is styled in a scene
-            new Scene(panel);
-            panel.applyCss();
-            return panel;
-        });
+        Region root = onFxThread(HelpPanelTest::createPanelInScene);
         VBox commands = (VBox) root.lookup("#commands");
 
         assertEquals(HelpPanel.COMMAND_FORMATS, commands.getChildren().stream()
                 .map(Label.class::cast).map(Label::getText).toList());
         assertTrue(commands.getChildren().stream().allMatch(label -> ((Label) label).isWrapText()));
         assertEquals(HelpPanel.USERGUIDE_URL, ((Label) root.lookup("#userGuideUrl")).getText());
+    }
+
+    @Test
+    public void copyButton_click_copiesUserGuideUrl() throws Exception {
+        String copied = onFxThread(() -> {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            // Puts back what was on the clipboard afterwards, so running the tests does not lose it
+            ClipboardContent saved = new ClipboardContent();
+            for (DataFormat format : clipboard.getContentTypes()) {
+                Object content = clipboard.getContent(format);
+                if (content != null) {
+                    saved.put(format, content);
+                }
+            }
+            try {
+                Button copyButton = (Button) createPanelInScene().lookup("#copyButton");
+                copyButton.fire();
+                return clipboard.getString();
+            } finally {
+                clipboard.setContent(saved);
+            }
+        });
+
+        assertEquals(HelpPanel.USERGUIDE_URL, copied);
+    }
+
+    /**
+     * Returns the root of a new help panel in a scene. The scroll pane adds its content to the scene graph
+     * only once it is styled in a scene, so the content can be looked up only after that.
+     */
+    private static Region createPanelInScene() {
+        Region panel = new HelpPanel().getRoot();
+        new Scene(panel);
+        panel.applyCss();
+        return panel;
     }
 
     private static <T> T onFxThread(Callable<T> task) throws Exception {
