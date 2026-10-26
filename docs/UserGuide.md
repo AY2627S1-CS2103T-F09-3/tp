@@ -493,6 +493,8 @@ Feedback distinguishes customers from matching item entries. For example, one cu
 
 Each customer card shows the customer's number on the left, then their name and tags, their phone number and email on one line, and their address with its postal code, for example `Postal 389030`. A customer without a postal code shows `Postal code needed` with a warning icon, and a customer without a preorder shows `No preorder`.
 
+![A customer card with a delivery preorder of two items](images/customerCard.png)
+
 A customer's preorder appears in a panel at the bottom of their card. Its first line shows when and how the preorder will be handed over, for example `20 Dec 2026 | Delivery`. A date that is not recorded yet shows as `Not scheduled`, and a method as `Method not set`. Any handover notes appear on the next line, for example `Handover notes: Call on arrival`. Below them, each item has its own row with its number, name, quantity and status, for example `1`, `Pineapple Tarts`, `Qty 2` and `PENDING`. A special request appears under the item, for example `Remark: Less sugar`, and a preorder with no items shows `No items yet`. The status badge's colour shows the status:
 
 Status | Meaning | Badge colour
