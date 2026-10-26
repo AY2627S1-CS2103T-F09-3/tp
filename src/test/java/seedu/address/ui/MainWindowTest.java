@@ -16,6 +16,7 @@ import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.api.io.TempDir;
 
 import javafx.application.Platform;
+import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
@@ -159,16 +160,26 @@ public class MainWindowTest {
         runInWindow((window, logic, root) -> {
             layOut(root, 1000, 700);
             double defaultLeftGap = cardTextLeft(root);
-            assertFalse(root.getStyleClass().contains("compact"));
+            assertFalse(isCompact(root));
 
             layOut(root, MIN_CONTENT_WIDTH, MIN_CONTENT_HEIGHT);
-            assertTrue(root.getStyleClass().contains("compact"));
-            assertTrue(cardTextLeft(root) < defaultLeftGap - 20);
+            assertTrue(isCompact(root));
+            double compactLeftGap = cardTextLeft(root);
+            assertTrue(compactLeftGap < defaultLeftGap - 20);
+
+            // Still narrow, so the gaps stay compact
+            layOut(root, 880, MIN_CONTENT_HEIGHT);
+            assertTrue(isCompact(root));
+            assertEquals(compactLeftGap, cardTextLeft(root), 0.5);
 
             layOut(root, 1000, 700);
-            assertFalse(root.getStyleClass().contains("compact"));
+            assertFalse(isCompact(root));
             assertEquals(defaultLeftGap, cardTextLeft(root), 0.5);
         });
+    }
+
+    private static boolean isCompact(Parent root) {
+        return root.getPseudoClassStates().contains(PseudoClass.getPseudoClass("compact"));
     }
 
     /**

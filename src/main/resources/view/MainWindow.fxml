@@ -24,8 +24,8 @@
         <URL value="@Extensions.css" />
       </stylesheets>
 
-      <!-- Gets the "compact" style class in a narrow window, which makes the gaps around the customer list smaller -->
-      <VBox fx:id="windowContent">
+      <!-- Gets the :compact pseudo-class in a narrow window, which makes the gaps around the customer list smaller -->
+      <VBox fx:id="windowContent" styleClass="window-content">
         <MenuBar fx:id="menuBar" VBox.vgrow="NEVER">
           <Menu mnemonicParsing="false" text="File">
             <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Exit" />

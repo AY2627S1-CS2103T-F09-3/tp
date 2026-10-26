@@ -87,7 +87,7 @@ The `UI` component,
 at least 300 px wide, which shows one long output at a time: the `HelpPanel` after `help`, the `ProductSummaryPanel`
 while it is visible during a product search, and the `DeliverySummaryPanel` otherwise. `MainWindow` shows help when a
 `CommandResult` asks for it, and returns the panel to the summaries after the next successful command. A window
-narrower than 900 px gets the `compact` style class, which `DarkTheme.css` uses to tighten the gaps around the
+narrower than 900 px gets the `:compact` pseudo-class, which `DarkTheme.css` uses to tighten the gaps around the
 customer list.
 
 `MainWindow` owns one `SearchCriteriaDisplay`, places it above the customer list and supplies
