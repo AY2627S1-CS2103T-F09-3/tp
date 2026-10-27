@@ -13,6 +13,10 @@ import seedu.address.model.person.Person;
 public class GroupPostalCommand extends Command {
     public static final String COMMAND_WORD = "group";
     public static final String POSTAL_ARGUMENT = "postal";
+    public static final String MESSAGE_USAGE = COMMAND_WORD + " " + POSTAL_ARGUMENT
+            + ": Groups customers by postal code.\n"
+            + "Parameters: " + POSTAL_ARGUMENT + "\n"
+            + "Example: " + COMMAND_WORD + " " + POSTAL_ARGUMENT;
     public static final String MESSAGE_SUCCESS = "Customers grouped by postal code.";
 
     /** Orders customers by postal prefix, then full postal code, then name ignoring case, with missing codes last. */
