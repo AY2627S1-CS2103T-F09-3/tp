@@ -8,6 +8,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.commands.GroupPostalCommand;
+import seedu.address.logic.commands.SortCommand;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.ItemStatus;
@@ -43,6 +45,44 @@ public class DeliveryPreparationSummaryTest {
         assertEquals("012345", summary.getStops().getFirst().getPostalCode().value);
         assertThrows(UnsupportedOperationException.class, () -> summary.getStops().clear());
         assertEquals(collection, customers.getFirst());
+    }
+
+    @Test
+    public void constructor_equalPostalCodesAndDates_ordersNamesLikeGroupingAndDateSorting() {
+        Person ben = new PersonBuilder().withName("ben").withPostalCode("012345")
+                .withPreorder(new PreorderBuilder().withDate("2026-12-20").withMethod(FulfilmentMethod.DELIVERY)
+                        .withItems(new ItemBuilder().withStatus(ItemStatus.PENDING).build()).build()).build();
+        Person zara = new PersonBuilder(ben).withName("Zara").build();
+        ModelManager model = new ModelManager();
+        List.of(zara, ben).forEach(model::addPerson);
+
+        DeliveryPreparationSummary summary = new DeliveryPreparationSummary(model.getFilteredPersonList());
+
+        assertEquals(List.of(ben, zara), summary.getStops());
+        new GroupPostalCommand().execute(model);
+        assertEquals(summary.getStops(), model.getFilteredPersonList());
+        new SortCommand().execute(model);
+        assertEquals(summary.getStops(), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void constructor_differentDates_preservesPostalNameOrderAfterDateSorting() {
+        Person ben = new PersonBuilder().withName("ben").withPostalCode("012345")
+                .withPreorder(new PreorderBuilder().withDate("2026-12-21").withMethod(FulfilmentMethod.DELIVERY)
+                        .withItems(new ItemBuilder().withStatus(ItemStatus.PENDING).build()).build()).build();
+        Person zara = new PersonBuilder(ben).withName("Zara")
+                .withPreorder(new PreorderBuilder(ben.getPreorder().orElseThrow())
+                        .withDate("2026-12-20").build()).build();
+        ModelManager model = new ModelManager();
+        List.of(ben, zara).forEach(model::addPerson);
+
+        new SortCommand().execute(model);
+
+        assertEquals(List.of(zara, ben), model.getFilteredPersonList());
+        DeliveryPreparationSummary summary = new DeliveryPreparationSummary(model.getFilteredPersonList());
+        assertEquals(List.of(ben, zara), summary.getStops());
+        new GroupPostalCommand().execute(model);
+        assertEquals(summary.getStops(), model.getFilteredPersonList());
     }
 
     @Test

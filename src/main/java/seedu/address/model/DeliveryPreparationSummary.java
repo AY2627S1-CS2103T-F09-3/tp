@@ -32,7 +32,8 @@ public final class DeliveryPreparationSummary {
                 .filter(person -> person.getPreorder().flatMap(Preorder::getMethod)
                         .filter(FulfilmentMethod.DELIVERY::equals).isPresent())
                 .sorted(Comparator.comparing((Person person) -> person.getPostalCode() == null
-                        ? "\uffff" : person.getPostalCode().value).thenComparing(person -> person.getName().fullName))
+                        ? "\uffff" : person.getPostalCode().value)
+                        .thenComparing(person -> person.getName().fullName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 

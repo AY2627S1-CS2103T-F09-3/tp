@@ -18,8 +18,67 @@ import seedu.address.model.person.Person;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.testutil.PersonBuilder;
+import seedu.address.testutil.PreorderBuilder;
 
 public class GroupPostalCommandTest {
+
+    @Test
+    public void execute_samePostalCodeWithoutDates_ordersNamesIgnoringCaseLikeDateSort() {
+        Person ben = new PersonBuilder().withName("ben").withPostalCode("012345").build();
+        Person zara = new PersonBuilder().withName("Zara").withPostalCode("012345").build();
+        ModelManager model = new ModelManager();
+        List.of(ben, zara).forEach(model::addPerson);
+        AddressBook original = new AddressBook(model.getAddressBook());
+
+        new GroupPostalCommand().execute(model);
+
+        assertEquals(List.of(ben, zara), model.getFilteredPersonList());
+        new SortCommand().execute(model);
+        assertEquals(List.of(ben, zara), model.getFilteredPersonList());
+        assertEquals(original, model.getAddressBook());
+    }
+
+    @Test
+    public void execute_mixedCaseNames_ordersByFullPostalCodeThenNameIgnoringDates() {
+        Person sameCodeAmy = new PersonBuilder().withName("Amy Lee").withPostalCode("012345")
+                .withPreorder(new PreorderBuilder().withDate("2026-12-21").build()).build();
+        Person sameCodeBen = new PersonBuilder().withName("ben Tan").withPostalCode("012345")
+                .withPreorder(new PreorderBuilder().withDate("2026-12-21").build()).build();
+        Person sameCodeZara = new PersonBuilder().withName("Zara Lim").withPostalCode("012345")
+                .withPreorder(new PreorderBuilder().withDate("2026-12-20").build()).build();
+        Person samePrefixLaterCode = new PersonBuilder().withName("Aaron Goh").withPostalCode("019876")
+                .withPreorder(new PreorderBuilder().withDate("2026-12-19").build()).build();
+        Person differentGroup = new PersonBuilder().withName("alice Ong").withPostalCode("531234")
+                .withPreorder(new PreorderBuilder().withDate("2026-12-18").build()).build();
+        ModelManager model = new ModelManager();
+        List.of(sameCodeZara, differentGroup, samePrefixLaterCode, sameCodeBen, sameCodeAmy)
+                .forEach(model::addPerson);
+        AddressBook original = new AddressBook(model.getAddressBook());
+
+        new SortCommand().execute(model);
+        assertEquals(List.of(differentGroup, samePrefixLaterCode, sameCodeZara, sameCodeAmy, sameCodeBen),
+                model.getFilteredPersonList());
+        new GroupPostalCommand().execute(model);
+
+        assertEquals(List.of(sameCodeAmy, sameCodeBen, sameCodeZara, samePrefixLaterCode, differentGroup),
+                model.getFilteredPersonList());
+        assertEquals(original, model.getAddressBook());
+    }
+
+    @Test
+    public void execute_missingPostalCodes_ordersNamesIgnoringCaseAndKeepsMissingGroupLast() {
+        Person missingBen = new PersonBuilder().withName("ben Tan").withPostalCode(null).build();
+        Person missingZara = new PersonBuilder().withName("Zara Lim").withPostalCode(null).build();
+        Person withCode = new PersonBuilder().withName("Zoe Lee").withPostalCode("999999").build();
+        ModelManager model = new ModelManager();
+        List.of(missingZara, missingBen, withCode).forEach(model::addPerson);
+        AddressBook original = new AddressBook(model.getAddressBook());
+
+        new GroupPostalCommand().execute(model);
+
+        assertEquals(List.of(withCode, missingBen, missingZara), model.getFilteredPersonList());
+        assertEquals(original, model.getAddressBook());
+    }
 
     @Test
     public void execute_boundaryCodesAndMultipleMissingCodes_ordersByCodeThenName() {
