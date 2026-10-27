@@ -883,6 +883,10 @@ testers are expected to do more *exploratory* testing.
       Expected: The customer list still shows the top of the first card, with its index and name. The usage message
       scrolls in the result box instead of pushing the customer list out of the window.
 
+   1. In the same window, run `tag 1 t/Christmas2026CorporateOrdersWithSpecialDietaryRequirementsAndPriorityDelivery`.<br>
+      Expected: The long tag wraps onto a second line inside its chip, which stays inside the card, and the rest
+      of the card moves down to make room for it.
+
 ### Using the side panel
 
 Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`.
