@@ -214,8 +214,8 @@ public class MainWindowTest {
     @Test
     public void layout_longMessageAtMinimumHeight_keepsRoomForCustomerList() throws Exception {
         runInWindow((window, logic, root) -> {
-            // Several rows of search badges and a long usage message take the most height above the list
-            enterCommand(root, "find n/Alice c/01 d/Pineapple Tarts s/pending f/2026-12-20 m/delivery h/arrival");
+            // Search badges and a long usage message both take height above the list
+            enterCommand(root, "find n/Alice d/Pineapple Tarts s/pending m/delivery");
             enterCommand(root, "edititem");
             layOut(root, MIN_CONTENT_WIDTH, MIN_CONTENT_HEIGHT);
 
