@@ -7,13 +7,13 @@
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<!-- The minimum width fits both columns at their minimum widths, with the gaps and window border -->
+<!-- The minimum width fits both columns at their minimum widths, with the gaps and window border. The minimum
+     height fits a 1280x720 screen at 150%, which is 480 px tall, less the taskbar. -->
 <fx:root type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-         title="LeBake" minWidth="800" minHeight="600" onCloseRequest="#handleExit">
+         title="LeBake" minWidth="800" minHeight="420" onCloseRequest="#handleExit">
   <icons>
     <Image url="@/images/address_book_32.png" />
   </icons>
@@ -40,14 +40,12 @@
           <!-- Wide enough that cards keep whole words on a line; the column takes any extra width -->
           <VBox fx:id="mainColumn" styleClass="window-column" spacing="8" minWidth="450" HBox.hgrow="ALWAYS">
             <StackPane fx:id="commandBoxPlaceholder" VBox.vgrow="NEVER" />
-            <!-- Takes the height of the whole message, and the customer list below gives up the space -->
-            <StackPane fx:id="resultDisplayPlaceholder" VBox.vgrow="NEVER">
-              <minHeight>
-                <Region fx:constant="USE_PREF_SIZE" />
-              </minHeight>
-            </StackPane>
+            <!-- Takes the height of the whole message, unless the window is too short for both the message and
+                 the customer list's minimum height; then the message scrolls -->
+            <StackPane fx:id="resultDisplayPlaceholder" VBox.vgrow="NEVER" />
             <StackPane fx:id="searchCriteriaDisplayPlaceholder" VBox.vgrow="NEVER" />
-            <StackPane fx:id="personListPanelPlaceholder" minHeight="0" VBox.vgrow="ALWAYS" />
+            <!-- Takes the rest of the height, but always keeps enough for the top of a customer card -->
+            <StackPane fx:id="personListPanelPlaceholder" minHeight="80" prefHeight="80" VBox.vgrow="ALWAYS" />
           </VBox>
 
           <!-- Help and the preparation summaries, one at a time -->

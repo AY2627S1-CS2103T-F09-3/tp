@@ -6,12 +6,14 @@ import java.util.logging.Logger;
 import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -157,13 +159,24 @@ public class MainWindow extends UiPart<Stage> {
      * Sets the default size based on {@code guiSettings}.
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
-        // A size saved before the side panel was added can be narrower than the window now allows
-        primaryStage.setHeight(Math.max(guiSettings.getWindowHeight(), primaryStage.getMinHeight()));
-        primaryStage.setWidth(Math.max(guiSettings.getWindowWidth(), primaryStage.getMinWidth()));
+        Rectangle2D screen = Screen.getPrimary().getVisualBounds();
+        primaryStage.setHeight(fitWindowLength(guiSettings.getWindowHeight(), primaryStage.getMinHeight(),
+                screen.getHeight()));
+        primaryStage.setWidth(fitWindowLength(guiSettings.getWindowWidth(), primaryStage.getMinWidth(),
+                screen.getWidth()));
         if (guiSettings.getWindowCoordinates() != null) {
             primaryStage.setX(guiSettings.getWindowCoordinates().getX());
             primaryStage.setY(guiSettings.getWindowCoordinates().getY());
         }
+    }
+
+    /**
+     * Returns the window's width or height to open with: the saved length, shortened to fit the screen, such as
+     * a 1280x720 screen at 150%, but no shorter than the window allows.
+     * A size saved before the side panel was added can be narrower than the window now allows.
+     */
+    static double fitWindowLength(double savedLength, double minLength, double screenLength) {
+        return Math.max(Math.min(savedLength, screenLength), minLength);
     }
 
     /**

@@ -41,9 +41,13 @@ import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PreorderBuilder;
 
 public class MainWindowTest {
-    // The smallest window content: both columns at their minimum widths, with the gaps between and around them
+    // The smallest window content: both columns at their minimum widths, with the gaps between and around them, and
+    // the window's minimum height of 420 px less the title bar
     private static final double MIN_CONTENT_WIDTH = 780;
-    private static final double MIN_CONTENT_HEIGHT = 560;
+    private static final double MIN_CONTENT_HEIGHT = 380;
+    // The content of a window at the default height of 600 px
+    private static final double DEFAULT_CONTENT_HEIGHT = 560;
+    private static final double CUSTOMER_LIST_MIN_HEIGHT = 80;
     private static final double MAIN_COLUMN_MIN_WIDTH = 450;
     private static final double SIDE_PANEL_MIN_WIDTH = 300;
     private static final double SIDE_PANEL_MAX_WIDTH = 460;
@@ -191,20 +195,49 @@ public class MainWindowTest {
     }
 
     @Test
-    public void commandBox_invalidCommandAtMinimumSize_showsWholeUsageMessage() throws Exception {
+    public void commandBox_invalidCommandAtDefaultHeight_showsWholeUsageMessage() throws Exception {
         runInWindow((window, logic, root) -> {
             TextArea resultDisplay = (TextArea) root.lookup("#resultDisplay");
 
             // Each of these shows its usage message, which are among the longest messages LeBake shows
             for (String command : List.of("add", "additem", "edit", "edititem", "find", "preorder")) {
                 enterCommand(root, command);
-                layOut(root, MIN_CONTENT_WIDTH, MIN_CONTENT_HEIGHT);
+                layOut(root, MIN_CONTENT_WIDTH, DEFAULT_CONTENT_HEIGHT);
 
                 assertTrue(resultDisplay.getText().contains("Example: " + command), command);
                 assertTrue(ResultDisplayTest.fitsWithoutScrolling(resultDisplay),
                         "result box scrolls for " + command);
             }
         });
+    }
+
+    @Test
+    public void layout_longMessageAtMinimumHeight_keepsRoomForCustomerList() throws Exception {
+        runInWindow((window, logic, root) -> {
+            // Several rows of search badges and a long usage message take the most height above the list
+            enterCommand(root, "find n/Alice c/01 d/Pineapple Tarts s/pending f/2026-12-20 m/delivery h/arrival");
+            enterCommand(root, "edititem");
+            layOut(root, MIN_CONTENT_WIDTH, MIN_CONTENT_HEIGHT);
+
+            assertTrue(height(root, "#personListPanelPlaceholder") >= CUSTOMER_LIST_MIN_HEIGHT);
+            // The message scrolls instead, and the status bar stays in the window
+            assertFalse(ResultDisplayTest.fitsWithoutScrolling((TextArea) root.lookup("#resultDisplay")));
+            assertShownWithinWindow(root, root.lookup("#statusbarPlaceholder"));
+        });
+    }
+
+    @Test
+    public void fitWindowLength_savedLengthLongerThanScreen_shortenedToScreen() {
+        // The default height of 600 px on a 1280x720 screen at 150%, which leaves 432 px above the taskbar
+        assertEquals(432, MainWindow.fitWindowLength(600, 420, 432));
+        assertEquals(600, MainWindow.fitWindowLength(600, 420, 1032));
+    }
+
+    @Test
+    public void fitWindowLength_savedLengthBelowMinimum_raisedToMinimum() {
+        // A width saved before the side panel was added
+        assertEquals(800, MainWindow.fitWindowLength(740, 800, 1920));
+        assertEquals(420, MainWindow.fitWindowLength(600, 420, 400));
     }
 
     /**
@@ -276,6 +309,10 @@ public class MainWindowTest {
 
     private static double width(Parent root, String selector) {
         return ((Region) root.lookup(selector)).getWidth();
+    }
+
+    private static double height(Parent root, String selector) {
+        return ((Region) root.lookup(selector)).getHeight();
     }
 
     private static String totals(Parent summary) {
