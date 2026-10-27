@@ -271,9 +271,10 @@ in one criterion and one badge.
 
 `FindCommandParser` combines `d/` (`PREFIX_DETAILS`) and `s/` into **one** `ItemCriterion`. Separate predicates for
 "has this product" and "has this status" would incorrectly allow different items to satisfy the conditions.
-Product names match completely after stripping surrounding whitespace and normalizing case with `Locale.ROOT`;
-internal spacing and punctuation remain significant. The criterion also retains the stripped input name for display;
-matching, equality and hash codes use the normalized name. Status input is validated with `ParserUtil.parseItemStatus`.
+Product names match completely after stripping surrounding whitespace, collapsing repeated spaces as `ItemName`
+does, and normalizing case with `Locale.ROOT`; punctuation remains significant. The criterion also retains the
+cleaned-up input name for display; matching, equality and hash codes use the normalized name. Status input is
+validated with `ParserUtil.parseItemStatus`.
 
 The parser supplies `EnumSet.allOf(ItemStatus.class)` when `s/` is omitted. This is deliberate: an empty status set
 in `ItemCriterion` matches **nothing**, rather than meaning "any status". An absent product name accepts any product.
@@ -370,6 +371,8 @@ one `Preorder`, and each `Preorder` holds the customer's `Item`s in the order th
   `HandoverNotes`, such as "Call on arrival". They belong to the whole preorder, so all of its items are handed
   over together. `Preorder#withItems()` keeps them when a command changes the items.
 * `Item` has an `ItemName` of up to 200 characters, an `ItemStatus`, and an optional `Quantity` and `Remark`.
+  `ItemName` turns each run of spaces, including Unicode spaces, into one space, so `Butter   Cake` and
+  `Butter Cake` are the same product in `find` and the preparation summary.
   A `Quantity` is a whole number from 1 to 999, and a `Remark` is a special request of up to 100 characters.
 * New items always have a quantity. `Item#getQuantity()` is empty only for items converted from v1.3 data, as
   described under "Loading v1.3 data" below.
