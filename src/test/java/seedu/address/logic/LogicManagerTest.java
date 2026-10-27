@@ -76,21 +76,21 @@ public class LogicManagerTest {
     @Test
     public void execute_groupPostal_savesOriginalOrderAndReloadsAllFields() throws Exception {
         Person later = new PersonBuilder().withName("Later").withPostalCode("654321").build();
-        Person missing = new PersonBuilder().withName("Missing").build();
+        Person highest = new PersonBuilder().withName("Highest").withPostalCode("999999").build();
         Person earlier = new PersonBuilder().withName("Earlier").withPostalCode("012345")
                 .withTags("regular").withPreorder("Chocolate cake", ItemStatus.PENDING).build();
-        List<Person> savedOrder = List.of(later, missing, earlier);
+        List<Person> savedOrder = List.of(later, highest, earlier);
         savedOrder.forEach(model::addPerson);
 
         logic.execute("group postal");
 
-        assertEquals(List.of(earlier, later, missing), logic.getFilteredPersonList());
+        assertEquals(List.of(earlier, later, highest), logic.getFilteredPersonList());
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
         ReadOnlyAddressBook reloaded = storage.readAddressBook().orElseThrow();
         assertEquals(savedOrder, reloaded.getPersonList());
         assertEquals("012345", reloaded.getPersonList().get(2).getPostalCode().value);
         assertEquals(earlier.getPreorder(), reloaded.getPersonList().get(2).getPreorder());
-        assertEquals(null, reloaded.getPersonList().get(1).getPostalCode());
+        assertEquals("999999", reloaded.getPersonList().get(1).getPostalCode().value);
     }
 
     @Test
@@ -330,8 +330,8 @@ public class LogicManagerTest {
         Person zoe = new PersonBuilder().withName("Zoe Tan").withPostalCode("019876").build();
         Person differentCode = new PersonBuilder().withName("Alex Lim").withPostalCode("654321").build();
         Person amy = new PersonBuilder().withName("Amy Tan").withPostalCode("012345").build();
-        Person missingCode = new PersonBuilder().withName("Legacy Customer").build();
-        List<Person> savedOrder = List.of(zoe, differentCode, amy, missingCode);
+        Person otherCode = new PersonBuilder().withName("Other Customer").withPostalCode("999999").build();
+        List<Person> savedOrder = List.of(zoe, differentCode, amy, otherCode);
         savedOrder.forEach(model::addPerson);
 
         assertFilteringCommandSuccess("find c/01", "2 person(s) listed!", List.of(zoe, amy));
@@ -353,8 +353,8 @@ public class LogicManagerTest {
         Person bob = new PersonBuilder().withName("Bob Tan").withPostalCode("531234").build();
         Person leadingZero = new PersonBuilder().withName("Charlie Tan").withPostalCode("012345").build();
         Person middleDigits = new PersonBuilder().withName("David Tan").withPostalCode("155300").build();
-        Person missingCode = new PersonBuilder().withName("Legacy Customer").build();
-        List.of(alice, bob, leadingZero, middleDigits, missingCode).forEach(model::addPerson);
+        Person otherCode = new PersonBuilder().withName("Other Customer").withPostalCode("999999").build();
+        List.of(alice, bob, leadingZero, middleDigits, otherCode).forEach(model::addPerson);
 
         assertFilteringCommandSuccess("find n/Alice c/53", "1 person(s) listed!", List.of(alice));
         assertFilteringCommandSuccess("find c/53", "2 person(s) listed!", List.of(alice, bob));
@@ -369,14 +369,14 @@ public class LogicManagerTest {
                 .withPostalCode("012345").withTags("regular").build();
         Person differentCode = new PersonBuilder(match).withName("Alice Lim").withPostalCode("123456").build();
         Person differentTag = new PersonBuilder(match).withName("Alice Tanaka").withTags("vip").build();
-        Person missingCode = new PersonBuilder(match).withName("Alice Lee").withPostalCode(null).build();
-        List.of(differentCode, differentTag, missingCode, match).forEach(model::addPerson);
+        Person otherCode = new PersonBuilder(match).withName("Alice Lee").withPostalCode("999999").build();
+        List.of(differentCode, differentTag, otherCode, match).forEach(model::addPerson);
 
         assertFilteringCommandSuccess("find n/Alice p/8123 e/EXAMPLE.COM a/hougang c/012345 t/REGULAR",
                 "1 person(s) listed!", List.of(match));
         logic.execute("delete 1");
 
-        assertEquals(List.of(differentCode, differentTag, missingCode), model.getAddressBook().getPersonList());
+        assertEquals(List.of(differentCode, differentTag, otherCode), model.getAddressBook().getPersonList());
         assertEquals(List.of(), logic.getFilteredPersonList());
     }
 
@@ -385,17 +385,17 @@ public class LogicManagerTest {
         Person match = new PersonBuilder().withName("Match").withPostalCode("012345")
                 .withPreorder(new ItemBuilder().withName("Tarts").build()).build();
         Person wrongCode = new PersonBuilder(match).withName("Wrong Code").withPostalCode("530123").build();
-        Person missingCode = new PersonBuilder(match).withName("Missing Code").withPostalCode(null).build();
+        Person otherCode = new PersonBuilder(match).withName("Other Code").withPostalCode("999999").build();
         Person splitMatch = new PersonBuilder(match).withName("Split Match").withPreorder(
                 new ItemBuilder().withName("Tarts").withStatus(ItemStatus.COMPLETED).build(),
                 new ItemBuilder().withName("Cookies").build()).build();
-        List.of(match, wrongCode, missingCode, splitMatch).forEach(model::addPerson);
+        List.of(match, wrongCode, otherCode, splitMatch).forEach(model::addPerson);
 
         assertFilteringCommandSuccess("find c/01 d/TARTS s/pending", "1 person(s) listed!", List.of(match));
         assertFilteringCommandSuccess("find d/tarts c/01", "2 person(s) listed!", List.of(match, splitMatch));
         assertFilteringCommandSuccess("track s/pending",
                 "4 customer(s) with 4 matching item(s) for PENDING listed!",
-                List.of(match, wrongCode, missingCode, splitMatch));
+                List.of(match, wrongCode, otherCode, splitMatch));
     }
 
     @Test

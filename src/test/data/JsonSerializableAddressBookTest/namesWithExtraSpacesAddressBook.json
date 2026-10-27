@@ -4,12 +4,14 @@
     "phone": "94351253",
     "email": "alice@example.com",
     "address": "123, Jurong West Ave 6, #08-111",
+    "postalCode": "012345",
     "tags": [ "friends" ]
   }, {
     "name": "  Jose   Tan  ",
     "phone": "98765432",
     "email": "johnd@example.com",
     "address": "311, Clementi Ave 2, #02-25",
+    "postalCode": "012345",
     "tags": [ "owesMoney", "friends" ]
   } ]
 }

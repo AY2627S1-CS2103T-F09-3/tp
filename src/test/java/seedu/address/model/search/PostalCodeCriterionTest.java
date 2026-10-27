@@ -51,8 +51,8 @@ public class PostalCodeCriterionTest {
     }
 
     @Test
-    public void test_missingPostalCode_returnsFalse() {
-        Person customer = new PersonBuilder().withPostalCode(null).build();
+    public void test_differentPostalPrefix_returnsFalse() {
+        Person customer = new PersonBuilder().withPostalCode("999999").build();
         assertFalse(new PostalCodeCriterion("01").test(customer));
         assertFalse(new PostalCodeCriterion("012345").test(customer));
     }

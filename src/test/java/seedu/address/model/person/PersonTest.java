@@ -2,7 +2,6 @@ package seedu.address.model.person;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
@@ -27,6 +26,14 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonTest {
 
     @Test
+    public void constructor_nullPostalCode_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone(),
+                ALICE.getEmail(), ALICE.getAddress(), null, ALICE.getTags()));
+        assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone(),
+                ALICE.getEmail(), ALICE.getAddress(), null, ALICE.getTags(), Optional.empty()));
+    }
+
+    @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
         Person person = new PersonBuilder().build();
         assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));
@@ -35,13 +42,13 @@ public class PersonTest {
     @Test
     public void constructor_nullPreorder_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone(),
-                ALICE.getEmail(), ALICE.getAddress(), ALICE.getTags(), null));
+                ALICE.getEmail(), ALICE.getAddress(), ALICE.getPostalCode(), ALICE.getTags(), null));
     }
 
     @Test
     public void getPreorder_createdWithoutPreorder_returnsEmpty() {
         Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
-                ALICE.getTags());
+                ALICE.getPostalCode(), ALICE.getTags());
         assertEquals(Optional.empty(), person.getPreorder());
     }
 
@@ -53,16 +60,13 @@ public class PersonTest {
     }
 
     @Test
-    public void constructor_withoutPostalCode_preservesOptionalPreorder() {
+    public void constructor_withPostalCode_preservesOptionalPreorder() {
         Preorder preorder = new Preorder(List.of(new ItemBuilder().build()));
         for (Optional<Preorder> optionalPreorder : List.of(Optional.<Preorder>empty(), Optional.of(preorder))) {
             Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
-                    ALICE.getTags(), optionalPreorder);
-            Person expected = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
-                    null, ALICE.getTags(), optionalPreorder);
-            assertNull(person.getPostalCode());
+                    ALICE.getPostalCode(), ALICE.getTags(), optionalPreorder);
+            assertEquals(ALICE.getPostalCode(), person.getPostalCode());
             assertEquals(optionalPreorder, person.getPreorder());
-            assertEquals(expected, person);
         }
     }
 
@@ -71,15 +75,12 @@ public class PersonTest {
         Person original = new PersonBuilder(ALICE).withPostalCode("012345").build();
         Person copy = new PersonBuilder(original).build();
         Person differentPostalCode = new PersonBuilder(original).withPostalCode("654321").build();
-        Person missingPostalCode = new PersonBuilder(original).withPostalCode(null).build();
 
         assertEquals(original, copy);
         assertEquals(original.hashCode(), copy.hashCode());
         assertFalse(original.equals(differentPostalCode));
-        assertFalse(original.equals(missingPostalCode));
-        assertFalse(missingPostalCode.equals(original));
+        assertFalse(differentPostalCode.equals(original));
         assertTrue(original.isSamePerson(differentPostalCode));
-        assertTrue(original.isSamePerson(missingPostalCode));
     }
 
     @Test

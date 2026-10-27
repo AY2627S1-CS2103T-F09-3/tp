@@ -49,7 +49,7 @@ public class EditCommandTest {
         Person personToEdit = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person newDetails = new PersonBuilder().build();
         Person editedPerson = new Person(newDetails.getName(), newDetails.getPhone(), newDetails.getEmail(),
-                newDetails.getAddress(), personToEdit.getTags());
+                newDetails.getAddress(), newDetails.getPostalCode(), personToEdit.getTags());
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder(editedPerson).build();
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
 
@@ -158,16 +158,16 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_editingLegacyCustomer_preservesMissingPostalCode() throws CommandException {
-        Person original = new PersonBuilder().withName("Legacy Customer").withPostalCode(null).build();
+    public void execute_editingCustomerWithoutPostalChange_preservesPostalCode() throws CommandException {
+        Person original = new PersonBuilder().withName("Existing Customer").withPostalCode("012345").build();
         AddressBook postalAddressBook = new AddressBook();
         postalAddressBook.addPerson(original);
         Model postalModel = new ModelManager(postalAddressBook, new UserPrefs());
 
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Updated Legacy").build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Updated Customer").build();
         new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(postalModel);
 
-        assertEquals(null, postalModel.getAddressBook().getPersonList().get(0).getPostalCode());
+        assertEquals(original.getPostalCode(), postalModel.getAddressBook().getPersonList().get(0).getPostalCode());
     }
 
     @Test

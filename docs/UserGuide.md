@@ -248,7 +248,6 @@ Groups the currently displayed customers by postal code without changing the sav
 Format: `group postal`
 
 * Customers are shown in ascending six-digit postal-code order, under headings based on their first two digits. Customers with the same postal code are ordered by name, ignoring capitalization.
-* Customers from old data files without postal codes remain usable and display `Postal code needed`. They appear in a final `MISSING POSTAL CODE` group.
 * Grouping keeps the current filter, including results from `find` or `track`. It does not change customer details, preorders, or the order saved in the data file.
 * Displayed index numbers follow the grouped list. Use those numbers for commands such as `edit`, `tag`, and `deleteorder`.
 * Use `list` to show all customers in their saved order and remove the group headings. Grouping is not restored after restarting the application.
@@ -298,7 +297,6 @@ The **Delivery preparation** summary in the side panel, on the right of the wind
 * A customer counts as one outstanding stop when their preorder uses `DELIVERY` and has at least one `PENDING` or `PREPARED` item. Multiple items still count as one stop.
 * Collection, empty preorders, completed-only preorders, and preorders without a method do not contribute to the totals.
 * Contacts are grouped by the first two postal digits. Each contact shows their name, phone, address, complete postal code, fulfilment date, and handover notes.
-* Customers without postal codes remain included under `MISSING POSTAL CODE`, which counts as one additional postal group. Their contact shows `Postal code needed`.
 * An outstanding delivery without a date shows `Not scheduled`; absent handover notes show `Handover notes: None`.
 * The contact area scrolls and wraps long text. Use Tab to focus it and the arrow keys to scroll.
 
@@ -491,7 +489,7 @@ Format: `track [s/STATUS]`
 
 Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count, and an item with a missing quantity still counts as one item. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
 
-Each customer card shows the customer's number on the left, then their name and tags, their phone number and email on one line, and their address with its postal code, for example `Postal 389030`. A customer without a postal code shows `Postal code needed` with a warning icon, and a customer without a preorder shows `No preorder`.
+Each customer card shows the customer's number on the left, then their name and tags, their phone number and email on one line, and their address with its postal code, for example `Postal 389030`. A customer without a preorder shows `No preorder`.
 
 ![A customer card with a delivery preorder of two items](images/customerCard.png)
 
@@ -503,7 +501,7 @@ Status | Meaning | Badge colour
 `PREPARED` | Ready for collection or delivery | Blue
 `COMPLETED` | Collected or delivered | Green outline with a tick
 
-If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Qty needed` with a warning icon instead of a quantity.
+After supplying the required postal codes in your data file, each preorder saved by LeBake v1.3 appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Qty needed` with a warning icon instead of a quantity.
 
 ### Deleting a preorder item: `deleteitem`
 
@@ -644,6 +642,8 @@ LeBake automatically saves data after every successful command. You do not need 
 ### Editing the data file
 
 LeBake data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+
+Postal codes are compulsory for every customer, including records saved by older versions. Each customer must have a `postalCode` containing exactly six digits. Null, missing, blank or malformed postal codes prevent the file from loading. Back up older files and supply the correct postal codes before launching LeBake.
 
 Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
 

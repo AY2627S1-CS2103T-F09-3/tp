@@ -26,6 +26,7 @@ public class PersonBuilder {
     public static final String DEFAULT_PHONE = "85355255";
     public static final String DEFAULT_EMAIL = "amy@gmail.com";
     public static final String DEFAULT_ADDRESS = "123, Jurong West Ave 6, #08-111";
+    public static final String DEFAULT_POSTAL_CODE = "012345";
 
     private Name name;
     private Phone phone;
@@ -43,7 +44,7 @@ public class PersonBuilder {
         phone = new Phone(DEFAULT_PHONE);
         email = new Email(DEFAULT_EMAIL);
         address = new Address(DEFAULT_ADDRESS);
-        postalCode = null;
+        postalCode = new PostalCode(DEFAULT_POSTAL_CODE);
         tags = new HashSet<>();
         preorder = Optional.empty();
     }

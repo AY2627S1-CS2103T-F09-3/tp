@@ -25,7 +25,7 @@ public class DeliveryPreparationSummaryTest {
         Person mixed = new PersonBuilder().withName("Mixed").withPostalCode("012345").withPreorder(delivery
                 .withItems(new ItemBuilder().withStatus(ItemStatus.COMPLETED).build(), new ItemBuilder().build(),
                         new ItemBuilder().withStatus(ItemStatus.PREPARED).build()).build()).build();
-        Person missingCode = new PersonBuilder().withName("Missing Postal").withPreorder(delivery
+        Person otherCode = new PersonBuilder().withName("Other Postal").withPostalCode("999999").withPreorder(delivery
                 .withItems(new ItemBuilder().withStatus(ItemStatus.PREPARED).build()).build()).build();
         Person samePrefix = new PersonBuilder(mixed).withName("Same Prefix").withPostalCode("019876").build();
         Person completed = new PersonBuilder().withName("Completed").withPreorder(delivery
@@ -34,12 +34,12 @@ public class DeliveryPreparationSummaryTest {
         Person collection = new PersonBuilder().withName("Collection").withPreorder(delivery
                 .withMethod(FulfilmentMethod.COLLECTION).withItems(new ItemBuilder().build()).build()).build();
         Person unset = new PersonBuilder().withName("Unset Method").withPreorder(new ItemBuilder().build()).build();
-        List<Person> customers = List.of(collection, missingCode, completed, mixed, samePrefix, empty, unset,
+        List<Person> customers = List.of(collection, otherCode, completed, mixed, samePrefix, empty, unset,
                 new PersonBuilder().withName("No Preorder").build());
 
         DeliveryPreparationSummary summary = new DeliveryPreparationSummary(customers);
 
-        assertEquals(List.of(mixed, samePrefix, missingCode), summary.getStops());
+        assertEquals(List.of(mixed, samePrefix, otherCode), summary.getStops());
         assertEquals(3, summary.getStopCount());
         assertEquals(2, summary.getPostalGroupCount());
         assertEquals("012345", summary.getStops().getFirst().getPostalCode().value);
