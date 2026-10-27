@@ -15,11 +15,14 @@ import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.api.io.TempDir;
 
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -111,6 +114,45 @@ public class MainWindowTest {
                 stage.close();
             }
         });
+    }
+
+    @Test
+    public void commandBox_invalidCommandAtMinimumSize_showsWholeUsageMessage() throws Exception {
+        runOnFxThread(() -> {
+            Path dataFilePath = temporaryFolder.resolve("addressBook.json");
+            StorageManager storage = new StorageManager(new JsonAddressBookStorage(dataFilePath),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json")));
+            Stage stage = new Stage();
+            try {
+                MainWindow window = new MainWindow(stage, new LogicManager(new ModelManager(), storage),
+                        dataFilePath);
+                window.fillInnerParts();
+                Parent root = stage.getScene().getRoot();
+                TextField commandBox = (TextField) root.lookup("#commandTextField");
+                TextArea resultDisplay = (TextArea) root.lookup("#resultDisplay");
+
+                // Each of these shows its usage message, which are among the longest messages LeBake shows
+                for (String command : List.of("add", "additem", "edit", "edititem", "find", "preorder")) {
+                    layOutAtMinimumSize(root);
+                    commandBox.setText(command);
+                    commandBox.fireEvent(new ActionEvent());
+                    layOutAtMinimumSize(root);
+                    layOutAtMinimumSize(root);
+
+                    assertTrue(resultDisplay.getText().contains("Example: " + command), command);
+                    assertTrue(ResultDisplayTest.fitsWithoutScrolling(resultDisplay),
+                            "result box scrolls for " + command);
+                }
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    private static void layOutAtMinimumSize(Parent root) {
+        root.resize(450, 600);
+        root.applyCss();
+        root.layout();
     }
 
     private static void assertSummaryVisible(Parent root, StackPane placeholder, Parent summary) {

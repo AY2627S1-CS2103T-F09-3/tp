@@ -3,7 +3,6 @@ package seedu.address.ui;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
-import seedu.address.logic.Messages;
 import seedu.address.model.preorder.FulfilmentDate;
 import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.HandoverNotes;
@@ -22,7 +21,8 @@ public class PreorderDisplay {
     public static final String NO_METHOD_TEXT = "Method not set";
     public static final String HANDOVER_NOTES_PREFIX = "Handover notes: ";
     public static final String NO_ITEMS_TEXT = "No items yet";
-    public static final String MISSING_QUANTITY_TEXT = Messages.MISSING_QUANTITY_TEXT;
+    // Short, like "Qty 2", so that the item's name keeps enough width in a narrow window
+    public static final String MISSING_QUANTITY_TEXT = "Qty needed";
     public static final String REMARK_PREFIX = "Remark: ";
 
     /** A 16 px calendar outline, shown beside a preorder that has no method yet. */
@@ -35,6 +35,11 @@ public class PreorderDisplay {
             + "M10.25 12.25a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0z";
     /** A 16 px shopping bag outline, for a preorder the customer collects. */
     public static final String COLLECTION_ICON = "M3.5 5.5h9l-0.75 8h-7.5zM6 5.5v-1.5a2 2 0 0 1 4 0v1.5";
+    /** A 14 px circled exclamation mark, shown beside a detail that still needs to be filled in. */
+    public static final String WARNING_ICON = "M1.75 7a5.25 5.25 0 1 0 10.5 0a5.25 5.25 0 1 0 -10.5 0z"
+            + "M7 4.4v3.2M7 9.6h0.01";
+    /** A 12 px tick, shown on the chip of a completed item. */
+    public static final String COMPLETED_ICON = "M2.5 6.25l2.25 2.25L9.5 3.75";
 
     private PreorderDisplay() {} // prevents instantiation
 
@@ -72,15 +77,14 @@ public class PreorderDisplay {
     }
 
     /**
-     * Returns an item's number and name, e.g. {@code 1. Pineapple Tarts}.
+     * Returns the number shown in the first column of an item's row, e.g. {@code 1}.
      *
      * @param itemNumber The item's position in the preorder, starting from 1.
      * @throws IllegalArgumentException if {@code itemNumber} is less than 1.
      */
-    public static String formatItemName(int itemNumber, Item item) {
-        requireNonNull(item);
+    public static String formatItemNumber(int itemNumber) {
         checkArgument(itemNumber > 0);
-        return itemNumber + ". " + item.getName();
+        return String.valueOf(itemNumber);
     }
 
     /**

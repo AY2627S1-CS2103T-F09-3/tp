@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.HandoverNotes;
 import seedu.address.model.preorder.Item;
-import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Preorder;
 import seedu.address.model.preorder.Remark;
@@ -71,22 +70,14 @@ public class PreorderDisplayTest {
     }
 
     @Test
-    public void formatItemName_validItem_numbersName() {
-        Item cookies = new ItemBuilder().withName("Almond Cookies").build();
-        assertEquals("2. Almond Cookies", PreorderDisplay.formatItemName(2, cookies));
+    public void formatItemNumber_positiveNumber_showsNumberOnly() {
+        assertEquals("1", PreorderDisplay.formatItemNumber(1));
+        assertEquals("12", PreorderDisplay.formatItemNumber(12));
     }
 
     @Test
-    public void formatItemName_longestName_keepsFullText() {
-        String longest = "a".repeat(ItemName.MAX_LENGTH);
-        Item item = new ItemBuilder().withName(longest).build();
-        assertEquals("1. " + longest, PreorderDisplay.formatItemName(1, item));
-    }
-
-    @Test
-    public void formatItemName_itemNumberBelowOne_throwsIllegalArgumentException() {
-        Item item = new ItemBuilder().build();
-        assertThrows(IllegalArgumentException.class, () -> PreorderDisplay.formatItemName(0, item));
+    public void formatItemNumber_numberBelowOne_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> PreorderDisplay.formatItemNumber(0));
     }
 
     @Test
@@ -97,7 +88,7 @@ public class PreorderDisplayTest {
     @Test
     public void formatQuantity_itemWithoutQuantity_saysQuantityNeeded() {
         Item cakes = new ItemBuilder().withName("2 chocolate cakes").withoutQuantity().build();
-        assertEquals(PreorderDisplay.MISSING_QUANTITY_TEXT, PreorderDisplay.formatQuantity(cakes));
+        assertEquals("Qty needed", PreorderDisplay.formatQuantity(cakes));
     }
 
     @Test
@@ -125,7 +116,6 @@ public class PreorderDisplayTest {
         assertThrows(NullPointerException.class, () -> PreorderDisplay.formatHeader(null));
         assertThrows(NullPointerException.class, () -> PreorderDisplay.getHeaderIcon(null));
         assertThrows(NullPointerException.class, () -> PreorderDisplay.formatHandoverNotes(null));
-        assertThrows(NullPointerException.class, () -> PreorderDisplay.formatItemName(1, null));
         assertThrows(NullPointerException.class, () -> PreorderDisplay.formatQuantity(null));
         assertThrows(NullPointerException.class, () -> PreorderDisplay.formatRemark(null));
         assertThrows(NullPointerException.class, () -> PreorderDisplay.getStatusStyleClass(null));
