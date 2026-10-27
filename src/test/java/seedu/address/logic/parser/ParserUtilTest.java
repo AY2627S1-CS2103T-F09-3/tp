@@ -7,6 +7,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,50 @@ public class ParserUtilTest {
     private static final String INVALID_HANDOVER_NOTES = "Call on arrival\nLeave at door"; // more than one line
 
     private static final String WHITESPACE = " \t\r\n";
+
+    @Test
+    public void findUnsupportedPrefix_nullInput_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.findUnsupportedPrefix(null));
+        assertThrows(NullPointerException.class, () -> ParserUtil.findUnsupportedPrefix("1", (Prefix[]) null));
+    }
+
+    @Test
+    public void findUnsupportedPrefix_whitespaceBoundary_returnsPrefix() {
+        for (String separator : List.of(" ", "\t", "\n", "\r\n", " \t ")) {
+            assertEquals(Optional.of(new Prefix("x/")),
+                    ParserUtil.findUnsupportedPrefix("1" + separator + "x/2", CliSyntax.PREFIX_ITEM_INDEX));
+        }
+    }
+
+    @Test
+    public void findUnsupportedPrefix_letterBasedTokens_preservesPrefix() {
+        for (String prefix : List.of("x/", "Q/", "status/")) {
+            assertEquals(Optional.of(new Prefix(prefix)),
+                    ParserUtil.findUnsupportedPrefix("1 " + prefix + "2", CliSyntax.PREFIX_ITEM_INDEX));
+        }
+    }
+
+    @Test
+    public void findUnsupportedPrefix_commandSpecificSupport_skipsSupportedPrefixes() {
+        assertEquals(Optional.empty(),
+                ParserUtil.findUnsupportedPrefix("1 i/2 q/3", CliSyntax.PREFIX_ITEM_INDEX, CliSyntax.PREFIX_QUANTITY));
+        assertEquals(Optional.of(CliSyntax.PREFIX_QUANTITY),
+                ParserUtil.findUnsupportedPrefix("1 i/2 q/3", CliSyntax.PREFIX_ITEM_INDEX));
+    }
+
+    @Test
+    public void findUnsupportedPrefix_multipleUnsupportedPrefixes_returnsFirst() {
+        assertEquals(Optional.of(new Prefix("x/")),
+                ParserUtil.findUnsupportedPrefix("1 i/2 x/3 q/4", CliSyntax.PREFIX_ITEM_INDEX));
+    }
+
+    @Test
+    public void findUnsupportedPrefix_noPrefixBoundary_returnsEmpty() {
+        for (String value : List.of("", "1", "1x/2", "x/2", "1 x /2", "1 #04/08",
+                "1 https://example.com/path", "1 2x/3")) {
+            assertEquals(Optional.empty(), ParserUtil.findUnsupportedPrefix(value, CliSyntax.PREFIX_ITEM_INDEX));
+        }
+    }
 
     @Test
     public void parseFulfilmentDate_validAndInvalidCalendarDates() throws Exception {
@@ -311,6 +356,13 @@ public class ParserUtilTest {
     public void parseRemark_validValueWithWhitespace_returnsTrimmedRemark() throws Exception {
         String remarkWithWhitespace = WHITESPACE + VALID_REMARK + WHITESPACE;
         assertEquals(new Remark(VALID_REMARK), ParserUtil.parseRemark(remarkWithWhitespace));
+    }
+
+    @Test
+    public void parseFreeText_prefixLikeText_preservesText() throws Exception {
+        assertEquals(new Remark("Pack w/o nuts x/2"), ParserUtil.parseRemark("Pack w/o nuts x/2"));
+        assertEquals(new HandoverNotes("Leave w/o ringing x/2"),
+                ParserUtil.parseHandoverNotes("Leave w/o ringing x/2"));
     }
 
     @Test
