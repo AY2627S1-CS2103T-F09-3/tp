@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.net.URL?>
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.Scene?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.image.Image?>
-<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
+<!-- The minimum width fits both columns at their minimum widths, with the gaps and window border. The minimum
+     height fits a 1280x720 screen at 150%, which is 480 px tall, less the taskbar. -->
 <fx:root type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-         title="LeBake" minWidth="450" minHeight="600" onCloseRequest="#handleExit">
+         title="LeBake" minWidth="800" minHeight="420" onCloseRequest="#handleExit">
   <icons>
     <Image url="@/images/address_book_32.png" />
   </icons>
@@ -24,7 +24,8 @@
         <URL value="@Extensions.css" />
       </stylesheets>
 
-      <VBox>
+      <!-- Gets the :compact pseudo-class in a narrow window, which makes the gaps around the customer list smaller -->
+      <VBox fx:id="windowContent" styleClass="window-content">
         <MenuBar fx:id="menuBar" VBox.vgrow="NEVER">
           <Menu mnemonicParsing="false" text="File">
             <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Exit" />
@@ -34,34 +35,22 @@
           </Menu>
         </MenuBar>
 
-        <StackPane VBox.vgrow="NEVER" fx:id="commandBoxPlaceholder" styleClass="pane-with-border">
-          <padding>
-            <Insets top="8" right="10" bottom="4" left="10" />
-          </padding>
-        </StackPane>
+        <!-- The paddings and gaps of both columns are in DarkTheme.css -->
+        <HBox fx:id="columns" styleClass="window-columns" VBox.vgrow="ALWAYS">
+          <!-- Wide enough that cards keep whole words on a line; the column takes any extra width -->
+          <VBox fx:id="mainColumn" styleClass="window-column" spacing="8" minWidth="450" HBox.hgrow="ALWAYS">
+            <StackPane fx:id="commandBoxPlaceholder" VBox.vgrow="NEVER" />
+            <!-- Takes the height of the whole message, unless the window is too short for both the message and
+                 the customer list's minimum height; then the message scrolls -->
+            <StackPane fx:id="resultDisplayPlaceholder" VBox.vgrow="NEVER" />
+            <StackPane fx:id="searchCriteriaDisplayPlaceholder" VBox.vgrow="NEVER" />
+            <!-- Takes the rest of the height, but always keeps enough for the top of a customer card -->
+            <StackPane fx:id="personListPanelPlaceholder" minHeight="80" prefHeight="80" VBox.vgrow="ALWAYS" />
+          </VBox>
 
-        <!-- Takes the height of the whole message, and the customer list below gives up the space -->
-        <StackPane VBox.vgrow="NEVER" fx:id="resultDisplayPlaceholder">
-          <minHeight>
-            <Region fx:constant="USE_PREF_SIZE" />
-          </minHeight>
-          <padding>
-            <Insets top="4" right="10" bottom="8" left="10" />
-          </padding>
-        </StackPane>
-
-        <VBox fx:id="personList" styleClass="pane-with-border" minWidth="340" prefWidth="340" VBox.vgrow="ALWAYS">
-          <padding>
-            <Insets top="10" right="10" bottom="0" left="10" />
-          </padding>
-          <StackPane fx:id="searchCriteriaDisplayPlaceholder" VBox.vgrow="NEVER" />
-          <StackPane fx:id="deliverySummaryPlaceholder" VBox.vgrow="NEVER">
-            <padding>
-              <Insets bottom="10" />
-            </padding>
-          </StackPane>
-          <StackPane fx:id="personListPanelPlaceholder" minHeight="0" VBox.vgrow="ALWAYS"/>
-        </VBox>
+          <!-- Help and the preparation summaries, one at a time -->
+          <StackPane fx:id="sidePanelPlaceholder" minWidth="300" prefWidth="360" maxWidth="460" />
+        </HBox>
 
         <StackPane fx:id="statusbarPlaceholder" VBox.vgrow="NEVER" />
       </VBox>

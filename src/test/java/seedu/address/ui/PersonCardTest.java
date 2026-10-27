@@ -214,7 +214,7 @@ public class PersonCardTest {
             root.applyCss();
             Region index = (Region) root.getChildren().get(0);
             Region content = (Region) root.getChildren().get(1);
-            double indexWidth = Math.max(root.getColumnConstraints().get(0).getMinWidth(), index.prefWidth(-1));
+            double indexWidth = Math.max(index.minWidth(-1), index.prefWidth(-1));
             double contentWidth = CARD_WIDTH - root.getInsets().getLeft() - root.getInsets().getRight()
                     - root.getHgap() - indexWidth;
             return new double[] {root.prefHeight(CARD_WIDTH),

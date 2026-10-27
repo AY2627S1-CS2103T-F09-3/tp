@@ -9,7 +9,8 @@ import javafx.scene.text.Text;
 
 /**
  * A UI component that displays the result of a command execution.
- * The box wraps long lines and grows to show the whole message, so no part of it is hidden behind a scroll bar.
+ * The box wraps long lines and grows to show the whole message. Only in a window too short for both the message and
+ * the customer list's minimum height does the message scroll.
  */
 public class ResultDisplay extends UiPart<Region> {
 

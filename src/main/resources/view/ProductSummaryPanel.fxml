@@ -7,14 +7,14 @@
 
 <ScrollPane fx:id="productSummary" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
             fitToWidth="true" hbarPolicy="NEVER" focusTraversable="true"
-            minHeight="100" maxHeight="180" styleClass="product-summary"
+            styleClass="product-summary, side-panel-content"
             accessibleText="Product preparation summary. Use arrow keys or Page Up and Page Down to scroll.">
   <content>
-    <VBox spacing="6" fillWidth="true">
+    <VBox spacing="8" fillWidth="true">
       <padding>
-        <Insets top="10" right="12" bottom="10" left="12" />
+        <Insets top="12" right="14" bottom="14" left="14" />
       </padding>
-      <Label fx:id="productHeading" wrapText="true" maxWidth="Infinity" styleClass="product-summary-heading" />
+      <Label fx:id="productHeading" wrapText="true" maxWidth="Infinity" styleClass="side-panel-title" />
       <Label fx:id="counts" wrapText="true" maxWidth="Infinity" />
       <Label fx:id="quantity" wrapText="true" maxWidth="Infinity" />
       <Label fx:id="remarks" wrapText="true" maxWidth="Infinity" />

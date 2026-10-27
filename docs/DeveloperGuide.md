@@ -74,7 +74,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `SearchCriteriaDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `SearchCriteriaDisplay`, `PersonListPanel`, `SidePanel` and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -84,6 +84,14 @@ The `UI` component,
 * listens for changes to `Model` data so that the UI can be updated with the modified data.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Person` objects and structured search criteria.
+
+`MainWindow` lays out two columns. The left one holds the `CommandBox`, `ResultDisplay`, `SearchCriteriaDisplay` and
+`PersonListPanel`, and keeps at least 450 px so that cards still wrap whole words. The right one is the `SidePanel`,
+at least 300 px wide, which shows one long output at a time: the `HelpPanel` after `help`, the `ProductSummaryPanel`
+while it is visible during a product search, and the `DeliverySummaryPanel` otherwise. `MainWindow` shows help when a
+`CommandResult` asks for it, and returns the panel to the summaries after the next successful command. A window
+narrower than 900 px gets the `:compact` pseudo-class, which `DarkTheme.css` uses to tighten the gaps around the
+customer list.
 
 `MainWindow` owns one `SearchCriteriaDisplay`, places it above the customer list and supplies
 `Logic.activeSearchCriteriaProperty()`. The display renders the current value immediately and observes criteria
@@ -292,7 +300,7 @@ remark attribution. Customer count is distinct, item count counts entries, and q
 presented as a complete total. Constructors reject null inputs and invalid item references; collections
 are defensively copied.
 
-`MainWindow` places `ProductSummaryPanel` above `PersonListPanel`. The summary listens to both the filtered
+`MainWindow` puts `ProductSummaryPanel` in the `SidePanel`. The summary listens to both the filtered
 customer list and `Logic.activeSearchCriteriaProperty()`, so changing criteria refreshes it even when the
 same customers remain visible. Its criteria invalidation listener also refreshes the heading for capitalization-only
 changes, which are equal for filtering purposes. It is visible and managed only when a product criterion exists. Updates
@@ -314,10 +322,10 @@ preorders are excluded. Missing postal codes remain represented by one additiona
 without excluding an otherwise outstanding delivery. The immutable snapshot orders contacts by postal code and name,
 without mutating the address book or the active search criteria.
 
-`MainWindow` installs a `DeliverySummaryPanel` above `PersonListPanel`. The panel observes the existing
+`MainWindow` puts a `DeliverySummaryPanel` in the `SidePanel`. The panel observes the existing
 `Logic.getFilteredPersonList()` observable view and rebuilds its snapshot when results or customer records change.
 It reuses `GroupPostalCommand.getPostalGroupKey` for contact headings and `FulfilmentDate.toDisplayString` for dates.
-Names, phones, addresses, postal codes and shared handover notes are shown in a bounded, keyboard-scrollable area
+Names, phones, addresses, postal codes and shared handover notes are shown in a keyboard-scrollable area
 with wrapped text. Missing dates display `Not scheduled`; absent handover notes display `Handover notes: None`.
 The panel stays installed and visible when there are no outstanding deliveries, showing zero totals and
 `No outstanding deliveries in the current results.` The UI tests cover exclusion of ineligible preorders, one contact
@@ -851,17 +859,49 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+   1. Open a terminal in that folder and run `java -jar LeBake.jar`.<br>
+      Expected: The GUI opens with a set of sample customers. The window size may not be optimal.
 
 1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with `java -jar LeBake.jar`.<br>
        Expected: The most recent window size and location are retained.
 
-1. _{ more test cases … }_
+1. Using the smallest window
+
+   1. Make the window as small as it allows.<br>
+      Expected: The window stops at 800 px wide and 420 px tall, which fits a 1280x720 screen at 150%. The customer
+      list and the side panel are both still readable, and long names and addresses wrap between words. The gaps to
+      the left of the cards become smaller.
+
+   1. In the same window, run `find n/Alex d/Pineapple Tarts s/pending m/delivery`, then `edititem`.<br>
+      Expected: The customer list still shows the top of the first card, with its index and name. The usage message
+      scrolls in the result box instead of pushing the customer list out of the window.
+
+### Using the side panel
+
+Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`.
+
+1. Look at the side panel on the right.<br>
+   Expected: It shows **Delivery preparation** with `2 outstanding customer stop(s) | 2 postal group(s)`, and stops for
+   `Alex Yeoh` and `Charlotte Oliveiro`.
+1. Run `find d/Pineapple Tarts`.<br>
+   Expected: The side panel shows `Preparation: Pineapple Tarts | All statuses`, `2 customer(s) | 2 matching item(s)`
+   and `Total quantity: 5` instead of the delivery summary. The Pineapple Tarts rows of both customers are in a yellow box.
+1. Run `help`.<br>
+   Expected: `Showing help in the side panel.` The side panel shows **Help**, with the format of every command and the
+   User Guide URL.
+1. Click **Copy URL**, then paste into a text editor.<br>
+   Expected: The User Guide URL is pasted.
+1. Run `add` with nothing after it.<br>
+   Expected: An invalid command format error. Help stays in the side panel.
+1. Run `list`.<br>
+   Expected: The side panel shows the delivery summary again, and only `Showing: All customers` is above the customer
+   list.
+1. Press F1.<br>
+   Expected: Help shows in the side panel again.
 
 ### Displaying active search criteria
 

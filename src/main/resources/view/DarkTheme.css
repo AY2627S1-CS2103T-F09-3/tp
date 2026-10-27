@@ -162,6 +162,8 @@
     -fx-border-color: -lb-border;
     -fx-border-radius: 8;
     -fx-border-width: 1;
+    -fx-padding: 14 18 16 12;
+    -fx-hgap: 12;
 }
 
 .list-cell:filled:selected #cardPane {
@@ -172,10 +174,12 @@
     -fx-border-color: -lb-accent;
 }
 
+/* Its column is at least this wide, so the indexes line up from card to card */
 .card-index {
     -fx-font-family: "Segoe UI Semibold";
     -fx-font-size: 18px;
     -fx-text-fill: -lb-accent;
+    -fx-min-width: 28;
 }
 
 .card-name {
@@ -338,32 +342,86 @@
     -fx-padding: 4 9 4 9;
 }
 
-/* Product and delivery preparation summaries, styled like the cards */
-.product-summary, .product-summary > .viewport {
-    -fx-background-color: -lb-card;
+/* The two columns: the command box, results and customer list, and the side panel beside them */
+.window-columns {
+    -fx-padding: 4 10 10 10;
+    -fx-spacing: 10;
 }
 
-.product-summary {
-    -fx-background-radius: 8;
+.window-column {
+    -fx-background-color: -lb-ground;
+    -fx-background-radius: 10;
     -fx-border-color: -lb-border;
-    -fx-border-radius: 8;
+    -fx-border-radius: 10;
+    -fx-padding: 10 10 0 10;
+}
+
+/*
+ * A narrow window, such as one at its minimum width, tightens the gaps to the left of the customer list
+ * and inside the cards, so the cards' text keeps more of the width.
+ */
+.window-content:compact .window-columns {
+    -fx-padding: 4 8 8 6;
+    -fx-spacing: 8;
+}
+
+.window-content:compact .window-column {
+    -fx-padding: 8 6 0 6;
+}
+
+.window-content:compact #cardPane {
+    -fx-padding: 12 12 14 6;
+    -fx-hgap: 8;
+}
+
+.window-content:compact .card-index {
+    -fx-min-width: 18;
+}
+
+/* The side panel is styled like a card, so the views inside it need no frame of their own */
+.side-panel {
+    -fx-background-color: -lb-card;
+    -fx-background-radius: 10;
+    -fx-border-color: -lb-border;
+    -fx-border-radius: 10;
+}
+
+.side-panel-content, .side-panel-content > .viewport, .delivery-summary {
+    -fx-background-color: transparent;
+}
+
+/* Inset from the panel's rounded border, which shows the accent color while the view has focus */
+.side-panel-content {
+    -fx-background-insets: 1;
+    -fx-border-color: transparent;
+    -fx-border-radius: 10;
     -fx-border-width: 1;
 }
 
-.product-summary:focused {
+.side-panel-content:focused {
     -fx-border-color: -lb-accent;
 }
 
-.product-summary-heading {
+.side-panel-title {
     -fx-font-family: "Segoe UI Semibold";
-    -fx-font-size: 15px;
+    -fx-font-size: 16px;
 }
 
-.delivery-summary {
-    -fx-background-color: -lb-card;
-    -fx-background-radius: 8;
-    -fx-border-color: -lb-border;
-    -fx-border-radius: 8;
+.side-panel-heading {
+    -fx-font-weight: bold;
+    -fx-text-fill: -lb-accent;
+}
+
+.help-command {
+    -fx-font-size: 12.5px;
+    -fx-background-color: -lb-panel;
+    -fx-background-radius: 4;
+    -fx-padding: 3 8 3 8;
+}
+
+.help-url {
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -lb-muted;
 }
 
 .delivery-summary .scroll-pane, .delivery-summary .scroll-pane > .viewport {
@@ -378,11 +436,6 @@
 
 .delivery-summary .scroll-pane:focused {
     -fx-border-color: -lb-accent;
-}
-
-.delivery-summary .delivery-title {
-    -fx-font-family: "Segoe UI Semibold";
-    -fx-font-size: 15px;
 }
 
 .delivery-summary .delivery-group {
