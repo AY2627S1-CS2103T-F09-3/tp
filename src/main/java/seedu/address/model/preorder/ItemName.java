@@ -17,9 +17,11 @@ public class ItemName {
 
     /*
      * The first and last characters must not be whitespace, so blank names and names with
-     * untrimmed spaces are rejected. Line breaks are not allowed anywhere.
+     * untrimmed spaces are rejected. Unicode spaces, such as an em space, count as whitespace, and
+     * at least one character must be visible, so a name of zero-width spaces is blank too.
+     * Line breaks are not allowed anywhere.
      */
-    public static final String VALIDATION_REGEX = "[^\\s]([^\\r\\n]*[^\\s])?";
+    public static final String VALIDATION_REGEX = "(?U)(?=.*[^\\p{Z}\\p{C}])[^\\s]([^\\v]*[^\\s])?";
 
     public final String value;
 

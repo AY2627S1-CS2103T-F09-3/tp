@@ -27,10 +27,13 @@ public class RemarkTest {
         // blank remark
         assertFalse(Remark.isValidRemark("")); // empty string
         assertFalse(Remark.isValidRemark("   ")); // spaces only
+        assertFalse(Remark.isValidRemark("\u2003")); // em space only
+        assertFalse(Remark.isValidRemark("\u200B")); // zero-width space only, which shows nothing
 
         // untrimmed remark
         assertFalse(Remark.isValidRemark(" Less sugar")); // leading space
         assertFalse(Remark.isValidRemark("Less sugar ")); // trailing space
+        assertFalse(Remark.isValidRemark("Less sugar\u00A0")); // trailing no-break space
 
         // more than one line
         assertFalse(Remark.isValidRemark("Less sugar\nNo nuts"));

@@ -241,13 +241,13 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String remark} into a {@code Remark}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespaces, including Unicode spaces, will be trimmed.
      *
      * @throws ParseException if the given {@code remark} is invalid.
      */
     public static Remark parseRemark(String remark) throws ParseException {
         requireNonNull(remark);
-        String trimmedRemark = remark.trim();
+        String trimmedRemark = remark.strip();
         if (!Remark.isValidRemark(trimmedRemark)) {
             throw new ParseException(Remark.MESSAGE_CONSTRAINTS);
         }
@@ -272,13 +272,13 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String handoverNotes} into a {@code HandoverNotes}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespaces, including Unicode spaces, will be trimmed.
      *
      * @throws ParseException if the given {@code handoverNotes} is invalid.
      */
     public static HandoverNotes parseHandoverNotes(String handoverNotes) throws ParseException {
         requireNonNull(handoverNotes);
-        String trimmedHandoverNotes = handoverNotes.trim();
+        String trimmedHandoverNotes = handoverNotes.strip();
         if (!HandoverNotes.isValidHandoverNotes(trimmedHandoverNotes)) {
             throw new ParseException(HandoverNotes.MESSAGE_CONSTRAINTS);
         }

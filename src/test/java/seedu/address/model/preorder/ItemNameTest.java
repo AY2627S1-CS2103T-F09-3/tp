@@ -27,18 +27,23 @@ public class ItemNameTest {
         // blank name
         assertFalse(ItemName.isValidItemName("")); // empty string
         assertFalse(ItemName.isValidItemName("   ")); // spaces only
-
-        // untrimmed name
-        assertFalse(ItemName.isValidItemName(" Pineapple Tarts")); // leading space
-        assertFalse(ItemName.isValidItemName("Pineapple Tarts ")); // trailing space
+        assertFalse(ItemName.isValidItemName("\u2003")); // em space only
+        assertFalse(ItemName.isValidItemName("\u00A0\u3000")); // no-break and ideographic spaces only
+        assertFalse(ItemName.isValidItemName("\u200B")); // zero-width space only, which shows nothing
 
         // more than one line
         assertFalse(ItemName.isValidItemName("Pineapple Tarts\nAlmond Cookies"));
         assertFalse(ItemName.isValidItemName("Pineapple Tarts\r\nAlmond Cookies"));
+        assertFalse(ItemName.isValidItemName("Pineapple Tarts\u2028Almond Cookies")); // Unicode line separator
 
         // length boundary
         assertTrue(ItemName.isValidItemName("a".repeat(ItemName.MAX_LENGTH)));
         assertFalse(ItemName.isValidItemName("a".repeat(ItemName.MAX_LENGTH + 1)));
+
+        // untrimmed name
+        assertFalse(ItemName.isValidItemName(" Pineapple Tarts")); // leading space
+        assertFalse(ItemName.isValidItemName("Pineapple Tarts ")); // trailing space
+        assertFalse(ItemName.isValidItemName("Pineapple Tarts\u2003")); // trailing em space
 
         // valid name
         assertTrue(ItemName.isValidItemName("x")); // one character

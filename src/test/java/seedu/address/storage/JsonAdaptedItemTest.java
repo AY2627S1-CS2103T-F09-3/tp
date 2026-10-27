@@ -44,6 +44,8 @@ public class JsonAdaptedItemTest {
     public void toModelType_invalidName_throwsIllegalValueException() {
         JsonAdaptedItem item = new JsonAdaptedItem(" ", VALID_QUANTITY, VALID_STATUS, VALID_REMARK);
         assertThrows(IllegalValueException.class, ItemName.MESSAGE_CONSTRAINTS, item::toModelType);
+        JsonAdaptedItem unicodeSpaceItem = new JsonAdaptedItem("\u2003", VALID_QUANTITY, VALID_STATUS, VALID_REMARK);
+        assertThrows(IllegalValueException.class, ItemName.MESSAGE_CONSTRAINTS, unicodeSpaceItem::toModelType);
     }
 
     @Test

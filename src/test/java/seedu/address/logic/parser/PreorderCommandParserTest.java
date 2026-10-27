@@ -67,6 +67,7 @@ public class PreorderCommandParserTest {
         assertParseFailure(parser, "1 m/pickup", FulfilmentMethod.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "1 h/" + "a".repeat(HandoverNotes.MAX_LENGTH + 1),
                 HandoverNotes.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 h/\u2003", HandoverNotes.MESSAGE_CONSTRAINTS);
     }
 
     @Test
