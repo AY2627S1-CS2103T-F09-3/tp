@@ -85,6 +85,11 @@ public class AddItemCommandParserTest {
     }
 
     @Test
+    public void parse_repeatedSpacesInName_savedWithOneSpace() {
+        assertValid("1 d/Butter   Cake q/2 s/pending", new ItemBuilder().withName("Butter Cake").build());
+    }
+
+    @Test
     public void parse_invalidQuantity_failure() {
         for (String quantity : new String[]{"", "   ", "0", "-1", "01", "+1", "1.5", "1000", "abc",
             "999999999999"}) {

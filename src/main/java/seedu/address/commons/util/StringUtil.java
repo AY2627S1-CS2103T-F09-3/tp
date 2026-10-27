@@ -53,6 +53,17 @@ public class StringUtil {
     }
 
     /**
+     * Returns {@code s} with surrounding whitespace removed and each run of spaces replaced by one space.
+     * Tabs and Unicode spaces, such as an em space, count as spaces. Line breaks inside {@code s} are kept.
+     *
+     * @param s cannot be null
+     */
+    public static String normalizeSpaces(String s) {
+        requireNonNull(s);
+        return s.replaceAll("\\h+", " ").strip();
+    }
+
+    /**
      * Returns a detailed message of {@code t}, including the stack trace.
      */
     public static String getDetails(Throwable t) {

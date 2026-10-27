@@ -211,17 +211,16 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String name} into an {@code ItemName}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespace is removed, and repeated spaces are replaced with one.
      *
      * @throws ParseException if the given {@code name} is invalid.
      */
     public static ItemName parseItemName(String name) throws ParseException {
         requireNonNull(name);
-        String trimmedName = name.trim();
-        if (!ItemName.isValidItemName(trimmedName)) {
+        if (!ItemName.isValidItemName(name)) {
             throw new ParseException(ItemName.MESSAGE_CONSTRAINTS);
         }
-        return new ItemName(trimmedName);
+        return new ItemName(name);
     }
 
     /**

@@ -1,5 +1,6 @@
 package seedu.address.commons.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -143,6 +144,22 @@ public class StringUtilTest {
         assertTrue(StringUtil.containsSubstringIgnoreCase("Anita Tan", "AN"));
         assertTrue(StringUtil.containsSubstringIgnoreCase("Alice (friend)", "(FRIEND)"));
         assertFalse(StringUtil.containsSubstringIgnoreCase("Alice Bob", "car"));
+    }
+
+    //---------------- Tests for normalizeSpaces --------------------------------------
+
+    @Test
+    public void normalizeSpaces_nullGiven_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> StringUtil.normalizeSpaces(null));
+    }
+
+    @Test
+    public void normalizeSpaces_validInputs_correctResult() {
+        assertEquals("Butter Cake", StringUtil.normalizeSpaces("Butter Cake")); // already normalized
+        assertEquals("Butter Cake", StringUtil.normalizeSpaces("  Butter   Cake \r\n")); // repeated and surrounding
+        assertEquals("Butter Cake", StringUtil.normalizeSpaces("Butter\t\u2003\u00A0Cake")); // tab and Unicode spaces
+        assertEquals("", StringUtil.normalizeSpaces("\u2003\u3000")); // Unicode spaces only
+        assertEquals("Butter\nCake", StringUtil.normalizeSpaces("Butter\nCake")); // line breaks are kept
     }
 
     //---------------- Tests for getDetails --------------------------------------

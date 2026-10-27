@@ -335,7 +335,7 @@ Supply at least one prefixed criterion. Each prefix may appear at most once, in 
 * When adding a customer or editing their postal code, supply all six digits. Shorter prefixes are accepted only for searching; leading zeros are preserved in both cases.
 * Tags must be single alphanumeric words. `t/reg` does not match a tag named `regular`.
 * Fulfilment conditions check the preorder's shared information. They can find empty preorders; customers without a preorder or without the requested field do not match. Handover notes are separate from an individual item's request notes.
-* Product names match completely: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Surrounding whitespace is ignored; internal spacing and punctuation remain significant.
+* Product names match completely: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Surrounding whitespace is ignored, and repeated spaces count as one, as they do in item names. Punctuation remains significant.
 * Omitting `s/` includes **all statuses**, including `COMPLETED`. A blank `s/` is invalid. A status-only search such as `find s/prepared` accepts any product with that status.
 * Product and status must match the **same item**. A customer with pending Pineapple Tarts and prepared Almond Cookies does not match `find d/Pineapple Tarts s/prepared`.
 * Customers without a preorder or with an empty preorder cannot match item criteria. Customer-only searches can still find them.
@@ -418,7 +418,7 @@ Adds one item to a customer's preorder. If the customer has no preorder, one is 
 Format: `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`
 
 * `INDEX` is a positive integer identifying a customer in the **currently displayed list**.
-* Name, quantity and status are required. A name must be non-blank, on one line and at most 200 characters long.
+* Name, quantity and status are required. A name must be non-blank, on one line and at most 200 characters long. Repeated spaces in a name become one, so `d/Butter   Cake` is saved as `Butter Cake`.
 * Quantity must be a whole number from 1 to 999, without leading zeros.
 * Status must be `PENDING`, `PREPARED` or `COMPLETED`, ignoring capitalisation.
 * Remarks are optional. If supplied, a remark must be non-blank, on one line and at most 100 characters long.
@@ -645,7 +645,7 @@ LeBake automatically saves data after every successful command. You do not need 
 
 LeBake data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
 
-Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
+Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. Item names are normalized in the same way, so items saved by earlier versions with repeated spaces count as the same product. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
 
 <box type="warning" seamless>
 

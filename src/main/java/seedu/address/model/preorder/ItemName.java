@@ -3,9 +3,12 @@ package seedu.address.model.preorder;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import seedu.address.commons.util.StringUtil;
+
 /**
  * Represents the name of an item in a customer's preorder, such as "Pineapple Tarts".
- * Guarantees: immutable; is valid as declared in {@link #isValidItemName(String)}
+ * Guarantees: immutable; is valid as declared in {@link #isValidItemName(String)};
+ * has no leading, trailing or repeated spaces, so a typing slip cannot split one product in two.
  */
 public class ItemName {
 
@@ -26,21 +29,23 @@ public class ItemName {
     public final String value;
 
     /**
-     * Constructs an {@code ItemName}.
+     * Constructs an {@code ItemName}, removing surrounding spaces and replacing repeated spaces with one.
      *
      * @param name A valid item name.
      */
     public ItemName(String name) {
         requireNonNull(name);
         checkArgument(isValidItemName(name), MESSAGE_CONSTRAINTS);
-        value = name;
+        value = StringUtil.normalizeSpaces(name);
     }
 
     /**
-     * Returns true if a given string is a valid item name.
+     * Returns true if a given string is a valid item name once surrounding spaces are removed
+     * and repeated spaces are replaced with one.
      */
     public static boolean isValidItemName(String test) {
-        return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX);
+        String normalizedName = StringUtil.normalizeSpaces(test);
+        return normalizedName.length() <= MAX_LENGTH && normalizedName.matches(VALIDATION_REGEX);
     }
 
     @Override

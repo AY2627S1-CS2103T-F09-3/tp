@@ -275,6 +275,12 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseItemName_repeatedSpaces_returnsItemNameWithOneSpace() throws Exception {
+        assertEquals("Butter Cake", ParserUtil.parseItemName("Butter   Cake").value);
+        assertEquals("Butter Cake", ParserUtil.parseItemName("\u2003Butter\u2003Cake\u00A0").value);
+    }
+
+    @Test
     public void parseItemName_maxLengthAfterTrimming_returnsItemName() throws Exception {
         String longestName = "a".repeat(ItemName.MAX_LENGTH);
         assertEquals(new ItemName(longestName), ParserUtil.parseItemName(" " + longestName + " "));

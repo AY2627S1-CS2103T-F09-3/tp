@@ -49,6 +49,13 @@ public class JsonAdaptedItemTest {
     }
 
     @Test
+    public void toModelType_nameWithRepeatedSpaces_loadedWithOneSpace() throws Exception {
+        // Names saved before spaces were collapsed load as the same product as newer ones
+        JsonAdaptedItem item = new JsonAdaptedItem("Pineapple   Tarts", VALID_QUANTITY, VALID_STATUS, null);
+        assertEquals("Pineapple Tarts", item.toModelType().getName().value);
+    }
+
+    @Test
     public void toModelType_itemWithoutQuantity_returnsItem() throws Exception {
         Item item = new ItemBuilder().withoutQuantity().build();
         assertEquals(item, new JsonAdaptedItem(item).toModelType());
