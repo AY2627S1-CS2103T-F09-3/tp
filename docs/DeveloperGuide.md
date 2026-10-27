@@ -871,9 +871,14 @@ testers are expected to do more *exploratory* testing.
 
 1. Using the smallest window
 
-   1. Make the window as narrow as it allows.<br>
-      Expected: The window stops at 800 px wide. The customer list and the side panel are both still readable,
-      and long names and addresses wrap between words. The gaps to the left of the cards become smaller.
+   1. Make the window as small as it allows.<br>
+      Expected: The window stops at 800 px wide and 420 px tall, which fits a 1280x720 screen at 150%. The customer
+      list and the side panel are both still readable, and long names and addresses wrap between words. The gaps to
+      the left of the cards become smaller.
+
+   1. In the same window, run `find n/Alex d/Pineapple Tarts s/pending m/delivery`, then `edititem`.<br>
+      Expected: The customer list still shows the top of the first card, with its index and name. The usage message
+      scrolls in the result box instead of pushing the customer list out of the window.
 
 ### Using the side panel
 
