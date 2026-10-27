@@ -32,7 +32,7 @@ information.
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
    ![Ui](images/Ui.png)
 
-1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
+1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to show help in the side panel.<br>
    Some example commands you can try:
 
    * `list` : Lists all contacts.
@@ -119,10 +119,9 @@ Use `list` to clear the badges and return to **Showing: All customers**.
 
 ### Viewing help: `help`
 
-Shows a window containing the [LeBake User Guide URL](https://ay2627s1-cs2103t-f09-3.github.io/tp/UserGuide.html).
-Click **Copy URL** to copy the link to your clipboard.
+Shows the format of every command and the [LeBake User Guide URL](https://ay2627s1-cs2103t-f09-3.github.io/tp/UserGuide.html) in the side panel, on the right of the window. Click **Copy URL** to copy the link to your clipboard. Help stays in the side panel until you run your next command. Pressing F1 or choosing **Help** from the menu also shows it.
 
-![LeBake Help window showing the User Guide URL and Copy URL button](images/helpMessage.png)
+![LeBake side panel showing the command formats and the User Guide URL](images/helpPanel.png)
 
 Format: `help`
 
@@ -248,7 +247,7 @@ Groups the currently displayed customers by postal code without changing the sav
 
 Format: `group postal`
 
-* Customers are shown in ascending six-digit postal-code order, under headings based on their first two digits. Customers with the same postal code are ordered by name, ignoring capitalization. The capitalization displayed in each name is preserved.
+* Customers are shown in ascending six-digit postal-code order, under headings based on their first two digits. Customers with the same postal code are ordered by name, ignoring capitalization.
 * Customers from old data files without postal codes remain usable and display `Postal code needed`. They appear in a final `MISSING POSTAL CODE` group.
 * Grouping keeps the current filter, including results from `find` or `track`. It does not change customer details, preorders, or the order saved in the data file.
 * Displayed index numbers follow the grouped list. Use those numbers for commands such as `edit`, `tag`, and `deleteorder`.
@@ -294,7 +293,7 @@ Common errors:
 
 ### Preparing deliveries
 
-The **Delivery preparation** panel above the customer list summarises outstanding deliveries in the current results. It refreshes after searches, customer changes, and preorder changes. No extra command is needed. When there are no outstanding deliveries, the panel remains visible with zero totals and `No outstanding deliveries in the current results.`
+The **Delivery preparation** summary in the side panel, on the right of the window, summarises outstanding deliveries in the current results. It refreshes after searches, customer changes, and preorder changes. No extra command is needed. When there are no outstanding deliveries, the summary remains visible with zero totals and `No outstanding deliveries in the current results.` During a product search, the side panel shows the product's preparation summary instead, and after `help` it shows help until your next command.
 
 * A customer counts as one outstanding stop when their preorder uses `DELIVERY` and has at least one `PENDING` or `PREPARED` item. Multiple items still count as one stop.
 * Collection, empty preorders, completed-only preorders, and preorders without a method do not contribute to the totals.
@@ -386,7 +385,7 @@ Rejected searches leave the current criteria and results unchanged. If no custom
 
 ### Reading the preparation summary and matching items
 
-A search containing `d/PRODUCT` shows a preparation summary above the customer list. The heading preserves
+A search containing `d/PRODUCT` shows a preparation summary in the side panel, in place of the delivery summary. The heading preserves
 the capitalization you typed, with surrounding whitespace removed. Product matching remains case-insensitive. It shows:
 
 * The selected product and statuses. Without `s/`, **all statuses**, including completed items, contribute.
@@ -400,7 +399,7 @@ An additional entry without a quantity raises the item count to three, leaves th
 and is reported as one item needing a quantity. Only customers in the current results contribute;
 customer fields such as `n/` and `t/` therefore also restrict the summary.
 
-Matching items on customer cards have a highlight border while retaining their
+Matching items on customer cards are shown in a yellow box while retaining their
 status colours. This applies to product/status searches and `track`. All other items remain visible,
 and item numbers remain unchanged. Customer-only searches and `list` remove the highlighting.
 
@@ -460,9 +459,9 @@ Examples:
 
 For Alice's second item, Cake, the success message could be:
 `Edited item 2 for Alice: Cake (quantity: 3, PREPARED)`.
-If its quantity is still missing, the message uses the same wording as the card:
+If its quantity is still missing, the message says so:
 `Edited item 2 for Alice: Cake (quantity needed, PREPARED)`.
-The card continues to display `quantity needed` for that item.
+The card continues to display `Qty needed` for that item.
 
 | Situation | Message |
 |-----------|---------|
@@ -492,15 +491,19 @@ Format: `track [s/STATUS]`
 
 Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count, and an item with a missing quantity still counts as one item. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
 
-A customer's preorder appears in a dark panel at the bottom of their card. Its first line shows when and how the preorder will be handed over, for example `20 Dec 2026 | Delivery`. A date that is not recorded yet shows as `Not scheduled`, and a method as `Method not set`. Any handover notes appear on the next line, for example `Handover notes: Call on arrival`. Below them, each item has its own row with its number and name, its quantity and its status, for example `1. Pineapple Tarts`, `Qty 2` and `PENDING`. A special request appears under the item, for example `Remark: Less sugar`, and a preorder with no items shows `No items yet`. The status badge's colour shows the status:
+Each customer card shows the customer's number on the left, then their name and tags, their phone number and email on one line, and their address with its postal code, for example `Postal 389030`. A customer without a postal code shows `Postal code needed` with a warning icon, and a customer without a preorder shows `No preorder`.
+
+![A customer card with a delivery preorder of two items](images/customerCard.png)
+
+A customer's preorder appears in a panel at the bottom of their card. Its first line shows when and how the preorder will be handed over, for example `20 Dec 2026 | Delivery`. A date that is not recorded yet shows as `Not scheduled`, and a method as `Method not set`. Any handover notes appear on the next line, for example `Handover notes: Call on arrival`. Below them, each item has its own row with its number, name, quantity and status, for example `1`, `Pineapple Tarts`, `Qty 2` and `PENDING`. A special request appears under the item, for example `Remark: Less sugar`, and a preorder with no items shows `No items yet`. The status badge's colour shows the status:
 
 Status | Meaning | Badge colour
 -------|---------|-------------
 `PENDING` | Recorded but not ready | Amber
 `PREPARED` | Ready for collection or delivery | Blue
-`COMPLETED` | Collected or delivered | Green
+`COMPLETED` | Collected or delivered | Green outline with a tick
 
-If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `quantity needed` instead of a quantity.
+If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Qty needed` with a warning icon instead of a quantity.
 
 ### Deleting a preorder item: `deleteitem`
 
@@ -662,12 +665,17 @@ _Details coming soon ..._
 **Q**: How do I transfer my data to another computer?<br>
 **A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous LeBake home folder.
 
+**Q**: Nothing happens when I double-click `LeBake.jar`. How do I start LeBake?<br>
+**A**: On some computers, double-clicking a JAR file does not run it with Java. Start LeBake from a terminal instead, as described in [Quick start](#quick-start).
+
+**Q**: LeBake shows an error, or my changes are not saved, when I run it from some folders. Why?<br>
+**A**: LeBake saves its data in a `data` folder next to the JAR file, so it needs permission to write there. Move the JAR file to a folder you can write to, such as one in your home folder, and start it from there.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -692,3 +700,4 @@ Action     | Format, Examples
 **Untag**  | `untag INDEX t/TAG`<br> e.g., `untag 1 t/friends`
 **Sort by date** | `sort date`
 **Help**   | `help`
+**Exit**   | `exit`

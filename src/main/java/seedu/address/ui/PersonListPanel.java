@@ -93,7 +93,7 @@ public class PersonListPanel extends UiPart<Region> {
                 if (isGrouped && isFirstInGroup) {
                     Label groupHeading = new Label(currentGroup.equals("\uffff")
                             ? "MISSING POSTAL CODE" : "POSTAL PREFIX " + currentGroup);
-                    groupHeading.getStyleClass().add("cell_big_label");
+                    groupHeading.getStyleClass().add("postal-group-heading");
                     cellContent.getChildren().add(groupHeading);
                 }
                 cellContent.getChildren().add(new PersonCard(person, getIndex() + 1, activeCriteria.get()).getRoot());

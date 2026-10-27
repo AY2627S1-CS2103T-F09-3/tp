@@ -5,19 +5,20 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" spacing="5"
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" spacing="8"
       styleClass="delivery-summary">
   <padding>
-    <Insets top="5" right="5" bottom="10" left="5" />
+    <Insets top="12" right="14" bottom="14" left="14" />
   </padding>
-  <Label text="Delivery preparation" styleClass="delivery-title" />
+  <Label text="Delivery preparation" styleClass="side-panel-title" />
   <Label fx:id="totals" wrapText="true" />
-  <ScrollPane fitToWidth="true" hbarPolicy="NEVER" minHeight="110" prefViewportHeight="110" maxHeight="160"
+  <!-- Takes the rest of the side panel's height, and scrolls when there are more stops than fit -->
+  <ScrollPane fitToWidth="true" hbarPolicy="NEVER" minHeight="80" VBox.vgrow="ALWAYS"
               focusTraversable="true" accessibleText="Outstanding delivery contacts, grouped by postal prefix">
     <content>
       <VBox fx:id="stops" spacing="8">
         <padding>
-          <Insets top="5" right="10" bottom="5" left="5" />
+          <Insets top="8" right="10" bottom="8" left="10" />
         </padding>
       </VBox>
     </content>

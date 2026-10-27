@@ -173,11 +173,11 @@ public class ProductSummaryPanelTest {
 
             model.setPerson(ALICE, new PersonBuilder(ALICE).withPreorder(TARTS, TARTS, TARTS, TARTS, TARTS).build());
             root.layout();
-            assertTrue(scroll.getHeight() > shortHeight);
-            assertTrue(scroll.getHeight() <= 180);
+            double grownHeight = scroll.getHeight();
+            assertTrue(grownHeight > shortHeight);
             execute(model, "find d/Cookies");
             root.layout();
-            assertTrue(scroll.getHeight() < 180);
+            assertTrue(scroll.getHeight() < grownHeight);
         });
     }
 
@@ -193,10 +193,11 @@ public class ProductSummaryPanelTest {
             execute(model, "find d/" + product);
             ProductSummaryPanel panel = createPanel(model);
             ScrollPane scroll = (ScrollPane) panel.getRoot();
+            // As in a side panel too short for the whole summary
             VBox root = new VBox(scroll);
-            new Scene(root, 450, 400);
+            new Scene(root, 300, 180);
             root.applyCss();
-            root.resize(450, 400);
+            root.resize(300, 180);
             root.layout();
             assertTrue(((Label) root.lookup("#remarks")).isWrapText());
             assertTrue(scroll.isFocusTraversable());
