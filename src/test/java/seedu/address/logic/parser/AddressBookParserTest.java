@@ -163,10 +163,14 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_invalidTrackStatus_throwsParseException() {
-        String[] invalidCommands = {"track s/", "track s/DONE", "track s/PENDING t/vip"};
+        String[] invalidCommands = {"track s/", "track s/DONE"};
         for (String command : invalidCommands) {
             assertThrows(ParseException.class, ItemStatus.MESSAGE_CONSTRAINTS, () -> parser.parseCommand(command));
         }
+        assertThrows(ParseException.class, "Unsupported prefix 't/' for track.", ()
+            -> parser.parseCommand("track s/PENDING t/vip"));
+        assertThrows(ParseException.class, "Unsupported prefix 'd/' for track.", ()
+            -> parser.parseCommand("track s/pending d/Cake"));
     }
 
     @Test
