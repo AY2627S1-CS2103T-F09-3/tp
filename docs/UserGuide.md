@@ -29,6 +29,7 @@ information.
 1. Copy the file to the folder you want to use as the _home folder_ for LeBake.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar LeBake.jar`.<br>
+   LeBake saves its data in the folder the terminal is in, so always start it from the home folder.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
    ![Ui](images/Ui.png)
 
@@ -643,7 +644,7 @@ LeBake automatically saves data after every successful command. You do not need 
 
 ### Editing the data file
 
-LeBake data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+LeBake data is saved automatically as a JSON file `data/addressbook.json`, inside the folder that the terminal is in when you start LeBake. If you start it as described in [Quick start](#quick-start), that is the home folder with the JAR file. Starting LeBake from another folder, for example with `java -jar C:\LeBake\LeBake.jar` from your desktop, makes a new `data` folder there with the sample data, and your saved data in the home folder is not loaded. Advanced users are welcome to update data directly by editing that data file.
 
 Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. Item names are normalized in the same way, so items saved by earlier versions with repeated spaces count as the same product. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
 
@@ -669,7 +670,7 @@ _Details coming soon ..._
 **A**: On some computers, double-clicking a JAR file does not run it with Java. Start LeBake from a terminal instead, as described in [Quick start](#quick-start).
 
 **Q**: LeBake shows an error, or my changes are not saved, when I run it from some folders. Why?<br>
-**A**: LeBake saves its data in a `data` folder next to the JAR file, so it needs permission to write there. Move the JAR file to a folder you can write to, such as one in your home folder, and start it from there.
+**A**: LeBake saves its data in a `data` folder inside the folder you start it from, so it needs permission to write there. Move the JAR file to a folder you can write to, such as one in your home folder, `cd` to that folder, and start it from there.
 
 --------------------------------------------------------------------------------------------------------------------
 
