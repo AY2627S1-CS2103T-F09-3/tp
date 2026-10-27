@@ -17,12 +17,6 @@
   [SE-EDU initiative](https://se-education.org). Its code, this guide and the User Guide started from AB3's.
 * Libraries: [JavaFX](https://openjfx.io/) for the GUI, [Jackson](https://github.com/FasterXML/jackson) for the JSON
   data file, and [JUnit 5](https://github.com/junit-team/junit5) for the tests.
-* Fonts, bundled in `src/main/resources/fonts` with their licences under the
-  [SIL Open Font License 1.1](https://openfontlicense.org):
-  * [Atkinson Hyperlegible](https://www.brailleinstitute.org/freefont/) by the Braille Institute of America, for
-    most of the text.
-  * [Bricolage Grotesque](https://github.com/ateliertriay/bricolage) by the Bricolage Grotesque Project Authors,
-    for customer names, numbers and headings.
 
 --------------------------------------------------------------------------------------------------------------------
 
