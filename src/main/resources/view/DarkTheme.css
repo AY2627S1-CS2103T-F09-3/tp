@@ -212,10 +212,6 @@
     -fx-graphic-text-gap: 4;
 }
 
-.card-postal-code-missing {
-    -fx-text-fill: -lb-warn;
-}
-
 .card-no-preorder {
     -fx-text-fill: -lb-muted;
 }

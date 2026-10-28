@@ -85,8 +85,8 @@ public class PersonListPanelTest {
         runOnFxThread(() -> {
             ModelManager model = createModel();
             model.addPerson(new PersonBuilder().withName("Same Prefix").withPostalCode("019999").build());
-            model.addPerson(new PersonBuilder().withName("Missing Amy").build());
-            model.addPerson(new PersonBuilder().withName("Missing Zoe").build());
+            model.addPerson(new PersonBuilder().withName("Last Amy").withPostalCode("999999").build());
+            model.addPerson(new PersonBuilder().withName("Last Zoe").withPostalCode("999999").build());
             PersonListPanel panel = new PersonListPanel(model.getFilteredPersonList());
             new GroupPostalCommand().execute(model);
 
@@ -95,7 +95,7 @@ public class PersonListPanelTest {
             assertEquals(List.of(), headingsForCell(panel, model.getFilteredPersonList().get(1), 1));
             assertEquals(List.of("POSTAL PREFIX 65"), headingsForCell(panel,
                     model.getFilteredPersonList().get(2), 2));
-            assertEquals(List.of("MISSING POSTAL CODE"), headingsForCell(panel,
+            assertEquals(List.of("POSTAL PREFIX 99"), headingsForCell(panel,
                     model.getFilteredPersonList().get(3), 3));
             assertEquals(List.of(), headingsForCell(panel, model.getFilteredPersonList().get(4), 4));
         });

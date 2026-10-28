@@ -4,6 +4,7 @@
     "phone": "94351253",
     "email": "john@example.com",
     "address": "123, Jurong West Ave 6, #08-111",
+    "postalCode": "012345",
     "tags": [ "friends" ]
   } ]
 }
