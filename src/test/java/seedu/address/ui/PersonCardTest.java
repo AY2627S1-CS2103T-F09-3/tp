@@ -74,13 +74,13 @@ public class PersonCardTest {
     }
 
     @Test
-    public void constructor_zeroPostalCode_showsAllDigitsWithoutWarning() throws Exception {
+    public void constructor_zeroPostalCode_showsAllDigits() throws Exception {
         PersonCard card = createCard(new PersonBuilder(ALICE).withPostalCode("000000").build());
         Label postalCode = (Label) lookup(card, "#postalCode");
 
         assertEquals("Postal 000000", postalCode.getText());
         assertTrue(postalCode.isVisible());
-        assertFalse(postalCode.getStyleClass().contains(PersonCard.MISSING_POSTAL_CODE_STYLE_CLASS));
+        assertTrue(postalCode.isManaged());
         assertEquals(null, postalCode.getGraphic());
     }
 
