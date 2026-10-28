@@ -1130,6 +1130,8 @@ Run each group below independently, starting with the sample data unless stated 
 ### Unsupported prefix diagnostics
 
 Use a disposable copy of the sample data and run `list`.
+For every rejected command below, confirm that customer data, saved data, active search criteria and displayed results
+remain unchanged.
 
 1. Try `deleteitem 1 i/1 x/2`.<br>
    Expected: `Unsupported prefix 'x/' for deleteitem.` No data changes.
@@ -1137,12 +1139,48 @@ Use a disposable copy of the sample data and run `list`.
    Expected: `Unsupported prefix 'c/' for edititem.` No data changes.
 1. Try `track s/pending d/Cake`.<br>
    Expected: `Unsupported prefix 'd/' for track.` The current criteria and displayed list remain unchanged.
+1. Run `find n/Alex`, then try each command below. Each error must identify `x/` for the specified command, while
+   Alex remains the only displayed customer.
+
+   | Input | Expected feedback |
+   |-------|-------------------|
+   | `add n/Prefix Test p/91234567 x/foo e/prefix@example.com a/Block 123 c/123456` | `Unsupported prefix 'x/' for add.` |
+   | `additem 1 d/Cake q/2 x/foo s/pending` | `Unsupported prefix 'x/' for additem.` |
+   | `additem 1 d/Cake q/2 s/pending x/foo` | `Unsupported prefix 'x/' for additem.` |
+   | `preorder 1 f/2026-12-20 x/foo` | `Unsupported prefix 'x/' for preorder.` |
+   | `preorder 1 m/delivery x/foo` | `Unsupported prefix 'x/' for preorder.` |
+   | `tag 1 t/VIP x/foo` | `Unsupported prefix 'x/' for tag.` |
+
+   Repeat the `add` test with `x/foo` after the name, email and postal code instead of the phone. All four constrained
+   fields must identify `x/`.
+1. Try each of `find n/Ali x/foo`, `find p/9123 x/foo`, `find e/example.com x/foo`, `find c/123 x/foo`,
+   `find t/VIP x/foo`, `find f/2026-12-20 x/foo`, `find m/delivery x/foo` and `find s/pending x/foo`.<br>
+   Expected: `Unsupported prefix 'x/' for find.` The active Alex search remains unchanged.
+1. Try `find h/Leave w/o ringing x/earlier s/pending y/later`.<br>
+   Expected: `Unsupported prefix 'y/' for find.` The literal notes must not mask the invalid status argument.
+1. Try `find n/Ali2`, `find p/91-23`, `find e/example!.com` and `find c/1234567`.<br>
+   Expected: The corresponding query constraint message, with no unsupported-prefix error.
 1. Run `edititem 1 i/1 r/Pack w/o nuts x/2`.<br>
    Expected: The edit succeeds and the remark is exactly `Pack w/o nuts x/2`.
 1. Run `preorder 1 h/Leave w/o ringing x/2`.<br>
    Expected: The handover notes are exactly `Leave w/o ringing x/2`.
 1. Run `edititem 1 i/1 r/Less sugar s/prepared`.<br>
    Expected: The remark is `Less sugar` and the status is `PREPARED`; the supported `s/` starts a separate field.
+1. Run `add n/Prefix Test p/91234567 e/prefix@example.com a/Block 123 c/o Prefix Test x/foo c/123456`, followed by
+   `find n/Pre p/9123 e/example.com a/Block 123 c/o Prefix Test x/foo`.<br>
+   Expected: Only `Prefix Test` is displayed. The address keeps both `c/o` and `x/foo`; contact fragments remain valid.
+1. Run `additem 1 d/Cake w/ candles q/2 s/pending r/Pack w/o nuts x/2`, then
+   `preorder 1 h/Leave w/o ringing x/2 f/2026-12-20 m/delivery`, then `tag 1 t/VIP`.<br>
+   Expected: The item name, remark and handover notes keep their literal prefix-like text. Date, method, quantity,
+   status and tag are stored as separate fields.
+1. Run `find d/Cake w/ candles h/Leave w/o ringing x/2`, then
+   `find n/Pre p/9123 e/example.com c/123 t/VIP f/2026-12-20 m/delivery s/pending`.<br>
+   Expected: Both searches show only `Prefix Test`.
+1. Restart LeBake, run `find n/Prefix`, and inspect the customer.<br>
+   Expected: All fields, including the literal address, item name, remark and notes, are preserved after reloading.
+1. Run `preorder 1 f/ m/ h/`.<br>
+   Expected: Date, method and handover notes are cleared. The item, its remark, contact details and tag remain, and
+   `Prefix Test` remains displayed under the active name search.
 
 ### Adding and editing preorder items
 

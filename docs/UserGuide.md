@@ -146,6 +146,8 @@ Postal codes must contain exactly six digits. They are stored as text, so leadin
 * All five fields (`n/`, `p/`, `e/`, `a/`, and `c/`) must be provided.
 * Names must contain at least one English letter (`A-Z` or `a-z`) and may contain only English letters, spaces, straight apostrophes (`'`) and hyphens (`-`). Accented letters, non-English characters, digits and other symbols are rejected. For example, `Mary-Jane O'Brien`, `Li` and `A` are valid names; `José Tan` and `---` are invalid.
 * Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
+* Name, phone, email and postal code values are validated first. An invalid value containing an extra unsupported prefix identifies that prefix. For example, adding `x/foo` after `p/98765432` shows `Unsupported prefix 'x/' for add.` Other invalid values keep their field constraint messages.
+* Addresses preserve unsupported prefix-like text and conventional `c/o` text. For example, `a/Block 123 c/o John x/foo` is kept as `Block 123 c/o John x/foo`.
 * A person is a duplicate if their name matches an existing person's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
 * Duplicate checks include all persons in the address book, even those hidden by a `find` command.
 * New persons are added without tags or a preorder. Use [`tag`](#tagging-a-person-tag) to add tags afterwards.
@@ -212,6 +214,7 @@ Common errors:
 | `tag 0 t/VIP`, `tag -1 t/VIP`, or `tag abc t/VIP` | `Invalid command format!` followed by the tag usage instructions. |
 | `tag`, `tag t/VIP`, or `tag 1` | `Invalid command format!` followed by the tag usage instructions. |
 | `tag 1 t/`, `tag 1 t/big order`, or `tag 1 t/gluten-free` | `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.` |
+| `tag 1 t/VIP x/foo` or `tag 1 t/VIP p/91234567` | `Unsupported prefix 'x/' for tag.` or `Unsupported prefix 'p/' for tag.`, respectively. |
 | `tag 1 t/VIP t/regular` | `Multiple values specified for the following single-valued field(s): t/` |
 | `tag 5 t/VIP` when fewer than five persons are displayed, or any valid index when the list is empty | `The person index provided is invalid.` |
 | `tag 1 t/VIP` when the first person is Alex Yeoh and already has the tag `vip` | `Alex Yeoh already has tag [VIP]. No changes made.` |
@@ -440,6 +443,7 @@ Format: `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`
 * Quantity must be a whole number from 1 to 999, without leading zeros.
 * Status must be `PENDING`, `PREPARED` or `COMPLETED`, ignoring capitalisation.
 * Remarks are optional. If supplied, a remark must be non-blank, on one line and at most 100 characters long.
+* Names and remarks preserve unsupported prefix-like text, such as `d/Cake w/ candles` and `r/Pack w/o nuts x/foo`. Supported prefixes still start separate fields.
 * Surrounding spaces in values are trimmed. Prefixes may appear in any order, but each can appear only once.
 * The item is appended to the preorder. Repeated product names, including identical items, remain separate entries.
 * Existing items, contact details and tags are preserved. The current filter remains active.
@@ -453,6 +457,10 @@ The remark appears on the customer card, rather than in the success message.
 Omitting a required prefix displays `Invalid command format!` followed by usage instructions.
 Supplying an empty value displays that field's validation error. In particular, `r/` without text is invalid when adding.
 An index beyond the displayed customer list produces `The person index provided is invalid.`
+
+Quantity and status are validated first. If an invalid value contains an extra unsupported prefix, the error names it:
+`additem 1 d/Cake q/2 x/foo s/pending` and `additem 1 d/Cake q/2 s/pending x/foo` both show
+`Unsupported prefix 'x/' for additem.` Without an extra unsupported prefix, the usual quantity or status constraint is shown.
 
 ### Editing a preorder item: `edititem`
 
@@ -614,6 +622,7 @@ Common errors:
 | `preorder 1` | `At least one of f/DATE, m/METHOD or h/HANDOVER_NOTES must be provided.` |
 | `preorder 1 f/2026-02-30` or `preorder 1 f/20-12-2026` | `Invalid date! Dates must be real calendar dates in YYYY-MM-DD format, e.g. 2026-12-20.` |
 | `preorder 1 m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
+| `preorder 1 f/2026-12-20 x/foo` or `preorder 1 m/delivery x/foo` | `Unsupported prefix 'x/' for preorder.` |
 | Handover notes longer than 100 characters | `Invalid handover notes! Handover notes must not be blank, must be on a single line, and must be at most 100 characters long.` |
 | `preorder 1 f/2026-12-20 f/2026-12-21` | `Multiple values specified for the following single-valued field(s): f/` |
 | `preorder`, `preorder 0 m/delivery`, `preorder abc m/delivery`, `preorder 1 2 m/delivery`, or a prefix of another command such as `preorder 1 d/Cake` | `Invalid command format!` followed by the preorder usage instructions. |

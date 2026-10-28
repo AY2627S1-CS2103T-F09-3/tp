@@ -11,6 +11,7 @@ import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.model.Model.SEARCH_CRITERIA_SHOW_ALL_PERSONS;
+import static seedu.address.model.preorder.FulfilmentMethod.DELIVERY;
 import static seedu.address.model.preorder.ItemStatus.PENDING;
 import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
 import static seedu.address.model.search.TextContainsCriterion.Field.PHONE;
@@ -50,6 +51,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PostalCodeCriterion;
@@ -63,6 +65,7 @@ import seedu.address.storage.StorageManager;
 import seedu.address.testutil.AddressBookBuilder;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
+import seedu.address.testutil.PreorderBuilder;
 
 public class LogicManagerTest {
     private static final IOException DUMMY_IO_EXCEPTION = new IOException("dummy IO exception");
@@ -458,6 +461,65 @@ public class LogicManagerTest {
         assertFilteringCommandSuccess("find a/Jurong t/friends", "1 person(s) listed!", List.of(ALICE));
         assertFilteringCommandSuccess("list", ListCommand.MESSAGE_SUCCESS,
                 List.of(COMPLETED_DANIEL, PENDING_ELLE, ALICE, PREPARED_CARL, PENDING_BENSON));
+    }
+
+    @Test
+    public void execute_unsupportedMutationArguments_preservesDataAndActiveSearch() throws Exception {
+        setUpTrackPersons();
+        logic.execute("find n/Ali");
+
+        for (String input : List.of(
+                "add n/Nora Lee x/foo p/81112222 e/nora@example.com a/12 Sample Road c/123456",
+                "add n/Nora Lee p/81112222 x/foo e/nora@example.com a/12 Sample Road c/123456",
+                "add n/Nora Lee p/81112222 e/nora@example.com x/foo a/12 Sample Road c/123456",
+                "add n/Nora Lee p/81112222 e/nora@example.com a/12 Sample Road c/123456 x/foo",
+                "additem 1 d/Cake q/2 x/foo s/pending",
+                "additem 1 d/Cake q/2 s/pending x/foo",
+                "preorder 1 f/2026-12-20 x/foo",
+                "preorder 1 m/delivery x/foo",
+                "tag 1 t/VIP x/foo")) {
+            String commandWord = input.substring(0, input.indexOf(' '));
+            assertCommandFailurePreservesFilteredList(input, ParseException.class,
+                    "Unsupported prefix 'x/' for " + commandWord + ".");
+        }
+        assertCommandFailurePreservesFilteredList("additem 1 d/Cake x/earlier q/2 y/later s/pending",
+                ParseException.class, "Unsupported prefix 'y/' for additem.");
+        assertCommandFailurePreservesFilteredList("preorder 1 h/Leave w/o ringing x/earlier m/delivery y/later",
+                ParseException.class, "Unsupported prefix 'y/' for preorder.");
+
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_literalPrefixTextInMutationCommands_roundTripsAndClearsFulfilmentDetails() throws Exception {
+        logic.execute("add n/Nora Lee p/81112222 e/nora@example.com a/Block 123 c/o Nora x/foo c/123456");
+        logic.execute("find n/Nora");
+        SearchCriteria criteria = logic.getActiveSearchCriteria();
+        logic.execute("additem 1 d/Cake w/ candles x/name q/2 s/pending r/Pack w/o nuts x/remark");
+        logic.execute("preorder 1 h/Leave w/o ringing x/notes f/2026-12-20 m/delivery");
+        logic.execute("tag 1 t/VIP");
+
+        Item item = new ItemBuilder().withName("Cake w/ candles x/name")
+                .withRemark("Pack w/o nuts x/remark").build();
+        Person expected = new PersonBuilder().withName("Nora Lee").withPhone("81112222")
+                .withEmail("nora@example.com").withAddress("Block 123 c/o Nora x/foo").withPostalCode("123456")
+                .withTags("VIP").withPreorder(new PreorderBuilder()
+                        .withItems(item).withDate("2026-12-20").withMethod(DELIVERY)
+                        .withHandoverNotes("Leave w/o ringing x/notes").build()).build();
+        assertEquals(List.of(expected), model.getAddressBook().getPersonList());
+        assertEquals(List.of(expected), logic.getFilteredPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(List.of(expected), storage.readAddressBook().orElseThrow().getPersonList());
+
+        logic.execute("preorder 1 f/ m/ h/");
+
+        Person cleared = new PersonBuilder(expected).withPreorder(item).build();
+        assertEquals(List.of(cleared), model.getAddressBook().getPersonList());
+        assertEquals(List.of(cleared), logic.getFilteredPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        assertEquals(List.of(cleared), storage.readAddressBook().orElseThrow().getPersonList());
     }
 
     @Test

@@ -79,7 +79,7 @@ public class FulfilmentSearchIntegrationTest {
     public void handoverNotesSearch_ignoresOtherFieldsAndCombinesUsingAnd() throws Exception {
         Person differentNotes = new PersonBuilder().withName("Arrival Customer").withAddress("12 Arrival Lane")
                 .withPreorder(new PreorderBuilder().withMethod(FulfilmentMethod.DELIVERY)
-                        .withHandoverNotes("Use the side gate").withItems(new ItemBuilder()
+                        .withHandoverNotes("Use the side gate i/1").withItems(new ItemBuilder()
                                 .withRemark("Call on arrival").build()).build()).build();
         model.addPerson(differentNotes);
 
@@ -87,6 +87,8 @@ public class FulfilmentSearchIntegrationTest {
         find("find h/arrival n/Alice m/delivery f/2026-12-20 t/regular", List.of(alice));
         find("find h/arrival m/collection", List.of());
         find("find h/GATE", List.of(collection, differentNotes));
+        find("find h/side gate i/1", List.of(differentNotes));
+        find("find h/arrival i/1", List.of());
     }
 
     @Test
@@ -107,7 +109,7 @@ public class FulfilmentSearchIntegrationTest {
         SearchCriteria criteria = logic.getActiveSearchCriteria();
         List<Person> customers = List.copyOf(model.getAddressBook().getPersonList());
         for (String input : List.of("find f/2026-02-30", "find m/pickup", "find h/", "find f/",
-                "find m/delivery m/collection", "find n/Alice h/", "find i/arrival", "find h/arrival i/1",
+                "find m/delivery m/collection", "find n/Alice h/", "find i/arrival",
                 "find Alice Charlie", "find Alice m/delivery")) {
             assertThrows(ParseException.class, () -> logic.execute(input));
             assertEquals(criteria, logic.getActiveSearchCriteria());
