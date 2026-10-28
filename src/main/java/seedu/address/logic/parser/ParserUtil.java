@@ -3,10 +3,14 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
@@ -31,6 +35,29 @@ import seedu.address.model.tag.Tag;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+
+    private static final Pattern PREFIX_LIKE_TOKEN = Pattern.compile("\\s([A-Za-z]+/)");
+
+    /**
+     * Returns the first letter-based prefix after whitespace in {@code value} that is not supported by the command.
+     * Use this only to refine errors for an already-invalid constrained field, as free text can contain literal
+     * prefix-like text.
+     *
+     * @param value An invalid field value to inspect.
+     * @param supportedPrefixes Prefixes supported by the command.
+     */
+    public static Optional<Prefix> findUnsupportedPrefix(String value, Prefix... supportedPrefixes) {
+        requireNonNull(value);
+        requireNonNull(supportedPrefixes);
+        Matcher matcher = PREFIX_LIKE_TOKEN.matcher(value);
+        while (matcher.find()) {
+            Prefix prefix = new Prefix(matcher.group(1));
+            if (Arrays.stream(supportedPrefixes).noneMatch(prefix::equals)) {
+                return Optional.of(prefix);
+            }
+        }
+        return Optional.empty();
+    }
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be

@@ -76,7 +76,8 @@ public class DeleteItemCommandParserTest {
 
     @Test
     public void parse_invalidItemIndex_showsIndexConstraint() {
-        for (String value : new String[]{"", "   ", "0", "-1", "+1", "1.5", "abc", "2147483648", "1 extra"}) {
+        for (String value : new String[]{"", "   ", "0", "-1", "+1", "1.5", "abc", "2147483648", "1 extra",
+            "1x/2", "x/2", "1 x /2", "1 #04/08"}) {
             assertParseFailure(parser, "1 i/" + value, Messages.MESSAGE_INVALID_ITEM_INDEX);
         }
     }
@@ -99,8 +100,33 @@ public class DeleteItemCommandParserTest {
 
     @Test
     public void parse_extraFieldOrOldPrefix_throwsParseException() {
-        assertParseFailure(parser, "1 i/1 q/2", Messages.MESSAGE_INVALID_ITEM_INDEX);
+        assertParseFailure(parser, "1 i/1 q/2", "Unsupported prefix 'q/' for deleteitem.");
         assertParseFailure(parser, "1 o/1", MESSAGE_INVALID_FORMAT);
+    }
+
+    @Test
+    public void parse_unsupportedPrefixAfterItemIndex_namesPrefix() {
+        for (String prefix : new String[]{"x/", "c/", "d/", "Q/", "status/"}) {
+            assertParseFailure(parser, "1 i/1 " + prefix + "2",
+                    "Unsupported prefix '" + prefix + "' for deleteitem.");
+        }
+        assertParseFailure(parser, "1 i/1 x/2 q/3", "Unsupported prefix 'x/' for deleteitem.");
+        assertParseFailure(parser, "1 i/1 x/", "Unsupported prefix 'x/' for deleteitem.");
+    }
+
+    @Test
+    public void parse_unsupportedPrefixAfterWhitespace_namesPrefix() {
+        for (String separator : new String[]{"\t", "\n", "\r\n", " \t "}) {
+            assertParseFailure(parser, "1 i/1" + separator + "x/2", "Unsupported prefix 'x/' for deleteitem.");
+        }
+    }
+
+    @Test
+    public void parse_unsupportedPrefixWithEarlierErrors_preservesValidationOrder() {
+        assertParseFailure(parser, "0 i/1 x/2", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1 x/2 i/1", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1 i/1 x/2 i/2",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_ITEM_INDEX));
     }
 
     @Test

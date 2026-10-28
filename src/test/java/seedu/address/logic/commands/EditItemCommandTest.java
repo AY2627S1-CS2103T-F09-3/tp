@@ -291,12 +291,12 @@ public class EditItemCommandTest {
     }
 
     @Test
-    public void execute_partialFulfilment_preservesLegacyPostalCodeAndMissingFields() throws Exception {
-        assertFulfilmentPreserved(null, Optional.of(new FulfilmentDate("2026-12-20")),
+    public void execute_partialFulfilment_preservesPostalCodeAndMissingFields() throws Exception {
+        assertFulfilmentPreserved("012345", Optional.of(new FulfilmentDate("2026-12-20")),
                 Optional.empty(), Optional.empty());
-        assertFulfilmentPreserved(null, Optional.empty(), Optional.of(FulfilmentMethod.COLLECTION),
+        assertFulfilmentPreserved("012345", Optional.empty(), Optional.of(FulfilmentMethod.COLLECTION),
                 Optional.empty());
-        assertFulfilmentPreserved(null, Optional.empty(), Optional.empty(),
+        assertFulfilmentPreserved("012345", Optional.empty(), Optional.empty(),
                 Optional.of(new HandoverNotes("Call on arrival")));
     }
 

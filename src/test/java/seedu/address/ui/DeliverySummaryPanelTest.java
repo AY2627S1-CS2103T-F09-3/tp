@@ -154,8 +154,8 @@ public class DeliverySummaryPanelTest {
             panel.getRoot().resize(410, 200);
             panel.getRoot().applyCss();
             panel.getRoot().layout();
-            assertTrue(text(panel).contains("MISSING POSTAL CODE"));
-            assertTrue(text(panel).contains("Postal code needed"));
+            assertTrue(text(panel).contains("POSTAL PREFIX 01"));
+            assertTrue(text(panel).contains("012345"));
             assertTrue(text(panel).contains("Not scheduled"));
             assertTrue(text(panel).contains("Handover notes: None"));
             VBox stops = (VBox) panel.getRoot().lookup("#stops");

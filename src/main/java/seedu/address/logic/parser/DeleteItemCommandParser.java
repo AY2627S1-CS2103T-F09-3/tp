@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_ITEM_INDEX;
+import static seedu.address.logic.Messages.MESSAGE_UNSUPPORTED_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ITEM_INDEX;
 
 import seedu.address.commons.core.index.Index;
@@ -35,7 +36,10 @@ public class DeleteItemCommandParser implements Parser<DeleteItemCommand> {
         try {
             return ParserUtil.parseIndex(value);
         } catch (ParseException pe) {
-            throw new ParseException(MESSAGE_INVALID_ITEM_INDEX, pe);
+            String message = ParserUtil.findUnsupportedPrefix(value, PREFIX_ITEM_INDEX)
+                    .map(prefix -> String.format(MESSAGE_UNSUPPORTED_PREFIX, prefix, DeleteItemCommand.COMMAND_WORD))
+                    .orElse(MESSAGE_INVALID_ITEM_INDEX);
+            throw new ParseException(message, pe);
         }
     }
 }

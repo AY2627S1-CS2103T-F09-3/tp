@@ -76,13 +76,14 @@ public class PersonCardTest {
     }
 
     @Test
-    public void constructor_personWithoutPostalCode_showsWarning() throws Exception {
-        PersonCard card = createCard(new PersonBuilder(ALICE).withPostalCode(null).build());
+    public void constructor_zeroPostalCode_showsAllDigits() throws Exception {
+        PersonCard card = createCard(new PersonBuilder(ALICE).withPostalCode("000000").build());
         Label postalCode = (Label) lookup(card, "#postalCode");
 
-        assertEquals(PersonCard.MISSING_POSTAL_CODE_TEXT, postalCode.getText());
-        assertTrue(postalCode.getStyleClass().contains(PersonCard.MISSING_POSTAL_CODE_STYLE_CLASS));
-        assertTrue(postalCode.getGraphic() instanceof SVGPath);
+        assertEquals("Postal 000000", postalCode.getText());
+        assertTrue(postalCode.isVisible());
+        assertTrue(postalCode.isManaged());
+        assertEquals(null, postalCode.getGraphic());
     }
 
     @Test
@@ -206,7 +207,7 @@ public class PersonCardTest {
                 .withTags("wholesale", "corporateclient", "vip")
                 .withEmail("alexandra.catherine.tanrodriguez@exampledomain.com")
                 .withAddress("Block 123 Example Avenue 6, The Very Long Residential Building Name, Tower North")
-                .withPostalCode(null).build();
+                .withPostalCode("999999").build();
 
         assertCardNotTallerThanContent(person);
     }

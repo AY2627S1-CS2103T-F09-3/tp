@@ -19,7 +19,6 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.PostalCode;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Preorder;
@@ -32,8 +31,6 @@ import seedu.address.model.search.SearchCriteria;
 public class PersonCard extends UiPart<Region> {
 
     public static final String TAG_STYLE_CLASS = "card-tag";
-    public static final String MISSING_POSTAL_CODE_STYLE_CLASS = "card-postal-code-missing";
-    public static final String MISSING_POSTAL_CODE_TEXT = "Postal code needed";
     public static final String POSTAL_CODE_PREFIX = "Postal ";
     public static final String ITEM_ROW_STYLE_CLASS = "preorder-item-row";
     public static final String ITEM_NUMBER_STYLE_CLASS = "preorder-item-number";
@@ -129,7 +126,7 @@ public class PersonCard extends UiPart<Region> {
         phone.setText(person.getPhone().value);
         email.setText(person.getEmail().value);
         address.setText(person.getAddress().value);
-        showPostalCode(person.getPostalCode());
+        postalCode.setText(POSTAL_CODE_PREFIX + person.getPostalCode().value);
         person.getPreorder().ifPresentOrElse(currentPreorder -> {
             removeFromLayout(noPreorder);
             showPreorder(currentPreorder);
@@ -164,16 +161,6 @@ public class PersonCard extends UiPart<Region> {
         // there, which would cut the second line of a wrapped tag short. The line itself has room for it.
         tag.setMinHeight(Region.USE_PREF_SIZE);
         return tag;
-    }
-
-    private void showPostalCode(PostalCode code) {
-        if (code != null) {
-            postalCode.setText(POSTAL_CODE_PREFIX + code.value);
-            return;
-        }
-        postalCode.setText(MISSING_POSTAL_CODE_TEXT);
-        postalCode.setGraphic(createIcon(PreorderDisplay.WARNING_ICON, WARNING_ICON_STYLE_CLASS));
-        postalCode.getStyleClass().add(MISSING_POSTAL_CODE_STYLE_CLASS);
     }
 
     /**
