@@ -79,6 +79,7 @@ Search criteria determine which customers are displayed. Keeping the criteria pr
 | `find`, `track` | Each successful command replaces the previous criteria and searches all stored customers. |
 | `add`, `edit`, `delete`, `tag`, `untag`, `preorder`, `deleteorder` | Preserve the active criteria and refresh the matching results. |
 | `sort date`, `group postal` | Preserve the active criteria and reorder the displayed results. A later `find` or `track` keeps this order. |
+| `clear` | Clears the criteria, sorting and grouping, then leaves the list empty. |
 | `list` | Clears the criteria, sorting and grouping, and shows all customers in their saved order. |
 
 During a session, use `list` to explicitly return to an unfiltered view. A `find` that happens to match every customer still has active criteria. Empty results do not clear the criteria either. Updates and deletions can change the displayed indexes, so check them before your next command.
@@ -248,6 +249,7 @@ Groups the currently displayed customers by postal code without changing the sav
 Format: `group postal`
 
 * Customers are shown in ascending six-digit postal-code order, under headings based on their first two digits. Customers with the same postal code are ordered by name, ignoring capitalization.
+* `postal` is not case-sensitive, and spaces around it are ignored. For example, `group POSTAL` also works.
 * Grouping keeps the current filter, including results from `find` or `track`. It does not change customer details, preorders, or the order saved in the data file.
 * Displayed index numbers follow the grouped list. Use those numbers for commands such as `edit`, `tag`, and `deleteorder`.
 * Use `list` to show all customers in their saved order and remove the group headings. Grouping is not restored after restarting the application.
