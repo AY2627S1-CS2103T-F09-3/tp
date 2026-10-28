@@ -64,6 +64,14 @@ information.
 * Prefixed parameters can be in any order, unless stated otherwise. A positional `INDEX` must appear before them.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
+* A supported prefix after whitespace starts another parameter and ends the previous value.<br>
+  For example, `edititem 1 i/1 r/Less sugar s/pending` sets the remark to `Less sugar` and the status to `PENDING`.
+  Quotation marks do not escape a supported prefix. Conventional `c/o` text is preserved inside addresses.
+
+* Except in `find`, unsupported prefix-like text inside a free-text value is kept, subject to that field's validation rules.<br>
+  For example, `edititem 1 i/1 r/Pack w/o nuts` keeps `Pack w/o nuts` as the remark.
+  There is no general ban on slash-containing text. The stricter rules for `find` are described in its section below.
+
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
@@ -344,7 +352,7 @@ Supply at least one prefixed criterion. Each prefix may appear at most once, in 
 * All items on matching customer cards remain visible with their existing item numbers, including items that did not match. Searches do not change stored items.
 * Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
 * Results use the current displayed indices. Use `list` to show all customers again.
-* Use lowercase prefixes. A prefix starts at the beginning of the arguments or after whitespace. Unknown letter-based prefixes such as `x/` are rejected; embedded slashes such as `#04/08` remain ordinary text.
+* Use lowercase prefixes. A prefix starts at the beginning of the arguments or after whitespace. Unknown letter-based prefixes such as `x/` are rejected, including inside text values; embedded slashes such as `#04/08` remain ordinary text.
 
 Examples:
 
@@ -473,6 +481,12 @@ The card continues to display `Qty needed` for that item.
 | Customer index exceeds the displayed list | `The person index provided is invalid.` |
 | Missing or malformed customer index, or missing `i/` prefix | `Invalid command format!` followed by usage instructions |
 | Present but empty or invalid item index, e.g. `i/0` or `i/abc` | `Item index must be a positive integer.` |
+| `edititem 1 i/1 c/012345` | `Unsupported prefix 'c/' for edititem.` |
+| `edititem 1 i/1 q/2 x/3` or `edititem 1 i/1 s/pending x/3` | `Unsupported prefix 'x/' for edititem.` |
+
+The unsupported-prefix message identifies the first unsupported letter-based prefix after whitespace in an invalid
+`i/`, `q/` or `s/` value. Names (`d/`) and remarks (`r/`) keep unsupported prefix-like text as part of the value.
+For example, `edititem 1 i/1 r/Pack w/o nuts x/2` keeps the complete remark `Pack w/o nuts x/2`.
 
 For both commands, repeated prefixes produce `Multiple values specified for the following single-valued field(s): `
 followed by the repeated prefixes. Input validation reports the first error: customer-index syntax, duplicate prefixes,
@@ -490,6 +504,10 @@ Format: `track [s/STATUS]`
 * Customers without preorders, or whose preorder has no items yet, are excluded. Use `list` to show all customers again.
 
 `track` accepts only the optional `s/` field. Use `find` for product or customer combinations. `track s/prepared` and `find s/prepared` select the same customers. Bare `track` includes only active statuses, whereas `find d/Pineapple Tarts` includes all statuses.
+
+An unsupported prefix after the status, such as `track s/pending d/Cake`, displays
+`Unsupported prefix 'd/' for track.` Remove the extra parameter or use `find s/pending d/Cake` to combine both criteria.
+An ordinary invalid status, such as `track s/done`, still displays the status constraint message.
 
 Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count, and an item with a missing quantity still counts as one item. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
 
@@ -536,7 +554,11 @@ The message uses the item's number before deletion. For a migrated item with no 
 | Preorder is empty or item index exceeds the item count | `The item index provided is invalid.` |
 | Missing or invalid customer index, or missing `i/` prefix | `Invalid command format!` followed by usage instructions |
 | Present but empty or invalid item index, e.g. `i/0` or `i/abc` | `Item index must be a positive integer.` |
+| Unsupported prefix after the item index, e.g. `deleteitem 1 i/1 x/2` | `Unsupported prefix 'x/' for deleteitem.` |
 | Repeated `i/` prefix | `Multiple values specified for the following single-valued field(s): i/` |
+
+The unsupported-prefix message also applies to prefixes used by other commands, such as `q/`.
+Only `i/` is supported by `deleteitem`. Ordinary invalid item indices retain their index constraint message.
 
 Validation failures leave the data unchanged. If several inputs are invalid, customer-index syntax is checked first, then duplicate prefixes, then item-index syntax. Customer, preorder and item existence are checked after parsing succeeds.
 
@@ -565,7 +587,7 @@ Format: `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`
 * If the customer has no preorder yet, supplying at least one nonempty value creates one with no items, so you can record the arrangements before adding items with [`additem`](#adding-a-preorder-item-additem). Supplying only empty values makes no changes because there is nothing to clear.
 * A past date is accepted, so you can still record late orders. The success message then adds a note on a new line, for example `Note: 20 Dec 2025 is in the past.`
 * The customer's items (with their quantities, statuses and remarks), contact details, postal code and tags are not changed. The current filter remains active.
-* Surrounding spaces in values are trimmed. Text that starts a new prefix after a space, such as ` m/`, ends the previous value, so avoid it inside handover notes.
+* Surrounding spaces in values are trimmed. A supported prefix (`f/`, `m/` or `h/`) after whitespace ends the previous value, so avoid it inside handover notes. Unsupported prefix-like text is preserved: `preorder 1 h/Leave w/o ringing x/2` keeps `Leave w/o ringing x/2` as the handover notes.
 
 On success, the app shows the customer's details after the change, for example:
 `Updated preorder details for Alex Yeoh: Date: 21 Dec 2026 | Method: COLLECTION | Handover notes: Collect from side gate`.
