@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_UNSUPPORTED_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
@@ -42,15 +43,50 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
                 PREFIX_POSTAL_CODE);
-        Name name = ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get());
-        Phone phone = ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get());
-        Email email = ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get());
+        String nameValue = argMultimap.getValue(PREFIX_NAME).get();
+        Name name;
+        try {
+            name = ParserUtil.parseName(nameValue);
+        } catch (ParseException pe) {
+            throw createFieldParseException(nameValue, pe);
+        }
+
+        String phoneValue = argMultimap.getValue(PREFIX_PHONE).get();
+        Phone phone;
+        try {
+            phone = ParserUtil.parsePhone(phoneValue);
+        } catch (ParseException pe) {
+            throw createFieldParseException(phoneValue, pe);
+        }
+
+        String emailValue = argMultimap.getValue(PREFIX_EMAIL).get();
+        Email email;
+        try {
+            email = ParserUtil.parseEmail(emailValue);
+        } catch (ParseException pe) {
+            throw createFieldParseException(emailValue, pe);
+        }
+
         Address address = ParserUtil.parseAddress(argMultimap.getValue(PREFIX_ADDRESS).get());
-        PostalCode postalCode = ParserUtil.parsePostalCode(argMultimap.getValue(PREFIX_POSTAL_CODE).get());
+        String postalCodeValue = argMultimap.getValue(PREFIX_POSTAL_CODE).get();
+        PostalCode postalCode;
+        try {
+            postalCode = ParserUtil.parsePostalCode(postalCodeValue);
+        } catch (ParseException pe) {
+            throw createFieldParseException(postalCodeValue, pe);
+        }
 
         Person person = new Person(name, phone, email, address, postalCode, Set.of());
 
         return new AddCommand(person);
+    }
+
+    private ParseException createFieldParseException(String value, ParseException cause) {
+        String message = ParserUtil.findUnsupportedPrefix(value,
+                PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_POSTAL_CODE)
+                .map(prefix -> String.format(MESSAGE_UNSUPPORTED_PREFIX, prefix, AddCommand.COMMAND_WORD))
+                .orElse(cause.getMessage());
+        return new ParseException(message, cause);
     }
 
     /**
