@@ -226,7 +226,7 @@ Examples:
 
 * `untag 3 t/wholesale` removes the `wholesale` tag from the third person shown, provided they have that tag.
 * `find n/Bernice` followed by `untag 1 t/friends` removes the `friends` tag from the first search result, provided that person has the tag.
-* If Alex Yeoh is displayed at index 1 and has the tag `VIP`, `untag 1 t/vip` removes it and displays `Removed tag(s) [vip] from Alex Yeoh`.
+* If Alex Yeoh is displayed at index 1 and has the tag `VIP`, `untag 1 t/vip` removes it and displays `Removed tag [vip] from Alex Yeoh`.
 
 Common errors:
 
