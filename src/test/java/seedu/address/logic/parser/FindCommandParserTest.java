@@ -148,6 +148,11 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_noBreakSpacesAroundText_stripped() {
+        assertParseSuccess(parser, "h/\u00A0side gate\u00A0", textCommand(HANDOVER_NOTES, "side gate"));
+    }
+
+    @Test
     public void parse_validPostalCodePrefix_returnsFindCommand() {
         for (String prefix : List.of("0", "53", "530", "5301", "53012", "123456", "012345", "000000", "999999")) {
             FindCommand expected = new FindCommand(new SearchCriteria(List.of(
