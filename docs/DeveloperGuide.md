@@ -501,6 +501,8 @@ the customer in the current format.
 `EditItemCommandParser` additionally requires `i/ITEM_INDEX` and constructs an `EditItemDescriptor` for supplied fields.
 Both parsers validate the customer-index syntax first, reject duplicate prefixes, check required inputs, and validate
 item fields in the order name, quantity, status, remark. They reuse the model validators through `ParserUtil`.
+`ParserUtil` trims remarks and handover notes with `StringUtil#stripSpaces()` rather than `String#strip()`, which
+keeps no-break spaces, so a value pasted with one around it is still accepted. Spaces inside the value are kept.
 
 For `edititem`, failures in `i/`, `q/` and `s/` use the contextual diagnostics described under
 [Prefix boundaries and error messages](#prefix-boundaries-and-error-messages). Names and remarks retain their

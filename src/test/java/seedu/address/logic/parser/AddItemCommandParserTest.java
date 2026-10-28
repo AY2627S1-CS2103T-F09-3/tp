@@ -85,6 +85,12 @@ public class AddItemCommandParserTest {
     }
 
     @Test
+    public void parse_noBreakSpaceBeforeRemark_trimmed() {
+        assertValid("1" + VALID_FIELDS + " r/\u00A0Less sugar",
+                new ItemBuilder().withName("Cake").withRemark("Less sugar").build());
+    }
+
+    @Test
     public void parse_repeatedSpacesInName_savedWithOneSpace() {
         assertValid("1 d/Butter   Cake q/2 s/pending", new ItemBuilder().withName("Butter Cake").build());
     }

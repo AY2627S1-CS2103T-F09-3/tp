@@ -376,6 +376,12 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseRemark_noBreakSpacesAround_returnsTrimmedRemark() throws Exception {
+        assertEquals(new Remark(VALID_REMARK), ParserUtil.parseRemark("\u00A0" + VALID_REMARK + "\u202F"));
+        assertEquals(new Remark("Less\u00A0 sugar"), ParserUtil.parseRemark("\u2007Less\u00A0 sugar\u00A0"));
+    }
+
+    @Test
     public void parseFreeText_prefixLikeText_preservesText() throws Exception {
         assertEquals(new Remark("Pack w/o nuts x/2"), ParserUtil.parseRemark("Pack w/o nuts x/2"));
         assertEquals(new HandoverNotes("Leave w/o ringing x/2"),
@@ -423,6 +429,14 @@ public class ParserUtilTest {
                 ParserUtil.parseHandoverNotes(handoverNotesWithWhitespace));
         assertEquals(new HandoverNotes(VALID_HANDOVER_NOTES),
                 ParserUtil.parseHandoverNotes("\u2003" + VALID_HANDOVER_NOTES + "\u2003"));
+    }
+
+    @Test
+    public void parseHandoverNotes_noBreakSpacesAround_returnsTrimmedHandoverNotes() throws Exception {
+        assertEquals(new HandoverNotes(VALID_HANDOVER_NOTES),
+                ParserUtil.parseHandoverNotes("\u00A0" + VALID_HANDOVER_NOTES + "\u202F"));
+        assertEquals(new HandoverNotes("Call\u00A0 on arrival"),
+                ParserUtil.parseHandoverNotes("\u2007Call\u00A0 on arrival\u00A0"));
     }
 
     @Test

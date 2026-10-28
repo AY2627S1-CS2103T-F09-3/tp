@@ -273,7 +273,7 @@ public class ParserUtil {
      */
     public static Remark parseRemark(String remark) throws ParseException {
         requireNonNull(remark);
-        String trimmedRemark = remark.strip();
+        String trimmedRemark = StringUtil.stripSpaces(remark);
         if (!Remark.isValidRemark(trimmedRemark)) {
             throw new ParseException(Remark.MESSAGE_CONSTRAINTS);
         }
@@ -304,7 +304,7 @@ public class ParserUtil {
      */
     public static HandoverNotes parseHandoverNotes(String handoverNotes) throws ParseException {
         requireNonNull(handoverNotes);
-        String trimmedHandoverNotes = handoverNotes.strip();
+        String trimmedHandoverNotes = StringUtil.stripSpaces(handoverNotes);
         if (!HandoverNotes.isValidHandoverNotes(trimmedHandoverNotes)) {
             throw new ParseException(HandoverNotes.MESSAGE_CONSTRAINTS);
         }

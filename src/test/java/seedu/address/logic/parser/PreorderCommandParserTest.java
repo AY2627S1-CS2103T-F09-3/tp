@@ -71,6 +71,12 @@ public class PreorderCommandParserTest {
     }
 
     @Test
+    public void parse_noBreakSpaceBeforeHandoverNotes_trimmed() {
+        assertParseDescriptor("1 h/\u00A0Call on arrival",
+                new EditFulfilmentDescriptorBuilder().withHandoverNotes("Call on arrival").build());
+    }
+
+    @Test
     public void parse_repeatedPrefix_failure() {
         assertParseFailure(parser, "1 f/2026-12-20 f/2026-12-21",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_FULFILMENT_DATE));
