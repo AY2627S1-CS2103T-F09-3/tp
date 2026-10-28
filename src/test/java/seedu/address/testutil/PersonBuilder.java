@@ -90,7 +90,7 @@ public class PersonBuilder {
      * Sets the postal code of the {@code Person} that we are building.
      */
     public PersonBuilder withPostalCode(String postalCode) {
-        this.postalCode = postalCode == null ? null : new PostalCode(postalCode);
+        this.postalCode = new PostalCode(postalCode);
         return this;
     }
 
