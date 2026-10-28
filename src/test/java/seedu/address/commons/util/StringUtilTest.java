@@ -45,6 +45,21 @@ public class StringUtilTest {
         assertTrue(StringUtil.isNonZeroUnsignedInteger("10"));
     }
 
+    @Test
+    public void isPositiveUnsignedInteger() {
+        assertThrows(NullPointerException.class, () -> StringUtil.isPositiveUnsignedInteger(null));
+        assertFalse(StringUtil.isPositiveUnsignedInteger(""));
+        assertFalse(StringUtil.isPositiveUnsignedInteger("0"));
+        assertFalse(StringUtil.isPositiveUnsignedInteger("000"));
+        assertFalse(StringUtil.isPositiveUnsignedInteger("-1"));
+        assertFalse(StringUtil.isPositiveUnsignedInteger("+1"));
+        assertFalse(StringUtil.isPositiveUnsignedInteger("1.5"));
+        assertTrue(StringUtil.isPositiveUnsignedInteger("1"));
+        assertTrue(StringUtil.isPositiveUnsignedInteger("0001"));
+        assertTrue(StringUtil.isPositiveUnsignedInteger("2147483648"));
+        assertTrue(StringUtil.isPositiveUnsignedInteger("9".repeat(1000)));
+    }
+
 
     //---------------- Tests for containsWordIgnoreCase --------------------------------------
 

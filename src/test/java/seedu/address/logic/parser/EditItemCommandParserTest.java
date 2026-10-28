@@ -42,10 +42,18 @@ public class EditItemCommandParserTest {
 
     @Test
     public void parse_invalidIndex_failure() {
-        for (String input : new String[]{"", "0", "-1", "abc", "1.5", "2147483648", "1 extra"}) {
+        for (String input : new String[]{"", "0", "-1", "abc", "1.5", "1 extra"}) {
             assertParseFailure(parser, input + " i/1 d/Cake s/PENDING",
                     String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, EditItemCommand.MESSAGE_USAGE));
         }
+    }
+
+    @Test
+    public void parse_overflowingCustomerIndex_success() {
+        EditItemDescriptor descriptor = new EditItemDescriptor();
+        descriptor.setName(new ItemName("Cake"));
+        assertParseSuccess(parser, "2147483648 i/1 d/Cake",
+                new EditItemCommand(Index.fromZeroBased(Integer.MAX_VALUE), Index.fromOneBased(1), descriptor));
     }
 
     @Test
@@ -83,10 +91,18 @@ public class EditItemCommandParserTest {
 
     @Test
     public void parse_invalidItemIndex_showsIndexConstraint() {
-        for (String value : new String[]{"", "   ", "0", "-1", "+1", "abc", "1.5", "2147483648", "1 extra"}) {
+        for (String value : new String[]{"", "   ", "0", "-1", "+1", "abc", "1.5", "1 extra"}) {
             assertParseFailure(parser, "1 i/" + value + " d/Cake", Messages.MESSAGE_INVALID_ITEM_INDEX);
             assertParseFailure(parser, "1 i/" + value, Messages.MESSAGE_INVALID_ITEM_INDEX);
         }
+    }
+
+    @Test
+    public void parse_overflowingItemIndex_success() {
+        EditItemDescriptor descriptor = new EditItemDescriptor();
+        descriptor.setName(new ItemName("Cake"));
+        assertParseSuccess(parser, "1 i/2147483648 d/Cake",
+                new EditItemCommand(Index.fromOneBased(1), Index.fromZeroBased(Integer.MAX_VALUE), descriptor));
     }
 
     @Test

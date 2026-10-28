@@ -60,9 +60,17 @@ public class DeleteItemCommandParserTest {
     }
 
     @Test
-    public void parse_indexOverflow_throwsParseException() {
-        assertParseFailure(parser, "2147483648 i/1", MESSAGE_INVALID_FORMAT);
+    public void parse_overflowingCustomerIndex_success() {
+        assertParseSuccess(parser, "2147483648 i/1",
+                new DeleteItemCommand(Index.fromZeroBased(Integer.MAX_VALUE), Index.fromOneBased(1)));
     }
+
+    @Test
+    public void parse_overflowingItemIndex_success() {
+        assertParseSuccess(parser, "1 i/2147483648",
+                new DeleteItemCommand(Index.fromOneBased(1), Index.fromZeroBased(Integer.MAX_VALUE)));
+    }
+
     @Test
     public void parse_distinctIndices_returnsDeleteItemCommand() {
         assertParseSuccess(parser, "2 i/3",
@@ -76,7 +84,7 @@ public class DeleteItemCommandParserTest {
 
     @Test
     public void parse_invalidItemIndex_showsIndexConstraint() {
-        for (String value : new String[]{"", "   ", "0", "-1", "+1", "1.5", "abc", "2147483648", "1 extra"}) {
+        for (String value : new String[]{"", "   ", "0", "-1", "+1", "1.5", "abc", "1 extra"}) {
             assertParseFailure(parser, "1 i/" + value, Messages.MESSAGE_INVALID_ITEM_INDEX);
         }
     }

@@ -79,4 +79,26 @@ public class StringUtil {
             return false;
         }
     }
+
+    /**
+     * Returns true if {@code s} represents a positive unsigned integer, without limiting its magnitude.
+     * Will return false for an empty string or any string containing a non-decimal digit.
+     * @throws NullPointerException if {@code s} is null.
+     */
+    public static boolean isPositiveUnsignedInteger(String s) {
+        requireNonNull(s);
+        if (s.isEmpty()) {
+            return false;
+        }
+
+        boolean hasNonZeroDigit = false;
+        for (int index = 0; index < s.length(); index++) {
+            int digit = Character.digit(s.charAt(index), 10);
+            if (digit < 0) {
+                return false;
+            }
+            hasNonZeroDigit |= digit > 0;
+        }
+        return hasNonZeroDigit;
+    }
 }

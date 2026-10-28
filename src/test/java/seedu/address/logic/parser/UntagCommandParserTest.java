@@ -8,6 +8,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.UntagCommand;
 import seedu.address.model.tag.Tag;
@@ -41,8 +42,13 @@ public class UntagCommandParserTest {
         assertParseFailure(parser, "-1 t/friends", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, "a t/friends", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, "1.5 t/friends", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, "2147483648 t/friends", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, "1 extra t/friends", MESSAGE_INVALID_FORMAT);
+    }
+
+    @Test
+    public void parse_overflowingIndex_success() {
+        assertParseSuccess(parser, "2147483648 t/friends",
+                new UntagCommand(Index.fromZeroBased(Integer.MAX_VALUE), new Tag("friends")));
     }
 
     @Test

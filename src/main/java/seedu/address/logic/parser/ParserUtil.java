@@ -35,14 +35,19 @@ public class ParserUtil {
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
      * trimmed.
-     * @throws ParseException if the specified index is invalid (not a non-zero unsigned integer).
+     * @throws ParseException if the specified index is not a positive unsigned integer.
      */
     public static Index parseIndex(String oneBasedIndex) throws ParseException {
         String trimmedIndex = oneBasedIndex.trim();
-        if (!StringUtil.isNonZeroUnsignedInteger(trimmedIndex)) {
+        if (!StringUtil.isPositiveUnsignedInteger(trimmedIndex)) {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
-        return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+        try {
+            return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+        } catch (NumberFormatException exception) {
+            // The input has already been validated as positive decimal digits, so only integer overflow remains.
+            return Index.fromZeroBased(Integer.MAX_VALUE);
+        }
     }
 
     /**
@@ -178,7 +183,7 @@ public class ParserUtil {
      *
      * @param argMultimap Tokenized arguments containing the index in the preamble.
      * @param errorMessage Complete error message shown when the index is missing or invalid.
-     * @throws ParseException If the preamble is not a positive integer within the supported integer range.
+     * @throws ParseException If the preamble is not a positive integer.
      */
     public static Index parsePreambleIndex(ArgumentMultimap argMultimap, String errorMessage)
             throws ParseException {
