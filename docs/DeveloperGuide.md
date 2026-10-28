@@ -1052,10 +1052,10 @@ Run each group below independently, starting with the sample data unless stated 
    1. Prerequisites: Run `list`. The first person is `Alex Yeoh`, who has the tag `friends`. Run `tag 1 t/regular` to give Alex a second tag.
 
    1. Test case: `untag 1 t/FRIENDS`<br>
-      Expected: The `friends` tag is removed despite the different capitalization. The `regular` tag and Alex's contact details remain unchanged. The status message shows `Removed tag(s) [FRIENDS] from Alex Yeoh`.
+      Expected: The `friends` tag is removed despite the different capitalization. The `regular` tag and Alex's contact details remain unchanged. The status message shows `Removed tag [FRIENDS] from Alex Yeoh`.
 
    1. Test case: `untag 1 t/regular`<br>
-      Expected: Alex has no tags left, but remains in the list with the same contact details. The status message shows `Removed tag(s) [regular] from Alex Yeoh`.
+      Expected: Alex has no tags left, but remains in the list with the same contact details. The status message shows `Removed tag [regular] from Alex Yeoh`.
 
    1. Test case: Repeat `untag 1 t/regular`.<br>
       Expected: No data is changed. The status message shows `Alex Yeoh does not have tag [regular]`.
@@ -1090,7 +1090,7 @@ Run each group below independently, starting with the sample data unless stated 
       Expected: The status message shows `The person index provided is invalid.`, even though the full address book contains more than one person.
 
    1. Test case: `untag 1 t/FRIENDS`<br>
-      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag(s) [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other persons are unchanged.
+      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other persons are unchanged.
 
    1. Test case: `untag 1 t/FRIENDS` again.<br>
       Expected: The status message shows `Bernice Yu does not have tag [FRIENDS]`. Only Bernice remains displayed.
