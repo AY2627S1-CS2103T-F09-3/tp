@@ -70,6 +70,60 @@ public class PreorderCommandParserTest {
     }
 
     @Test
+    public void parse_unsupportedPrefixesInConstrainedFields_namesPrefix() {
+        for (String field : new String[]{"f/" + VALID_DATE, "m/delivery"}) {
+            for (String prefix : new String[]{"x/", "d/", "q/", "F/", "method/"}) {
+                assertParseFailure(parser, "1 " + field + " " + prefix + "foo",
+                        "Unsupported prefix '" + prefix + "' for preorder.");
+            }
+            assertParseFailure(parser, "1 " + field + " x/", "Unsupported prefix 'x/' for preorder.");
+            assertParseFailure(parser, "1 " + field + " x/foo d/Cake", "Unsupported prefix 'x/' for preorder.");
+        }
+    }
+
+    @Test
+    public void parse_unsupportedPrefixAfterWhitespace_namesPrefix() {
+        for (String field : new String[]{"f/" + VALID_DATE, "m/delivery"}) {
+            for (String separator : new String[]{"\t", "\n", "\r\n", " \t "}) {
+                assertParseFailure(parser, "1 " + field + separator + "x/foo",
+                        "Unsupported prefix 'x/' for preorder.");
+            }
+        }
+    }
+
+    @Test
+    public void parse_invalidValuesWithoutUnsupportedPrefixes_keepsConstraintMessages() {
+        for (String suffix : new String[]{"x/foo", " x /foo", " #04/08", " https://example.com/path"}) {
+            assertParseFailure(parser, "1 f/" + VALID_DATE + suffix, FulfilmentDate.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, "1 m/delivery" + suffix, FulfilmentMethod.MESSAGE_CONSTRAINTS);
+        }
+        assertParseFailure(parser, "1 f/x/foo", FulfilmentDate.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 m/x/foo", FulfilmentMethod.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_prefixLikeTextInHandoverNotes_preservesTextAndOtherFields() {
+        String notes = "Leave w/o ringing d/Cake x/foo";
+        EditFulfilmentDescriptor descriptor = new EditFulfilmentDescriptorBuilder().withHandoverNotes(notes)
+                .withoutDate().withMethod(FulfilmentMethod.DELIVERY).build();
+        assertParseDescriptor("1 h/" + notes + " f/ m/delivery", descriptor);
+    }
+
+    @Test
+    public void parse_invalidHandoverNotesWithPrefixLikeText_keepsConstraintMessage() {
+        assertParseFailure(parser, "1 h/Leave\nx/foo", HandoverNotes.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_unsupportedPrefixWithEarlierErrors_preservesValidationOrder() {
+        assertParseFailure(parser, "0 f/" + VALID_DATE + " x/foo", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1 x/foo f/" + VALID_DATE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1 f/" + VALID_DATE + " x/foo f/2026-12-21",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_FULFILMENT_DATE));
+        assertParseFailure(parser, "1 f/2026-02-30 m/delivery x/foo", FulfilmentDate.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
     public void parse_repeatedPrefix_failure() {
         assertParseFailure(parser, "1 f/2026-12-20 f/2026-12-21",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_FULFILMENT_DATE));

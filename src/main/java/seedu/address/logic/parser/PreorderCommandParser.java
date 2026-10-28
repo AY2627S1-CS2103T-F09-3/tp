@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_UNSUPPORTED_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FULFILMENT_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FULFILMENT_METHOD;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_HANDOVER_NOTES;
@@ -52,12 +53,20 @@ public class PreorderCommandParser implements Parser<PreorderCommand> {
 
         Optional<String> date = argMultimap.getValue(PREFIX_FULFILMENT_DATE);
         if (date.isPresent()) {
-            descriptor.setDate(date.get().isEmpty() ? null : ParserUtil.parseFulfilmentDate(date.get()));
+            try {
+                descriptor.setDate(date.get().isEmpty() ? null : ParserUtil.parseFulfilmentDate(date.get()));
+            } catch (ParseException pe) {
+                throw createFieldParseException(date.get(), pe);
+            }
         }
 
         Optional<String> method = argMultimap.getValue(PREFIX_FULFILMENT_METHOD);
         if (method.isPresent()) {
-            descriptor.setMethod(method.get().isEmpty() ? null : ParserUtil.parseFulfilmentMethod(method.get()));
+            try {
+                descriptor.setMethod(method.get().isEmpty() ? null : ParserUtil.parseFulfilmentMethod(method.get()));
+            } catch (ParseException pe) {
+                throw createFieldParseException(method.get(), pe);
+            }
         }
 
         Optional<String> handoverNotes = argMultimap.getValue(PREFIX_HANDOVER_NOTES);
@@ -67,6 +76,14 @@ public class PreorderCommandParser implements Parser<PreorderCommand> {
         }
 
         return descriptor;
+    }
+
+    private static ParseException createFieldParseException(String value, ParseException cause) {
+        String message = ParserUtil.findUnsupportedPrefix(value,
+                PREFIX_FULFILMENT_DATE, PREFIX_FULFILMENT_METHOD, PREFIX_HANDOVER_NOTES)
+                .map(prefix -> String.format(MESSAGE_UNSUPPORTED_PREFIX, prefix, PreorderCommand.COMMAND_WORD))
+                .orElse(cause.getMessage());
+        return new ParseException(message, cause);
     }
 
 }
