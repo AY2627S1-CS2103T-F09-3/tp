@@ -418,7 +418,8 @@ Adds one item to a customer's preorder. If the customer has no preorder, one is 
 Format: `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`
 
 * `INDEX` is a positive integer identifying a customer in the **currently displayed list**.
-* Name, quantity and status are required. A name must be non-blank, on one line and at most 200 characters long.
+* Name, quantity and status are required. A name must be non-blank, must not contain forward slashes (`/`), must be
+  on one line and at most 200 characters long.
 * Quantity must be a whole number from 1 to 999, without leading zeros.
 * Status must be `PENDING`, `PREPARED` or `COMPLETED`, ignoring capitalisation.
 * Remarks are optional. If supplied, a remark must be non-blank, on one line and at most 100 characters long.

@@ -36,6 +36,11 @@ public class ItemNameTest {
         assertFalse(ItemName.isValidItemName("Pineapple Tarts\nAlmond Cookies"));
         assertFalse(ItemName.isValidItemName("Pineapple Tarts\r\nAlmond Cookies"));
 
+        // forward slashes are not allowed
+        assertFalse(ItemName.isValidItemName("Pineapple/Tarts"));
+        assertFalse(ItemName.isValidItemName("/Pineapple Tarts"));
+        assertFalse(ItemName.isValidItemName("Pineapple Tarts/"));
+
         // length boundary
         assertTrue(ItemName.isValidItemName("a".repeat(ItemName.MAX_LENGTH)));
         assertFalse(ItemName.isValidItemName("a".repeat(ItemName.MAX_LENGTH + 1)));

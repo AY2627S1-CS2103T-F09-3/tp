@@ -13,7 +13,8 @@ public class ItemName {
     public static final int MAX_LENGTH = 200;
 
     public static final String MESSAGE_CONSTRAINTS = "Invalid item name! Item names must not be blank, "
-            + "must be on a single line, and must be at most " + MAX_LENGTH + " characters long.";
+            + "must not contain forward slashes, must be on a single line, and must be at most " + MAX_LENGTH
+            + " characters long.";
 
     /*
      * The first and last characters must not be whitespace, so blank names and names with
@@ -38,7 +39,7 @@ public class ItemName {
      * Returns true if a given string is a valid item name.
      */
     public static boolean isValidItemName(String test) {
-        return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX);
+        return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX) && !test.contains("/");
     }
 
     @Override

@@ -78,7 +78,7 @@ public class AddItemCommandParserTest {
 
     @Test
     public void parse_invalidName_failure() {
-        for (String name : new String[]{"", "   ", "Cake\nTarts", "Cake\rTarts",
+        for (String name : new String[]{"", "   ", "Cake\nTarts", "Cake\rTarts", "Cake/Tarts",
             "a".repeat(ItemName.MAX_LENGTH + 1)}) {
             assertParseFailure(parser, "1 d/" + name + " q/2 s/pending", ItemName.MESSAGE_CONSTRAINTS);
         }
