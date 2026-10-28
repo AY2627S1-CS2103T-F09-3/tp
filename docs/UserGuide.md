@@ -178,11 +178,22 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CO
 * Existing tags and preorders are always preserved.
 * Editing preserves the current search criteria. A person disappears from the results if their edited details no longer match. Check the displayed indexes again before your next command, or use `list` to show all customers.
 
+An unsupported letter-based prefix after whitespace in an invalid `n/`, `p/`, `e/` or `c/` value is named directly.
+For example, `edit 1 p/91234567 x/foo` displays `Unsupported prefix 'x/' for edit.` Remove the unsupported argument
+and try again. Ordinary invalid values keep their corresponding field constraint messages.
+
+Addresses preserve unsupported prefix-like text. For example, `edit 1 a/Block 123 c/o Alice x/foo` keeps the complete
+address `Block 123 c/o Alice x/foo`. Customer names follow the existing name validation rules described for `add`.
+
 Examples:
 
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`, preserving all other details and tags.
 *  `edit 1 n/JOHN DOE` Changes the capitalization of the 1st person's name if they are already named `John Doe`.
+
+If several inputs are invalid, checks run in this order: index format, duplicate prefixes, then name, phone, email,
+address and postal code. Whether the index exists in the displayed list is checked after the supplied fields are valid.
+Rejected edits leave customer data and the current filter unchanged.
 
 ### Tagging a person: `tag`
 
@@ -244,11 +255,15 @@ Common errors:
 | `untag 0 t/VIP`, `untag -1 t/VIP`, or `untag abc t/VIP` | `Invalid command format!` followed by the untag usage instructions. |
 | `untag`, `untag t/VIP`, or `untag 1` | `Invalid command format!` followed by the untag usage instructions. |
 | `untag 1 t/`, `untag 1 t/close friends`, or `untag 1 t/VIP!` | `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.` |
+| Unsupported prefix after the tag, e.g. `untag 1 t/VIP x/foo` | `Unsupported prefix 'x/' for untag.` |
 | `untag 1 t/VIP t/friends` | `Multiple values specified for the following single-valued field(s): t/` |
 | `untag 5 t/VIP` when fewer than five persons are displayed, or any valid index when the list is empty | `The person index provided is invalid.` |
 | `untag 1 t/VIP` when the first person is Alex Yeoh and has no `VIP` tag | `Alex Yeoh does not have tag [VIP]` |
 
-If several inputs are invalid, only the first detected error is shown. The index format is checked before the tag input; whether the index exists in the displayed list is checked after both inputs are valid.
+The unsupported-prefix message names the first unsupported letter-based prefix after whitespace in an invalid tag
+value. Ordinary invalid tags retain their tag constraint message. If several inputs are invalid, checks run in this
+order: index format, required `t/` prefix, duplicate `t/` prefixes, then tag value. Whether the index exists in the
+displayed list is checked after parsing succeeds. Rejected commands leave customer data and the current filter unchanged.
 
 ### Grouping customers by postal code: `group postal`
 

@@ -163,13 +163,15 @@ A supported prefix ends the preceding value. Unsupported prefix-like text stays 
 The tokenizer preserves conventional `c/o` text inside an address instead of treating it as a postal-code prefix.
 Quotation marks and backslashes do not escape supported prefixes.
 
-Three parsers refine errors from constrained fields using `ParserUtil.findUnsupportedPrefix`:
+The following parsers refine errors from constrained fields using `ParserUtil.findUnsupportedPrefix`:
 
 | Parser | Fields with contextual prefix diagnostics |
 |--------|------------------------------------------|
 | `DeleteItemCommandParser` | Item index (`i/`) |
+| `EditCommandParser` | Customer name (`n/`), phone (`p/`), email (`e/`) and postal code (`c/`) |
 | `EditItemCommandParser` | Item index (`i/`), quantity (`q/`) and status (`s/`) |
 | `TrackCommandParser` | Status (`s/`) |
+| `UntagCommandParser` | Tag (`t/`) |
 
 Each field is validated normally first. If parsing fails, the helper finds the first token matching
 `\s([A-Za-z]+/)` whose prefix is absent from that command's supported-prefix list. It preserves the prefix's case
@@ -178,7 +180,15 @@ prefix and command name, for example `Unsupported prefix 'd/' for track.` If no 
 the original field constraint message is used. A slash embedded without a preceding whitespace boundary does not
 trigger this diagnostic. Customer-index and duplicate-prefix checks retain their earlier precedence.
 
-This is an error-message refinement rather than a global rejection rule. Item names, remarks and handover notes
+`EditCommandParser` preserves its field-validation order: name, phone, email, address, then postal code. Customer
+names are constrained by `Name` and do not permit slashes. Addresses retain their normal validation and preserve
+unsupported prefix-like text, including `Block 123 c/o Alice x/foo`.
+
+`UntagCommandParser` checks the index format, required `t/` prefix and duplicate `t/` prefixes before calling
+`ParserUtil.parseTag`. Only a tag-value failure is refined. The refinement stays in the command parser;
+`TagCommandParser` continues to use `ParserUtil.parseSingleTag` with its existing diagnostics.
+
+This is an error-message refinement rather than a global rejection rule. Addresses, item names, remarks and handover notes
 can contain unsupported prefix-like text, subject to their model constraints. Do not apply the helper to free-text
 values or scan the complete command before field validation: text such as `Pack w/o nuts x/2` can be intentional.
 `FindCommandParser` has a separate, stricter rule that rejects unsupported letter-based prefixes throughout the
@@ -1112,6 +1122,21 @@ Use a disposable copy of the sample data and run `list`.
    Expected: `Unsupported prefix 'c/' for edititem.` No data changes.
 1. Try `track s/pending d/Cake`.<br>
    Expected: `Unsupported prefix 'd/' for track.` The current criteria and displayed list remain unchanged.
+1. Run `find n/Alex`, then try `edit 1 p/91234567 x/foo`.<br>
+   Expected: `Unsupported prefix 'x/' for edit.` Customer data, the displayed list and the active criteria are unchanged.
+1. Try `untag 1 t/VIP x/foo`.<br>
+   Expected: `Unsupported prefix 'x/' for untag.` Customer data, the displayed list and the active criteria are unchanged,
+   whether or not the customer has a `VIP` tag.
+1. Try `edit 1 n/Alex Yeoh x/foo`, `edit 1 e/alex@example.com x/foo` and `edit 1 c/012345 x/foo`.<br>
+   Expected: Each command shows `Unsupported prefix 'x/' for edit.` No data or filter changes.
+1. Try `edit 1 p/12345` and `untag 1 t/close friends`.<br>
+   Expected: The existing phone and tag constraint messages respectively. No data or filter changes.
+1. Try `edit 0 p/91234567 x/foo` and `untag 1 t/VIP x/foo t/friends`.<br>
+   Expected: Respectively, the edit format error and usage instructions, and the duplicate-`t/` error.
+   No data or filter changes.
+1. Run `edit 1 a/Block 123 c/o Alice x/foo`.<br>
+   Expected: The complete address is `Block 123 c/o Alice x/foo`. Other contact details, tags, postal code and preorder
+   are preserved. The active criteria are unchanged. Run `list` before continuing.
 1. Run `edititem 1 i/1 r/Pack w/o nuts x/2`.<br>
    Expected: The edit succeeds and the remark is exactly `Pack w/o nuts x/2`.
 1. Run `preorder 1 h/Leave w/o ringing x/2`.<br>
