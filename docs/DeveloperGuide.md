@@ -163,13 +163,18 @@ A supported prefix ends the preceding value. Unsupported prefix-like text stays 
 The tokenizer preserves conventional `c/o` text inside an address instead of treating it as a postal-code prefix.
 Quotation marks and backslashes do not escape supported prefixes.
 
-Three parsers refine errors from constrained fields using `ParserUtil.findUnsupportedPrefix`:
+The following parsers refine errors from constrained fields using `ParserUtil.findUnsupportedPrefix`:
 
 | Parser | Fields with contextual prefix diagnostics |
 |--------|------------------------------------------|
 | `DeleteItemCommandParser` | Item index (`i/`) |
 | `EditItemCommandParser` | Item index (`i/`), quantity (`q/`) and status (`s/`) |
 | `TrackCommandParser` | Status (`s/`) |
+| `AddItemCommandParser` | Quantity (`q/`) and status (`s/`) |
+| `PreorderCommandParser` | Date (`f/`) and method (`m/`) |
+| `AddCommandParser` | Name (`n/`), phone (`p/`), email (`e/`) and postal code (`c/`) |
+| `TagCommandParser` | Tag (`t/`) |
+| `FindCommandParser` | Name (`n/`), phone (`p/`) and email (`e/`) queries |
 
 Each field is validated normally first. If parsing fails, the helper finds the first token matching
 `\s([A-Za-z]+/)` whose prefix is absent from that command's supported-prefix list. It preserves the prefix's case
@@ -181,8 +186,9 @@ trigger this diagnostic. Customer-index and duplicate-prefix checks retain their
 This is an error-message refinement rather than a global rejection rule. Item names, remarks and handover notes
 can contain unsupported prefix-like text, subject to their model constraints. Do not apply the helper to free-text
 values or scan the complete command before field validation: text such as `Pack w/o nuts x/2` can be intentional.
-`FindCommandParser` has a separate, stricter rule that rejects unsupported letter-based prefixes throughout the
-arguments, including text criteria. Its behaviour is unchanged by these contextual diagnostics.
+`FindCommandParser` uses the shared tokenizer too. It validates name, phone and email queries using search-specific
+constraints before refining their errors. Address, product and handover-note queries preserve unsupported prefix-like
+text. Unsupported arguments in the preamble are rejected by the existing nonempty-preamble check.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/model/Model.java)
@@ -251,10 +257,16 @@ SearchCriteria criteria = new SearchCriteria(List.of(
         new TagCriterion(new Tag("regular"))));
 ```
 
-`TextContainsCriterion` supports name, phone, email and address fields. It strips surrounding query whitespace and
+`TextContainsCriterion` supports name, phone, email, address and handover-note fields. It strips surrounding query whitespace and
 matches the entire query as a case-insensitive substring using locale-independent case normalization. Internal spacing
-and punctuation remain significant. Queries must be nonblank, but may be fragments such as `8123` or `example.com`;
-they do not use the validation rules for creating complete contact fields. `TagCriterion` accepts a validated `Tag` and
+and punctuation remain significant. Queries must be nonblank. `FindCommandParser` validates contact fragments before
+creating their criteria: names allow English letters, spaces, apostrophes and hyphens; phones allow one to eight ASCII
+digits with no first-digit restriction; emails allow ASCII letters, digits and `+_.-@`, without requiring a complete
+address. These rules accept `Ali`, `9123`, `example.com`, punctuation-only name fragments such as `-`, and email
+fragments such as `tan@`. They do not use the validators for creating complete contact fields or normalize internal
+name spacing. A failed contact-query validation is refined with the unsupported-prefix helper; otherwise its
+search-specific constraint message is retained. Address and handover-note queries use the generic substring matcher
+without contact-query validation. `TagCriterion` accepts a validated `Tag` and
 uses its complete, case-insensitive equality rule.
 
 `FulfilmentDateCriterion` and `FulfilmentMethodCriterion` inspect the optional shared fields on `Preorder`, independently
@@ -266,8 +278,8 @@ The `f/` and `m/` values are parsed through `ParserUtil.parseFulfilmentDate` and
 real calendar dates in `YYYY-MM-DD` format; methods are stripped and normalized with `Locale.ROOT` to `DELIVERY` or
 `COLLECTION`. Invalid values produce the corresponding model constraint message. The shared `PREFIX_HANDOVER_NOTES`
 constant defines `h/` for handover notes. These queries follow existing text search rules: surrounding whitespace is
-stripped, while internal spacing and punctuation remain significant. Blank values, repeated prefixes and unsupported
-prefixes retain the shared parser's error handling.
+stripped, while internal spacing and punctuation remain significant. Unsupported prefix-like text stays literal in
+handover-note queries. Blank values, repeated prefixes and nonempty preambles retain the existing parser checks.
 
 All `find` searches require a supported prefix, including `n/` for names. Unprefixed searches and bare preambles are
 rejected; `find Alice m/delivery` must use `find n/Alice m/delivery` instead.
