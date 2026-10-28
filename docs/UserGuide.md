@@ -355,7 +355,7 @@ Supply at least one prefixed criterion. Each prefix may appear at most once, in 
 * Results use the current displayed indices. Use `list` to show all customers again.
 * Use lowercase prefixes. A supported prefix starts at the beginning of the arguments or after whitespace and ends the previous value. The existing `c/o` exception keeps conventional care-of text inside an address.
 * Address, product and handover-note queries preserve unsupported prefix-like text literally. For example, `find d/Cake w/ candles` searches for the complete product `Cake w/ candles`, and `find h/Leave w/o ringing x/foo` keeps the entire handover-note query.
-* Name, phone and email queries are validated first. If an invalid query contains an extra unsupported prefix, such as `find p/9123 x/foo`, the error identifies `x/`. Other invalid queries show the corresponding query constraint message. Unsupported arguments before the first recognised criterion still show command-format guidance.
+* Name, phone, email, postal code, tag, date, method and status queries are validated first. If an invalid query contains an extra unsupported prefix, such as `find c/123 x/foo`, the error identifies `x/`. Other invalid queries show the corresponding constraint message. Unsupported arguments before the first recognised criterion still show command-format guidance.
 
 Examples:
 
@@ -388,6 +388,7 @@ Customer and preorder changes preserve the search and refresh the results. A cus
 | `find p/91-23` or `find p/912345678` | Phone query constraint message; use one to eight digits. |
 | `find e/example!.com` | Email query constraint message; use letters, digits or `+_.-@`, without spaces. |
 | `find n/Ali x/foo`, `find p/9123 x/foo` or `find e/example.com x/foo` | `Unsupported prefix 'x/' for find.` |
+| `find c/123 x/foo`, `find t/VIP x/foo`, `find f/2026-12-20 x/foo`, `find m/delivery x/foo` or `find s/pending x/foo` | `Unsupported prefix 'x/' for find.` |
 | `find f/2026-02-30` or `find f/2026-2-03` | The date constraint message is shown; supply a real date in `YYYY-MM-DD` format. |
 | `find m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
 | `find h/` or `find m/` | Invalid command format; every supplied prefix needs a value. |

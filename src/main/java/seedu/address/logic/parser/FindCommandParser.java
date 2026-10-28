@@ -97,22 +97,39 @@ public class FindCommandParser implements Parser<FindCommand> {
         addTextCriterion(criteria, arguments, PREFIX_ADDRESS, Field.ADDRESS);
         addTextCriterion(criteria, arguments, PREFIX_HANDOVER_NOTES, Field.HANDOVER_NOTES);
         if (arguments.getValue(PREFIX_FULFILMENT_DATE).isPresent()) {
-            criteria.add(new FulfilmentDateCriterion(
-                    ParserUtil.parseFulfilmentDate(arguments.getValue(PREFIX_FULFILMENT_DATE).get())));
+            String date = arguments.getValue(PREFIX_FULFILMENT_DATE).get();
+            try {
+                criteria.add(new FulfilmentDateCriterion(ParserUtil.parseFulfilmentDate(date)));
+            } catch (ParseException pe) {
+                throw createFieldParseException(date, pe);
+            }
         }
         if (arguments.getValue(PREFIX_FULFILMENT_METHOD).isPresent()) {
-            criteria.add(new FulfilmentMethodCriterion(
-                    ParserUtil.parseFulfilmentMethod(arguments.getValue(PREFIX_FULFILMENT_METHOD).get())));
+            String method = arguments.getValue(PREFIX_FULFILMENT_METHOD).get();
+            try {
+                criteria.add(new FulfilmentMethodCriterion(ParserUtil.parseFulfilmentMethod(method)));
+            } catch (ParseException pe) {
+                throw createFieldParseException(method, pe);
+            }
         }
         if (arguments.getValue(PREFIX_POSTAL_CODE).isPresent()) {
             String postalCodePrefix = arguments.getValue(PREFIX_POSTAL_CODE).get().strip();
-            if (!PostalCodeCriterion.isValidPrefix(postalCodePrefix)) {
-                throw new ParseException(PostalCodeCriterion.MESSAGE_CONSTRAINTS);
+            try {
+                if (!PostalCodeCriterion.isValidPrefix(postalCodePrefix)) {
+                    throw new ParseException(PostalCodeCriterion.MESSAGE_CONSTRAINTS);
+                }
+                criteria.add(new PostalCodeCriterion(postalCodePrefix));
+            } catch (ParseException pe) {
+                throw createFieldParseException(postalCodePrefix, pe);
             }
-            criteria.add(new PostalCodeCriterion(postalCodePrefix));
         }
         if (arguments.getValue(PREFIX_TAG).isPresent()) {
-            criteria.add(new TagCriterion(ParserUtil.parseTag(arguments.getValue(PREFIX_TAG).get().strip())));
+            String tag = arguments.getValue(PREFIX_TAG).get().strip();
+            try {
+                criteria.add(new TagCriterion(ParserUtil.parseTag(tag)));
+            } catch (ParseException pe) {
+                throw createFieldParseException(tag, pe);
+            }
         }
 
         return criteria;
@@ -160,9 +177,15 @@ public class FindCommandParser implements Parser<FindCommand> {
         }
 
         // Omitting s/ accepts all statuses. An empty set would instead match no items.
-        Set<ItemStatus> statuses = status.isPresent()
-                ? Set.of(ParserUtil.parseItemStatus(status.get().strip()))
-                : EnumSet.allOf(ItemStatus.class);
+        Set<ItemStatus> statuses = EnumSet.allOf(ItemStatus.class);
+        if (status.isPresent()) {
+            String value = status.get().strip();
+            try {
+                statuses = Set.of(ParserUtil.parseItemStatus(value));
+            } catch (ParseException pe) {
+                throw createFieldParseException(value, pe);
+            }
+        }
         // Both conditions belong in one criterion so they cannot match different items.
         criteria.add(new ItemCriterion(productName, statuses));
     }

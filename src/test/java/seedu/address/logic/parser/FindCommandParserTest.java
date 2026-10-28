@@ -51,6 +51,12 @@ public class FindCommandParserTest {
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
     private static final Map<Prefix, Field> TEXT_FIELDS = Map.of(
             PREFIX_ADDRESS, ADDRESS, PREFIX_HANDOVER_NOTES, HANDOVER_NOTES);
+    private static final Map<String, String> CONSTRAINED_QUERIES = Map.of(
+            "c/123", PostalCodeCriterion.MESSAGE_CONSTRAINTS,
+            "t/VIP", Tag.MESSAGE_CONSTRAINTS,
+            "f/2026-12-20", FulfilmentDate.MESSAGE_CONSTRAINTS,
+            "m/delivery", FulfilmentMethod.MESSAGE_CONSTRAINTS,
+            "s/pending", ItemStatus.MESSAGE_CONSTRAINTS);
 
     private final FindCommandParser parser = new FindCommandParser();
 
@@ -143,6 +149,69 @@ public class FindCommandParserTest {
         assertParseFailure(parser, "n/Ali2 p/9123 x/foo", FindCommandParser.MESSAGE_NAME_QUERY_CONSTRAINTS);
         assertParseFailure(parser, "p/invalid e/example.com x/foo", FindCommandParser.MESSAGE_PHONE_QUERY_CONSTRAINTS);
         assertParseFailure(parser, "e/invalid! c/01 x/foo", FindCommandParser.MESSAGE_EMAIL_QUERY_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_unsupportedPrefixesInConstrainedCriteria_namesPrefix() {
+        for (String query : CONSTRAINED_QUERIES.keySet()) {
+            for (String prefix : List.of("x/", "i/", "q/", "P/", "unknown/", "w/")) {
+                for (String value : List.of("foo", "2", "")) {
+                    assertParseFailure(parser, query + " " + prefix + value,
+                            "Unsupported prefix '" + prefix + "' for find.");
+                }
+            }
+            assertParseFailure(parser, query + " x/foo q/2", "Unsupported prefix 'x/' for find.");
+        }
+    }
+
+    @Test
+    public void parse_unsupportedPrefixAfterWhitespaceInConstrainedCriteria_namesPrefix() {
+        for (String query : CONSTRAINED_QUERIES.keySet()) {
+            for (String separator : List.of("\t", "\n", "\r\n", " \t ")) {
+                assertParseFailure(parser, query + separator + "x/foo", "Unsupported prefix 'x/' for find.");
+            }
+        }
+    }
+
+    @Test
+    public void parse_invalidConstrainedValuesWithoutPrefixBoundary_keepsConstraintMessages() {
+        for (Map.Entry<String, String> query : CONSTRAINED_QUERIES.entrySet()) {
+            for (String suffix : List.of("x/foo", " x /foo", " #04/08", " https://example.com/path", " 2x/foo")) {
+                assertParseFailure(parser, query.getKey() + suffix, query.getValue());
+            }
+            String prefix = query.getKey().substring(0, query.getKey().indexOf('/') + 1);
+            assertParseFailure(parser, prefix + "x/foo", query.getValue());
+        }
+    }
+
+    @Test
+    public void parse_freeTextPrefixesBeforeInvalidConstrainedValue_keepsConstraintMessage() {
+        for (Map.Entry<String, String> query : CONSTRAINED_QUERIES.entrySet()) {
+            for (String text : List.of("a/Block 123 x/foo", "d/Cake w/ candles", "h/Leave w/o ringing x/foo")) {
+                assertParseFailure(parser, text + " " + query.getKey() + " invalid", query.getValue());
+            }
+        }
+    }
+
+    @Test
+    public void parse_freeTextPrefixesBeforeUnsupportedConstrainedArgument_namesOnlyArgument() {
+        for (String query : CONSTRAINED_QUERIES.keySet()) {
+            assertParseFailure(parser, "h/Leave w/o ringing x/earlier " + query + " y/later",
+                    "Unsupported prefix 'y/' for find.");
+        }
+    }
+
+    @Test
+    public void parse_unsupportedConstrainedArgumentWithEarlierErrors_preservesValidationOrder() {
+        assertParseFailure(parser, "x/foo c/123", FORMAT_ERROR);
+        assertParseFailure(parser, "c/123 x/foo c/456",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_POSTAL_CODE));
+        assertParseFailure(parser, "c/123 x/foo t/", FORMAT_ERROR);
+        assertParseFailure(parser, "n/Ali2 c/123 x/foo", FindCommandParser.MESSAGE_NAME_QUERY_CONSTRAINTS);
+        assertParseFailure(parser, "f/2026-02-30 m/delivery x/foo", FulfilmentDate.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "m/pickup c/123 x/foo", FulfilmentMethod.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "c/invalid t/VIP x/foo", PostalCodeCriterion.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "t/VIP! s/pending x/foo", Tag.MESSAGE_CONSTRAINTS);
     }
 
     @Test
@@ -294,7 +363,7 @@ public class FindCommandParserTest {
                 "n/Alice c/")) {
             assertParseFailure(parser, input, FORMAT_ERROR);
         }
-        assertParseFailure(parser, "c/012345 x/value", PostalCodeCriterion.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "c/012345 x/value", "Unsupported prefix 'x/' for find.");
         assertParseFailure(parser, "c/012345 c/123456",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_POSTAL_CODE));
     }

@@ -174,7 +174,7 @@ The following parsers refine errors from constrained fields using `ParserUtil.fi
 | `PreorderCommandParser` | Date (`f/`) and method (`m/`) |
 | `AddCommandParser` | Name (`n/`), phone (`p/`), email (`e/`) and postal code (`c/`) |
 | `TagCommandParser` | Tag (`t/`) |
-| `FindCommandParser` | Name (`n/`), phone (`p/`) and email (`e/`) queries |
+| `FindCommandParser` | Name (`n/`), phone (`p/`), email (`e/`), postal code (`c/`), tag (`t/`), date (`f/`), method (`m/`) and status (`s/`) queries |
 
 Each field is validated normally first. If parsing fails, the helper finds the first token matching
 `\s([A-Za-z]+/)` whose prefix is absent from that command's supported-prefix list. It preserves the prefix's case
@@ -186,9 +186,13 @@ trigger this diagnostic. Customer-index and duplicate-prefix checks retain their
 This is an error-message refinement rather than a global rejection rule. Item names, remarks and handover notes
 can contain unsupported prefix-like text, subject to their model constraints. Do not apply the helper to free-text
 values or scan the complete command before field validation: text such as `Pack w/o nuts x/2` can be intentional.
-`FindCommandParser` uses the shared tokenizer too. It validates name, phone and email queries using search-specific
-constraints before refining their errors. Address, product and handover-note queries preserve unsupported prefix-like
-text. Unsupported arguments in the preamble are rejected by the existing nonempty-preamble check.
+`FindCommandParser` uses the shared tokenizer too. It validates name, phone, email and postal-code queries using
+search-specific constraints, and validates tags, dates, methods and statuses through their existing validators.
+Each failed constrained value is passed to `createFieldParseException` to refine its error. For example,
+`find c/123 x/foo` identifies `x/` while `find c/123` remains a valid postal-prefix search. Address, product and
+handover-note queries preserve unsupported prefix-like text. Only the failed field's value is inspected, so
+`find h/Leave w/o ringing x/foo s/invalid` still reports the status constraint rather than an error about the notes.
+Unsupported arguments in the preamble are rejected by the existing nonempty-preamble check.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/model/Model.java)
@@ -276,7 +280,8 @@ matching fields do. Searches for handover notes do not inspect item remarks.
 
 The `f/` and `m/` values are parsed through `ParserUtil.parseFulfilmentDate` and `parseFulfilmentMethod`. Dates must be
 real calendar dates in `YYYY-MM-DD` format; methods are stripped and normalized with `Locale.ROOT` to `DELIVERY` or
-`COLLECTION`. Invalid values produce the corresponding model constraint message. The shared `PREFIX_HANDOVER_NOTES`
+`COLLECTION`. Invalid values are refined with the unsupported-prefix helper, falling back to the corresponding model
+constraint message when no extra unsupported prefix is present. The shared `PREFIX_HANDOVER_NOTES`
 constant defines `h/` for handover notes. These queries follow existing text search rules: surrounding whitespace is
 stripped, while internal spacing and punctuation remain significant. Unsupported prefix-like text stays literal in
 handover-note queries. Blank values, repeated prefixes and nonempty preambles retain the existing parser checks.
@@ -287,7 +292,8 @@ rejected; `find Alice m/delivery` must use `find n/Alice m/delivery` instead.
 `PostalCodeCriterion` accepts a search prefix stored as a string. `FindCommandParser` strips surrounding whitespace
 from the `c/` value and validates it using `PostalCodeCriterion.isValidPrefix`, which accepts one to six ASCII digits
 (`[0-9]{1,6}`). Blank values produce the existing invalid-command-format error; other invalid values produce
-`PostalCodeCriterion.MESSAGE_CONSTRAINTS`. The criterion also validates its constructor argument and matches using
+`PostalCodeCriterion.MESSAGE_CONSTRAINTS` unless the failed value contains an extra unsupported prefix. For example,
+`find c/123 x/foo` reports `Unsupported prefix 'x/' for find.` The criterion also validates its constructor argument and matches using
 `postalCode.value.startsWith(postalCodePrefix)`. Leading zeros remain significant, and a six-digit query is an exact match.
 This criterion joins the same `SearchCriteria` collection as
 other conditions, so `find n/Alice c/53` requires both conditions and each new `find` replaces the previous criteria.
@@ -303,7 +309,7 @@ To add a search condition with different matching rules, implement `PersonCriter
 `SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
 CLI prefixes belong in the parser, not in the criteria. Add the prefix to `FindCommandParser`'s supported-prefix list
 and construct its criterion there. The parser accepts each supported prefix once, requires a prefix before the first
-value, rejects blank or unsupported parameters, and validates tags using `ParserUtil.parseTag` and postal search
+value, rejects blank values and nonempty preambles, and validates tags using `ParserUtil.parseTag` and postal search
 prefixes using `PostalCodeCriterion.isValidPrefix`.
 It recognizes prefixes at whitespace boundaries without collapsing internal query spacing, including `c/o` inside an
 address. `FindCommand` passes `SearchCriteria` directly to
@@ -317,7 +323,8 @@ in one criterion and one badge.
 "has this product" and "has this status" would incorrectly allow different items to satisfy the conditions.
 Product names match completely after stripping surrounding whitespace and normalizing case with `Locale.ROOT`;
 internal spacing and punctuation remain significant. The criterion also retains the stripped input name for display;
-matching, equality and hash codes use the normalized name. Status input is validated with `ParserUtil.parseItemStatus`.
+matching, equality and hash codes use the normalized name. Status input is validated with `ParserUtil.parseItemStatus`;
+failures use the same contextual unsupported-prefix diagnostics as other constrained queries.
 
 The parser supplies `EnumSet.allOf(ItemStatus.class)` when `s/` is omitted. This is deliberate: an empty status set
 in `ItemCriterion` matches **nothing**, rather than meaning "any status". An absent product name accepts any product.

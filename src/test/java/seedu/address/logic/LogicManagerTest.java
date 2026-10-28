@@ -504,6 +504,19 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_unsupportedFindConstrainedArguments_preservesDataAndActiveSearch() throws Exception {
+        setUpTrackPersons();
+        logic.execute("find n/Ali");
+
+        for (String query : List.of("c/123", "t/VIP", "f/2026-12-20", "m/delivery", "s/pending")) {
+            assertCommandFailurePreservesFilteredList("find " + query + " x/foo", ParseException.class,
+                    "Unsupported prefix 'x/' for find.");
+        }
+        assertCommandFailurePreservesFilteredList("find h/Leave w/o ringing x/earlier s/pending y/later",
+                ParseException.class, "Unsupported prefix 'y/' for find.");
+    }
+
+    @Test
     public void execute_invalidFindFormat_preservesDataAndFilteredList() throws Exception {
         setUpTrackPersons();
         assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
