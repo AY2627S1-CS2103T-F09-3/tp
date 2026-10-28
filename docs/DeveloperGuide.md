@@ -156,6 +156,34 @@ How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
+#### Prefix boundaries and error messages
+
+`ArgumentTokenizer` recognizes only the prefixes supplied by a command parser, with whitespace before each prefix.
+A supported prefix ends the preceding value. Unsupported prefix-like text stays in the current value or preamble.
+The tokenizer preserves conventional `c/o` text inside an address instead of treating it as a postal-code prefix.
+Quotation marks and backslashes do not escape supported prefixes.
+
+Three parsers refine errors from constrained fields using `ParserUtil.findUnsupportedPrefix`:
+
+| Parser | Fields with contextual prefix diagnostics |
+|--------|------------------------------------------|
+| `DeleteItemCommandParser` | Item index (`i/`) |
+| `EditItemCommandParser` | Item index (`i/`), quantity (`q/`) and status (`s/`) |
+| `TrackCommandParser` | Status (`s/`) |
+
+Each field is validated normally first. If parsing fails, the helper finds the first token matching
+`\s([A-Za-z]+/)` whose prefix is absent from that command's supported-prefix list. It preserves the prefix's case
+and returns an `Optional<Prefix>`. The parser formats `Messages.MESSAGE_UNSUPPORTED_PREFIX` with the offending
+prefix and command name, for example `Unsupported prefix 'd/' for track.` If no unsupported prefix is found,
+the original field constraint message is used. A slash embedded without a preceding whitespace boundary does not
+trigger this diagnostic. Customer-index and duplicate-prefix checks retain their earlier precedence.
+
+This is an error-message refinement rather than a global rejection rule. Item names, remarks and handover notes
+can contain unsupported prefix-like text, subject to their model constraints. Do not apply the helper to free-text
+values or scan the complete command before field validation: text such as `Pack w/o nuts x/2` can be intentional.
+`FindCommandParser` has a separate, stricter rule that rejects unsupported letter-based prefixes throughout the
+arguments, including text criteria. Its behaviour is unchanged by these contextual diagnostics.
+
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/model/Model.java)
 
@@ -465,6 +493,10 @@ the customer in the current format.
 Both parsers validate the customer-index syntax first, reject duplicate prefixes, check required inputs, and validate
 item fields in the order name, quantity, status, remark. They reuse the model validators through `ParserUtil`.
 
+For `edititem`, failures in `i/`, `q/` and `s/` use the contextual diagnostics described under
+[Prefix boundaries and error messages](#prefix-boundaries-and-error-messages). Names and remarks retain their
+normal validation and preserve unsupported prefix-like text.
+
 The edit descriptor distinguishes an omitted remark (`null`), removal (`Optional.empty()`) and replacement
 (`Optional.of(remark)`). The command copies the descriptor defensively. Empty remarks are rejected when adding.
 New items must have quantities; editing preserves a migrated missing quantity unless a quantity is supplied.
@@ -481,16 +513,17 @@ same immutable preorder/person replacement path, with the item list appended or 
 
 Success messages use `Added/Edited item NUMBER for CUSTOMER: NAME (quantity: QUANTITY, STATUS)`.
 For migrated items without a quantity, the quantity portion is `quantity needed`; the card shows `Qty needed`.
-Remarks remain visible on the customer card. A missing `i/` produces usage instructions; a supplied but invalid
-item index produces `Item index must be a positive integer.`
+Remarks remain visible on the customer card. A missing `i/` produces usage instructions. Invalid item-index values
+use the contextual diagnostics above, with `Item index must be a positive integer.` as the fallback message.
 `deleteorder` still removes the whole preorder; its item-level replacement is a separate feature.
 
 ### Preorder item deletion
 
 `DeleteItemCommandParser` parses `deleteitem INDEX i/ITEM_INDEX`. It validates the customer-index preamble,
 rejects duplicate `i/` prefixes, and parses the required item index using `ParserUtil.parseIndex`.
-A missing `i/` shows usage instructions; a supplied empty or invalid value shows
-`Item index must be a positive integer.`
+A missing `i/` shows usage instructions. An unsupported prefix after the item-index value, such as
+`deleteitem 1 i/1 x/2`, shows `Unsupported prefix 'x/' for deleteitem.` Other empty or invalid item-index values
+show `Item index must be a positive integer.`
 `AddressBookParser` dispatches `deleteitem` to this parser.
 
 `DeleteItemCommand` resolves the customer from `model.getFilteredPersonList()`, checks that a preorder exists,
@@ -1068,6 +1101,23 @@ Run each group below independently, starting with the sample data unless stated 
 
    1. Test case: Close and relaunch the application, then locate the same customer.<br>
       Expected: The removed tag remains absent. The customer's other tags, contact details, and preorder are preserved.
+
+### Unsupported prefix diagnostics
+
+Use a disposable copy of the sample data and run `list`.
+
+1. Try `deleteitem 1 i/1 x/2`.<br>
+   Expected: `Unsupported prefix 'x/' for deleteitem.` No data changes.
+1. Try `edititem 1 i/1 c/012345`.<br>
+   Expected: `Unsupported prefix 'c/' for edititem.` No data changes.
+1. Try `track s/pending d/Cake`.<br>
+   Expected: `Unsupported prefix 'd/' for track.` The current criteria and displayed list remain unchanged.
+1. Run `edititem 1 i/1 r/Pack w/o nuts x/2`.<br>
+   Expected: The edit succeeds and the remark is exactly `Pack w/o nuts x/2`.
+1. Run `preorder 1 h/Leave w/o ringing x/2`.<br>
+   Expected: The handover notes are exactly `Leave w/o ringing x/2`.
+1. Run `edititem 1 i/1 r/Less sugar s/prepared`.<br>
+   Expected: The remark is `Less sugar` and the status is `PREPARED`; the supported `s/` starts a separate field.
 
 ### Adding and editing preorder items
 

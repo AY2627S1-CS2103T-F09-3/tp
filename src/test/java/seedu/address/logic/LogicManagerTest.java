@@ -546,10 +546,13 @@ public class LogicManagerTest {
                 "1 customer(s) with 1 matching item(s) for COMPLETED listed!",
                 List.of(COMPLETED_DANIEL));
 
-        for (String input : List.of("track s/", "track s/UNKNOWN", "track s/PENDING p/123",
-                "track s/PENDING extra")) {
+        for (String input : List.of("track s/", "track s/UNKNOWN", "track s/PENDING extra")) {
             assertCommandFailurePreservesFilteredList(input, ParseException.class, ItemStatus.MESSAGE_CONSTRAINTS);
         }
+        assertCommandFailurePreservesFilteredList("track s/PENDING p/123", ParseException.class,
+                "Unsupported prefix 'p/' for track.");
+        assertCommandFailurePreservesFilteredList("track s/pending d/Cake", ParseException.class,
+                "Unsupported prefix 'd/' for track.");
     }
 
     @Test
