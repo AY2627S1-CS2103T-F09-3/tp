@@ -79,6 +79,7 @@ Search criteria determine which customers are displayed. Keeping the criteria pr
 | `find`, `track` | Each successful command replaces the previous criteria and searches all stored customers. |
 | `add`, `edit`, `delete`, `tag`, `untag`, `preorder`, `deleteorder` | Preserve the active criteria and refresh the matching results. |
 | `sort date`, `group postal` | Preserve the active criteria and reorder the displayed results. A later `find` or `track` keeps this order. |
+| `clear` | Clears the criteria, sorting and grouping, then leaves the list empty. |
 | `list` | Clears the criteria, sorting and grouping, and shows all customers in their saved order. |
 
 During a session, use `list` to explicitly return to an unfiltered view. A `find` that happens to match every customer still has active criteria. Empty results do not clear the criteria either. Updates and deletions can change the displayed indexes, so check them before your next command.
