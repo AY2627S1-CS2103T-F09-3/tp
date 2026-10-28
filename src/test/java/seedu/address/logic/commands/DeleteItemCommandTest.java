@@ -47,7 +47,8 @@ public class DeleteItemCommandTest {
     private static final Item PENDING_ITEM = PENDING_BENSON.getPreorder().orElseThrow().getItems().getFirst();
     private static final String EXPECTED_SUCCESS_MESSAGE = String.format(
             DeleteItemCommand.MESSAGE_DELETE_ITEM_SUCCESS, 1, BENSON.getName(), PENDING_ITEM.getName(),
-            PENDING_ITEM.getQuantity().orElseThrow(), PENDING_ITEM.getStatus());
+            PENDING_ITEM.getQuantity().map(quantity -> "quantity: " + quantity)
+                    .orElse(Messages.MISSING_QUANTITY_TEXT), PENDING_ITEM.getStatus());
 
     private Model model;
 
@@ -83,12 +84,30 @@ public class DeleteItemCommandTest {
             Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
             expectedModel.setPerson(BENSON, expected);
             String message = String.format(DeleteItemCommand.MESSAGE_DELETE_ITEM_SUCCESS, position + 1,
-                    BENSON.getName(), removed.getName(), removed.getQuantity().map(Object::toString).orElse(""),
+                    BENSON.getName(), removed.getName(), removed.getQuantity()
+                            .map(quantity -> "quantity: " + quantity).orElse(Messages.MISSING_QUANTITY_TEXT),
                     removed.getStatus());
             assertCommandSuccess(new DeleteItemCommand(INDEX_BENSON, Index.fromZeroBased(position)),
                     model, message, expectedModel);
             assertEquals(originalItems, original.getPreorder().orElseThrow().getItems());
         }
+    }
+
+    @Test
+    public void execute_itemWithoutQuantity_successMessageShowsQuantityNeeded() {
+        Item itemWithoutQuantity = new ItemBuilder().withName("Pineapple Tarts").withoutQuantity()
+                .withStatus(ItemStatus.PREPARED).build();
+        Person personWithItem = new PersonBuilder(BENSON).withPreorder(itemWithoutQuantity).build();
+        model.setPerson(PENDING_BENSON, personWithItem);
+
+        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+        expectedModel.setPerson(BENSON, EMPTY_BENSON);
+
+        DeleteItemCommand command = new DeleteItemCommand(INDEX_BENSON, INDEX_FIRST_ITEM);
+
+        assertCommandSuccess(command, model,
+                "Deleted item 1 for " + BENSON.getName()
+                        + ": Pineapple Tarts (quantity needed, PREPARED)", expectedModel);
     }
 
     @Test

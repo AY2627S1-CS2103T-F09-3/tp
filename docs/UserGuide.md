@@ -525,7 +525,8 @@ For example, deleting Alex Yeoh's second sample item shows:
 Deleted item 2 for Alex Yeoh: Almond Cookies (quantity: 1, PREPARED)
 ```
 
-The message uses the item's number before deletion. For a migrated item with no recorded quantity, the quantity value is blank, for example `(quantity: , PENDING)`.
+The message uses the item's number before deletion. For a migrated item with no recorded quantity, the message says
+`(quantity needed, STATUS)`, matching the item card and `edititem` success message.
 
 | Situation | Message |
 |-----------|---------|
