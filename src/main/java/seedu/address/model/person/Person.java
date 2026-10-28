@@ -29,35 +29,18 @@ public class Person {
     private final Set<Tag> tags = new HashSet<>();
     private final Preorder preorder; // null when the customer has no current preorder
 
-    /**
-     * Creates a person without a preorder.
-     * Every field must be present and not null.
-     */
-    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags) {
-        this(name, phone, email, address, null, tags, Optional.empty());
-    }
-
-    /**
-     * Every field must be present and not null.
-     * Pass {@code Optional.empty()} as {@code preorder} for a person without a current preorder.
-     */
-    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags,
-            Optional<Preorder> preorder) {
-        this(name, phone, email, address, null, tags, preorder);
-    }
-
-    /** Creates a person with an optional postal code and no preorder. */
+    /** Creates a person without a preorder. Every field must be present and not null. */
     public Person(Name name, Phone phone, Email email, Address address, PostalCode postalCode, Set<Tag> tags) {
         this(name, phone, email, address, postalCode, tags, Optional.empty());
     }
 
     /**
      * Creates a person with the given details and preorder.
-     * The postal code may be null for legacy data; all other arguments must be non-null.
+     * Every argument must be non-null. Use {@code Optional.empty()} for a person without a preorder.
      */
     public Person(Name name, Phone phone, Email email, Address address, PostalCode postalCode, Set<Tag> tags,
             Optional<Preorder> preorder) {
-        requireAllNonNull(name, phone, email, address, tags, preorder);
+        requireAllNonNull(name, phone, email, address, postalCode, tags, preorder);
         this.name = name;
         this.phone = phone;
         this.email = email;

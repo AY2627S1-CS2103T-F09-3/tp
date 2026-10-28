@@ -276,12 +276,16 @@ rejected; `find Alice m/delivery` must use `find n/Alice m/delivery` instead.
 from the `c/` value and validates it using `PostalCodeCriterion.isValidPrefix`, which accepts one to six ASCII digits
 (`[0-9]{1,6}`). Blank values produce the existing invalid-command-format error; other invalid values produce
 `PostalCodeCriterion.MESSAGE_CONSTRAINTS`. The criterion also validates its constructor argument and matches using
-`postalCode.value.startsWith(postalCodePrefix)`. Leading zeros remain significant, a six-digit query is an exact match,
-and customers whose postal code is null do not match. This criterion joins the same `SearchCriteria` collection as
+`postalCode.value.startsWith(postalCodePrefix)`. Leading zeros remain significant, and a six-digit query is an exact match.
+This criterion joins the same `SearchCriteria` collection as
 other conditions, so `find n/Alice c/53` requires both conditions and each new `find` replaces the previous criteria.
 
 Customer-record validation remains separate: `add` and `edit` continue to use `ParserUtil.parsePostalCode` and
 `PostalCode`, which require exactly six digits. A valid search prefix is never used as a customer's stored postal code.
+
+Postal codes are mandatory in the model and saved data too. `Person` requires a non-null `PostalCode`, and
+`JsonAdaptedPerson` rejects null or missing postal codes with the standard missing-field error and malformed values
+with `PostalCode.MESSAGE_CONSTRAINTS`. Older files must contain valid postal codes before they can be loaded.
 
 To add a search condition with different matching rules, implement `PersonCriterion` and include it in a
 `SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
@@ -346,8 +350,8 @@ JavaFX keyboard navigation and selects its first entry when focused without an e
 `DeliveryPreparationSummary` takes a snapshot of the current displayed customer results. It reuses
 `ItemCriterion` with no product condition and statuses `PENDING` and `PREPARED`, then requires the preorder's method
 to be `DELIVERY`. It counts customers, not matching items. Collection, unset methods, empty wrappers and completed-only
-preorders are excluded. Missing postal codes remain represented by one additional group; dates and notes may be unset
-without excluding an otherwise outstanding delivery. The immutable snapshot orders contacts by postal code and name,
+preorders are excluded. Dates and notes may be unset without excluding an otherwise outstanding delivery.
+The immutable snapshot orders contacts by postal code and name,
 without mutating the address book or the active search criteria.
 
 `MainWindow` puts a `DeliverySummaryPanel` in the `SidePanel`. The panel observes the existing
@@ -435,6 +439,8 @@ field that breaks its rules is reported as invalid data, in the same way as an i
 an `"items"` field loads as a preorder with no items.
 
 #### Loading v1.3 data
+
+All customer records must first have valid six-digit postal codes; missing codes are not inferred or accepted.
 
 LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and one `"status"`.
 `JsonAdaptedPerson` still reads that field through `JsonAdaptedLegacyPreorder`, which turns it into a preorder with
