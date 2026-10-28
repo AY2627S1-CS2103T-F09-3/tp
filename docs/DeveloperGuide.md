@@ -481,16 +481,18 @@ same immutable preorder/person replacement path, with the item list appended or 
 
 Success messages use `Added/Edited item NUMBER for CUSTOMER: NAME (quantity: QUANTITY, STATUS)`.
 For migrated items without a quantity, the quantity portion is `quantity needed`; the card shows `Qty needed`.
-Remarks remain visible on the customer card. A missing `i/` produces usage instructions; a supplied but invalid
-item index produces `Item index must be a positive integer.`
+Remarks remain visible on the customer card. A missing `i/` produces usage instructions; an item index that is empty,
+non-positive or malformed produces `Item index must be a positive integer.` A positive item index beyond the preorder's
+item count produces `The item index provided is invalid.`
 `deleteorder` still removes the whole preorder; its item-level replacement is a separate feature.
 
 ### Preorder item deletion
 
 `DeleteItemCommandParser` parses `deleteitem INDEX i/ITEM_INDEX`. It validates the customer-index preamble,
 rejects duplicate `i/` prefixes, and parses the required item index using `ParserUtil.parseIndex`.
-A missing `i/` shows usage instructions; a supplied empty or invalid value shows
-`Item index must be a positive integer.`
+A missing `i/` shows usage instructions; an item index that is empty, non-positive or malformed shows
+`Item index must be a positive integer.` A positive index beyond the preorder's item count is parsed and later
+produces `The item index provided is invalid.`
 `AddressBookParser` dispatches `deleteitem` to this parser.
 
 `DeleteItemCommand` resolves the customer from `model.getFilteredPersonList()`, checks that a preorder exists,
