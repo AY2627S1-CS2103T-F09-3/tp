@@ -92,9 +92,12 @@ public class FindCommandParser implements Parser<FindCommand> {
 
     private List<PersonCriterion> createCustomerCriteria(ArgumentMultimap arguments) throws ParseException {
         List<PersonCriterion> criteria = new ArrayList<>();
-        addConstrainedTextCriterion(criteria, arguments, PREFIX_NAME, Field.NAME);
-        addConstrainedTextCriterion(criteria, arguments, PREFIX_PHONE, Field.PHONE);
-        addConstrainedTextCriterion(criteria, arguments, PREFIX_EMAIL, Field.EMAIL);
+        addConstrainedTextCriterion(criteria, arguments, PREFIX_NAME, Field.NAME,
+                "[A-Za-z '-]+", MESSAGE_NAME_QUERY_CONSTRAINTS);
+        addConstrainedTextCriterion(criteria, arguments, PREFIX_PHONE, Field.PHONE,
+                "[0-9]{1,8}", MESSAGE_PHONE_QUERY_CONSTRAINTS);
+        addConstrainedTextCriterion(criteria, arguments, PREFIX_EMAIL, Field.EMAIL,
+                "[A-Za-z0-9+_.@-]+", MESSAGE_EMAIL_QUERY_CONSTRAINTS);
         addTextCriterion(criteria, arguments, PREFIX_ADDRESS, Field.ADDRESS);
         addTextCriterion(criteria, arguments, PREFIX_HANDOVER_NOTES, Field.HANDOVER_NOTES);
         if (arguments.getValue(PREFIX_FULFILMENT_DATE).isPresent()) {
@@ -137,7 +140,7 @@ public class FindCommandParser implements Parser<FindCommand> {
     }
 
     private void addConstrainedTextCriterion(List<PersonCriterion> criteria, ArgumentMultimap arguments,
-            Prefix prefix, Field field) throws ParseException {
+            Prefix prefix, Field field, String validationRegex, String constraintMessage) throws ParseException {
         Optional<String> value = arguments.getValue(prefix);
         if (value.isEmpty()) {
             return;
@@ -145,12 +148,7 @@ public class FindCommandParser implements Parser<FindCommand> {
 
         String query = value.get();
         try {
-            switch (field) {
-                case NAME -> validateQuery(query, "[A-Za-z '-]+", MESSAGE_NAME_QUERY_CONSTRAINTS);
-                case PHONE -> validateQuery(query, "[0-9]{1,8}", MESSAGE_PHONE_QUERY_CONSTRAINTS);
-                case EMAIL -> validateQuery(query, "[A-Za-z0-9+_.@-]+", MESSAGE_EMAIL_QUERY_CONSTRAINTS);
-                default -> throw new IllegalArgumentException("Unsupported constrained text field: " + field);
-            }
+            validateQuery(query, validationRegex, constraintMessage);
         } catch (ParseException pe) {
             throw createFieldParseException(query, pe);
         }
