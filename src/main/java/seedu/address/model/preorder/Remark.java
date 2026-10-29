@@ -5,8 +5,7 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 
 /**
  * Represents a customer's special request for an item, such as "Less sugar".
- * Guarantees: immutable; new values are valid as declared in {@link #isValidRemark(String)}; legacy values loaded
- * from storage may contain forward slashes.
+ * Guarantees: immutable; values are valid as declared in {@link #isValidRemark(String)}.
  */
 public class Remark {
 
@@ -32,33 +31,11 @@ public class Remark {
         value = remark;
     }
 
-    private Remark(String remark, boolean isLegacyData) {
-        checkArgument(isLegacyData, "Legacy remarks must be created through the legacy-data factory.");
-        value = remark;
-    }
-
-    /**
-     * Creates a remark loaded from legacy data, where forward slashes were allowed.
-     * New user input must use {@link #Remark(String)} so the current validation rule is enforced.
-     *
-     * @param remark A legacy remark that satisfies all constraints except the slash restriction.
-     */
-    public static Remark fromLegacyData(String remark) {
-        requireNonNull(remark);
-        checkArgument(isValidRemarkExceptSlash(remark), MESSAGE_CONSTRAINTS);
-        checkArgument(remark.contains("/"), "Legacy remarks must contain a forward slash.");
-        return new Remark(remark, true);
-    }
-
     /**
      * Returns true if a given string is a valid remark.
      */
     public static boolean isValidRemark(String test) {
-        return isValidRemarkExceptSlash(test) && !test.contains("/");
-    }
-
-    private static boolean isValidRemarkExceptSlash(String test) {
-        return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX);
+        return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX) && !test.contains("/");
     }
 
     @Override

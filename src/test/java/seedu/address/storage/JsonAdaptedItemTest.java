@@ -56,33 +56,6 @@ public class JsonAdaptedItemTest {
     }
 
     @Test
-    public void toModelType_legacySlashNameAndRemark_preservesValues() throws Exception {
-        JsonAdaptedItem adapted = new JsonAdaptedItem("Cake w/ candles", VALID_QUANTITY, VALID_STATUS,
-                "Pack w/o nuts");
-
-        Item loaded = adapted.toModelType();
-
-        assertEquals("Cake w/ candles", loaded.getName().value);
-        assertEquals("Pack w/o nuts", loaded.getRemark().orElseThrow().value);
-    }
-
-    @Test
-    public void toModelType_invalidLegacySlashNameAndRemark_throwsIllegalValueException() {
-        JsonAdaptedItem oversizedName = new JsonAdaptedItem("C".repeat(ItemName.MAX_LENGTH) + "/", VALID_QUANTITY,
-                VALID_STATUS, null);
-        JsonAdaptedItem multilineName = new JsonAdaptedItem("Cake/\nTarts", VALID_QUANTITY, VALID_STATUS, null);
-        JsonAdaptedItem oversizedRemark = new JsonAdaptedItem(VALID_NAME, VALID_QUANTITY, VALID_STATUS,
-                "R".repeat(Remark.MAX_LENGTH) + "/");
-        JsonAdaptedItem multilineRemark = new JsonAdaptedItem(VALID_NAME, VALID_QUANTITY, VALID_STATUS,
-                "Less/\nsugar");
-
-        assertThrows(IllegalValueException.class, ItemName.MESSAGE_CONSTRAINTS, oversizedName::toModelType);
-        assertThrows(IllegalValueException.class, ItemName.MESSAGE_CONSTRAINTS, multilineName::toModelType);
-        assertThrows(IllegalValueException.class, Remark.MESSAGE_CONSTRAINTS, oversizedRemark::toModelType);
-        assertThrows(IllegalValueException.class, Remark.MESSAGE_CONSTRAINTS, multilineRemark::toModelType);
-    }
-
-    @Test
     public void toModelType_nullQuantity_throwsIllegalValueException() {
         JsonAdaptedItem item = new JsonAdaptedItem(VALID_NAME, null, VALID_STATUS, VALID_REMARK);
         String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Quantity.class.getSimpleName());

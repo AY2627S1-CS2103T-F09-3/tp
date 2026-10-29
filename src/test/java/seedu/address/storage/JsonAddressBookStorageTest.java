@@ -151,30 +151,6 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
-    public void readAndSaveAddressBook_legacySlashPreorderFields_preservesValues() throws Exception {
-        JsonAdaptedItem legacyItem = new JsonAdaptedItem("Cake w/ candles", "2", "PENDING", "Pack w/o nuts");
-        JsonAdaptedPreorder legacyPreorder = new JsonAdaptedPreorder(List.of(legacyItem), null, null,
-                "Leave w/o ringing");
-        JsonAdaptedPerson legacyPerson = new JsonAdaptedPerson(ALICE.getName().fullName, ALICE.getPhone().value,
-                ALICE.getEmail().value, ALICE.getAddress().value, ALICE.getPostalCode().value,
-                ALICE.getTags().stream().map(JsonAdaptedTag::new).toList(), List.of(legacyPreorder), null);
-        Path sourcePath = testFolder.resolve("legacy-slash-fields.json");
-        JsonUtil.saveJsonFile(new JsonSerializableAddressBook(List.of(legacyPerson)), sourcePath);
-
-        ReadOnlyAddressBook loaded = new JsonAddressBookStorage(sourcePath).readAddressBook().orElseThrow();
-        var preorder = loaded.getPersonList().get(0).getPreorder().orElseThrow();
-        assertEquals("Cake w/ candles", preorder.getItems().get(0).getName().value);
-        assertEquals("Pack w/o nuts", preorder.getItems().get(0).getRemark().orElseThrow().value);
-        assertEquals("Leave w/o ringing", preorder.getHandoverNotes().orElseThrow().value);
-
-        Path savedPath = testFolder.resolve("legacy-slash-fields-saved.json");
-        JsonAddressBookStorage storage = new JsonAddressBookStorage(savedPath);
-        storage.saveAddressBook(loaded);
-        ReadOnlyAddressBook reloaded = storage.readAddressBook().orElseThrow();
-        assertEquals(loaded, reloaded);
-    }
-
-    @Test
     public void readAndSaveAddressBook_namesWithExtraSpaces_success() throws Exception {
         Path sourcePath = NAME_TEST_DATA_FOLDER.resolve("namesWithExtraSpacesAddressBook.json");
         ReadOnlyAddressBook loaded = new JsonAddressBookStorage(sourcePath).readAddressBook().get();

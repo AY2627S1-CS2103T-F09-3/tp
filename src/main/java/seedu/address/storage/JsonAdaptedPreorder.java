@@ -90,21 +90,13 @@ class JsonAdaptedPreorder {
         if (modelMethod != null && !FulfilmentMethod.isValidMethod(modelMethod)) {
             throw new IllegalValueException(FulfilmentMethod.MESSAGE_CONSTRAINTS);
         }
-        if (modelHandoverNotes != null && !HandoverNotes.isValidHandoverNotes(modelHandoverNotes)
-                && !isValidLegacyHandoverNotes(modelHandoverNotes)) {
+        if (modelHandoverNotes != null && !HandoverNotes.isValidHandoverNotes(modelHandoverNotes)) {
             throw new IllegalValueException(HandoverNotes.MESSAGE_CONSTRAINTS);
         }
 
-        Optional<HandoverNotes> notes = Optional.ofNullable(modelHandoverNotes)
-                .map(value -> HandoverNotes.isValidHandoverNotes(value)
-                        ? new HandoverNotes(value) : HandoverNotes.fromLegacyData(value));
+        Optional<HandoverNotes> notes = Optional.ofNullable(modelHandoverNotes).map(HandoverNotes::new);
         return new Preorder(modelItems, Optional.ofNullable(modelDate).map(FulfilmentDate::new),
                 Optional.ofNullable(modelMethod).map(FulfilmentMethod::valueOf), notes);
-    }
-
-    private static boolean isValidLegacyHandoverNotes(String value) {
-        return value.contains("/") && value.length() <= HandoverNotes.MAX_LENGTH
-                && value.matches(HandoverNotes.VALIDATION_REGEX);
     }
 
     /**

@@ -7,8 +7,7 @@ import seedu.address.commons.util.StringUtil;
 
 /**
  * Represents the name of an item in a customer's preorder, such as "Pineapple Tarts".
- * Guarantees: immutable; new values are valid as declared in {@link #isValidItemName(String)}; legacy values loaded
- * from storage may contain forward slashes;
+ * Guarantees: immutable; values are valid as declared in {@link #isValidItemName(String)};
  * has no leading, trailing or repeated spaces, so a typing slip cannot split one product in two.
  */
 public class ItemName {
@@ -41,36 +40,14 @@ public class ItemName {
         value = StringUtil.normalizeSpaces(name);
     }
 
-    private ItemName(String name, boolean isLegacyData) {
-        checkArgument(isLegacyData, "Legacy item names must be created through the legacy-data factory.");
-        value = name;
-    }
-
-    /**
-     * Creates an item name loaded from legacy data, where forward slashes were allowed.
-     * New user input must use {@link #ItemName(String)} so the current validation rule is enforced.
-     *
-     * @param name A legacy item name that satisfies all constraints except the slash restriction.
-     */
-    public static ItemName fromLegacyData(String name) {
-        requireNonNull(name);
-        String normalizedName = StringUtil.normalizeSpaces(name);
-        checkArgument(isValidNameExceptSlash(normalizedName), MESSAGE_CONSTRAINTS);
-        checkArgument(normalizedName.contains("/"), "Legacy item names must contain a forward slash.");
-        return new ItemName(normalizedName, true);
-    }
-
     /**
      * Returns true if a given string is a valid item name once surrounding spaces are removed
      * and repeated spaces are replaced with one.
      */
     public static boolean isValidItemName(String test) {
         String normalizedName = StringUtil.normalizeSpaces(test);
-        return isValidNameExceptSlash(normalizedName) && !normalizedName.contains("/");
-    }
-
-    private static boolean isValidNameExceptSlash(String name) {
-        return name.length() <= MAX_LENGTH && name.matches(VALIDATION_REGEX);
+        return normalizedName.length() <= MAX_LENGTH && normalizedName.matches(VALIDATION_REGEX)
+                && !normalizedName.contains("/");
     }
 
     @Override

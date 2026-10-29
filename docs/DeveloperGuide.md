@@ -210,11 +210,8 @@ an address such as `Block 123 c/o Alice x/foo` can contain literal prefix-like t
 search-specific constraints, and validates tags, dates, methods and statuses through their existing validators.
 Each failed constrained value is passed to `ParserUtil.createFieldParseException` to refine its error. For example,
 `find c/123 x/foo` identifies `x/` while `find c/123` remains a valid postal-prefix search. Address, product and
-handover-note queries are parsed as text. Product and handover-note queries reject slashes for newly entered values;
-legacy JSON may preserve slash-containing values, but slash-containing `d/` and `h/` queries are rejected. Since the
-tokenizer recognizes supported prefixes at whitespace boundaries, a supported prefix inside a legacy value, such as
-`n/` in `Cake n/ chocolate`, starts a separate criterion and cannot be searched literally. Address queries retain
-slash text, including `c/o`. Only the failed field's value is inspected,
+handover-note queries are parsed as text. Product and handover-note queries reject slashes, while address queries
+retain slash text, including `c/o`. Only the failed field's value is inspected,
 so `find a/Block c/o Alice s/invalid` still reports the status constraint rather than an error about the address.
 Unsupported arguments in the preamble are rejected by the existing nonempty-preamble check.
 
@@ -307,9 +304,8 @@ real calendar dates in `YYYY-MM-DD` format; methods are stripped and normalized 
 `COLLECTION`. Invalid values are refined with the unsupported-prefix helper, falling back to the corresponding model
 constraint message when no extra unsupported prefix is present. The shared `PREFIX_HANDOVER_NOTES`
 constant defines `h/` for handover notes. These queries follow existing text search rules: surrounding whitespace is
-stripped, while internal spacing and punctuation remain significant. Product and handover-note queries reject `/` to
-match their validation for new values; supported prefixes inside a legacy query value still delimit separate criteria.
-Address queries retain slash text such as `c/o`. Blank values, repeated prefixes and
+stripped, while internal spacing and punctuation remain significant. Product and handover-note queries reject `/`,
+matching their field validation. Address queries retain slash text such as `c/o`. Blank values, repeated prefixes and
 nonempty preambles retain the existing parser checks.
 
 All `find` searches require a supported prefix, including `n/` for names. Unprefixed searches and bare preambles are
@@ -486,11 +482,6 @@ existing preorder to the new `Person`, so it is not lost.
 none for a customer without a preorder. Each `JsonAdaptedPreorder` holds its `JsonAdaptedItem`s, and saves the date
 in `YYYY-MM-DD` form, the method by its name, and the handover notes. Each `JsonAdaptedItem` saves each field as a
 string. A missing fulfilment detail or remark is saved as `null`. Every item is saved with its quantity.
-The storage adapters preserve slash-containing item names, remarks and handover notes from existing data when those
-values meet their remaining constraints. Regular model constructors and command parsers continue to reject slash
-input for new values. The `find` parser also rejects slash-containing product and handover-note queries, so such
-legacy values remain visible in `list` but cannot be searched directly.
-
 ```json
 "preorders" : [ {
   "items" : [ {

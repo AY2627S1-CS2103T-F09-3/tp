@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
-import seedu.address.commons.util.StringUtil;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
@@ -57,7 +56,7 @@ class JsonAdaptedItem {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
                     ItemName.class.getSimpleName()));
         }
-        if (!ItemName.isValidItemName(name) && !isValidLegacyItemName(name)) {
+        if (!ItemName.isValidItemName(name)) {
             throw new IllegalValueException(ItemName.MESSAGE_CONSTRAINTS);
         }
 
@@ -77,24 +76,12 @@ class JsonAdaptedItem {
             throw new IllegalValueException(ItemStatus.MESSAGE_CONSTRAINTS);
         }
 
-        if (remark != null && !Remark.isValidRemark(remark) && !isValidLegacyRemark(remark)) {
+        if (remark != null && !Remark.isValidRemark(remark)) {
             throw new IllegalValueException(Remark.MESSAGE_CONSTRAINTS);
         }
 
-        ItemName itemName = ItemName.isValidItemName(name) ? new ItemName(name) : ItemName.fromLegacyData(name);
-        Optional<Remark> itemRemark = Optional.ofNullable(remark).map(value -> Remark.isValidRemark(value)
-                ? new Remark(value) : Remark.fromLegacyData(value));
+        ItemName itemName = new ItemName(name);
+        Optional<Remark> itemRemark = Optional.ofNullable(remark).map(Remark::new);
         return new Item(itemName, new Quantity(quantity), ItemStatus.valueOf(status), itemRemark);
-    }
-
-    private static boolean isValidLegacyItemName(String value) {
-        String normalizedValue = StringUtil.normalizeSpaces(value);
-        return normalizedValue.contains("/") && normalizedValue.length() <= ItemName.MAX_LENGTH
-                && normalizedValue.matches(ItemName.VALIDATION_REGEX);
-    }
-
-    private static boolean isValidLegacyRemark(String value) {
-        return value.contains("/") && value.length() <= Remark.MAX_LENGTH
-                && value.matches(Remark.VALIDATION_REGEX);
     }
 }
