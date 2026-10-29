@@ -34,6 +34,8 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.model.preorder.FulfilmentDate;
 import seedu.address.model.preorder.FulfilmentMethod;
+import seedu.address.model.preorder.HandoverNotes;
+import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.FulfilmentDateCriterion;
 import seedu.address.model.search.FulfilmentMethodCriterion;
@@ -49,8 +51,6 @@ public class FindCommandParserTest {
 
     private static final String FORMAT_ERROR =
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
-    private static final Map<Prefix, Field> TEXT_FIELDS = Map.of(
-            PREFIX_ADDRESS, ADDRESS, PREFIX_HANDOVER_NOTES, HANDOVER_NOTES);
     private static final Map<String, String> CONSTRAINED_QUERIES = Map.of(
             "c/123", PostalCodeCriterion.MESSAGE_CONSTRAINTS,
             "t/VIP", Tag.MESSAGE_CONSTRAINTS,
@@ -205,7 +205,7 @@ public class FindCommandParserTest {
     @Test
     public void parse_freeTextPrefixesBeforeInvalidConstrainedValue_keepsConstraintMessage() {
         for (Map.Entry<String, String> query : CONSTRAINED_QUERIES.entrySet()) {
-            for (String text : List.of("a/Block 123 x/foo", "d/Cake w/ candles", "h/Leave w/o ringing x/foo")) {
+            for (String text : List.of("a/Block 123 #04/08")) {
                 assertParseFailure(parser, text + " " + query.getKey() + " invalid", query.getValue());
             }
         }
@@ -214,7 +214,7 @@ public class FindCommandParserTest {
     @Test
     public void parse_freeTextPrefixesBeforeUnsupportedConstrainedArgument_namesOnlyArgument() {
         for (String query : CONSTRAINED_QUERIES.keySet()) {
-            assertParseFailure(parser, "h/Leave w/o ringing x/earlier " + query + " y/later",
+            assertParseFailure(parser, "h/Leave ringing " + query + " y/later",
                     "Unsupported prefix 'y/' for find.");
         }
     }
@@ -233,26 +233,19 @@ public class FindCommandParserTest {
     }
 
     @Test
-    public void parse_prefixLikeTextInTextCriteria_preservesText() {
-        for (String text : List.of("Cake w/ candles", "Leave w/o ringing x/foo", "Alice P/8123 D/Tarts",
-                "arrival i/1 q/2", "x/foo", "status/")) {
-            for (Map.Entry<Prefix, Field> field : TEXT_FIELDS.entrySet()) {
-                assertParseSuccess(parser, field.getKey() + text, textCommand(field.getValue(), text));
-            }
-            assertParseSuccess(parser, PREFIX_DETAILS + text,
-                    itemCommand(Optional.of(text), EnumSet.allOf(ItemStatus.class)));
-        }
+    public void parse_slashesInProductAndHandoverQueries_rejected() {
+        assertParseFailure(parser, "d/Cake w/ candles", ItemName.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "h/Leave w/o ringing x/foo", HandoverNotes.MESSAGE_CONSTRAINTS);
+        assertParseSuccess(parser, "a/Block 123 c/o Alice #04/08",
+                textCommand(ADDRESS, "Block 123 c/o Alice #04/08"));
     }
 
     @Test
-    public void parse_prefixLikeTextAfterWhitespace_preservesInternalWhitespace() {
+    public void parse_slashTextAfterWhitespace_rejectedOutsideAddress() {
         for (String separator : List.of(" ", "\t", "\n", "\r\n", " \t ")) {
             String text = "Cake" + separator + "x/foo";
-            for (Map.Entry<Prefix, Field> field : TEXT_FIELDS.entrySet()) {
-                assertParseSuccess(parser, field.getKey() + text, textCommand(field.getValue(), text));
-            }
-            assertParseSuccess(parser, PREFIX_DETAILS + text,
-                    itemCommand(Optional.of(text), EnumSet.allOf(ItemStatus.class)));
+            assertParseFailure(parser, PREFIX_DETAILS + text, ItemName.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, PREFIX_HANDOVER_NOTES + text, HandoverNotes.MESSAGE_CONSTRAINTS);
         }
     }
 
@@ -262,27 +255,28 @@ public class FindCommandParserTest {
                 new TextContainsCriterion(NAME, "Ali"),
                 new TextContainsCriterion(PHONE, "9123"),
                 new TextContainsCriterion(EMAIL, "example.com"),
-                new TextContainsCriterion(ADDRESS, "Block 123 c/o Alice x/foo"),
-                new TextContainsCriterion(HANDOVER_NOTES, "Leave w/o ringing x/foo"),
-                new ItemCriterion(Optional.of("Cake w/ candles"), Set.of(ItemStatus.PENDING)),
+                new TextContainsCriterion(ADDRESS, "Block 123 c/o Alice #04/08"),
+                new TextContainsCriterion(HANDOVER_NOTES, "Leave ringing"),
+                new ItemCriterion(Optional.of("Cake candles"), Set.of(ItemStatus.PENDING)),
                 new PostalCodeCriterion("01"), new TagCriterion(new Tag("VIP")),
                 new FulfilmentDateCriterion(new FulfilmentDate("2026-12-20")),
                 new FulfilmentMethodCriterion(FulfilmentMethod.DELIVERY))));
         assertParseSuccess(parser, "n/Ali p/9123 e/example.com "
-                + "a/Block 123 c/o Alice x/foo c/01 t/VIP d/Cake w/ candles s/pending "
-                + "h/Leave w/o ringing x/foo f/2026-12-20 m/delivery", expected);
-        assertParseSuccess(parser, "m/delivery f/2026-12-20 h/Leave w/o ringing x/foo "
-                + "s/pending d/Cake w/ candles t/VIP c/01 a/Block 123 c/o Alice x/foo "
+                + "a/Block 123 c/o Alice #04/08 c/01 t/VIP d/Cake candles s/pending "
+                + "h/Leave ringing f/2026-12-20 m/delivery", expected);
+        assertParseSuccess(parser, "m/delivery f/2026-12-20 h/Leave ringing "
+                + "s/pending d/Cake candles t/VIP c/01 a/Block 123 c/o Alice #04/08 "
                 + "e/example.com p/9123 n/Ali", expected);
     }
 
     @Test
     public void parse_prefixLikeTextWithDuplicateOrBlankCriterion_preservesValidationOrder() {
         for (Prefix prefix : List.of(PREFIX_ADDRESS, PREFIX_DETAILS, PREFIX_HANDOVER_NOTES)) {
-            assertParseFailure(parser, prefix + "Cake x/foo " + prefix + "Other",
+            String value = prefix.equals(PREFIX_ADDRESS) ? "Block 123 x/foo" : "Cake";
+            assertParseFailure(parser, prefix + value + " " + prefix + "Other",
                     Messages.getErrorMessageForDuplicatePrefixes(prefix));
-            assertParseFailure(parser, prefix + "Cake x/foo s/", FORMAT_ERROR);
-            assertParseFailure(parser, prefix + "Cake x/foo c/invalid", PostalCodeCriterion.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, prefix + value + " s/", FORMAT_ERROR);
+            assertParseFailure(parser, prefix + value + " c/invalid", PostalCodeCriterion.MESSAGE_CONSTRAINTS);
         }
     }
 
@@ -561,9 +555,8 @@ public class FindCommandParserTest {
     }
 
     @Test
-    public void parse_productSpacingAndPunctuation_preservesText() {
-        assertParseSuccess(parser, "d/Tarts  (Large)/Box",
-                itemCommand(Optional.of("Tarts  (Large)/Box"), EnumSet.allOf(ItemStatus.class)));
+    public void parse_productNameWithSlash_failure() {
+        assertParseFailure(parser, "d/Tarts  (Large)/Box", ItemName.MESSAGE_CONSTRAINTS);
     }
 
     private FindCommand itemCommand(Optional<String> product, Set<ItemStatus> statuses) {

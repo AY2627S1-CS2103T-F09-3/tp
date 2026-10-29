@@ -81,7 +81,8 @@ class JsonAdaptedItem {
             throw new DataValidationException("invalid remark.", Remark.MESSAGE_CONSTRAINTS);
         }
 
-        return new Item(new ItemName(name), new Quantity(quantity),
-                ItemStatus.valueOf(status), Optional.ofNullable(remark).map(Remark::new));
+        ItemName itemName = new ItemName(name);
+        Optional<Remark> itemRemark = Optional.ofNullable(remark).map(Remark::new);
+        return new Item(itemName, new Quantity(quantity), ItemStatus.valueOf(status), itemRemark);
     }
 }

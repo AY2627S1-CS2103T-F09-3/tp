@@ -36,6 +36,11 @@ public class ItemNameTest {
         assertFalse(ItemName.isValidItemName("Pineapple Tarts\r\nAlmond Cookies"));
         assertFalse(ItemName.isValidItemName("Pineapple Tarts\u2028Almond Cookies")); // Unicode line separator
 
+        // forward slashes are not allowed
+        assertFalse(ItemName.isValidItemName("Pineapple/Tarts"));
+        assertFalse(ItemName.isValidItemName("/Pineapple Tarts"));
+        assertFalse(ItemName.isValidItemName("Pineapple Tarts/"));
+
         // length boundary, counted after repeated spaces become one
         assertTrue(ItemName.isValidItemName("a".repeat(ItemName.MAX_LENGTH)));
         assertFalse(ItemName.isValidItemName("a".repeat(ItemName.MAX_LENGTH + 1)));

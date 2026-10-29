@@ -58,6 +58,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.Item;
+import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PostalCodeCriterion;
@@ -554,23 +555,22 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_editAddressWithPrefixLikeText_preservesAndSavesEveryValue() throws Exception {
+    public void execute_editAddressWithPrefixLikeText_rejectedWithoutChanges() throws Exception {
         Person originalDaniel = new PersonBuilder(COMPLETED_DANIEL).withPostalCode("012345").build();
         List.of(ALICE, originalDaniel, PREPARED_CARL).forEach(model::addPerson);
         assertFilteringCommandSuccess("find n/Daniel", "1 customer(s) listed!", List.of(originalDaniel));
         SearchCriteria criteria = logic.getActiveSearchCriteria();
         String address = "Block 123 c/o Alice x/foo w/o lift #04/08";
 
-        logic.execute("edit 1 a/" + address);
+        assertCommandFailurePreservesFilteredList("edit 1 a/" + address, ParseException.class,
+                Address.MESSAGE_CONSTRAINTS);
 
-        Person editedDaniel = new PersonBuilder(originalDaniel).withAddress(address).build();
-        List<Person> expectedPersons = List.of(ALICE, editedDaniel, PREPARED_CARL);
-        assertEquals(expectedPersons, model.getAddressBook().getPersonList());
-        assertEquals(List.of(editedDaniel), logic.getFilteredPersonList());
+        assertEquals(List.of(ALICE, originalDaniel, PREPARED_CARL), model.getAddressBook().getPersonList());
         assertEquals(criteria, logic.getActiveSearchCriteria());
         assertEquals(criteria, logic.activeSearchCriteriaProperty().get());
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
-        assertEquals(expectedPersons, storage.readAddressBook().orElseThrow().getPersonList());
+        assertEquals(List.of(ALICE, originalDaniel, PREPARED_CARL), storage.readAddressBook().orElseThrow()
+                .getPersonList());
     }
 
     @Test
@@ -753,8 +753,8 @@ public class LogicManagerTest {
                     "Unsupported prefix 'x/' for " + commandWord + ".");
         }
         assertCommandFailurePreservesFilteredList("additem 1 d/Cake x/earlier q/2 y/later s/pending",
-                ParseException.class, "Unsupported prefix 'y/' for additem.");
-        assertCommandFailurePreservesFilteredList("preorder 1 h/Leave w/o ringing x/earlier m/delivery y/later",
+                ParseException.class, ItemName.MESSAGE_CONSTRAINTS);
+        assertCommandFailurePreservesFilteredList("preorder 1 h/Leave ringing m/delivery y/later",
                 ParseException.class, "Unsupported prefix 'y/' for preorder.");
 
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
@@ -762,21 +762,21 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_literalPrefixTextInMutationCommands_roundTripsAndClearsFulfilmentDetails() throws Exception {
-        logic.execute("add n/Nora Lee p/81112222 e/nora@example.com a/Block 123 c/o Nora x/foo c/123456");
+    public void execute_mutationCommands_roundTripAndClearFulfilmentDetails() throws Exception {
+        logic.execute("add n/Nora Lee p/81112222 e/nora@example.com a/Block 123 c/o Nora #04/08 c/123456");
         logic.execute("find n/Nora");
         SearchCriteria criteria = logic.getActiveSearchCriteria();
-        logic.execute("additem 1 d/Cake w/ candles x/name q/2 s/pending r/Pack w/o nuts x/remark");
-        logic.execute("preorder 1 h/Leave w/o ringing x/notes f/2026-12-20 m/delivery");
+        logic.execute("additem 1 d/Cake candles q/2 s/pending r/Pack without nuts");
+        logic.execute("preorder 1 h/Leave ringing f/2026-12-20 m/delivery");
         logic.execute("tag 1 t/VIP");
 
-        Item item = new ItemBuilder().withName("Cake w/ candles x/name")
-                .withRemark("Pack w/o nuts x/remark").build();
+        Item item = new ItemBuilder().withName("Cake candles")
+                .withRemark("Pack without nuts").build();
         Person expected = new PersonBuilder().withName("Nora Lee").withPhone("81112222")
-                .withEmail("nora@example.com").withAddress("Block 123 c/o Nora x/foo").withPostalCode("123456")
+                .withEmail("nora@example.com").withAddress("Block 123 c/o Nora #04/08").withPostalCode("123456")
                 .withTags("VIP").withPreorder(new PreorderBuilder()
                         .withItems(item).withDate("2026-12-20").withMethod(DELIVERY)
-                        .withHandoverNotes("Leave w/o ringing x/notes").build()).build();
+                        .withHandoverNotes("Leave ringing").build()).build();
         assertEquals(List.of(expected), model.getAddressBook().getPersonList());
         assertEquals(List.of(expected), logic.getFilteredPersonList());
         assertEquals(criteria, logic.getActiveSearchCriteria());
@@ -793,28 +793,28 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_findProductAndNotesWithPrefixLikeText_matchesSavedValues() throws Exception {
+    public void execute_findProductAndNotes_matchesSavedValues() throws Exception {
         model.addPerson(ALICE);
-        logic.execute("additem 1 d/Cake w/ candles q/2 s/pending");
-        logic.execute("preorder 1 h/Leave w/o ringing x/foo");
+        logic.execute("additem 1 d/Cake candles q/2 s/pending");
+        logic.execute("preorder 1 h/Leave ringing");
         Person updated = model.getAddressBook().getPersonList().getFirst();
 
-        assertFilteringCommandSuccess("find d/Cake w/ candles s/pending", "1 customer(s) listed!", List.of(updated));
-        assertFilteringCommandSuccess("find h/Leave w/o ringing x/foo", "1 customer(s) listed!", List.of(updated));
-        assertFilteringCommandSuccess("find d/Cake w/ candles h/Leave w/o ringing x/foo",
+        assertFilteringCommandSuccess("find d/Cake candles s/pending", "1 customer(s) listed!", List.of(updated));
+        assertFilteringCommandSuccess("find h/Leave ringing", "1 customer(s) listed!", List.of(updated));
+        assertFilteringCommandSuccess("find d/Cake candles h/Leave ringing",
                 "1 customer(s) listed!", List.of(updated));
         assertFilteringCommandSuccess("find d/Cake", "0 customer(s) listed!", List.of());
         assertEquals(List.of(updated), model.getAddressBook().getPersonList());
     }
 
     @Test
-    public void execute_findContactFragments_matchesCustomerAndPreservesLiteralAddress() throws Exception {
+    public void execute_findContactFragments_matchesAddressWithOrdinarySlash() throws Exception {
         Person customer = new PersonBuilder().withName("Alice Tan").withPhone("91234567")
-                .withEmail("alice@example.com").withAddress("Block 123 c/o Alice x/foo").build();
+                .withEmail("alice@example.com").withAddress("Block 123 c/o Alice #04/08").build();
         model.addPerson(customer);
 
         assertFilteringCommandSuccess("find n/Ali p/9123 e/example.com", "1 customer(s) listed!", List.of(customer));
-        assertFilteringCommandSuccess("find a/Block 123 c/o Alice x/foo n/Ali p/9123 e/example.com",
+        assertFilteringCommandSuccess("find a/Block 123 c/o Alice #04/08 n/Ali p/9123 e/example.com",
                 "1 customer(s) listed!", List.of(customer));
         assertEquals(List.of(customer), model.getAddressBook().getPersonList());
     }
@@ -844,7 +844,7 @@ public class LogicManagerTest {
             assertCommandFailurePreservesFilteredList("find " + query + " x/foo", ParseException.class,
                     "Unsupported prefix 'x/' for find.");
         }
-        assertCommandFailurePreservesFilteredList("find h/Leave w/o ringing x/earlier s/pending y/later",
+        assertCommandFailurePreservesFilteredList("find h/Leave ringing s/pending y/later",
                 ParseException.class, "Unsupported prefix 'y/' for find.");
     }
 

@@ -23,6 +23,8 @@ import java.util.Set;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.preorder.HandoverNotes;
+import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.FulfilmentDateCriterion;
 import seedu.address.model.search.FulfilmentMethodCriterion;
@@ -169,6 +171,9 @@ public class FindCommandParser implements Parser<FindCommand> {
     private void addItemCriterion(List<PersonCriterion> criteria, ArgumentMultimap arguments) throws ParseException {
         Optional<String> productName = arguments.getValue(PREFIX_DETAILS);
         Optional<String> status = arguments.getValue(PREFIX_STATUS);
+        if (productName.isPresent() && productName.get().contains("/")) {
+            throw new ParseException(ItemName.MESSAGE_CONSTRAINTS);
+        }
         if (productName.isEmpty() && status.isEmpty()) {
             return;
         }
@@ -188,7 +193,14 @@ public class FindCommandParser implements Parser<FindCommand> {
     }
 
     private void addTextCriterion(List<PersonCriterion> criteria, ArgumentMultimap arguments,
-            Prefix prefix, Field field) {
-        arguments.getValue(prefix).ifPresent(value -> criteria.add(new TextContainsCriterion(field, value)));
+            Prefix prefix, Field field) throws ParseException {
+        Optional<String> value = arguments.getValue(prefix);
+        if (value.isEmpty()) {
+            return;
+        }
+        if (field == Field.HANDOVER_NOTES && value.get().contains("/")) {
+            throw new ParseException(HandoverNotes.MESSAGE_CONSTRAINTS);
+        }
+        criteria.add(new TextContainsCriterion(field, value.get()));
     }
 }

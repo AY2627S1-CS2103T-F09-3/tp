@@ -85,7 +85,7 @@ public class AddItemCommandParserTest {
 
     @Test
     public void parse_invalidName_failure() {
-        for (String name : new String[]{"", "   ", "\u2003", "Cake\nTarts", "Cake\rTarts",
+        for (String name : new String[]{"", "   ", "\u2003", "Cake\nTarts", "Cake\rTarts", "Cake/Tarts",
             "a".repeat(ItemName.MAX_LENGTH + 1)}) {
             assertParseFailure(parser, "1 d/" + name + " q/2 s/pending", ItemName.MESSAGE_CONSTRAINTS);
         }
@@ -153,11 +153,9 @@ public class AddItemCommandParserTest {
     }
 
     @Test
-    public void parse_prefixLikeTextInNameAndRemark_preservesText() {
-        String name = "Cake w/o nuts c/012345 x/foo";
-        String remark = "Pack w/o nuts i/1 x/foo";
-        assertValid("1 d/" + name + " q/2 r/" + remark + " s/prepared",
-                new ItemBuilder().withName(name).withRemark(remark).withStatus(ItemStatus.PREPARED).build());
+    public void parse_slashesInNameOrRemark_failure() {
+        assertParseFailure(parser, "1 d/Cake w/o nuts q/2 s/pending", ItemName.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 d/Cake q/2 s/pending r/Pack w/o nuts", Remark.MESSAGE_CONSTRAINTS);
     }
 
     @Test
