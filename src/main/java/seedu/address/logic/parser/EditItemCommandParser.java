@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_ITEM_INDEX;
+import static seedu.address.logic.Messages.MESSAGE_UNSUPPORTED_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ITEM_INDEX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_QUANTITY;
@@ -50,8 +51,16 @@ public class EditItemCommandParser implements Parser<EditItemCommand> {
         try {
             return ParserUtil.parseIndex(value);
         } catch (ParseException pe) {
-            throw new ParseException(MESSAGE_INVALID_ITEM_INDEX, pe);
+            throw createFieldParseException(value, MESSAGE_INVALID_ITEM_INDEX, pe);
         }
+    }
+
+    private ParseException createFieldParseException(String value, String fallbackMessage, ParseException cause) {
+        String message = ParserUtil.findUnsupportedPrefix(value,
+                PREFIX_ITEM_INDEX, PREFIX_DETAILS, PREFIX_QUANTITY, PREFIX_STATUS, PREFIX_REMARK)
+                .map(prefix -> String.format(MESSAGE_UNSUPPORTED_PREFIX, prefix, EditItemCommand.COMMAND_WORD))
+                .orElse(fallbackMessage);
+        return new ParseException(message, cause);
     }
 
     private EditItemDescriptor parseDescriptor(ArgumentMultimap argumentMultimap) throws ParseException {
@@ -61,10 +70,20 @@ public class EditItemCommandParser implements Parser<EditItemCommand> {
                     ParserUtil.parseItemName(argumentMultimap.getValue(PREFIX_DETAILS).get()));
         }
         if (argumentMultimap.getValue(PREFIX_QUANTITY).isPresent()) {
-            descriptor.setQuantity(ParserUtil.parseQuantity(argumentMultimap.getValue(PREFIX_QUANTITY).get()));
+            String quantity = argumentMultimap.getValue(PREFIX_QUANTITY).get();
+            try {
+                descriptor.setQuantity(ParserUtil.parseQuantity(quantity));
+            } catch (ParseException pe) {
+                throw createFieldParseException(quantity, pe.getMessage(), pe);
+            }
         }
         if (argumentMultimap.getValue(PREFIX_STATUS).isPresent()) {
-            descriptor.setStatus(ParserUtil.parseItemStatus(argumentMultimap.getValue(PREFIX_STATUS).get()));
+            String status = argumentMultimap.getValue(PREFIX_STATUS).get();
+            try {
+                descriptor.setStatus(ParserUtil.parseItemStatus(status));
+            } catch (ParseException pe) {
+                throw createFieldParseException(status, pe.getMessage(), pe);
+            }
         }
         if (argumentMultimap.getValue(PREFIX_REMARK).isPresent()) {
             String remark = argumentMultimap.getValue(PREFIX_REMARK).get();

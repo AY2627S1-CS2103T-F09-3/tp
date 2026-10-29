@@ -47,8 +47,7 @@ public class DeliverySummaryPanel extends UiPart<Region> {
         for (Person person : summary.getStops()) {
             String group = GroupPostalCommand.getPostalGroupKey(person);
             if (!group.equals(previousGroup)) {
-                stops.getChildren().add(label(person.getPostalCode() == null
-                        ? "MISSING POSTAL CODE" : "POSTAL PREFIX " + group, "delivery-group"));
+                stops.getChildren().add(label("POSTAL PREFIX " + group, "delivery-group"));
                 previousGroup = group;
             }
             Preorder preorder = person.getPreorder().orElseThrow();
@@ -56,7 +55,7 @@ public class DeliverySummaryPanel extends UiPart<Region> {
             String handoverNotes = preorder.getHandoverNotes().map(notes -> notes.value).orElse("None");
             stops.getChildren().add(label(person.getName().fullName + " | " + person.getPhone().value + "\n"
                     + person.getAddress().value + " | "
-                    + (person.getPostalCode() == null ? "Postal code needed" : person.getPostalCode().value) + "\n"
+                    + person.getPostalCode().value + "\n"
                     + "Delivery | " + date + "\nHandover notes: " + handoverNotes, "delivery-stop"));
         }
     }

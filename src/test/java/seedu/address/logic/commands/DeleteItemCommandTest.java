@@ -198,12 +198,12 @@ public class DeleteItemCommandTest {
     }
 
     @Test
-    public void execute_partialFulfilment_preservesLegacyPostalCodeAndMissingFields() throws Exception {
-        assertDetailsPreserved(null, List.of(PENDING_ITEM), Optional.of(new FulfilmentDate("2026-12-20")),
+    public void execute_partialFulfilment_preservesPostalCodeAndMissingFields() throws Exception {
+        assertDetailsPreserved("012345", List.of(PENDING_ITEM), Optional.of(new FulfilmentDate("2026-12-20")),
                 Optional.empty(), Optional.empty());
-        assertDetailsPreserved(null, List.of(PENDING_ITEM), Optional.empty(),
+        assertDetailsPreserved("012345", List.of(PENDING_ITEM), Optional.empty(),
                 Optional.of(FulfilmentMethod.COLLECTION), Optional.empty());
-        assertDetailsPreserved(null, List.of(PENDING_ITEM), Optional.empty(), Optional.empty(),
+        assertDetailsPreserved("012345", List.of(PENDING_ITEM), Optional.empty(), Optional.empty(),
                 Optional.of(new HandoverNotes("Call on arrival")));
     }
 

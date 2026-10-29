@@ -5,11 +5,9 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.PostalCode;
 
 /**
  * Tests whether a customer's postal code starts with the requested digits.
- * Customers without a postal code do not match.
  */
 public final class PostalCodeCriterion implements PersonCriterion {
     public static final String MESSAGE_CONSTRAINTS = "Postal-code search values must contain one to six digits.";
@@ -45,8 +43,7 @@ public final class PostalCodeCriterion implements PersonCriterion {
     @Override
     public boolean test(Person person) {
         requireNonNull(person);
-        PostalCode postalCode = person.getPostalCode();
-        return postalCode != null && postalCode.value.startsWith(postalCodePrefix);
+        return person.getPostalCode().value.startsWith(postalCodePrefix);
     }
 
     @Override

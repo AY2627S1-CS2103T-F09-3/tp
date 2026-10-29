@@ -31,9 +31,7 @@ public class PersonUtil {
         sb.append(PREFIX_PHONE + person.getPhone().value + " ");
         sb.append(PREFIX_EMAIL + person.getEmail().value + " ");
         sb.append(PREFIX_ADDRESS + person.getAddress().value + " ");
-        if (person.getPostalCode() != null) {
-            sb.append(PREFIX_POSTAL_CODE + person.getPostalCode().value + " ");
-        }
+        sb.append(PREFIX_POSTAL_CODE + person.getPostalCode().value + " ");
         return sb.toString();
     }
 

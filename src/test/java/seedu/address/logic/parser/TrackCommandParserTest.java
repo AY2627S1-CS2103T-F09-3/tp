@@ -64,7 +64,8 @@ public class TrackCommandParserTest {
 
     @Test
     public void parse_invalidStatus_failure() {
-        String[] invalidStatuses = {"DONE", "COLLECTED", "COMPLETE", "PEND ING", "PENDING,PREPARED", "*"};
+        String[] invalidStatuses = {"DONE", "COLLECTED", "COMPLETE", "PEND ING", "PENDING,PREPARED", "*",
+            "PENDINGx/2", "x/2", "PENDING x /2", "PENDING #04/08", "PENDING https://example.com/path"};
         for (String status : invalidStatuses) {
             assertParseFailure(parser, "s/" + status, ItemStatus.MESSAGE_CONSTRAINTS);
         }
@@ -93,12 +94,33 @@ public class TrackCommandParserTest {
 
     @Test
     public void parse_unsupportedParameter_failure() {
-        String[] unsupportedParameters = {"d/cakes", "n/Alex", "t/vip", "x/PENDING", "--status PENDING"};
+        String[] unsupportedParameters = {"d/cakes", "n/Alex", "t/vip", "x/PENDING", "S/PENDING", "status/PENDING"};
         for (String parameter : unsupportedParameters) {
             assertParseFailure(parser, parameter, MESSAGE_INVALID_FORMAT);
             assertParseFailure(parser, parameter + " s/PENDING", MESSAGE_INVALID_FORMAT);
-            assertParseFailure(parser, "s/PENDING " + parameter, ItemStatus.MESSAGE_CONSTRAINTS);
+            String prefix = parameter.substring(0, parameter.indexOf('/') + 1);
+            assertParseFailure(parser, "s/PENDING " + parameter, "Unsupported prefix '" + prefix + "' for track.");
         }
+        assertParseFailure(parser, "s/pending d/Cake", "Unsupported prefix 'd/' for track.");
+        assertParseFailure(parser, "--status PENDING", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "--status PENDING s/PENDING", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "s/PENDING --status PENDING", ItemStatus.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_unsupportedPrefixAfterWhitespace_namesPrefix() {
+        for (String separator : new String[]{"\t", "\n", "\r\n", " \t "}) {
+            assertParseFailure(parser, "s/pending" + separator + "d/Cake", "Unsupported prefix 'd/' for track.");
+        }
+        assertParseFailure(parser, "s/pending d/Cake x/2", "Unsupported prefix 'd/' for track.");
+        assertParseFailure(parser, "s/pending x/", "Unsupported prefix 'x/' for track.");
+    }
+
+    @Test
+    public void parse_unsupportedPrefixWithEarlierErrors_preservesValidationOrder() {
+        assertParseFailure(parser, "1 s/pending d/Cake", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "s/pending d/Cake s/prepared", MESSAGE_DUPLICATE_STATUS);
+        assertParseFailure(parser, "s/DONE s/pending d/Cake", MESSAGE_DUPLICATE_STATUS);
     }
 
     @Test

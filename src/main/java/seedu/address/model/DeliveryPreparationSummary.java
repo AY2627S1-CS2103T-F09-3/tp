@@ -24,15 +24,13 @@ public final class DeliveryPreparationSummary {
     /**
      * Selects DELIVERY customers with an outstanding item, counting each customer once.
      * Empty preorders, collection, unset methods and completed-only preorders do not contribute.
-     * Customers without postal codes remain included, after customers with codes.
      */
     public DeliveryPreparationSummary(Collection<Person> customers) {
         stops = List.copyOf(requireNonNull(customers)).stream()
                 .filter(OUTSTANDING_ITEMS)
                 .filter(person -> person.getPreorder().flatMap(Preorder::getMethod)
                         .filter(FulfilmentMethod.DELIVERY::equals).isPresent())
-                .sorted(Comparator.comparing((Person person) -> person.getPostalCode() == null
-                        ? "\uffff" : person.getPostalCode().value)
+                .sorted(Comparator.comparing((Person person) -> person.getPostalCode().value)
                         .thenComparing(person -> person.getName().fullName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
@@ -45,9 +43,8 @@ public final class DeliveryPreparationSummary {
         return stops.size();
     }
 
-    /** Returns the number of two-digit postal groups, including one group for missing postal codes. */
+    /** Returns the number of two-digit postal groups. */
     public int getPostalGroupCount() {
-        return (int) stops.stream().map(person -> person.getPostalCode() == null
-                ? "" : person.getPostalCode().value.substring(0, 2)).distinct().count();
+        return (int) stops.stream().map(person -> person.getPostalCode().value.substring(0, 2)).distinct().count();
     }
 }

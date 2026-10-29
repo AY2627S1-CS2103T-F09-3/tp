@@ -29,6 +29,7 @@ information.
 1. Copy the file to the folder you want to use as the _home folder_ for LeBake.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar LeBake.jar`.<br>
+   LeBake saves its data in the folder the terminal is in, so always start it from the home folder.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
    ![Ui](images/Ui.png)
 
@@ -64,6 +65,14 @@ information.
 * Prefixed parameters can be in any order, unless stated otherwise. A positional `INDEX` must appear before them.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
+* A supported prefix after whitespace starts another parameter and ends the previous value.<br>
+  For example, `edititem 1 i/1 r/Less sugar s/pending` sets the remark to `Less sugar` and the status to `PENDING`.
+  Quotation marks do not escape a supported prefix. Conventional `c/o` text is preserved inside addresses.
+
+* Except in `find`, unsupported prefix-like text inside a free-text value is kept, subject to that field's validation rules.<br>
+  For example, `edititem 1 i/1 r/Pack w/o nuts` keeps `Pack w/o nuts` as the remark.
+  There is no general ban on slash-containing text. The stricter rules for `find` are described in its section below.
+
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
@@ -79,6 +88,7 @@ Search criteria determine which customers are displayed. Keeping the criteria pr
 | `find`, `track` | Each successful command replaces the previous criteria and searches all stored customers. |
 | `add`, `edit`, `delete`, `tag`, `untag`, `preorder`, `deleteorder` | Preserve the active criteria and refresh the matching results. |
 | `sort date`, `group postal` | Preserve the active criteria and reorder the displayed results. A later `find` or `track` keeps this order. |
+| `clear` | Clears the criteria, sorting and grouping, then leaves the list empty. |
 | `list` | Clears the criteria, sorting and grouping, and shows all customers in their saved order. |
 
 During a session, use `list` to explicitly return to an unfiltered view. A `find` that happens to match every customer still has active criteria. Empty results do not clear the criteria either. Updates and deletions can change the displayed indexes, so check them before your next command.
@@ -169,11 +179,22 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CO
 * Existing tags and preorders are always preserved.
 * Editing preserves the current search criteria. A person disappears from the results if their edited details no longer match. Check the displayed indexes again before your next command, or use `list` to show all customers.
 
+An unsupported letter-based prefix after whitespace in an invalid `n/`, `p/`, `e/` or `c/` value is named directly.
+For example, `edit 1 p/91234567 x/foo` displays `Unsupported prefix 'x/' for edit.` Remove the unsupported argument
+and try again. Ordinary invalid values keep their corresponding field constraint messages.
+
+Addresses preserve unsupported prefix-like text. For example, `edit 1 a/Block 123 c/o Alice x/foo` keeps the complete
+address `Block 123 c/o Alice x/foo`. Customer names follow the existing name validation rules described for `add`.
+
 Examples:
 
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`, preserving all other details and tags.
 *  `edit 1 n/JOHN DOE` Changes the capitalization of the 1st person's name if they are already named `John Doe`.
+
+If several inputs are invalid, checks run in this order: index format, duplicate prefixes, then name, phone, email,
+address and postal code. Whether the index exists in the displayed list is checked after the supplied fields are valid.
+Rejected edits leave customer data and the current filter unchanged.
 
 ### Tagging a person: `tag`
 
@@ -226,7 +247,7 @@ Examples:
 
 * `untag 3 t/wholesale` removes the `wholesale` tag from the third person shown, provided they have that tag.
 * `find n/Bernice` followed by `untag 1 t/friends` removes the `friends` tag from the first search result, provided that person has the tag.
-* If Alex Yeoh is displayed at index 1 and has the tag `VIP`, `untag 1 t/vip` removes it and displays `Removed tag(s) [vip] from Alex Yeoh`.
+* If Alex Yeoh is displayed at index 1 and has the tag `VIP`, `untag 1 t/vip` removes it and displays `Removed tag [vip] from Alex Yeoh`.
 
 Common errors:
 
@@ -235,11 +256,15 @@ Common errors:
 | `untag 0 t/VIP`, `untag -1 t/VIP`, or `untag abc t/VIP` | `Invalid command format!` followed by the untag usage instructions. |
 | `untag`, `untag t/VIP`, or `untag 1` | `Invalid command format!` followed by the untag usage instructions. |
 | `untag 1 t/`, `untag 1 t/close friends`, or `untag 1 t/VIP!` | `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.` |
+| Unsupported prefix after the tag, e.g. `untag 1 t/VIP x/foo` | `Unsupported prefix 'x/' for untag.` |
 | `untag 1 t/VIP t/friends` | `Multiple values specified for the following single-valued field(s): t/` |
 | `untag 5 t/VIP` when fewer than five persons are displayed, or any valid index when the list is empty | `The person index provided is invalid.` |
 | `untag 1 t/VIP` when the first person is Alex Yeoh and has no `VIP` tag | `Alex Yeoh does not have tag [VIP]` |
 
-If several inputs are invalid, only the first detected error is shown. The index format is checked before the tag input; whether the index exists in the displayed list is checked after both inputs are valid.
+The unsupported-prefix message names the first unsupported letter-based prefix after whitespace in an invalid tag
+value. Ordinary invalid tags retain their tag constraint message. If several inputs are invalid, checks run in this
+order: index format, required `t/` prefix, duplicate `t/` prefixes, then tag value. Whether the index exists in the
+displayed list is checked after parsing succeeds. Rejected commands leave customer data and the current filter unchanged.
 
 ### Grouping customers by postal code: `group postal`
 
@@ -248,7 +273,7 @@ Groups the currently displayed customers by postal code without changing the sav
 Format: `group postal`
 
 * Customers are shown in ascending six-digit postal-code order, under headings based on their first two digits. Customers with the same postal code are ordered by name, ignoring capitalization.
-* Customers from old data files without postal codes remain usable and display `Postal code needed`. They appear in a final `MISSING POSTAL CODE` group.
+* `postal` is not case-sensitive, and spaces around it are ignored. For example, `group POSTAL` also works.
 * Grouping keeps the current filter, including results from `find` or `track`. It does not change customer details, preorders, or the order saved in the data file.
 * Displayed index numbers follow the grouped list. Use those numbers for commands such as `edit`, `tag`, and `deleteorder`.
 * Use `list` to show all customers in their saved order and remove the group headings. Grouping is not restored after restarting the application.
@@ -298,7 +323,6 @@ The **Delivery preparation** summary in the side panel, on the right of the wind
 * A customer counts as one outstanding stop when their preorder uses `DELIVERY` and has at least one `PENDING` or `PREPARED` item. Multiple items still count as one stop.
 * Collection, empty preorders, completed-only preorders, and preorders without a method do not contribute to the totals.
 * Contacts are grouped by the first two postal digits. Each contact shows their name, phone, address, complete postal code, fulfilment date, and handover notes.
-* Customers without postal codes remain included under `MISSING POSTAL CODE`, which counts as one additional postal group. Their contact shows `Postal code needed`.
 * An outstanding delivery without a date shows `Not scheduled`; absent handover notes show `Handover notes: None`.
 * The contact area scrolls and wraps long text. Use Tab to focus it and the arrow keys to scroll.
 
@@ -331,18 +355,18 @@ Supply at least one prefixed criterion. Each prefix may appear at most once, in 
 * Multiword text is one substring: `find n/Alice Tan` can match `Alice Tanaka`, but does not match `Alice Lim` or `Tan Alice`.
 * Surrounding whitespace is ignored. Internal spacing and punctuation remain significant.
 * Phone and email fragments are accepted: `p/8123` and `e/example.com` need not be complete contact details.
-* Postal searches accept one to six digits. `find c/53` matches codes beginning with `53`, such as `530123` and `531234`; `find c/530` narrows this to codes beginning with `530`. A six-digit query such as `find c/012345` matches only that complete code. Customers without a postal code do not match a postal-code criterion.
+* Postal searches accept one to six digits. `find c/53` matches codes beginning with `53`, such as `530123` and `531234`; `find c/530` narrows this to codes beginning with `530`. A six-digit query such as `find c/012345` matches only that complete code.
 * When adding a customer or editing their postal code, supply all six digits. Shorter prefixes are accepted only for searching; leading zeros are preserved in both cases.
 * Tags must be single alphanumeric words. `t/reg` does not match a tag named `regular`.
 * Fulfilment conditions check the preorder's shared information. They can find empty preorders; customers without a preorder or without the requested field do not match. Handover notes are separate from an individual item's request notes.
-* Product names match completely: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Surrounding whitespace is ignored; internal spacing and punctuation remain significant.
+* Product names match completely: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Surrounding whitespace is ignored, and repeated spaces count as one, as they do in item names. Punctuation remains significant.
 * Omitting `s/` includes **all statuses**, including `COMPLETED`. A blank `s/` is invalid. A status-only search such as `find s/prepared` accepts any product with that status.
 * Product and status must match the **same item**. A customer with pending Pineapple Tarts and prepared Almond Cookies does not match `find d/Pineapple Tarts s/prepared`.
 * Customers without a preorder or with an empty preorder cannot match item criteria. Customer-only searches can still find them.
 * All items on matching customer cards remain visible with their existing item numbers, including items that did not match. Searches do not change stored items.
 * Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
 * Results use the current displayed indices. Use `list` to show all customers again.
-* Use lowercase prefixes. A prefix starts at the beginning of the arguments or after whitespace. Unknown letter-based prefixes such as `x/` are rejected; embedded slashes such as `#04/08` remain ordinary text.
+* Use lowercase prefixes. A prefix starts at the beginning of the arguments or after whitespace. Unknown letter-based prefixes such as `x/` are rejected, including inside text values; embedded slashes such as `#04/08` remain ordinary text.
 
 Examples:
 
@@ -418,11 +442,11 @@ Adds one item to a customer's preorder. If the customer has no preorder, one is 
 Format: `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`
 
 * `INDEX` is a positive integer identifying a customer in the **currently displayed list**.
-* Name, quantity and status are required. A name must be non-blank, on one line and at most 200 characters long.
+* Name, quantity and status are required. A name must be non-blank, on one line and at most 200 characters long. Repeated spaces in a name become one, so `d/Butter   Cake` is saved as `Butter Cake`.
 * Quantity must be a whole number from 1 to 999, without leading zeros.
 * Status must be `PENDING`, `PREPARED` or `COMPLETED`, ignoring capitalisation.
 * Remarks are optional. If supplied, a remark must be non-blank, on one line and at most 100 characters long.
-* Surrounding spaces in values are trimmed. Prefixes may appear in any order, but each can appear only once.
+* Surrounding spaces in values are trimmed. A value of only spaces, including Unicode spaces such as an em space, is blank. Prefixes may appear in any order, but each can appear only once.
 * The item is appended to the preorder. Repeated product names, including identical items, remain separate entries.
 * Existing items, contact details and tags are preserved. The current filter remains active.
 
@@ -471,6 +495,12 @@ The card continues to display `Qty needed` for that item.
 | Customer index exceeds the displayed list | `The person index provided is invalid.` |
 | Missing or malformed customer index, or missing `i/` prefix | `Invalid command format!` followed by usage instructions |
 | Present but empty or invalid item index, e.g. `i/0` or `i/abc` | `Item index must be a positive integer.` |
+| `edititem 1 i/1 c/012345` | `Unsupported prefix 'c/' for edititem.` |
+| `edititem 1 i/1 q/2 x/3` or `edititem 1 i/1 s/pending x/3` | `Unsupported prefix 'x/' for edititem.` |
+
+The unsupported-prefix message identifies the first unsupported letter-based prefix after whitespace in an invalid
+`i/`, `q/` or `s/` value. Names (`d/`) and remarks (`r/`) keep unsupported prefix-like text as part of the value.
+For example, `edititem 1 i/1 r/Pack w/o nuts x/2` keeps the complete remark `Pack w/o nuts x/2`.
 
 For both commands, repeated prefixes produce `Multiple values specified for the following single-valued field(s): `
 followed by the repeated prefixes. Input validation reports the first error: customer-index syntax, duplicate prefixes,
@@ -489,9 +519,13 @@ Format: `track [s/STATUS]`
 
 `track` accepts only the optional `s/` field. Use `find` for product or customer combinations. `track s/prepared` and `find s/prepared` select the same customers. Bare `track` includes only active statuses, whereas `find d/Pineapple Tarts` includes all statuses.
 
+An unsupported prefix after the status, such as `track s/pending d/Cake`, displays
+`Unsupported prefix 'd/' for track.` Remove the extra parameter or use `find s/pending d/Cake` to combine both criteria.
+An ordinary invalid status, such as `track s/done`, still displays the status constraint message.
+
 Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count, and an item with a missing quantity still counts as one item. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
 
-Each customer card shows the customer's number on the left, then their name and tags, their phone number and email on one line, and their address with its postal code, for example `Postal 389030`. A customer without a postal code shows `Postal code needed` with a warning icon, and a customer without a preorder shows `No preorder`.
+Each customer card shows the customer's number on the left, then their name and tags, their phone number and email on one line, and their address with its postal code, for example `Postal 389030`. A customer without a preorder shows `No preorder`. Long names, tags and addresses wrap onto more lines, so they are always shown in full.
 
 ![A customer card with a delivery preorder of two items](images/customerCard.png)
 
@@ -503,7 +537,7 @@ Status | Meaning | Badge colour
 `PREPARED` | Ready for collection or delivery | Blue
 `COMPLETED` | Collected or delivered | Green outline with a tick
 
-If you used LeBake v1.3, each saved preorder appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Qty needed` with a warning icon instead of a quantity.
+After supplying the required postal codes in your data file, each preorder saved by LeBake v1.3 appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Qty needed` with a warning icon instead of a quantity.
 
 ### Deleting a preorder item: `deleteitem`
 
@@ -534,7 +568,11 @@ The message uses the item's number before deletion. For a migrated item with no 
 | Preorder is empty or item index exceeds the item count | `The item index provided is invalid.` |
 | Missing or invalid customer index, or missing `i/` prefix | `Invalid command format!` followed by usage instructions |
 | Present but empty or invalid item index, e.g. `i/0` or `i/abc` | `Item index must be a positive integer.` |
+| Unsupported prefix after the item index, e.g. `deleteitem 1 i/1 x/2` | `Unsupported prefix 'x/' for deleteitem.` |
 | Repeated `i/` prefix | `Multiple values specified for the following single-valued field(s): i/` |
+
+The unsupported-prefix message also applies to prefixes used by other commands, such as `q/`.
+Only `i/` is supported by `deleteitem`. Ordinary invalid item indices retain their index constraint message.
 
 Validation failures leave the data unchanged. If several inputs are invalid, customer-index syntax is checked first, then duplicate prefixes, then item-index syntax. Customer, preorder and item existence are checked after parsing succeeds.
 
@@ -563,7 +601,7 @@ Format: `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`
 * If the customer has no preorder yet, supplying at least one nonempty value creates one with no items, so you can record the arrangements before adding items with [`additem`](#adding-a-preorder-item-additem). Supplying only empty values makes no changes because there is nothing to clear.
 * A past date is accepted, so you can still record late orders. The success message then adds a note on a new line, for example `Note: 20 Dec 2025 is in the past.`
 * The customer's items (with their quantities, statuses and remarks), contact details, postal code and tags are not changed. The current filter remains active.
-* Surrounding spaces in values are trimmed. Text that starts a new prefix after a space, such as ` m/`, ends the previous value, so avoid it inside handover notes.
+* Surrounding spaces in values are trimmed. Handover notes of only spaces, including Unicode spaces such as an em space, are rejected as blank. A supported prefix (`f/`, `m/` or `h/`) after whitespace ends the previous value, so avoid it inside handover notes. Unsupported prefix-like text is preserved: `preorder 1 h/Leave w/o ringing x/2` keeps `Leave w/o ringing x/2` as the handover notes.
 
 On success, the app shows the customer's details after the change, for example:
 `Updated preorder details for Alex Yeoh: Date: 21 Dec 2026 | Method: COLLECTION | Handover notes: Collect from side gate`.
@@ -643,9 +681,11 @@ LeBake automatically saves data after every successful command. You do not need 
 
 ### Editing the data file
 
-LeBake data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+LeBake data is saved automatically as a JSON file `data/addressbook.json`, inside the folder that the terminal is in when you start LeBake. If you start it as described in [Quick start](#quick-start), that is the home folder with the JAR file. Starting LeBake from another folder, for example with `java -jar C:\LeBake\LeBake.jar` from your desktop, makes a new `data` folder there with the sample data, and your saved data in the home folder is not loaded. Advanced users are welcome to update data directly by editing that data file.
 
-Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
+Postal codes are compulsory for every customer, including records saved by older versions. Each customer must have a `postalCode` containing exactly six digits. Null, missing, blank or malformed postal codes prevent the file from loading. Back up older files and supply the correct postal codes before launching LeBake.
+
+Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. Item names are normalized in the same way, so items saved by earlier versions with repeated spaces count as the same product. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
 
 <box type="warning" seamless>
 
@@ -669,7 +709,7 @@ _Details coming soon ..._
 **A**: On some computers, double-clicking a JAR file does not run it with Java. Start LeBake from a terminal instead, as described in [Quick start](#quick-start).
 
 **Q**: LeBake shows an error, or my changes are not saved, when I run it from some folders. Why?<br>
-**A**: LeBake saves its data in a `data` folder next to the JAR file, so it needs permission to write there. Move the JAR file to a folder you can write to, such as one in your home folder, and start it from there.
+**A**: LeBake saves its data in a `data` folder inside the folder you start it from, so it needs permission to write there. Move the JAR file to a folder you can write to, such as one in your home folder, `cd` to that folder, and start it from there.
 
 --------------------------------------------------------------------------------------------------------------------
 

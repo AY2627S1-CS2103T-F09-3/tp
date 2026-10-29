@@ -64,22 +64,10 @@ class JsonAdaptedPerson {
         }
     }
 
-    /** Backwards-compatible constructor for customers without a preorder. */
-    public JsonAdaptedPerson(String name, String phone, String email, String address,
-            List<JsonAdaptedTag> tags) {
-        this(name, phone, email, address, null, tags, null, null);
-    }
-
     /** Creates an adapted customer with a postal code and no preorder. */
     public JsonAdaptedPerson(String name, String phone, String email, String address, String postalCode,
             List<JsonAdaptedTag> tags) {
         this(name, phone, email, address, postalCode, tags, null, null);
-    }
-
-    /** Creates an adapted customer from preorder data without a postal code. */
-    public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags,
-            List<JsonAdaptedPreorder> preorders, JsonAdaptedLegacyPreorder legacyPreorder) {
-        this(name, phone, email, address, null, tags, preorders, legacyPreorder);
     }
 
     /**
@@ -90,7 +78,7 @@ class JsonAdaptedPerson {
         phone = source.getPhone().value;
         email = source.getEmail().value;
         address = source.getAddress().value;
-        postalCode = source.getPostalCode() == null ? null : source.getPostalCode().value;
+        postalCode = source.getPostalCode().value;
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -139,10 +127,14 @@ class JsonAdaptedPerson {
             throw new IllegalValueException(Address.MESSAGE_CONSTRAINTS);
         }
         final Address modelAddress = new Address(address);
-        if (postalCode != null && !PostalCode.isValidPostalCode(postalCode)) {
+        if (postalCode == null) {
+            throw new IllegalValueException(
+                    String.format(MISSING_FIELD_MESSAGE_FORMAT, PostalCode.class.getSimpleName()));
+        }
+        if (!PostalCode.isValidPostalCode(postalCode)) {
             throw new IllegalValueException(PostalCode.MESSAGE_CONSTRAINTS);
         }
-        final PostalCode modelPostalCode = postalCode == null ? null : new PostalCode(postalCode);
+        final PostalCode modelPostalCode = new PostalCode(postalCode);
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
 
