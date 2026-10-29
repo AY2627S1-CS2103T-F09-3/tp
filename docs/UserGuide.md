@@ -743,9 +743,26 @@ oversized field prevents the file from loading.
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, LeBake starts with an empty address book at the next run. The invalid file remains on disk until you run a command (LeBake saves after every command). Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause LeBake to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+Close LeBake and back up `data/lebake.json` before editing it. Valid changes load the next time you start LeBake.
 </box>
+
+### When the data file cannot be loaded
+
+If an existing data file is invalid or cannot be read, LeBake shows an error dialog before opening the main window.
+The dialog shows the full file path and the first error detected. Your data file is left unchanged.
+
+For invalid records, the reason identifies the person, field and, where relevant, item:
+
+* `Person 2: invalid email.`
+* `Person 1: item 2: missing status.`
+
+Person and item numbers start at **1** and follow their order in the JSON file: the `persons` list and each preorder's
+`items` list. They refer to the saved order, which can differ from a filtered or sorted view in the app.
+For malformed JSON, the dialog gives the parsing error and its line and column when available.
+
+Press `Enter` or choose `OK` to dismiss the dialog and exit LeBake. Correct the reported data, restore a valid backup,
+or fix the file's read permissions, then start LeBake again. A genuinely missing data file still starts LeBake with
+sample data, as described above.
 
 ### Archiving data files `[coming in v2.0]`
 
