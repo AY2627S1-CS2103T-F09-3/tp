@@ -99,7 +99,7 @@ public class ResultDisplayTest {
     public void constructor_beforeLayout_hasRoomForShortMessageOnly() throws Exception {
         Integer rows = onFxThread(() -> {
             ResultDisplay resultDisplay = new ResultDisplay();
-            resultDisplay.setFeedbackToUser("Listed all persons.");
+            resultDisplay.setFeedbackToUser("Listed all customers.");
             return ((TextArea) resultDisplay.getRoot().lookup("#resultDisplay")).getPrefRowCount();
         });
 
@@ -111,7 +111,7 @@ public class ResultDisplayTest {
         double[] heights = onFxThread(() -> {
             ResultDisplay resultDisplay = new ResultDisplay();
             Region root = layOut(resultDisplay, MIN_WINDOW_RESULT_WIDTH);
-            resultDisplay.setFeedbackToUser("Listed all persons.");
+            resultDisplay.setFeedbackToUser("Listed all customers.");
             root.layout();
             double shortHeight = root.prefHeight(MIN_WINDOW_RESULT_WIDTH);
             resultDisplay.setFeedbackToUser(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));

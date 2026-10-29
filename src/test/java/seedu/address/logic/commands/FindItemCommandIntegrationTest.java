@@ -112,6 +112,6 @@ public class FindItemCommandIntegrationTest {
     private void assertResults(String command, Person... expectedPersons) throws Exception {
         CommandResult result = parser.parseCommand(command).execute(model);
         assertEquals(List.of(expectedPersons), model.getFilteredPersonList());
-        assertEquals(new CommandResult(expectedPersons.length + " person(s) listed!"), result);
+        assertEquals(new CommandResult(expectedPersons.length + " customer(s) listed!"), result);
     }
 }

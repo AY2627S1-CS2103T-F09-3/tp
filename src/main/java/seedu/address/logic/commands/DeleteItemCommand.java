@@ -37,7 +37,7 @@ public class DeleteItemCommand extends Command {
 
     public static final String MESSAGE_DELETE_ITEM_SUCCESS =
             "Deleted item %1$d for %2$s: %3$s (quantity: %4$s, %5$s)";
-    public static final String MESSAGE_NO_PREORDER = "Identified person has no preorder.";
+    public static final String MESSAGE_NO_PREORDER = "This customer has no preorder.";
     public static final String MESSAGE_INVALID_ITEM_INDEX = "The item index provided is invalid.";
 
     private static final Logger logger = LogsCenter.getLogger(DeleteItemCommand.class);
