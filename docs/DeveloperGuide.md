@@ -522,6 +522,11 @@ field that breaks its rules is reported as invalid data, in the same way as an i
 whose `"quantity"` is missing, `null` or blank breaks these rules, just like a missing name or status. A preorder
 without an `"items"` field loads as a preorder with no items.
 
+Before checking a fulfilment detail, `JsonAdaptedPreorder#toModelType()` strips surrounding whitespace, treats a
+blank value as `null`, and uppercases the method. A hand-edited file is therefore read with the same rules as the
+`preorder` command, so `"delivery"` or `""` loads, while a value the command would reject, such as `"PICKUP"` or
+`"2026-02-30"`, still makes the file invalid.
+
 #### Rejecting v1.3 data
 
 LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and one `"status"`, and no quantity.
@@ -1444,6 +1449,20 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
    1. Test case: Repeat with the item's `"quantity"` set to `null`, and then with the `"quantity"` line removed.<br>
       Expected: The dialog reports `Person 1: item 1: missing quantity.` Dismissing it exits LeBake and leaves
       the file unchanged. The log retains the detailed error `Item's Quantity field is missing!`.
+
+1. Loading hand-edited fulfilment details
+
+   1. Prerequisites: In `data/lebake.json`, find a customer whose preorder has a `"method"`. Change it to
+      `"delivery"` and change their `"handoverNotes"` to `""`. Keep a copy of the file.
+
+   1. Test case: Launch LeBake.<br>
+      Expected: The data file loads. The customer's preorder panel shows `Delivery` as the method and no
+      handover notes line. Their items and other details are unchanged.
+
+   1. Test case: Close LeBake, change the same `"method"` to `"pickup"`, then launch LeBake.<br>
+      Expected: An error dialog appears before the main window and reports `Person 1: invalid preorder method.`
+      for the first customer. Dismissing it exits LeBake and leaves the file unchanged. Restore the file from
+      your copy before relaunching.
 
 ### Sorting customers by fulfilment date
 

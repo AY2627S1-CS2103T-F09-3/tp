@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.DataValidationException;
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.model.preorder.FulfilmentDate;
 import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.HandoverNotes;
@@ -82,18 +84,38 @@ class JsonAdaptedPreorder {
             }
         }
 
-        if (date != null && !FulfilmentDate.isValidDate(date)) {
+        String modelDate = stripToNull(date);
+        String modelMethod = stripToNull(method);
+        String modelHandoverNotes = stripToNull(handoverNotes);
+        if (modelMethod != null) {
+            modelMethod = modelMethod.toUpperCase(Locale.ROOT);
+        }
+
+        if (modelDate != null && !FulfilmentDate.isValidDate(modelDate)) {
             throw new DataValidationException("invalid preorder date.", FulfilmentDate.MESSAGE_CONSTRAINTS);
         }
-        if (method != null && !FulfilmentMethod.isValidMethod(method)) {
+        if (modelMethod != null && !FulfilmentMethod.isValidMethod(modelMethod)) {
             throw new DataValidationException("invalid preorder method.", FulfilmentMethod.MESSAGE_CONSTRAINTS);
         }
-        if (handoverNotes != null && !HandoverNotes.isValidHandoverNotes(handoverNotes)) {
+        if (modelHandoverNotes != null && !HandoverNotes.isValidHandoverNotes(modelHandoverNotes)) {
             throw new DataValidationException("invalid preorder handoverNotes.", HandoverNotes.MESSAGE_CONSTRAINTS);
         }
 
-        return new Preorder(modelItems, Optional.ofNullable(date).map(FulfilmentDate::new),
-                Optional.ofNullable(method).map(FulfilmentMethod::valueOf),
-                Optional.ofNullable(handoverNotes).map(HandoverNotes::new));
+        return new Preorder(modelItems, Optional.ofNullable(modelDate).map(FulfilmentDate::new),
+                Optional.ofNullable(modelMethod).map(FulfilmentMethod::valueOf),
+                Optional.ofNullable(modelHandoverNotes).map(HandoverNotes::new));
+    }
+
+    /**
+     * Returns {@code value} without surrounding whitespace, or null if it is null or blank,
+     * so that a hand-edited detail of {@code ""} loads as not set.
+     */
+    private static String stripToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String strippedValue = StringUtil.stripSpaces(value);
+        return strippedValue.isEmpty() ? null : strippedValue;
     }
 }
