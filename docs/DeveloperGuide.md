@@ -1405,20 +1405,20 @@ remain unchanged.
 1. Run `edit 1 a/Block 123 c/o Alice x/foo`.<br>
    Expected: The complete address is `Block 123 c/o Alice x/foo`. Other contact details, tags, postal code and preorder
    are preserved. The active criteria are unchanged. Run `list` before continuing.
-1. Run `edititem 1 i/1 r/Pack w/o nuts x/2`.<br>
-   Expected: The edit succeeds and the remark is exactly `Pack w/o nuts x/2`.
-1. Run `preorder 1 h/Leave w/o ringing x/2`.<br>
-   Expected: The handover notes are exactly `Leave w/o ringing x/2`.
+1. Run `edititem 1 i/1 r/Pack without nuts`.<br>
+   Expected: The edit succeeds and the remark is exactly `Pack without nuts`.
+1. Run `preorder 1 h/Leave at side gate`.<br>
+   Expected: The handover notes are exactly `Leave at side gate`.
 1. Run `edititem 1 i/1 r/Less sugar s/prepared`.<br>
    Expected: The remark is `Less sugar` and the status is `PREPARED`; the supported `s/` starts a separate field.
 1. Run `add n/Prefix Test p/91234567 e/prefix@example.com a/Block 123 c/o Prefix Test x/foo c/123456`, followed by
    `find n/Pre p/9123 e/example.com a/Block 123 c/o Prefix Test x/foo`.<br>
    Expected: Only `Prefix Test` is displayed. The address keeps both `c/o` and `x/foo`; contact fragments remain valid.
-1. Run `additem 1 d/Cake w/ candles q/2 s/pending r/Pack w/o nuts x/2`, then
-   `preorder 1 h/Leave w/o ringing x/2 f/2026-12-20 m/delivery`, then `tag 1 t/VIP`.<br>
-   Expected: The item name, remark and handover notes keep their literal prefix-like text. Date, method, quantity,
-   status and tag are stored as separate fields.
-1. Run `find d/Cake w/ candles h/Leave w/o ringing x/2`, then
+1. Run `additem 1 d/Cake with candles q/2 s/pending r/Pack without nuts`, then
+   `preorder 1 h/Leave at side gate f/2026-12-20 m/delivery`, then `tag 1 t/VIP`.<br>
+   Expected: The item name, remark and handover notes are stored correctly. Date, method, quantity, status and tag
+   are stored as separate fields.
+1. Run `find d/Cake with candles h/Leave at side gate`, then
    `find n/Pre p/9123 e/example.com c/123 t/VIP f/2026-12-20 m/delivery s/pending`.<br>
    Expected: Both searches show only `Prefix Test`.
 1. Restart LeBake, run `find n/Prefix`, and inspect the customer.<br>
@@ -1516,8 +1516,8 @@ preorder. Run the steps in order. For every rejected command, check that no card
 1. Run `preorder 1 m/Collection h/`.<br>
    Expected: `Updated preorder details for Alex Yeoh: Date: 24 Dec 2026 | Method: COLLECTION | Handover notes: None`.
    The method changes and the handover notes are removed from the card.
-1. Run `preorder 1 h/Gate code 1234 x/2`.<br>
-   Expected: Succeeds. The handover notes are `Gate code 1234 x/2`, because notes are free text.
+1. Run `preorder 1 h/Gate code 1234`.<br>
+   Expected: Succeeds. The handover notes are `Gate code 1234`.
 1. Run `preorder 5 m/delivery`.<br>
    Expected: `Updated preorder details for Irfan Ibrahim: Date: Not scheduled | Method: DELIVERY | Handover notes: None`.
    Irfan's card now shows a preorder with `No items yet`.
