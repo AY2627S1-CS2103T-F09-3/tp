@@ -44,6 +44,15 @@ public class JsonAdaptedItemTest {
     public void toModelType_invalidName_throwsIllegalValueException() {
         JsonAdaptedItem item = new JsonAdaptedItem(" ", VALID_QUANTITY, VALID_STATUS, VALID_REMARK);
         assertThrows(IllegalValueException.class, ItemName.MESSAGE_CONSTRAINTS, item::toModelType);
+        JsonAdaptedItem unicodeSpaceItem = new JsonAdaptedItem("\u2003", VALID_QUANTITY, VALID_STATUS, VALID_REMARK);
+        assertThrows(IllegalValueException.class, ItemName.MESSAGE_CONSTRAINTS, unicodeSpaceItem::toModelType);
+    }
+
+    @Test
+    public void toModelType_nameWithRepeatedSpaces_loadedWithOneSpace() throws Exception {
+        // Names saved before spaces were collapsed load as the same product as newer ones
+        JsonAdaptedItem item = new JsonAdaptedItem("Pineapple   Tarts", VALID_QUANTITY, VALID_STATUS, null);
+        assertEquals("Pineapple Tarts", item.toModelType().getName().value);
     }
 
     @Test

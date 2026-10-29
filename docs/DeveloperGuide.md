@@ -303,9 +303,10 @@ in one criterion and one badge.
 
 `FindCommandParser` combines `d/` (`PREFIX_DETAILS`) and `s/` into **one** `ItemCriterion`. Separate predicates for
 "has this product" and "has this status" would incorrectly allow different items to satisfy the conditions.
-Product names match completely after stripping surrounding whitespace and normalizing case with `Locale.ROOT`;
-internal spacing and punctuation remain significant. The criterion also retains the stripped input name for display;
-matching, equality and hash codes use the normalized name. Status input is validated with `ParserUtil.parseItemStatus`.
+Product names match completely after stripping surrounding whitespace, collapsing repeated spaces as `ItemName`
+does, and normalizing case with `Locale.ROOT`; punctuation remains significant. The criterion also retains the
+cleaned-up input name for display; matching, equality and hash codes use the normalized name. Status input is
+validated with `ParserUtil.parseItemStatus`.
 
 The parser supplies `EnumSet.allOf(ItemStatus.class)` when `s/` is omitted. This is deliberate: an empty status set
 in `ItemCriterion` matches **nothing**, rather than meaning "any status". An absent product name accepts any product.
@@ -402,6 +403,8 @@ one `Preorder`, and each `Preorder` holds the customer's `Item`s in the order th
   `HandoverNotes`, such as "Call on arrival". They belong to the whole preorder, so all of its items are handed
   over together. `Preorder#withItems()` keeps them when a command changes the items.
 * `Item` has an `ItemName` of up to 200 characters, an `ItemStatus`, and an optional `Quantity` and `Remark`.
+  `ItemName` turns each run of spaces, including Unicode spaces, into one space, so `Butter   Cake` and
+  `Butter Cake` are the same product in `find` and the preparation summary.
   A `Quantity` is a whole number from 1 to 999, and a `Remark` is a special request of up to 100 characters.
 * New items always have a quantity. `Item#getQuantity()` is empty only for items converted from v1.3 data, as
   described under "Loading v1.3 data" below.
@@ -498,6 +501,8 @@ the customer in the current format.
 `EditItemCommandParser` additionally requires `i/ITEM_INDEX` and constructs an `EditItemDescriptor` for supplied fields.
 Both parsers validate the customer-index syntax first, reject duplicate prefixes, check required inputs, and validate
 item fields in the order name, quantity, status, remark. They reuse the model validators through `ParserUtil`.
+`ParserUtil` trims remarks and handover notes with `StringUtil#stripSpaces()` rather than `String#strip()`, which
+keeps no-break spaces, so a value pasted with one around it is still accepted. Spaces inside the value are kept.
 
 For `edititem`, failures in `i/`, `q/` and `s/` use the contextual diagnostics described under
 [Prefix boundaries and error messages](#prefix-boundaries-and-error-messages). Names and remarks retain their
@@ -919,6 +924,10 @@ testers are expected to do more *exploratory* testing.
       Expected: The customer list still shows the top of the first card, with its index and name. The usage message
       scrolls in the result box instead of pushing the customer list out of the window.
 
+   1. In the same window, run `tag 1 t/Christmas2026CorporateOrdersWithSpecialDietaryRequirementsAndPriorityDelivery`.<br>
+      Expected: The long tag wraps onto a second line inside its chip, which stays inside the card, and the rest
+      of the card moves down to make room for it.
+
 ### Using the side panel
 
 Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`.
@@ -1052,10 +1061,10 @@ Run each group below independently, starting with the sample data unless stated 
    1. Prerequisites: Run `list`. The first person is `Alex Yeoh`, who has the tag `friends`. Run `tag 1 t/regular` to give Alex a second tag.
 
    1. Test case: `untag 1 t/FRIENDS`<br>
-      Expected: The `friends` tag is removed despite the different capitalization. The `regular` tag and Alex's contact details remain unchanged. The status message shows `Removed tag(s) [FRIENDS] from Alex Yeoh`.
+      Expected: The `friends` tag is removed despite the different capitalization. The `regular` tag and Alex's contact details remain unchanged. The status message shows `Removed tag [FRIENDS] from Alex Yeoh`.
 
    1. Test case: `untag 1 t/regular`<br>
-      Expected: Alex has no tags left, but remains in the list with the same contact details. The status message shows `Removed tag(s) [regular] from Alex Yeoh`.
+      Expected: Alex has no tags left, but remains in the list with the same contact details. The status message shows `Removed tag [regular] from Alex Yeoh`.
 
    1. Test case: Repeat `untag 1 t/regular`.<br>
       Expected: No data is changed. The status message shows `Alex Yeoh does not have tag [regular]`.
@@ -1090,7 +1099,7 @@ Run each group below independently, starting with the sample data unless stated 
       Expected: The status message shows `The person index provided is invalid.`, even though the full address book contains more than one person.
 
    1. Test case: `untag 1 t/FRIENDS`<br>
-      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag(s) [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other persons are unchanged.
+      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other persons are unchanged.
 
    1. Test case: `untag 1 t/FRIENDS` again.<br>
       Expected: The status message shows `Bernice Yu does not have tag [FRIENDS]`. Only Bernice remains displayed.

@@ -27,6 +27,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
@@ -179,6 +180,32 @@ public class MainWindowTest {
             layOut(root, 1000, 700);
             assertFalse(isCompact(root));
             assertEquals(defaultLeftGap, cardTextLeft(root), 0.5);
+        });
+    }
+
+    @Test
+    public void card_tagLongerThanLineAtMinimumWidth_wrapsInsideCard() throws Exception {
+        runInWindow((window, logic, root) -> {
+            String longTag = "Christmas2026CorporateOrdersWithSpecialDietaryRequirementsAndPriorityDelivery";
+            enterCommand(root, "tag 1 t/" + longTag);
+            enterCommand(root, "tag 1 t/vip");
+            Parent nameAndTags = (Parent) root.lookup("#nameAndTags");
+            List<Label> tags = nameAndTags.getChildrenUnmodifiable().stream()
+                    .filter(node -> node.getStyleClass().contains(PersonCard.TAG_STYLE_CLASS))
+                    .map(Label.class::cast).toList();
+            Label longChip = tags.stream().filter(tag -> tag.getText().equals(longTag)).findFirst().orElseThrow();
+            Label nextChip = tags.get(tags.indexOf(longChip) + 1);
+            Bounds line = nameAndTags.localToScene(nameAndTags.getLayoutBounds());
+            Bounds longChipBounds = longChip.localToScene(longChip.getLayoutBounds());
+
+            assertTrue(longChipBounds.getMaxX() <= line.getMaxX() + 0.5,
+                    "tag ends at " + longChipBounds.getMaxX() + ", past the name line at " + line.getMaxX());
+            // The wrapped chip stays above the phone number and email under the name
+            assertTrue(longChipBounds.getMaxY() <= line.getMaxY() + 0.5);
+            // The label draws its whole text, rather than ending it in "..."
+            assertEquals(longTag, ((Text) longChip.lookup(".text")).getText());
+            // The next tag starts its own line at the left edge, without the gap between tags in front of it
+            assertEquals(longChipBounds.getMinX(), nextChip.localToScene(nextChip.getLayoutBounds()).getMinX(), 0.5);
         });
     }
 

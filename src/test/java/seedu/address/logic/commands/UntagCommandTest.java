@@ -42,7 +42,7 @@ public class UntagCommandTest {
         expectedModel.setPerson(original, expectedPerson);
 
         assertCommandSuccess(new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends")), model,
-                "Removed tag(s) [friends] from " + original.getName(), expectedModel);
+                "Removed tag [friends] from " + original.getName(), expectedModel);
     }
 
     @Test
@@ -57,7 +57,7 @@ public class UntagCommandTest {
         expectedModel.setPerson(withPreorder, expectedPerson);
 
         assertCommandSuccess(new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends")), model,
-                "Removed tag(s) [friends] from " + original.getName(), expectedModel);
+                "Removed tag [friends] from " + original.getName(), expectedModel);
         assertEquals(withPreorder.getPreorder(), model.getFilteredPersonList().get(0).getPreorder());
     }
 
@@ -71,7 +71,7 @@ public class UntagCommandTest {
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
 
         assertCommandSuccess(new UntagCommand(INDEX_FIRST_PERSON, new Tag("FRIENDS")), model,
-                "Removed tag(s) [FRIENDS] from " + original.getName(), expectedModel);
+                "Removed tag [FRIENDS] from " + original.getName(), expectedModel);
     }
 
     @Test
@@ -83,7 +83,7 @@ public class UntagCommandTest {
         expectedModel.setPerson(taggedPerson, new PersonBuilder(taggedPerson).withTags("regular").build());
 
         assertCommandSuccess(new UntagCommand(INDEX_FIRST_PERSON, new Tag("Vip")), model,
-                "Removed tag(s) [Vip] from " + original.getName(), expectedModel);
+                "Removed tag [Vip] from " + original.getName(), expectedModel);
     }
 
     @Test

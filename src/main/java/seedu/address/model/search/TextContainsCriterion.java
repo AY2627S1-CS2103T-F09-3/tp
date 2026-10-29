@@ -6,6 +6,7 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 import java.util.Locale;
 import java.util.Objects;
 
+import seedu.address.commons.util.StringUtil;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.Preorder;
@@ -26,7 +27,8 @@ public final class TextContainsCriterion implements PersonCriterion {
     private final String query;
 
     /**
-     * Creates a criterion for {@code field}, stripping surrounding whitespace from {@code query}.
+     * Creates a criterion for {@code field}, stripping surrounding whitespace, including no-break spaces, from
+     * {@code query}.
      * Internal whitespace and punctuation remain significant. Case normalization is locale-independent.
      *
      * @throws NullPointerException If either argument is null.
@@ -34,7 +36,7 @@ public final class TextContainsCriterion implements PersonCriterion {
      */
     public TextContainsCriterion(Field field, String query) {
         this.field = requireNonNull(field);
-        String strippedQuery = requireNonNull(query).strip();
+        String strippedQuery = StringUtil.stripSpaces(requireNonNull(query));
         checkArgument(!strippedQuery.isEmpty(), "Search text must not be blank.");
         this.query = strippedQuery.toLowerCase(Locale.ROOT);
     }

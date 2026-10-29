@@ -92,6 +92,12 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_unicodeSpacesOnly_throwsParseException() {
+        assertParseFailure(parser, "d/\u00A0", FORMAT_ERROR); // no-break space
+        assertParseFailure(parser, "d/\u2003", FORMAT_ERROR); // em space
+    }
+
+    @Test
     public void parse_duplicatePrefix_throwsParseException() {
         for (Prefix prefix : List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_POSTAL_CODE,
                 PREFIX_TAG, PREFIX_DETAILS, PREFIX_STATUS,
@@ -139,6 +145,11 @@ public class FindCommandParserTest {
             assertParseFailure(parser, "m/" + method, FulfilmentMethod.MESSAGE_CONSTRAINTS);
         }
         assertParseSuccess(parser, "h/ Call  on arrival! ", textCommand(HANDOVER_NOTES, "Call  on arrival!"));
+    }
+
+    @Test
+    public void parse_noBreakSpacesAroundText_stripped() {
+        assertParseSuccess(parser, "h/\u00A0side gate\u00A0", textCommand(HANDOVER_NOTES, "side gate"));
     }
 
     @Test
