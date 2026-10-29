@@ -27,7 +27,7 @@ public class TagCommand extends Command {
             + "Parameters: INDEX (must be a positive integer) " + PREFIX_TAG + "TAG\n"
             + "Example: " + COMMAND_WORD + " 1 " + PREFIX_TAG + "regular";
 
-    public static final String MESSAGE_TAG_PERSON_SUCCESS = "Added tag(s) %1$s to %2$s";
+    public static final String MESSAGE_TAG_PERSON_SUCCESS = "Added tag %1$s to %2$s";
     public static final String MESSAGE_DUPLICATE_TAG = "%1$s already has tag %2$s. No changes made.";
 
     private final Index index;
