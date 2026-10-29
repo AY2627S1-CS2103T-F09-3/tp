@@ -64,6 +64,7 @@ import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TagCriterion;
 import seedu.address.model.search.TextContainsCriterion;
 import seedu.address.model.tag.Tag;
+import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -168,6 +169,35 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_duplicateCustomer_preservesSavedDataAndReloads() throws Exception {
+        ReadOnlyAddressBook sampleData = SampleDataUtil.getSampleAddressBook();
+        model.setAddressBook(sampleData);
+        logic.execute("list");
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        String savedData = Files.readString(dataFile);
+        String expectedMessage = String.format(Messages.MESSAGE_DUPLICATE_CUSTOMER, "alex yeoh");
+        String duplicateAdd = "add n/alex yeoh p/91234567 e/alex2@example.com a/1 Test Road c/123456";
+
+        for (String input : List.of(duplicateAdd, "edit 2 n/alex yeoh")) {
+            assertCommandFailurePreservesFilteredList(input, CommandException.class, expectedMessage);
+            assertEquals(savedData, Files.readString(dataFile));
+        }
+
+        assertFilteringCommandSuccess("find n/Bernice", "1 customer(s) listed!",
+                List.of(sampleData.getPersonList().get(1)));
+        for (String input : List.of(duplicateAdd, "edit 1 n/alex yeoh")) {
+            assertCommandFailurePreservesFilteredList(input, CommandException.class, expectedMessage);
+            assertEquals(savedData, Files.readString(dataFile));
+        }
+
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        ReadOnlyAddressBook reloaded = storage.readAddressBook().orElseThrow();
+        assertEquals(sampleData.getPersonList(), reloaded.getPersonList());
+        Model restartedModel = new ModelManager(reloaded, new UserPrefs());
+        assertEquals(sampleData.getPersonList(), restartedModel.getFilteredPersonList());
     }
 
     @Test

@@ -3,6 +3,7 @@ package seedu.address.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.Messages.MESSAGE_DUPLICATE_CUSTOMER;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 
 import java.util.List;
@@ -33,6 +34,7 @@ import seedu.address.logic.commands.SortCommand;
 import seedu.address.logic.commands.TagCommand;
 import seedu.address.logic.commands.TrackCommand;
 import seedu.address.logic.commands.UntagCommand;
+import seedu.address.model.person.Name;
 
 /**
  * Checks that the result box shows every usage message in full, without scrolling.
@@ -66,6 +68,16 @@ public class ResultDisplayTest {
             Boolean fits = onFxThread(() -> fitsWithoutScrolling(showInScene(message, MIN_WINDOW_RESULT_WIDTH)));
 
             assertTrue(fits, "message does not fit: " + usage);
+        }
+    }
+
+    @Test
+    public void setFeedbackToUser_duplicateCustomerAtMinimumWidth_showsWholeMessageWithoutScrolling() throws Exception {
+        for (String name : List.of("alex yeoh", "W".repeat(Name.MAX_LENGTH))) {
+            String message = String.format(MESSAGE_DUPLICATE_CUSTOMER, name);
+            Boolean fits = onFxThread(() -> fitsWithoutScrolling(showInScene(message, MIN_WINDOW_RESULT_WIDTH)));
+
+            assertTrue(fits, "duplicate message does not fit: " + name);
         }
     }
 
