@@ -189,6 +189,7 @@ public class SearchCriteriaDisplayTest {
             window.fillInnerParts();
             Parent root = stage.getScene().getRoot();
             TextField commandBox = (TextField) root.lookup("#commandTextField");
+            TextArea resultDisplay = (TextArea) root.lookup("#resultDisplay");
             commandBox.requestFocus();
 
             assertDisplay(root, "Showing: All customers");
@@ -216,9 +217,11 @@ public class SearchCriteriaDisplayTest {
             assertEquals(2, model.getFilteredPersonList().size());
             assertDisplay(root, "Showing: All customers");
             assertFalse(getBadgePane(root).isManaged());
+            String previousFeedback = resultDisplay.getText();
+            enterCommand(commandBox, "");
+            assertEquals(previousFeedback, resultDisplay.getText());
 
             enterCommand(commandBox, "clear");
-            TextArea resultDisplay = (TextArea) root.lookup("#resultDisplay");
             assertEquals(ClearCommand.MESSAGE_CONFIRMATION_REQUIRED, resultDisplay.getText());
             assertEquals(2, model.getAddressBook().getPersonList().size());
 

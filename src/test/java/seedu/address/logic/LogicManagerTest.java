@@ -168,6 +168,16 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_emptyInputWithoutPendingClear_returnsEmptyFeedback() throws Exception {
+        model.addPerson(AMY);
+
+        CommandResult result = logic.execute("");
+
+        assertEquals("", result.getFeedbackToUser());
+        assertEquals(List.of(AMY), model.getAddressBook().getPersonList());
+    }
+
+    @Test
     public void execute_clearPromptsWithoutDeletingData() throws Exception {
         model.addPerson(AMY);
 

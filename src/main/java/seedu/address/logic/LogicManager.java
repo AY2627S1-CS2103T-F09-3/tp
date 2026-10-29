@@ -77,7 +77,10 @@ public class LogicManager implements Logic {
     }
 
     private boolean isClearConfirmationPending() {
-        return pendingClearCommand != null && pendingClearCommand.isConfirmationPending();
+        if (pendingClearCommand == null) {
+            return false;
+        }
+        return pendingClearCommand.isConfirmationPending();
     }
 
     private CommandResult executeAndSave(Command command) throws CommandException {
