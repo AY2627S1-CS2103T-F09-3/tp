@@ -21,7 +21,7 @@ class JsonAdaptedItem {
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Item's %s field is missing!";
 
     private final String name;
-    private final String quantity; // null when the item came from v1.3 without a quantity
+    private final String quantity;
     private final String status;
     private final String remark; // null when the item has no remark
 
@@ -42,7 +42,7 @@ class JsonAdaptedItem {
      */
     public JsonAdaptedItem(Item source) {
         name = source.getName().value;
-        quantity = source.getQuantity().map(Quantity::toString).orElse(null);
+        quantity = source.getQuantity().toString();
         status = source.getStatus().name();
         remark = source.getRemark().map(itemRemark -> itemRemark.value).orElse(null);
     }
@@ -61,7 +61,11 @@ class JsonAdaptedItem {
             throw new DataValidationException("invalid name.", ItemName.MESSAGE_CONSTRAINTS);
         }
 
-        if (quantity != null && !Quantity.isValidQuantity(quantity)) {
+        if (quantity == null) {
+            throw new DataValidationException("missing quantity.", String.format(MISSING_FIELD_MESSAGE_FORMAT,
+                    Quantity.class.getSimpleName()));
+        }
+        if (!Quantity.isValidQuantity(quantity)) {
             throw new DataValidationException("invalid quantity.", Quantity.MESSAGE_CONSTRAINTS);
         }
 
@@ -77,7 +81,7 @@ class JsonAdaptedItem {
             throw new DataValidationException("invalid remark.", Remark.MESSAGE_CONSTRAINTS);
         }
 
-        return new Item(new ItemName(name), Optional.ofNullable(quantity).map(Quantity::new),
+        return new Item(new ItemName(name), new Quantity(quantity),
                 ItemStatus.valueOf(status), Optional.ofNullable(remark).map(Remark::new));
     }
 }

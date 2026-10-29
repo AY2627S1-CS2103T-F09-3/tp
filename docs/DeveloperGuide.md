@@ -347,8 +347,8 @@ item criteria. Each new command still replaces the previous search, rather than 
 
 `ItemCriterion.matches(Item)` is the shared item-level check. `getMatchingItems(Person)` returns an unmodifiable list
 that preserves item order and duplicate entries. `TrackCommand` counts filtered customers once each, then sums the
-sizes of their matching-item lists using a `long` total. It counts item entries, not quantities, including migrated
-items without quantities. Explicit status feedback retains the requested status even when both counts are zero.
+sizes of their matching-item lists using a `long` total. It counts item entries, not quantities. Explicit status
+feedback retains the requested status even when both counts are zero.
 
 The criterion rejects null arguments, null status elements and blank product queries, and defensively copies the
 status set. Its normalized conditions define value equality and hash codes for observable search state.
@@ -360,10 +360,9 @@ rather than an individual item.
 `ProductPreparationSummary.from` creates an immutable snapshot from the filtered customers and a product
 `ItemCriterion`. It reuses `ItemCriterion.matches`, retaining matching entries in customer/item order,
 including duplicates. Each `MatchingItem` retains its customer and original one-based item number for
-remark attribution. Customer count is distinct, item count counts entries, and quantity is summed using
-`long`. Missing quantities from migrated data are counted separately so that a known subtotal is never
-presented as a complete total. Constructors reject null inputs and invalid item references; collections
-are defensively copied.
+remark attribution. Customer count is distinct, item count counts entries, and the quantities of all
+matching items are summed into a `long` total quantity. Constructors reject null inputs and invalid item
+references; collections are defensively copied.
 
 `MainWindow` puts `ProductSummaryPanel` in the `SidePanel`. The summary listens to both the filtered
 customer list and `Logic.activeSearchCriteriaProperty()`, so changing criteria refreshes it even when the
@@ -409,7 +408,7 @@ The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
-* saves preorders through `JsonAdaptedPreorder` and `JsonAdaptedItem`, and reads preorders saved by v1.3 through `JsonAdaptedLegacyPreorder` (see [Saving preorders](#saving-preorders)).
+* saves preorders through `JsonAdaptedPreorder` and `JsonAdaptedItem`, and rejects preorders saved in the v1.3 format (see [Saving preorders](#saving-preorders)).
 
 ### Common classes
 
@@ -475,12 +474,12 @@ one `Preorder`, and each `Preorder` holds the customer's `Item`s in the order th
 * `Preorder` also has an optional `FulfilmentDate`, `FulfilmentMethod` (`DELIVERY` or `COLLECTION`) and
   `HandoverNotes`, such as "Call on arrival". They belong to the whole preorder, so all of its items are handed
   over together. `Preorder#withItems()` keeps them when a command changes the items.
-* `Item` has an `ItemName` of up to 200 characters, an `ItemStatus`, and an optional `Quantity` and `Remark`.
+* `Item` has an `ItemName` of up to 200 characters, a `Quantity`, an `ItemStatus`, and an optional `Remark`.
   `ItemName` turns each run of spaces, including Unicode spaces, into one space, so `Butter   Cake` and
   `Butter Cake` are the same product in `find` and the preparation summary.
   A `Quantity` is a whole number from 1 to 999, and a `Remark` is a special request of up to 100 characters.
-* New items always have a quantity. `Item#getQuantity()` is empty only for items converted from v1.3 data, as
-  described under "Loading v1.3 data" below.
+* Every item has a quantity. The `Item` constructor rejects a `null` quantity, and the data file loader rejects an
+  item without one (see [Saving preorders](#saving-preorders)).
 * `ItemStatus` belongs to each item, so a customer can have one item `PREPARED` while another is still
   `PENDING`. There is no overall status for a customer or a preorder. `track` matches a customer when any item
   has one of the requested statuses.
@@ -494,7 +493,7 @@ existing preorder to the new `Person`, so it is not lost.
 `JsonAdaptedPerson` saves a customer's preorder in a `"preorders"` list, which holds one `JsonAdaptedPreorder`, or
 none for a customer without a preorder. Each `JsonAdaptedPreorder` holds its `JsonAdaptedItem`s, and saves the date
 in `YYYY-MM-DD` form, the method by its name, and the handover notes. Each `JsonAdaptedItem` saves each field as a
-string. A missing fulfilment detail or remark, or the missing quantity of a converted item, is saved as `null`.
+string. A missing fulfilment detail or remark is saved as `null`. Every item is saved with its quantity.
 
 ```json
 "preorders" : [ {
@@ -511,19 +510,20 @@ string. A missing fulfilment detail or remark, or the missing quantity of a conv
 ```
 
 When the file is loaded, a customer with more than one preorder, a `null` preorder or item, or a preorder or item
-field that breaks its rules is reported as invalid data, in the same way as an invalid name or phone number. A preorder without
-an `"items"` field loads as a preorder with no items.
+field that breaks its rules is reported as invalid data, in the same way as an invalid name or phone number. An item
+whose `"quantity"` is missing, `null` or blank breaks these rules, just like a missing name or status. A preorder
+without an `"items"` field loads as a preorder with no items.
 
-#### Loading v1.3 data
+#### Rejecting v1.3 data
 
-All customer records must first have valid six-digit postal codes; missing codes are not inferred or accepted.
-
-LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and one `"status"`.
-`JsonAdaptedPerson` still reads that field through `JsonAdaptedLegacyPreorder`, which turns it into a preorder with
-one item named after the old details, with the old status. v1.3 did not record a quantity, and guessing one from the
-details could be wrong, so the item has no quantity and its card shows `Qty needed`. The converted preorder has
-no date, method or handover notes, as v1.3 had none. The old field is never written back, so the next save stores
-the customer in the current format.
+LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and one `"status"`, and no quantity.
+These preorders are no longer converted, since every item now needs a quantity and guessing one from the details
+could be wrong. The JSON reader ignores fields it does not know, so `JsonAdaptedPerson` still accepts a
+`"preorder"` field, only to reject the customer with `Person has a preorder in the v1.3 format, which is no longer
+supported!` in the detailed diagnostics. Without this check, the old preorder would be dropped without any warning.
+The startup dialog identifies the saved person's position, such as `Person 1: unsupported v1.3 preorder format.`,
+and a logged warning names the customer and explains the required format. A `"preorder"` field that is `null` holds
+no data, so it is ignored. As with any invalid data file, the file itself is not changed.
 
 #### Design considerations
 
@@ -551,13 +551,11 @@ the customer in the current format.
 
 * **Alternative 1 (current choice):** a `Quantity` class.
   * Pros: The rule and its error message are in one place, shared by `ParserUtil#parseQuantity` and the JSON
-    loader. An item without a quantity is an empty `Optional<Quantity>`, the same way an item without a remark is
-    an empty `Optional<Remark>`.
+    loader.
   * Cons: One more small class.
 * **Alternative 2:** a plain `int`.
   * Pros: Less code.
-  * Cons: Each place that creates an item has to repeat the range check, and a missing quantity needs a special
-    value such as 0.
+  * Cons: Each place that creates an item has to repeat the range check.
 
 **Aspect: how preorders are saved**
 
@@ -583,7 +581,7 @@ normal validation and preserve unsupported prefix-like text.
 
 The edit descriptor distinguishes an omitted remark (`null`), removal (`Optional.empty()`) and replacement
 (`Optional.of(remark)`). The command copies the descriptor defensively. Empty remarks are rejected when adding.
-New items must have quantities; editing preserves a migrated missing quantity unless a quantity is supplied.
+Every item has a quantity: `additem` requires `q/`, and `edititem` keeps the existing quantity unless `q/` is supplied.
 
 Both commands resolve the customer against the filtered list, copy the immutable item list, and rebuild the preorder
 and person before calling `model.setPerson`. Addition appends an item, creating a preorder if absent. Editing validates
@@ -596,7 +594,6 @@ same immutable preorder/person replacement path, with the item list appended or 
 <puml src="diagrams/EditItemSequenceDiagram.puml" alt="Interactions for editing one preorder item" />
 
 Success messages use `Added/Edited item NUMBER for CUSTOMER: NAME (quantity: QUANTITY, STATUS)`.
-For migrated items without a quantity, the quantity portion is `quantity needed`; the card shows `Qty needed`.
 Remarks remain visible on the customer card. A missing `i/` produces usage instructions. Empty, non-positive or
 malformed item-index values produce `Item index must be a positive integer.`, unless an unsupported prefix-like token
 is present, in which case the contextual diagnostic above is used. A syntactically valid positive index beyond the
@@ -621,7 +618,7 @@ preconditions in the update helper.
 The command copies the immutable item list, removes only the selected position, and constructs a replacement
 `Preorder` and `Person`. It preserves other customer fields and calls `model.setPerson` without resetting the filter.
 An empty item list remains wrapped in a preorder. The success message uses the deleted item's original number,
-name, quantity and status; missing quantities are displayed as blank values.
+name, quantity and status.
 
 The replacement person preserves the customer's postal code. `Preorder.withItems` preserves the fulfilment date,
 method and handover notes, including when the final item is removed. Missing optional fields remain absent.
@@ -1308,9 +1305,9 @@ Record their contact details and tags before starting. Replace `INDEX` in the ex
    Run `list` to confirm that both items and the customer remain stored.
 1. Close and reopen the application.<br>
    Expected: Both items retain their quantities and statuses; the second item's remark remains absent.
-1. With a v1.3 migrated item lacking a quantity, edit only its status.<br>
-   Expected: Its success message shows `quantity needed`, and its card shows `Qty needed`.
-   Supply `q/1` to correct it; subsequent success messages and the card show the recorded quantity.
+1. Run `list`, then `edititem INDEX i/1 s/pending`.<br>
+   Expected: Only the status of item 1 changes. The success message ends with `(quantity: 2, PENDING)`, and the card
+   still shows `Qty 2`.
 
 ### Deleting a preorder item
 
@@ -1343,9 +1340,6 @@ is customer 5 without a preorder.
    Expected: Alex's and Charlotte's preorders remain empty. Their other customer details are preserved.
 1. Using a fresh sample-data copy, run `list`, then `deleteitem 1 i/1`.<br>
    Expected: Only Pineapple Tarts is removed. Almond Cookies remains and is renumbered from 2 to 1.
-1. With a migrated v1.3 item lacking quantity, delete it using its displayed indices.<br>
-   Expected: Deletion succeeds, and the success message shows a blank quantity value. An empty preorder remains
-   if this was the only item.
 
 ### Deleting a preorder
 
@@ -1370,15 +1364,15 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
 1. Loading a preorder saved by v1.3
 
    1. Prerequisites: In `data/lebake.json`, replace the first customer's `"preorders"` list with
-      `"preorder" : { "details" : "2 chocolate cakes", "status" : "PENDING" }`.
+      `"preorder" : { "details" : "2 chocolate cakes", "status" : "PENDING" }`. Keep a copy of the file.
 
    1. Test case: Launch LeBake.<br>
-      Expected: The first customer's card shows one item, `2 chocolate cakes`, with `Qty needed` and the
-      status `PENDING`. Their other details are unchanged.
+      Expected: An error dialog appears before the main window and reports
+      `Person 1: unsupported v1.3 preorder format.` The log explains that the preorder must be moved into the
+      `"preorders"` list, with a quantity for each item.
 
-   1. Test case: Run `list`, close LeBake, then open `data/lebake.json` again.<br>
-      Expected: The customer has a `"preorders"` list holding one item whose `"quantity"` is `null`, and no
-      `"preorder"` field.
+   1. Test case: Press `Enter` to dismiss the dialog.<br>
+      Expected: LeBake exits, and the invalid file is unchanged. Restore a valid file before the next test.
 
 1. Loading a data file with an invalid item
 
@@ -1391,6 +1385,10 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
    1. Test case: Press `Enter` to dismiss the dialog.<br>
       Expected: LeBake exits, and the invalid file is unchanged. Restore the valid file from your copy and relaunch;
       the saved customers and preorders load normally.
+
+   1. Test case: Repeat with the item's `"quantity"` set to `null`, and then with the `"quantity"` line removed.<br>
+      Expected: The dialog reports `Person 1: item 1: missing quantity.` Dismissing it exits LeBake and leaves
+      the file unchanged. The log retains the detailed error `Item's Quantity field is missing!`.
 
 ### Sorting customers by fulfilment date
 

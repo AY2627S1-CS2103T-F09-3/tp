@@ -193,6 +193,39 @@ public class MainAppTest {
     }
 
     @Test
+    public void createDataLoadingErrorDialog_missingQuantity_identifiesPersonItemAndField() throws Exception {
+        String data = Files.readString(STORAGE_TEST_DATA_FOLDER.resolve("fulfilmentDetails.json"))
+                .replace("\"quantity\" : \"2\",", "");
+
+        String content = getErrorDialogContent(data);
+
+        assertTrue(content.contains("Reason:\nPerson 1: item 1: missing quantity."));
+    }
+
+    @Test
+    public void createDataLoadingErrorDialog_nullQuantity_identifiesPersonItemAndField() throws Exception {
+        String data = Files.readString(STORAGE_TEST_DATA_FOLDER.resolve("fulfilmentDetails.json"))
+                .replace("\"quantity\" : \"2\"", "\"quantity\" : null");
+
+        String content = getErrorDialogContent(data);
+
+        assertTrue(content.contains("Reason:\nPerson 1: item 1: missing quantity."));
+    }
+
+    @Test
+    public void createDataLoadingErrorDialog_legacyPreorder_identifiesPersonAndFormat() throws Exception {
+        JsonNode data = JsonUtil.readJsonFile(STORAGE_TEST_DATA_FOLDER.resolve("fulfilmentDetails.json"),
+                JsonNode.class).get();
+        ObjectNode person = (ObjectNode) data.get("persons").get(0);
+        person.remove("preorders");
+        person.putObject("preorder").put("details", "2 chocolate cakes").put("status", "PENDING");
+
+        String content = getErrorDialogContent(JsonUtil.toJsonString(data));
+
+        assertTrue(content.contains("Reason:\nPerson 1: unsupported v1.3 preorder format."));
+    }
+
+    @Test
     public void createDataLoadingErrorDialog_missingItemStatus_identifiesMissingField() throws Exception {
         String data = Files.readString(STORAGE_TEST_DATA_FOLDER.resolve("missingItemStatus.json"));
 

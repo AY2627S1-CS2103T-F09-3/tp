@@ -5,11 +5,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataValidationException;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
@@ -30,6 +33,10 @@ class JsonAdaptedPerson {
     public static final String MESSAGE_TOO_MANY_PREORDERS = "Person has more than one preorder!";
     public static final String MESSAGE_NULL_PREORDER = "Person's preorder list contains a null entry!";
     public static final String MESSAGE_NULL_TAG = "Person's tag list contains a null entry!";
+    public static final String MESSAGE_LEGACY_PREORDER =
+            "Person has a preorder in the v1.3 format, which is no longer supported!";
+
+    private static final Logger logger = LogsCenter.getLogger(JsonAdaptedPerson.class);
 
     private final String name;
     private final String phone;
@@ -39,17 +46,21 @@ class JsonAdaptedPerson {
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     // Saved as a list so that customers can have more than one preorder in a later version
     private final List<JsonAdaptedPreorder> preorders = new ArrayList<>();
+    // True if the file has the single "preorder" field of v1.3, which is rejected instead of being ignored
+    @JsonIgnore
+    private final boolean hasLegacyPreorder;
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
-     * A {@code legacyPreorder} from a v1.3 data file is added to {@code preorders} in the current format.
+     * A non-null {@code legacyPreorder} is the {@code "preorder"} field of a v1.3 data file, which makes
+     * {@link #toModelType()} fail.
      */
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("address") String address,
             @JsonProperty("postalCode") String postalCode, @JsonProperty("tags") List<JsonAdaptedTag> tags,
             @JsonProperty("preorders") List<JsonAdaptedPreorder> preorders,
-            @JsonProperty("preorder") JsonAdaptedLegacyPreorder legacyPreorder) {
+            @JsonProperty("preorder") Object legacyPreorder) {
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -61,9 +72,7 @@ class JsonAdaptedPerson {
         if (preorders != null) {
             this.preorders.addAll(preorders);
         }
-        if (legacyPreorder != null) {
-            this.preorders.add(legacyPreorder.toJsonAdaptedPreorder());
-        }
+        hasLegacyPreorder = legacyPreorder != null;
     }
 
     /** Creates an adapted customer with a postal code and no preorder. */
@@ -85,6 +94,7 @@ class JsonAdaptedPerson {
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
         source.getPreorder().ifPresent(preorder -> preorders.add(new JsonAdaptedPreorder(preorder)));
+        hasLegacyPreorder = false;
     }
 
     /**
@@ -147,6 +157,11 @@ class JsonAdaptedPerson {
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
 
+        if (hasLegacyPreorder) {
+            logger.warning("The v1.3 preorder of " + modelName + " must be moved into the \"preorders\" list, "
+                    + "with a quantity for each item, before the data file can be loaded.");
+            throw new DataValidationException("unsupported v1.3 preorder format.", MESSAGE_LEGACY_PREORDER);
+        }
         if (preorders.contains(null)) {
             throw new DataValidationException("missing preorder data.", MESSAGE_NULL_PREORDER);
         }
