@@ -27,8 +27,8 @@ import seedu.address.model.preorder.Preorder;
 public class AddItemCommand extends Command {
     public static final String COMMAND_WORD = "additem";
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Adds one item to the preorder of the person in the displayed list. "
-            + "A preorder is created if the person does not have one.\n"
+            + ": Adds one item to the preorder of the customer in the displayed list. "
+            + "A preorder is created if the customer does not have one.\n"
             + "Parameters: INDEX (must be a positive integer) "
             + PREFIX_DETAILS + "NAME " + PREFIX_QUANTITY + "QUANTITY "
             + PREFIX_STATUS + "STATUS [" + PREFIX_REMARK + "REMARK]\n"
