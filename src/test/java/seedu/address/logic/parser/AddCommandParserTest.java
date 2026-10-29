@@ -192,12 +192,20 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_addressContainingUnrecognizedPrefixes_success() {
-        String address = "Block 123 c/o Alice x/foo";
+    public void parse_addressWithCareOfAndOrdinarySlash_success() {
+        String address = "Block 123 c/o Alice #04/08";
         Person expectedPerson = new PersonBuilder(BOB).withPostalCode("654321").withAddress(address).withTags().build();
         assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + " a/" + address
                 + POSTAL_CODE_DESC_BOB,
                 new AddCommand(expectedPerson));
+    }
+
+    @Test
+    public void parse_addressWithPrefixLikeSlashText_failure() {
+        for (String address : new String[]{"Block123 s/pending", "Block 123 x/foo", "Block 123 w/o lift"}) {
+            assertParseFailure(parser, VALID_FIELDS.replace(ADDRESS_DESC_BOB, " a/" + address),
+                    Address.MESSAGE_CONSTRAINTS);
+        }
     }
 
     @Test
@@ -244,8 +252,8 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_addressWithPrefixLikeTextAndOtherFields_preservesEveryValue() {
-        String address = "Block 123 c/o Alice w/o lift x/foo #04/08";
+    public void parse_addressWithCareOfAndOrdinarySlashAndOtherFields_preservesEveryValue() {
+        String address = "Block 123 c/o Alice #04/08";
         Person expectedPerson = new PersonBuilder(BOB).withPostalCode("654321").withAddress(address).withTags().build();
         assertParseSuccess(parser, " a/" + address + POSTAL_CODE_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + NAME_DESC_BOB, new AddCommand(expectedPerson));

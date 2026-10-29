@@ -69,9 +69,9 @@ information.
   For example, `edititem 1 i/1 r/Less sugar s/pending` sets the remark to `Less sugar` and the status to `PENDING`.
   Quotation marks do not escape a supported prefix. Conventional `c/o` text is preserved inside addresses.
 
-* Unsupported prefix-like text inside a free-text value is kept, subject to that field's validation rules.<br>
-  For example, `edititem 1 i/1 r/Pack w/o nuts` keeps `Pack w/o nuts` as the remark.
-  There is no general ban on slash-containing text. The `find` section below distinguishes constrained queries from free text.
+* Item names, remarks and handover notes reject forward slashes. Addresses allow ordinary slash notation such as
+  `#04/08` and conventional `c/o`, but reject a letter-based token followed by `/` at the start or after whitespace,
+  such as `s/pending` or `x/foo`.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
@@ -170,7 +170,8 @@ Postal codes must contain exactly six digits. They are stored as text, so leadin
 * Names must contain at least one English letter (`A-Z` or `a-z`) and may contain only English letters, spaces, straight apostrophes (`'`) and hyphens (`-`). Accented letters, non-English characters, digits and other symbols are rejected. For example, `Mary-Jane O'Brien`, `Li` and `A` are valid names; `José Tan` and `---` are invalid.
 * Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
 * Name, phone, email and postal code values are validated first. An invalid value containing an extra unsupported prefix identifies that prefix. For example, adding `x/foo` after `p/98765432` shows `Unsupported prefix 'x/' for add.` Other invalid values keep their field constraint messages.
-* Addresses preserve unsupported prefix-like text and conventional `c/o` text. For example, `a/Block 123 c/o John x/foo` is kept as `Block 123 c/o John x/foo`.
+* Addresses allow conventional `c/o` and ordinary slash notation such as `#04/08`. A letter-based token followed by
+  `/` at the start or after whitespace, such as `s/pending`, is rejected so it cannot be confused with another field.
 * A customer is a duplicate if their name matches an existing customer's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
 * Duplicate checks include all saved customers, even those hidden by a `find` command.
 * New customers are added without tags or a preorder. Use [`tag`](#tagging-a-customer-tag) to add tags afterwards.
@@ -219,8 +220,9 @@ An unsupported letter-based prefix after whitespace in an invalid `n/`, `p/`, `e
 For example, `edit 1 p/91234567 x/foo` displays `Unsupported prefix 'x/' for edit.` Remove the unsupported argument
 and try again. Ordinary invalid values keep their corresponding field constraint messages.
 
-Addresses preserve unsupported prefix-like text. For example, `edit 1 a/Block 123 c/o Alice x/foo` keeps the complete
-address `Block 123 c/o Alice x/foo`. Customer names follow the existing name validation rules described for `add`.
+Addresses allow conventional `c/o` and ordinary slash notation such as `#04/08`. A letter-based token followed by `/`
+at the start or after whitespace, such as `s/pending`, is rejected. Customer names follow the existing name validation
+rules described for `add`.
 
 Examples:
 
@@ -420,7 +422,9 @@ Supply at least one prefixed criterion. Each prefix may appear at most once, in 
 * Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
 * Results use the current displayed indices. Use `list` to show all customers again.
 * Use lowercase prefixes. A supported prefix starts at the beginning of the arguments or after whitespace and ends the previous value. The existing `c/o` exception keeps conventional care-of text inside an address.
-* Address, product and handover-note queries preserve unsupported prefix-like text literally. For example, `find d/Cake w/ candles` searches for the complete product `Cake w/ candles`, and `find h/Leave w/o ringing x/foo` keeps the entire handover-note query.
+* Address queries preserve slash text, including `c/o`. Saved addresses allow ordinary slash notation such as `#04/08`
+  and conventional `c/o`, but reject a letter-based token followed by `/` at the start or after whitespace. Product
+  names and handover notes cannot contain slashes.
 * Name, phone, email, postal code, tag, date, method and status queries are validated first. If an invalid query contains an extra unsupported prefix, such as `find c/123 x/foo`, the error identifies `x/`. Other invalid queries show the corresponding constraint message. Unsupported arguments before the first recognised criterion still show command-format guidance.
 
 Examples:
@@ -501,11 +505,13 @@ Adds one item to a customer's preorder. If the customer has no preorder, one is 
 Format: `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`
 
 * `INDEX` is a positive integer identifying a customer in the **currently displayed list**.
-* Name, quantity and status are required. A name must be non-blank, on one line and at most 200 characters long. Repeated spaces in a name become one, so `d/Butter   Cake` is saved as `Butter Cake`.
+* Name, quantity and status are required. A name must be non-blank, on one line, at most 200 characters long and must
+  not contain forward slashes (`/`). Repeated spaces in a name become one, so `d/Butter   Cake` is saved as
+  `Butter Cake`.
 * Quantity must be a whole number from 1 to 999, without leading zeros.
 * Status must be `PENDING`, `PREPARED` or `COMPLETED`, ignoring capitalisation.
-* Remarks are optional. If supplied, a remark must be non-blank, on one line and at most 100 characters long.
-* Names and remarks preserve unsupported prefix-like text, such as `d/Cake w/ candles` and `r/Pack w/o nuts x/foo`. Supported prefixes still start separate fields.
+* Remarks are optional. If supplied, a remark must be non-blank, contain no forward slashes, be on one line and be at most 100 characters long.
+* Names and remarks reject slash-containing text, including prefix-like strings such as `Cake w/ candles` and `Pack w/o nuts`. Supported prefixes still start separate fields.
 * Surrounding spaces in values are trimmed. A value of only spaces, including Unicode spaces such as an em space, is blank. Prefixes may appear in any order, but each can appear only once.
 * The item is appended to the preorder. Repeated product names, including identical items, remain separate entries.
 * Existing items, contact details and tags are preserved. The current filter remains active.
@@ -560,8 +566,8 @@ For Alice's second item, Cake, the success message could be:
 | `edititem 1 i/1 q/2 x/3` or `edititem 1 i/1 s/pending x/3` | `Unsupported prefix 'x/' for edititem.` |
 
 The unsupported-prefix message identifies the first unsupported letter-based prefix after whitespace in an invalid
-`i/`, `q/` or `s/` value. Names (`d/`) and remarks (`r/`) keep unsupported prefix-like text as part of the value.
-For example, `edititem 1 i/1 r/Pack w/o nuts x/2` keeps the complete remark `Pack w/o nuts x/2`.
+`i/`, `q/` or `s/` value. Names (`d/`) and remarks (`r/`) reject forward slashes, including prefix-like text such as
+`Cake w/ candles` and `Pack w/o nuts`.
 
 For both commands, repeated prefixes produce `Multiple values specified for the following single-valued field(s): `
 followed by the repeated prefixes. Input validation reports the first error: customer-index syntax, duplicate prefixes,
@@ -660,7 +666,7 @@ Format: `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`
 * If the customer has no preorder yet, supplying at least one nonempty value creates one with no items, so you can record the arrangements before adding items with [`additem`](#adding-a-preorder-item-additem). Supplying only empty values makes no changes because there is nothing to clear.
 * A past date is accepted, so you can still record late orders. The success message then adds a note on a new line, for example `Note: 20 Dec 2025 is in the past.`
 * The customer's items (with their quantities, statuses and remarks), contact details, postal code and tags are not changed. The current filter remains active.
-* Surrounding spaces in values are trimmed. Handover notes of only spaces, including Unicode spaces such as an em space, are rejected as blank. A supported prefix (`f/`, `m/` or `h/`) after whitespace ends the previous value, so avoid it inside handover notes. Unsupported prefix-like text is preserved: `preorder 1 h/Leave w/o ringing x/2` keeps `Leave w/o ringing x/2` as the handover notes.
+* Surrounding spaces in values are trimmed. Handover notes of only spaces, including Unicode spaces such as an em space, are rejected as blank. Handover notes must not contain forward slashes. A supported prefix (`f/`, `m/` or `h/`) after whitespace ends the previous value.
 
 On success, the app shows the customer's details after the change, for example:
 `Updated preorder details for Alex Yeoh: Date: 21 Dec 2026 | Method: COLLECTION | Handover notes: Collect from side gate`.
@@ -680,7 +686,7 @@ Common errors:
 | `preorder 1 f/2026-02-30` or `preorder 1 f/20-12-2026` | `Invalid date! Dates must be real calendar dates in YYYY-MM-DD format, e.g. 2026-12-20.` |
 | `preorder 1 m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
 | `preorder 1 f/2026-12-20 x/foo` or `preorder 1 m/delivery x/foo` | `Unsupported prefix 'x/' for preorder.` |
-| Handover notes longer than 100 characters | `Invalid handover notes! Handover notes must not be blank, must be on a single line, and must be at most 100 characters long.` |
+| Handover notes longer than 100 characters or containing `/` | `Invalid handover notes! Handover notes must not be blank, must not contain forward slashes, must be on a single line, and must be at most 100 characters long.` |
 | `preorder 1 f/2026-12-20 f/2026-12-21` | `Multiple values specified for the following single-valued field(s): f/` |
 | `preorder`, `preorder 0 m/delivery`, `preorder abc m/delivery`, `preorder 1 2 m/delivery`, or a prefix of another command such as `preorder 1 d/Cake` | `Invalid command format!` followed by the preorder usage instructions. |
 | `preorder 7 m/delivery` when fewer than seven customers are displayed | `The customer index provided is invalid.` |

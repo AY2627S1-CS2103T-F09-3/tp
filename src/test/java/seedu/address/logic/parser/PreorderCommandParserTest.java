@@ -117,11 +117,8 @@ public class PreorderCommandParserTest {
     }
 
     @Test
-    public void parse_prefixLikeTextInHandoverNotes_preservesTextAndOtherFields() {
-        String notes = "Leave w/o ringing d/Cake x/foo";
-        EditFulfilmentDescriptor descriptor = new EditFulfilmentDescriptorBuilder().withHandoverNotes(notes)
-                .withoutDate().withMethod(FulfilmentMethod.DELIVERY).build();
-        assertParseDescriptor("1 h/" + notes + " f/ m/delivery", descriptor);
+    public void parse_slashesInHandoverNotes_failure() {
+        assertParseFailure(parser, "1 h/Leave w/o ringing", HandoverNotes.MESSAGE_CONSTRAINTS);
     }
 
     @Test

@@ -539,10 +539,9 @@ public class ParserUtilTest {
     }
 
     @Test
-    public void parseFreeText_prefixLikeText_preservesText() throws Exception {
-        assertEquals(new Remark("Pack w/o nuts x/2"), ParserUtil.parseRemark("Pack w/o nuts x/2"));
-        assertEquals(new HandoverNotes("Leave w/o ringing x/2"),
-                ParserUtil.parseHandoverNotes("Leave w/o ringing x/2"));
+    public void parseFreeText_slashesRejected() {
+        assertThrows(ParseException.class, () -> ParserUtil.parseRemark("Pack w/o nuts x/2"));
+        assertThrows(ParseException.class, () -> ParserUtil.parseHandoverNotes("Leave w/o ringing x/2"));
     }
 
     @Test

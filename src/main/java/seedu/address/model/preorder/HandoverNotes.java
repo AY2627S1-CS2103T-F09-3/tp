@@ -5,14 +5,15 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 
 /**
  * Represents a note on how to hand over a customer's preorder, such as "Call on arrival".
- * Guarantees: immutable; is valid as declared in {@link #isValidHandoverNotes(String)}
+ * Guarantees: immutable; values are valid as declared in {@link #isValidHandoverNotes(String)}.
  */
 public class HandoverNotes {
 
     public static final int MAX_LENGTH = 100;
 
     public static final String MESSAGE_CONSTRAINTS = "Invalid handover notes! Handover notes must not be blank, "
-            + "must be on a single line, and must be at most " + MAX_LENGTH + " characters long.";
+            + "must not contain forward slashes, must be on a single line, and must be at most "
+            + MAX_LENGTH + " characters long.";
 
     // Handover notes follow the same single-line rule as item names
     public static final String VALIDATION_REGEX = ItemName.VALIDATION_REGEX;
@@ -34,7 +35,7 @@ public class HandoverNotes {
      * Returns true if a given string is valid handover notes.
      */
     public static boolean isValidHandoverNotes(String test) {
-        return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX);
+        return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX) && !test.contains("/");
     }
 
     @Override

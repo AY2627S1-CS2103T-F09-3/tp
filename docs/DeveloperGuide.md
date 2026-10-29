@@ -194,23 +194,27 @@ original exception as the direct cause. A slash embedded without a preceding whi
 this diagnostic. Customer-index and duplicate-prefix checks retain their earlier precedence.
 
 `EditCommandParser` preserves its field-validation order: name, phone, email, address, then postal code. Customer
-names are constrained by `Name` and do not permit slashes. Addresses retain their normal validation and preserve
-unsupported prefix-like text, including `Block 123 c/o Alice x/foo`.
+names are constrained by `Name` and do not permit slashes. Address validation permits ordinary slash notation such
+as `#04/08` and conventional `c/o`, but rejects a letter-based token followed by `/` at the start or after whitespace,
+such as `s/pending` or `x/foo`.
 
 `TagCommandParser` and `UntagCommandParser` check the index format before calling `ParserUtil.parseSingleTag`
 with their format-error message and command word. This shared helper checks the required `t/` prefix and duplicate
 `t/` prefixes before calling `ParserUtil.parseTag`. Only a tag-value failure is passed to
 `ParserUtil.createFieldParseException`, so each command retains its own unsupported-prefix message.
 
-This is an error-message refinement rather than a global rejection rule. Addresses, item names, remarks and handover notes
-can contain unsupported prefix-like text, subject to their model constraints. Do not apply the helper to free-text
-values or scan the complete command before field validation: text such as `Pack w/o nuts x/2` can be intentional.
+This is an error-message refinement rather than a global rejection rule. Address validation allows ordinary slash
+notation and conventional `c/o` while rejecting a letter-based token followed by `/` at the start or after whitespace,
+which could be mistaken for another field.
+Item names, remarks and handover notes reject forward slashes through their model validation. Do not apply the helper
+to valid free-text values or scan the complete command before field validation.
 `FindCommandParser` uses the shared tokenizer too. It validates name, phone, email and postal-code queries using
 search-specific constraints, and validates tags, dates, methods and statuses through their existing validators.
 Each failed constrained value is passed to `ParserUtil.createFieldParseException` to refine its error. For example,
 `find c/123 x/foo` identifies `x/` while `find c/123` remains a valid postal-prefix search. Address, product and
-handover-note queries preserve unsupported prefix-like text. Only the failed field's value is inspected, so
-`find h/Leave w/o ringing x/foo s/invalid` still reports the status constraint rather than an error about the notes.
+handover-note queries are parsed as text. Product and handover-note queries reject slashes, while address queries
+retain ordinary slash text, including `c/o`. Only the failed field's value is inspected,
+so `find a/Block c/o Alice s/invalid` still reports the status constraint rather than an error about the address.
 Unsupported arguments in the preamble are rejected by the existing nonempty-preamble check.
 
 ### Model component
@@ -302,8 +306,9 @@ real calendar dates in `YYYY-MM-DD` format; methods are stripped and normalized 
 `COLLECTION`. Invalid values are refined with the unsupported-prefix helper, falling back to the corresponding model
 constraint message when no extra unsupported prefix is present. The shared `PREFIX_HANDOVER_NOTES`
 constant defines `h/` for handover notes. These queries follow existing text search rules: surrounding whitespace is
-stripped, while internal spacing and punctuation remain significant. Unsupported prefix-like text stays literal in
-handover-note queries. Blank values, repeated prefixes and nonempty preambles retain the existing parser checks.
+stripped, while internal spacing and punctuation remain significant. Product and handover-note queries reject `/`,
+matching their field validation. Address queries retain slash text such as `c/o`. Blank values, repeated prefixes and
+nonempty preambles retain the existing parser checks.
 
 All `find` searches require a supported prefix, including `n/` for names. Unprefixed searches and bare preambles are
 rejected; `find Alice m/delivery` must use `find n/Alice m/delivery` instead.
@@ -461,7 +466,8 @@ one `Preorder`, and each `Preorder` holds the customer's `Item`s in the order th
 * `Item` has an `ItemName` of up to 200 characters, a `Quantity`, an `ItemStatus`, and an optional `Remark`.
   `ItemName` turns each run of spaces, including Unicode spaces, into one space, so `Butter   Cake` and
   `Butter Cake` are the same product in `find` and the preparation summary.
-  A `Quantity` is a whole number from 1 to 999, and a `Remark` is a special request of up to 100 characters.
+  New item names and remarks reject forward slashes. A `Quantity` is a whole number from 1 to 999, and a `Remark`
+  is a special request of up to 100 characters.
 * Every item has a quantity. The `Item` constructor rejects a `null` quantity, and the data file loader rejects an
   item without one (see [Saving preorders](#saving-preorders)).
 * `ItemStatus` belongs to each item, so a customer can have one item `PREPARED` while another is still
@@ -478,7 +484,6 @@ existing preorder to the new `Person`, so it is not lost.
 none for a customer without a preorder. Each `JsonAdaptedPreorder` holds its `JsonAdaptedItem`s, and saves the date
 in `YYYY-MM-DD` form, the method by its name, and the handover notes. Each `JsonAdaptedItem` saves each field as a
 string. A missing fulfilment detail or remark is saved as `null`. Every item is saved with its quantity.
-
 ```json
 "preorders" : [ {
   "items" : [ {
@@ -565,7 +570,7 @@ keeps no-break spaces, so a value pasted with one around it is still accepted. S
 
 For `edititem`, failures in `i/`, `q/` and `s/` use the contextual diagnostics described under
 [Prefix boundaries and error messages](#prefix-boundaries-and-error-messages). Names and remarks retain their
-normal validation and preserve unsupported prefix-like text.
+normal validation and reject forward slashes.
 
 The edit descriptor distinguishes an omitted remark (`null`), removal (`Optional.empty()`) and replacement
 (`Optional.of(remark)`). The command copies the descriptor defensively. Empty remarks are rejected when adding.
@@ -1438,8 +1443,8 @@ remain unchanged.
 1. Try each of `find n/Ali x/foo`, `find p/9123 x/foo`, `find e/example.com x/foo`, `find c/123 x/foo`,
    `find t/VIP x/foo`, `find f/2026-12-20 x/foo`, `find m/delivery x/foo` and `find s/pending x/foo`.<br>
    Expected: `Unsupported prefix 'x/' for find.` The active Alex search remains unchanged.
-1. Try `find h/Leave w/o ringing x/earlier s/pending y/later`.<br>
-   Expected: `Unsupported prefix 'y/' for find.` The literal notes must not mask the invalid status argument.
+1. Try `find h/Leave ringing s/pending y/later`.<br>
+   Expected: `Unsupported prefix 'y/' for find.` The notes text must not mask the invalid status argument.
 1. Try `find n/Ali2`, `find p/91-23`, `find e/example!.com` and `find c/1234567`.<br>
    Expected: The corresponding query constraint message, with no unsupported-prefix error.
 1. Run `find n/Alex`, then try `edit 1 p/91234567 x/foo`.<br>
@@ -1454,8 +1459,8 @@ remain unchanged.
 1. Try `edit 0 p/91234567 x/foo` and `untag 1 t/VIP x/foo t/friends`.<br>
    Expected: Respectively, the edit format error and usage instructions, and the duplicate-`t/` error.
    No data or filter changes.
-1. Run `edit 1 a/Block 123 c/o Alice x/foo`.<br>
-   Expected: The complete address is `Block 123 c/o Alice x/foo`. Other contact details, tags, postal code and preorder
+1. Run `edit 1 a/Block 123 c/o Alice #04/08`.<br>
+   Expected: The complete address is `Block 123 c/o Alice #04/08`. Other contact details, tags, postal code and preorder
    are preserved. The active criteria are unchanged. Run `list` before continuing.
 1. Run `edititem 1 i/1 r/Pack without nuts`.<br>
    Expected: The edit succeeds and the remark is exactly `Pack without nuts`.
@@ -1463,9 +1468,9 @@ remain unchanged.
    Expected: The handover notes are exactly `Leave at side gate`.
 1. Run `edititem 1 i/1 r/Less sugar s/prepared`.<br>
    Expected: The remark is `Less sugar` and the status is `PREPARED`; the supported `s/` starts a separate field.
-1. Run `add n/Prefix Test p/91234567 e/prefix@example.com a/Block 123 c/o Prefix Test x/foo c/123456`, followed by
-   `find n/Pre p/9123 e/example.com a/Block 123 c/o Prefix Test x/foo`.<br>
-   Expected: Only `Prefix Test` is displayed. The address keeps both `c/o` and `x/foo`; contact fragments remain valid.
+1. Run `add n/Prefix Test p/91234567 e/prefix@example.com a/Block 123 c/o Prefix Test #04/08 c/123456`, followed by
+   `find n/Pre p/9123 e/example.com a/Block 123 c/o Prefix Test #04/08`.<br>
+   Expected: Only `Prefix Test` is displayed. The address keeps both `c/o` and `#04/08`; contact fragments remain valid.
 1. Run `additem 1 d/Cake with candles q/2 s/pending r/Pack without nuts`, then
    `preorder 1 h/Leave at side gate f/2026-12-20 m/delivery`, then `tag 1 t/VIP`.<br>
    Expected: The item name, remark and handover notes are stored correctly. Date, method, quantity, status and tag
@@ -1474,7 +1479,7 @@ remain unchanged.
    `find n/Pre p/9123 e/example.com c/123 t/VIP f/2026-12-20 m/delivery s/pending`.<br>
    Expected: Both searches show only `Prefix Test`.
 1. Restart LeBake, run `find n/Prefix`, and inspect the customer.<br>
-   Expected: All fields, including the literal address, item name, remark and notes, are preserved after reloading.
+   Expected: All fields, including the address, item name, remark and notes, are preserved after reloading.
 1. Run `preorder 1 f/ m/ h/`.<br>
    Expected: Date, method and handover notes are cleared. The item, its remark, contact details and tag remain, and
    `Prefix Test` remains displayed under the active name search.

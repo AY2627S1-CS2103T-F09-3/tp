@@ -59,7 +59,8 @@ public class EditItemCommandParserTest {
     @Test
     public void parse_emptyOrInvalidValues_failure() {
         for (String input : new String[]{" 1 i/1 d/", " 1 i/1 d/   s/PENDING", " 1 i/1 d/\u2003",
-            " 1 i/1 d/Cake\nTarts", " 1 i/1 d/" + "a".repeat(ItemName.MAX_LENGTH + 1)}) {
+            " 1 i/1 d/Cake\nTarts", " 1 i/1 d/Cake/Tarts",
+            " 1 i/1 d/" + "a".repeat(ItemName.MAX_LENGTH + 1)}) {
             assertParseFailure(parser, input, ItemName.MESSAGE_CONSTRAINTS);
         }
         for (String input : new String[]{" 1 i/1 s/", " 1 i/1 s/   d/Cake", " 1 i/1 s/DONE"}) {
@@ -133,15 +134,9 @@ public class EditItemCommandParserTest {
     }
 
     @Test
-    public void parse_prefixLikeTextInNameAndRemark_preservesText() {
-        String text = "Cake w/o nuts c/012345 x/2";
-        EditItemDescriptor descriptor = new EditItemDescriptor();
-        descriptor.setName(new ItemName(text));
-        descriptor.setRemark(Optional.of(new Remark(text)));
-        descriptor.setQuantity(new Quantity("2"));
-        descriptor.setStatus(ItemStatus.PENDING);
-        assertParseSuccess(parser, "1 i/1 d/" + text + " r/" + text + " q/2 s/pending",
-                new EditItemCommand(Index.fromOneBased(1), Index.fromOneBased(1), descriptor));
+    public void parse_slashesInNameOrRemark_failure() {
+        assertParseFailure(parser, "1 i/1 d/Cake w/o nuts", ItemName.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 i/1 r/Pack w/o nuts", Remark.MESSAGE_CONSTRAINTS);
     }
 
     @Test

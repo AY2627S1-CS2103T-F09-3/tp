@@ -7,7 +7,7 @@ import seedu.address.commons.util.StringUtil;
 
 /**
  * Represents the name of an item in a customer's preorder, such as "Pineapple Tarts".
- * Guarantees: immutable; is valid as declared in {@link #isValidItemName(String)};
+ * Guarantees: immutable; values are valid as declared in {@link #isValidItemName(String)};
  * has no leading, trailing or repeated spaces, so a typing slip cannot split one product in two.
  */
 public class ItemName {
@@ -16,7 +16,8 @@ public class ItemName {
     public static final int MAX_LENGTH = 200;
 
     public static final String MESSAGE_CONSTRAINTS = "Invalid item name! Item names must not be blank, "
-            + "must be on a single line, and must be at most " + MAX_LENGTH + " characters long.";
+            + "must not contain forward slashes, must be on a single line, and must be at most " + MAX_LENGTH
+            + " characters long.";
 
     /*
      * The first and last characters must not be whitespace, so blank names and names with
@@ -45,7 +46,8 @@ public class ItemName {
      */
     public static boolean isValidItemName(String test) {
         String normalizedName = StringUtil.normalizeSpaces(test);
-        return normalizedName.length() <= MAX_LENGTH && normalizedName.matches(VALIDATION_REGEX);
+        return normalizedName.length() <= MAX_LENGTH && normalizedName.matches(VALIDATION_REGEX)
+                && !normalizedName.contains("/");
     }
 
     @Override

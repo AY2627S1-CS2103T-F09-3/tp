@@ -94,9 +94,9 @@ class JsonAdaptedPreorder {
             throw new IllegalValueException(HandoverNotes.MESSAGE_CONSTRAINTS);
         }
 
+        Optional<HandoverNotes> notes = Optional.ofNullable(modelHandoverNotes).map(HandoverNotes::new);
         return new Preorder(modelItems, Optional.ofNullable(modelDate).map(FulfilmentDate::new),
-                Optional.ofNullable(modelMethod).map(FulfilmentMethod::valueOf),
-                Optional.ofNullable(modelHandoverNotes).map(HandoverNotes::new));
+                Optional.ofNullable(modelMethod).map(FulfilmentMethod::valueOf), notes);
     }
 
     /**
