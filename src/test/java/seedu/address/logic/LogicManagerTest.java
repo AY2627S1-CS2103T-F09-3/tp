@@ -203,6 +203,17 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_confirmWithNonBreakingSpacesAfterClear_clearsAddressBook() throws Exception {
+        model.addPerson(AMY);
+        logic.execute("clear");
+
+        CommandResult result = logic.execute("\u00A0CONFIRM\u00A0");
+
+        assertEquals(ClearCommand.MESSAGE_SUCCESS, result.getFeedbackToUser());
+        assertEquals(List.of(), model.getAddressBook().getPersonList());
+    }
+
+    @Test
     public void execute_otherInputDuringClearConfirmation_cancelsAndDiscardsInput() throws Exception {
         model.addPerson(AMY);
         SearchCriteria criteria = new SearchCriteria(List.of(new TextContainsCriterion(NAME, "No match")));

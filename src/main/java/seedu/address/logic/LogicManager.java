@@ -10,6 +10,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
@@ -58,8 +59,7 @@ public class LogicManager implements Logic {
         if (isClearConfirmationPending()) {
             ClearCommand clearCommand = pendingClearCommand;
             pendingClearCommand = null;
-            clearCommand.cancelConfirmation();
-            if (commandText.strip().equalsIgnoreCase(ClearCommand.CONFIRMATION_INPUT)) {
+            if (StringUtil.stripSpaces(commandText).equalsIgnoreCase(ClearCommand.CONFIRMATION_INPUT)) {
                 return executeAndSave(clearCommand);
             }
             return new CommandResult(ClearCommand.MESSAGE_CONFIRMATION_CANCELLED);
@@ -69,7 +69,6 @@ public class LogicManager implements Logic {
         if (command instanceof ClearCommand) {
             // Defer the destructive command until the user explicitly confirms it.
             pendingClearCommand = (ClearCommand) command;
-            pendingClearCommand.requestConfirmation();
             return new CommandResult(ClearCommand.MESSAGE_CONFIRMATION_REQUIRED);
         }
 
@@ -77,10 +76,7 @@ public class LogicManager implements Logic {
     }
 
     private boolean isClearConfirmationPending() {
-        if (pendingClearCommand == null) {
-            return false;
-        }
-        return pendingClearCommand.isConfirmationPending();
+        return pendingClearCommand != null;
     }
 
     private CommandResult executeAndSave(Command command) throws CommandException {

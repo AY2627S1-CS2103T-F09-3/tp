@@ -19,30 +19,6 @@ public class ClearCommand extends Command {
             + "was discarded; enter it again if needed.";
     public static final String MESSAGE_SUCCESS = "Address book has been cleared!";
 
-    private boolean isConfirmationPending;
-
-    /**
-     * Marks this command as awaiting user confirmation.
-     */
-    public void requestConfirmation() {
-        isConfirmationPending = true;
-    }
-
-    /**
-     * Returns whether this command is awaiting user confirmation.
-     */
-    public boolean isConfirmationPending() {
-        return isConfirmationPending;
-    }
-
-    /**
-     * Clears the pending confirmation state.
-     */
-    public void cancelConfirmation() {
-        isConfirmationPending = false;
-    }
-
-
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
