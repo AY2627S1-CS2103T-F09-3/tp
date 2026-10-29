@@ -101,6 +101,37 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_nameLengthBoundaries_checksNormalizedLength() {
+        for (int length : new int[]{99, 100}) {
+            String normalizedName = "A".repeat(length - 2) + " B";
+            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(normalizedName).build();
+            assertParseSuccess(parser, "1 n/  " + "A".repeat(length - 2) + "   B  ",
+                    new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        }
+        assertParseFailure(parser, "1 n/  " + "A".repeat(99) + "   B  ", Name.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_emailLengthBoundaries_checksTrimmedLength() {
+        for (int length : new int[]{253, 254}) {
+            String email = createEmailWithLength(length);
+            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withEmail(email).build();
+            assertParseSuccess(parser, "1 e/  " + email + "  ", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        }
+        assertParseFailure(parser, "1 e/  " + createEmailWithLength(255) + "  ", Email.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_addressLengthBoundaries_checksTrimmedLength() {
+        for (int length : new int[]{299, 300}) {
+            String address = "A".repeat(length);
+            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withAddress(address).build();
+            assertParseSuccess(parser, "1 a/  " + address + "  ", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        }
+        assertParseFailure(parser, "1 a/  " + "A".repeat(301) + "  ", Address.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
     public void parse_invalidNames_failure() {
         for (String invalidName : new String[]{"", "   ", "John2", "John@Tan", "John\tTan", "-", "'", " - ' ",
             "José Tan"}) {
@@ -219,5 +250,10 @@ public class EditCommandParserTest {
         EditCommand expectedCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
 
         assertParseSuccess(parser, "1 " + PREFIX_ADDRESS + address, expectedCommand);
+    }
+
+    private static String createEmailWithLength(int length) {
+        String prefix = "a".repeat(64) + "@" + "b".repeat(63) + "." + "c".repeat(63) + ".";
+        return prefix + "d".repeat(length - prefix.length());
     }
 }

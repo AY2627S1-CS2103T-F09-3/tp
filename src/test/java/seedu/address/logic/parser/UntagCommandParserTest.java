@@ -61,6 +61,16 @@ public class UntagCommandParserTest {
     }
 
     @Test
+    public void parse_tagLengthBoundaries_checksTrimmedLength() {
+        for (int length : new int[]{29, 30}) {
+            String tag = "A".repeat(length);
+            assertParseSuccess(parser, "1 t/  " + tag + "  ",
+                    new UntagCommand(INDEX_FIRST_PERSON, new Tag(tag)));
+        }
+        assertParseFailure(parser, "1 t/  " + "A".repeat(31) + "  ", Tag.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
     public void parse_repeatedTagPrefix_failure() {
         String expectedMessage = Messages.getErrorMessageForDuplicatePrefixes(PREFIX_TAG);
         assertParseFailure(parser, "1 t/friends t/VIP", expectedMessage);
