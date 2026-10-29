@@ -34,6 +34,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Region;
@@ -41,6 +42,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.parser.FindCommandParser;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -214,6 +216,15 @@ public class SearchCriteriaDisplayTest {
             assertEquals(2, model.getFilteredPersonList().size());
             assertDisplay(root, "Showing: All customers");
             assertFalse(getBadgePane(root).isManaged());
+
+            enterCommand(commandBox, "clear");
+            TextArea resultDisplay = (TextArea) root.lookup("#resultDisplay");
+            assertEquals(ClearCommand.MESSAGE_CONFIRMATION_REQUIRED, resultDisplay.getText());
+            assertEquals(2, model.getAddressBook().getPersonList().size());
+
+            enterCommand(commandBox, "");
+            assertEquals(ClearCommand.MESSAGE_CONFIRMATION_CANCELLED, resultDisplay.getText());
+            assertEquals(2, model.getAddressBook().getPersonList().size());
         });
     }
 

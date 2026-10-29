@@ -12,7 +12,35 @@ import seedu.address.model.Model;
 public class ClearCommand extends Command {
 
     public static final String COMMAND_WORD = "clear";
+    public static final String CONFIRMATION_INPUT = "confirm";
+    public static final String MESSAGE_CONFIRMATION_REQUIRED = "This will permanently delete all customers and their "
+            + "preorder data. Type 'confirm' to proceed; any other input cancels and is discarded.";
+    public static final String MESSAGE_CONFIRMATION_CANCELLED = "Clear cancelled. No data was deleted. Any typed input "
+            + "was discarded; enter it again if needed.";
     public static final String MESSAGE_SUCCESS = "Address book has been cleared!";
+
+    private boolean isConfirmationPending;
+
+    /**
+     * Marks this command as awaiting user confirmation.
+     */
+    public void requestConfirmation() {
+        isConfirmationPending = true;
+    }
+
+    /**
+     * Returns whether this command is awaiting user confirmation.
+     */
+    public boolean isConfirmationPending() {
+        return isConfirmationPending;
+    }
+
+    /**
+     * Clears the pending confirmation state.
+     */
+    public void cancelConfirmation() {
+        isConfirmationPending = false;
+    }
 
 
     @Override
