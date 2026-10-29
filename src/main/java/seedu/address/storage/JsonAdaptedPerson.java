@@ -5,12 +5,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
@@ -31,6 +33,8 @@ class JsonAdaptedPerson {
     public static final String MESSAGE_NULL_PREORDER = "Person's preorder list contains a null entry!";
     public static final String MESSAGE_LEGACY_PREORDER =
             "Person has a preorder in the v1.3 format, which is no longer supported!";
+
+    private static final Logger logger = LogsCenter.getLogger(JsonAdaptedPerson.class);
 
     private final String name;
     private final String phone;
@@ -145,6 +149,9 @@ class JsonAdaptedPerson {
         final Set<Tag> modelTags = new HashSet<>(personTags);
 
         if (hasLegacyPreorder) {
+            // The exception message does not say which customer to fix in the file
+            logger.warning("The v1.3 preorder of " + modelName + " must be moved into the \"preorders\" list, "
+                    + "with a quantity for each item, before the data file can be loaded.");
             throw new IllegalValueException(MESSAGE_LEGACY_PREORDER);
         }
         if (preorders.contains(null)) {

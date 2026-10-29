@@ -498,8 +498,9 @@ LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and on
 These preorders are no longer converted, since every item now needs a quantity and guessing one from the details
 could be wrong. The JSON reader ignores fields it does not know, so `JsonAdaptedPerson` still accepts a
 `"preorder"` field, only to reject the customer with `Person has a preorder in the v1.3 format, which is no longer
-supported!`. Without this check, the old preorder would be dropped without any warning. A `"preorder"` field that
-is `null` holds no data, so it is ignored. As with any invalid data file, the file itself is not changed.
+supported!`. Without this check, the old preorder would be dropped without any warning. The exception message does
+not say which customer is affected, so a logged warning names them. A `"preorder"` field that is `null` holds no
+data, so it is ignored. As with any invalid data file, the file itself is not changed.
 
 #### Design considerations
 
@@ -1343,8 +1344,9 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
       `"preorder" : { "details" : "2 chocolate cakes", "status" : "PENDING" }`. Keep a copy of the file.
 
    1. Test case: Launch LeBake.<br>
-      Expected: The data file cannot be loaded, so LeBake starts with an empty customer list. The log shows
-      `Person has a preorder in the v1.3 format, which is no longer supported!`, and the data file is unchanged.
+      Expected: The data file cannot be loaded, so LeBake starts with an empty customer list. The log warns that
+      the first customer's v1.3 preorder must be moved into the `"preorders"` list, and shows
+      `Person has a preorder in the v1.3 format, which is no longer supported!`. The data file is unchanged.
       Restore the file from your copy before running a command, as the next command saves the empty list over it.
 
 1. Loading a data file with an invalid item
