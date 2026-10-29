@@ -892,18 +892,20 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | keyboard-oriented home baker                         | exit LeBake using a command                                                       | complete my workflow without using a mouse                          |
 | `* * *`  | home baker                                           | add or remove tags from an existing customer                                      | keep the customer’s classifications current                         |
 | `* * *`  | home baker entering contacts quickly                 | be warned about possible duplicate profiles                                       | avoid recording the same customer twice                             |
-| `* * *`  | home baker                                           | record a concise seasonal pre-order summary in a customer’s profile               | keep the order connected to the correct customer                    |
+| `* * *`  | home baker                                           | record the products and quantities a customer pre-ordered                         | keep the order connected to the correct customer                    |
 | `* * *`  | home baker                                           | update a customer’s current pre-order requirements                                | record later changes accurately                                     |
 | `* * *`  | home baker preparing an order                        | view its requirements together with the customer’s contact and address details    | avoid searching in separate places                                  |
-| `* * *`  | home baker                                           | record a customer’s fulfilment status                                             | know whether their order is pending, prepared, or completed         |
+| `* * *`  | home baker                                           | record the fulfilment status of each item in a pre-order                          | know which products are pending, prepared, or completed             |
 | `* * *`  | home baker during a busy season                      | filter customer profiles by fulfilment status                                     | focus on customers requiring the same next action                   |
 | `* * *`  | home baker                                           | view only customers with active pre-orders                                        | focus on active orders without distraction from inactive contacts   |
+| `* * *`  | home baker arranging order handovers                 | set the date of a pre-order and whether it is delivered or collected              | know when and how to hand it over                                   |
 | `* * *`  | keyboard-oriented home baker                         | perform common customer-management tasks without using a mouse                    | work efficiently through the CLI                                    |
 | `* * *`  | home baker with a large customer base                | receive search and update results promptly                                        | keep using LeBake efficiently during peak periods                   |
 | `* *`    | home baker                                           | find a customer by phone number                                                   | identify someone who contacts me by phone                           |
 | `* *`    | home baker                                           | find a customer by email address                                                  | identify someone from an email enquiry                              |
 | `* *`    | home baker who remembers only part of a name         | search using partial and case-insensitive text                                    | still locate the correct customer                                   |
 | `* *`    | home baker with many customers                       | sort customer profiles alphabetically                                             | browse them predictably                                             |
+| `* *`    | home baker prioritising upcoming orders              | sort customers by the fulfilment date of their pre-order                          | prepare the orders due soonest first                                |
 | `* *`    | home baker                                           | filter customers by tag                                                           | focus on a relevant group of contacts                               |
 | `* *`    | home baker                                           | record notes about a customer                                                     | remember information relevant to serving them                       |
 | `* *`    | home baker serving repeat customers                  | record their contact and delivery preferences                                     | provide consistent service                                          |
@@ -912,7 +914,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *`    | home baker                                           | identify customer profiles with missing essential information                     | complete them before fulfilment begins                              |
 | `* *`    | home baker migrating from another system             | import existing customer contacts                                                 | avoid re-entering every profile manually                            |
 | `* *`    | home baker                                           | export my customer contacts                                                       | keep a backup or use them outside LeBake                            |
-| `* *`    | home baker                                           | record handover notes for a delivery                                              | remember access details such as gate codes or drop-off directions   |
+| `* *`    | home baker                                           | record handover notes for a delivery or collection                                | remember access details such as gate codes or drop-off directions   |
 | `* *`    | home baker preparing deliveries                      | mark an address as verified or unverified                                         | identify addresses that still require confirmation                  |
 | `* *`    | home baker                                           | find customers using an address or postal-code keyword                            | retrieve contacts based on delivery location                        |
 | `* *`    | home baker planning deliveries                       | filter customers by neighbourhood or postal area                                  | focus on customers in the same vicinity                             |
@@ -1079,7 +1081,10 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 * **Archived customer**: A customer hidden from the active customer list but kept, so that it can be restored for a future seasonal campaign
 * **Customer**: A person whose contact and delivery details are stored in LeBake, represented by the `Person` class in the code
 * **Duplicate customer**: A customer with the same name as an existing customer, ignoring case and extra spaces (phone number, email and address are not compared)
+* **Fulfilment date**: The date a pre-order is to be delivered or collected, shared by all items in the pre-order
+* **Fulfilment method**: How a pre-order is handed over, which is `DELIVERY` (the baker brings it to the customer) or `COLLECTION` (the customer picks it up)
 * **Fulfilment status**: The stage an item in a pre-order has reached, which is `PENDING` (recorded but not ready), `PREPARED` (ready for collection or delivery), or `COMPLETED` (collected or delivered). Each item has its own status, represented by `ItemStatus` in the code; a pre-order has no overall status
+* **Handover notes**: A short note about handing over a pre-order, such as "Call on arrival" or "Collect from side gate", shared by all items in the pre-order
 * **Item**: One product in a pre-order, with its name, quantity, fulfilment status and an optional remark
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Postal area**: A group of nearby addresses that share the same leading digits of their postal code, used to group deliveries
