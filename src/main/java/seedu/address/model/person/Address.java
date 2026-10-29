@@ -3,6 +3,8 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.util.regex.Pattern;
+
 /**
  * Represents a Person's address in the address book.
  * Guarantees: immutable; is valid as declared in {@link #isValidAddress(String)}
@@ -12,7 +14,8 @@ public class Address {
     /** Maximum length in UTF-16 code units. */
     public static final int MAX_LENGTH = 300;
 
-    public static final String MESSAGE_CONSTRAINTS = "Addresses can take any values, and should not be blank";
+    public static final String MESSAGE_CONSTRAINTS = "Addresses must not be blank or contain a letter-based prefix "
+            + "(letters followed by '/') at the start or after whitespace, except c/o.";
 
     public static final String MESSAGE_LENGTH_CONSTRAINTS = "Addresses must be at most " + MAX_LENGTH
             + " characters long.";
@@ -22,6 +25,8 @@ public class Address {
      * otherwise " " (a blank string) becomes a valid input.
      */
     public static final String VALIDATION_REGEX = "[^\\s].*";
+
+    private static final Pattern PREFIX_LIKE_SLASH_PATTERN = Pattern.compile("(?:^|\\s)(?!c/o(?:\\s|$))[A-Za-z]+/");
 
     public final String value;
 
@@ -37,10 +42,12 @@ public class Address {
     }
 
     /**
-     * Returns true if a given string is a valid address with at most {@link #MAX_LENGTH} UTF-16 code units.
+     * Returns true if a given string is at most {@link #MAX_LENGTH} UTF-16 code units and has no letter-based prefix
+     * (letters followed by '/') at the start or after whitespace, except conventional {@code c/o}.
      */
     public static boolean isValidAddress(String test) {
-        return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX);
+        return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX)
+                && !PREFIX_LIKE_SLASH_PATTERN.matcher(test).find();
     }
 
     /**

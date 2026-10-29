@@ -69,8 +69,9 @@ information.
   For example, `edititem 1 i/1 r/Less sugar s/pending` sets the remark to `Less sugar` and the status to `PENDING`.
   Quotation marks do not escape a supported prefix. Conventional `c/o` text is preserved inside addresses.
 
-* Unsupported prefix-like text is kept only when the field permits it. Item names, remarks and handover notes reject
-  forward slashes; addresses can contain slash text, including conventional `c/o` text.
+* Item names, remarks and handover notes reject forward slashes. Addresses allow ordinary slash notation such as
+  `#04/08` and conventional `c/o`, but reject a letter-based token followed by `/` at the start or after whitespace,
+  such as `s/pending` or `x/foo`.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
@@ -169,7 +170,8 @@ Postal codes must contain exactly six digits. They are stored as text, so leadin
 * Names must contain at least one English letter (`A-Z` or `a-z`) and may contain only English letters, spaces, straight apostrophes (`'`) and hyphens (`-`). Accented letters, non-English characters, digits and other symbols are rejected. For example, `Mary-Jane O'Brien`, `Li` and `A` are valid names; `José Tan` and `---` are invalid.
 * Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
 * Name, phone, email and postal code values are validated first. An invalid value containing an extra unsupported prefix identifies that prefix. For example, adding `x/foo` after `p/98765432` shows `Unsupported prefix 'x/' for add.` Other invalid values keep their field constraint messages.
-* Addresses preserve unsupported prefix-like text and conventional `c/o` text. For example, `a/Block 123 c/o John x/foo` is kept as `Block 123 c/o John x/foo`.
+* Addresses allow conventional `c/o` and ordinary slash notation such as `#04/08`. A letter-based token followed by
+  `/` at the start or after whitespace, such as `s/pending`, is rejected so it cannot be confused with another field.
 * A customer is a duplicate if their name matches an existing customer's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
 * Duplicate checks include all saved customers, even those hidden by a `find` command.
 * New customers are added without tags or a preorder. Use [`tag`](#tagging-a-customer-tag) to add tags afterwards.
@@ -218,8 +220,9 @@ An unsupported letter-based prefix after whitespace in an invalid `n/`, `p/`, `e
 For example, `edit 1 p/91234567 x/foo` displays `Unsupported prefix 'x/' for edit.` Remove the unsupported argument
 and try again. Ordinary invalid values keep their corresponding field constraint messages.
 
-Addresses preserve unsupported prefix-like text. For example, `edit 1 a/Block 123 c/o Alice x/foo` keeps the complete
-address `Block 123 c/o Alice x/foo`. Customer names follow the existing name validation rules described for `add`.
+Addresses allow conventional `c/o` and ordinary slash notation such as `#04/08`. A letter-based token followed by `/`
+at the start or after whitespace, such as `s/pending`, is rejected. Customer names follow the existing name validation
+rules described for `add`.
 
 Examples:
 
@@ -419,7 +422,9 @@ Supply at least one prefixed criterion. Each prefix may appear at most once, in 
 * Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
 * Results use the current displayed indices. Use `list` to show all customers again.
 * Use lowercase prefixes. A supported prefix starts at the beginning of the arguments or after whitespace and ends the previous value. The existing `c/o` exception keeps conventional care-of text inside an address.
-* Address queries preserve slash text, including `c/o`. Product names and handover notes cannot contain slashes.
+* Address queries preserve slash text, including `c/o`. Saved addresses allow ordinary slash notation such as `#04/08`
+  and conventional `c/o`, but reject a letter-based token followed by `/` at the start or after whitespace. Product
+  names and handover notes cannot contain slashes.
 * Name, phone, email, postal code, tag, date, method and status queries are validated first. If an invalid query contains an extra unsupported prefix, such as `find c/123 x/foo`, the error identifies `x/`. Other invalid queries show the corresponding constraint message. Unsupported arguments before the first recognised criterion still show command-format guidance.
 
 Examples:

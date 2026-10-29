@@ -28,9 +28,15 @@ public class AddressTest {
         // invalid addresses
         assertFalse(Address.isValidAddress("")); // empty string
         assertFalse(Address.isValidAddress(" ")); // spaces only
+        assertFalse(Address.isValidAddress("Block123 s/pending")); // looks like a command prefix
+        assertFalse(Address.isValidAddress("Block 123 x/foo")); // looks like an unsupported prefix
+        assertFalse(Address.isValidAddress("s/pending Block 123")); // prefix-like text at the start
+        assertFalse(Address.isValidAddress("w/o lift")); // only lowercase c/o is accepted as slash notation
+        assertFalse(Address.isValidAddress("Block 123 c/O Alice")); // tokenizer recognizes only lowercase c/o
 
         // valid addresses
         assertTrue(Address.isValidAddress("Blk 456, Den Road, #01-355"));
+        assertTrue(Address.isValidAddress("Block 123 c/o Alice #04/08"));
         assertTrue(Address.isValidAddress("-")); // one character
         assertTrue(Address.isValidAddress("Leng Inc; 1234 Market St; San Francisco CA 2349879; USA")); // long address
     }

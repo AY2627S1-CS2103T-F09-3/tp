@@ -205,7 +205,7 @@ public class FindCommandParserTest {
     @Test
     public void parse_freeTextPrefixesBeforeInvalidConstrainedValue_keepsConstraintMessage() {
         for (Map.Entry<String, String> query : CONSTRAINED_QUERIES.entrySet()) {
-            for (String text : List.of("a/Block 123 x/foo")) {
+            for (String text : List.of("a/Block 123 #04/08")) {
                 assertParseFailure(parser, text + " " + query.getKey() + " invalid", query.getValue());
             }
         }
@@ -236,8 +236,8 @@ public class FindCommandParserTest {
     public void parse_slashesInProductAndHandoverQueries_rejected() {
         assertParseFailure(parser, "d/Cake w/ candles", ItemName.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "h/Leave w/o ringing x/foo", HandoverNotes.MESSAGE_CONSTRAINTS);
-        assertParseSuccess(parser, "a/Block 123 c/o Alice x/foo",
-                textCommand(ADDRESS, "Block 123 c/o Alice x/foo"));
+        assertParseSuccess(parser, "a/Block 123 c/o Alice #04/08",
+                textCommand(ADDRESS, "Block 123 c/o Alice #04/08"));
     }
 
     @Test
@@ -255,17 +255,17 @@ public class FindCommandParserTest {
                 new TextContainsCriterion(NAME, "Ali"),
                 new TextContainsCriterion(PHONE, "9123"),
                 new TextContainsCriterion(EMAIL, "example.com"),
-                new TextContainsCriterion(ADDRESS, "Block 123 c/o Alice x/foo"),
+                new TextContainsCriterion(ADDRESS, "Block 123 c/o Alice #04/08"),
                 new TextContainsCriterion(HANDOVER_NOTES, "Leave ringing"),
                 new ItemCriterion(Optional.of("Cake candles"), Set.of(ItemStatus.PENDING)),
                 new PostalCodeCriterion("01"), new TagCriterion(new Tag("VIP")),
                 new FulfilmentDateCriterion(new FulfilmentDate("2026-12-20")),
                 new FulfilmentMethodCriterion(FulfilmentMethod.DELIVERY))));
         assertParseSuccess(parser, "n/Ali p/9123 e/example.com "
-                + "a/Block 123 c/o Alice x/foo c/01 t/VIP d/Cake candles s/pending "
+                + "a/Block 123 c/o Alice #04/08 c/01 t/VIP d/Cake candles s/pending "
                 + "h/Leave ringing f/2026-12-20 m/delivery", expected);
         assertParseSuccess(parser, "m/delivery f/2026-12-20 h/Leave ringing "
-                + "s/pending d/Cake candles t/VIP c/01 a/Block 123 c/o Alice x/foo "
+                + "s/pending d/Cake candles t/VIP c/01 a/Block 123 c/o Alice #04/08 "
                 + "e/example.com p/9123 n/Ali", expected);
     }
 

@@ -555,23 +555,22 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_editAddressWithPrefixLikeText_preservesAndSavesEveryValue() throws Exception {
+    public void execute_editAddressWithPrefixLikeText_rejectedWithoutChanges() throws Exception {
         Person originalDaniel = new PersonBuilder(COMPLETED_DANIEL).withPostalCode("012345").build();
         List.of(ALICE, originalDaniel, PREPARED_CARL).forEach(model::addPerson);
         assertFilteringCommandSuccess("find n/Daniel", "1 customer(s) listed!", List.of(originalDaniel));
         SearchCriteria criteria = logic.getActiveSearchCriteria();
         String address = "Block 123 c/o Alice x/foo w/o lift #04/08";
 
-        logic.execute("edit 1 a/" + address);
+        assertCommandFailurePreservesFilteredList("edit 1 a/" + address, ParseException.class,
+                Address.MESSAGE_CONSTRAINTS);
 
-        Person editedDaniel = new PersonBuilder(originalDaniel).withAddress(address).build();
-        List<Person> expectedPersons = List.of(ALICE, editedDaniel, PREPARED_CARL);
-        assertEquals(expectedPersons, model.getAddressBook().getPersonList());
-        assertEquals(List.of(editedDaniel), logic.getFilteredPersonList());
+        assertEquals(List.of(ALICE, originalDaniel, PREPARED_CARL), model.getAddressBook().getPersonList());
         assertEquals(criteria, logic.getActiveSearchCriteria());
         assertEquals(criteria, logic.activeSearchCriteriaProperty().get());
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
-        assertEquals(expectedPersons, storage.readAddressBook().orElseThrow().getPersonList());
+        assertEquals(List.of(ALICE, originalDaniel, PREPARED_CARL), storage.readAddressBook().orElseThrow()
+                .getPersonList());
     }
 
     @Test
@@ -764,7 +763,7 @@ public class LogicManagerTest {
 
     @Test
     public void execute_mutationCommands_roundTripAndClearFulfilmentDetails() throws Exception {
-        logic.execute("add n/Nora Lee p/81112222 e/nora@example.com a/Block 123 c/o Nora x/foo c/123456");
+        logic.execute("add n/Nora Lee p/81112222 e/nora@example.com a/Block 123 c/o Nora #04/08 c/123456");
         logic.execute("find n/Nora");
         SearchCriteria criteria = logic.getActiveSearchCriteria();
         logic.execute("additem 1 d/Cake candles q/2 s/pending r/Pack without nuts");
@@ -774,7 +773,7 @@ public class LogicManagerTest {
         Item item = new ItemBuilder().withName("Cake candles")
                 .withRemark("Pack without nuts").build();
         Person expected = new PersonBuilder().withName("Nora Lee").withPhone("81112222")
-                .withEmail("nora@example.com").withAddress("Block 123 c/o Nora x/foo").withPostalCode("123456")
+                .withEmail("nora@example.com").withAddress("Block 123 c/o Nora #04/08").withPostalCode("123456")
                 .withTags("VIP").withPreorder(new PreorderBuilder()
                         .withItems(item).withDate("2026-12-20").withMethod(DELIVERY)
                         .withHandoverNotes("Leave ringing").build()).build();
@@ -809,13 +808,13 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_findContactFragments_matchesCustomerAndPreservesLiteralAddress() throws Exception {
+    public void execute_findContactFragments_matchesAddressWithOrdinarySlash() throws Exception {
         Person customer = new PersonBuilder().withName("Alice Tan").withPhone("91234567")
-                .withEmail("alice@example.com").withAddress("Block 123 c/o Alice x/foo").build();
+                .withEmail("alice@example.com").withAddress("Block 123 c/o Alice #04/08").build();
         model.addPerson(customer);
 
         assertFilteringCommandSuccess("find n/Ali p/9123 e/example.com", "1 customer(s) listed!", List.of(customer));
-        assertFilteringCommandSuccess("find a/Block 123 c/o Alice x/foo n/Ali p/9123 e/example.com",
+        assertFilteringCommandSuccess("find a/Block 123 c/o Alice #04/08 n/Ali p/9123 e/example.com",
                 "1 customer(s) listed!", List.of(customer));
         assertEquals(List.of(customer), model.getAddressBook().getPersonList());
     }

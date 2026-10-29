@@ -203,8 +203,8 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_addressLengthBoundariesWithPrefixLikeText_preservesValue() {
-        String suffix = " x/foo";
+    public void parse_addressLengthBoundariesWithOrdinarySlash_preservesValue() {
+        String suffix = " #04/08";
         for (int length : new int[]{299, 300}) {
             String address = "A".repeat(length - suffix.length()) + suffix;
             EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withAddress(address).build();
@@ -327,8 +327,8 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_addressContainingUnrecognizedPrefixes_success() {
-        String address = "Block 123 c/o Alice x/foo";
+    public void parse_addressWithCareOfAndOrdinarySlash_success() {
+        String address = "Block 123 c/o Alice #04/08";
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withAddress(address).build();
         EditCommand expectedCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
 
@@ -337,12 +337,14 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_invalidAddressWithPrefixLikeText_keepsConstraintMessage() {
-        assertParseFailure(parser, "1 a/Block 123\nx/foo", Address.MESSAGE_CONSTRAINTS);
+        for (String address : new String[]{"Block123 s/pending", "Block 123 x/foo", "Block 123 w/o lift"}) {
+            assertParseFailure(parser, "1 a/" + address, Address.MESSAGE_CONSTRAINTS);
+        }
     }
 
     @Test
-    public void parse_addressWithPrefixLikeTextAndOtherFields_preservesEveryValue() {
-        String address = "Block 123 c/o Alice x/foo w/o lift #04/08";
+    public void parse_addressWithCareOfAndOrdinarySlashAndOtherFields_preservesEveryValue() {
+        String address = "Block 123 c/o Alice #04/08";
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withAddress(address)
                 .withName(VALID_NAME_AMY).withPhone(VALID_PHONE_AMY).withEmail(VALID_EMAIL_AMY)
                 .withPostalCode("012345").build();
