@@ -5,6 +5,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import seedu.address.commons.exceptions.DataValidationException;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemName;
@@ -53,31 +54,31 @@ class JsonAdaptedItem {
      */
     public Item toModelType() throws IllegalValueException {
         if (name == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
+            throw new DataValidationException("missing name.", String.format(MISSING_FIELD_MESSAGE_FORMAT,
                     ItemName.class.getSimpleName()));
         }
         if (!ItemName.isValidItemName(name)) {
-            throw new IllegalValueException(ItemName.MESSAGE_CONSTRAINTS);
+            throw new DataValidationException("invalid name.", ItemName.MESSAGE_CONSTRAINTS);
         }
 
         if (quantity == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
+            throw new DataValidationException("missing quantity.", String.format(MISSING_FIELD_MESSAGE_FORMAT,
                     Quantity.class.getSimpleName()));
         }
         if (!Quantity.isValidQuantity(quantity)) {
-            throw new IllegalValueException(Quantity.MESSAGE_CONSTRAINTS);
+            throw new DataValidationException("invalid quantity.", Quantity.MESSAGE_CONSTRAINTS);
         }
 
         if (status == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
+            throw new DataValidationException("missing status.", String.format(MISSING_FIELD_MESSAGE_FORMAT,
                     ItemStatus.class.getSimpleName()));
         }
         if (!ItemStatus.isValidStatus(status)) {
-            throw new IllegalValueException(ItemStatus.MESSAGE_CONSTRAINTS);
+            throw new DataValidationException("invalid status.", ItemStatus.MESSAGE_CONSTRAINTS);
         }
 
         if (remark != null && !Remark.isValidRemark(remark)) {
-            throw new IllegalValueException(Remark.MESSAGE_CONSTRAINTS);
+            throw new DataValidationException("invalid remark.", Remark.MESSAGE_CONSTRAINTS);
         }
 
         ItemName itemName = new ItemName(name);

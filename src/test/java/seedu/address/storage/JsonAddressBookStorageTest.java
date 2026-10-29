@@ -1,5 +1,6 @@
 package seedu.address.storage;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -74,6 +75,72 @@ public class JsonAddressBookStorageTest {
     @Test
     public void readAddressBook_invalidAndValidPersonAddressBook_throwDataLoadingException() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("invalidAndValidPersonAddressBook.json"));
+    }
+
+    @Test
+    public void readAddressBook_invalidPerson_preservesOriginalFile() throws Exception {
+        Path filePath = testFolder.resolve("invalid-person.json");
+        Files.copy(TEST_DATA_FOLDER.resolve("invalidAndValidPersonAddressBook.json"), filePath);
+
+        assertReadFailurePreservesFile(filePath);
+    }
+
+    @Test
+    public void readAddressBook_nullJson_throwsWithoutChangingFile() throws Exception {
+        Path filePath = testFolder.resolve("null.json");
+        Files.writeString(filePath, "null");
+
+        assertReadFailurePreservesFile(filePath);
+    }
+
+    @Test
+    public void readAddressBook_nullPerson_throwsWithoutChangingFile() throws Exception {
+        Path filePath = testFolder.resolve("null-person.json");
+        Files.writeString(filePath, "{\"persons\":[null]}");
+
+        assertReadFailurePreservesFile(filePath);
+    }
+
+    @Test
+    public void readAddressBook_nullTag_throwsWithoutChangingFile() throws Exception {
+        Path filePath = testFolder.resolve("null-tag.json");
+        JsonAdaptedPerson person = new JsonAdaptedPerson(new PersonBuilder(ALICE).withTags("friends").build());
+        String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(List.of(person)));
+        Files.writeString(filePath, json.replace("\"friends\"", "null"));
+
+        assertReadFailurePreservesFile(filePath);
+    }
+
+    @Test
+    public void readAddressBook_directory_throwsDataLoadingException() {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder);
+
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        assertTrue(Files.isDirectory(testFolder));
+    }
+
+    @Test
+    public void readAddressBook_validManualEdit_loadsWithoutChangingFile() throws Exception {
+        Path filePath = testFolder.resolve("edited.json");
+        AddressBook original = new AddressBook();
+        original.addPerson(ALICE);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        storage.saveAddressBook(original);
+        Files.writeString(filePath, Files.readString(filePath).replace(ALICE.getName().fullName, "Alice Baker"));
+        byte[] editedContent = Files.readAllBytes(filePath);
+        AddressBook expected = new AddressBook();
+        expected.addPerson(new PersonBuilder(ALICE).withName("Alice Baker").build());
+
+        assertEquals(expected, storage.readAddressBook().get());
+        assertArrayEquals(editedContent, Files.readAllBytes(filePath));
+    }
+
+    private void assertReadFailurePreservesFile(Path filePath) throws Exception {
+        byte[] originalContent = Files.readAllBytes(filePath);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        assertArrayEquals(originalContent, Files.readAllBytes(filePath));
     }
 
     @Test

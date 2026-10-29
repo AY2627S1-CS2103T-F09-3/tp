@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.exceptions.DataValidationException;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
@@ -31,6 +32,7 @@ class JsonAdaptedPerson {
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Person's %s field is missing!";
     public static final String MESSAGE_TOO_MANY_PREORDERS = "Person has more than one preorder!";
     public static final String MESSAGE_NULL_PREORDER = "Person's preorder list contains a null entry!";
+    public static final String MESSAGE_NULL_TAG = "Person's tag list contains a null entry!";
     public static final String MESSAGE_LEGACY_PREORDER =
             "Person has a preorder in the v1.3 format, which is no longer supported!";
 
@@ -103,62 +105,68 @@ class JsonAdaptedPerson {
     public Person toModelType() throws IllegalValueException {
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
+            if (tag == null) {
+                throw new DataValidationException("missing tag.", MESSAGE_NULL_TAG);
+            }
             personTags.add(tag.toModelType());
         }
 
         if (name == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.class.getSimpleName()));
+            throw new DataValidationException("missing name.",
+                    String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.class.getSimpleName()));
         }
         if (!Name.isValidName(name)) {
-            throw new IllegalValueException(Name.getValidationErrorMessage(name));
+            throw new DataValidationException("invalid name.", Name.getValidationErrorMessage(name));
         }
         final Name modelName = new Name(name);
 
         if (phone == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName()));
+            throw new DataValidationException("missing phone.",
+                    String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName()));
         }
         if (!Phone.isValidPhone(phone)) {
-            throw new IllegalValueException(Phone.MESSAGE_CONSTRAINTS);
+            throw new DataValidationException("invalid phone.", Phone.MESSAGE_CONSTRAINTS);
         }
         final Phone modelPhone = new Phone(phone);
 
         if (email == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName()));
+            throw new DataValidationException("missing email.",
+                    String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName()));
         }
         if (!Email.isValidEmail(email)) {
-            throw new IllegalValueException(Email.getValidationErrorMessage(email));
+            throw new DataValidationException("invalid email.", Email.getValidationErrorMessage(email));
         }
         final Email modelEmail = new Email(email);
 
         if (address == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Address.class.getSimpleName()));
+            throw new DataValidationException("missing address.",
+                    String.format(MISSING_FIELD_MESSAGE_FORMAT, Address.class.getSimpleName()));
         }
         if (!Address.isValidAddress(address)) {
-            throw new IllegalValueException(Address.getValidationErrorMessage(address));
+            throw new DataValidationException("invalid address.", Address.getValidationErrorMessage(address));
         }
         final Address modelAddress = new Address(address);
         if (postalCode == null) {
-            throw new IllegalValueException(
+            throw new DataValidationException("missing postalCode.",
                     String.format(MISSING_FIELD_MESSAGE_FORMAT, PostalCode.class.getSimpleName()));
         }
         if (!PostalCode.isValidPostalCode(postalCode)) {
-            throw new IllegalValueException(PostalCode.MESSAGE_CONSTRAINTS);
+            throw new DataValidationException("invalid postalCode.", PostalCode.MESSAGE_CONSTRAINTS);
         }
         final PostalCode modelPostalCode = new PostalCode(postalCode);
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
 
         if (hasLegacyPreorder) {
-            // The exception message does not say which customer to fix in the file
             logger.warning("The v1.3 preorder of " + modelName + " must be moved into the \"preorders\" list, "
                     + "with a quantity for each item, before the data file can be loaded.");
-            throw new IllegalValueException(MESSAGE_LEGACY_PREORDER);
+            throw new DataValidationException("unsupported v1.3 preorder format.", MESSAGE_LEGACY_PREORDER);
         }
         if (preorders.contains(null)) {
-            throw new IllegalValueException(MESSAGE_NULL_PREORDER);
+            throw new DataValidationException("missing preorder data.", MESSAGE_NULL_PREORDER);
         }
         if (preorders.size() > 1) {
-            throw new IllegalValueException(MESSAGE_TOO_MANY_PREORDERS);
+            throw new DataValidationException("more than one preorder.", MESSAGE_TOO_MANY_PREORDERS);
         }
         final Optional<Preorder> modelPreorder = preorders.isEmpty()
                 ? Optional.empty()

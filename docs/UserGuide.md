@@ -759,7 +759,9 @@ LeBake automatically saves data after every successful command. You do not need 
 
 ### Editing the data file
 
-LeBake data is saved automatically as a JSON file `data/addressbook.json`, inside the folder that the terminal is in when you start LeBake. If you start it as described in [Quick start](#quick-start), that is the home folder with the JAR file. Starting LeBake from another folder, for example with `java -jar C:\LeBake\LeBake.jar` from your desktop, makes a new `data` folder there with the sample data, and your saved data in the home folder is not loaded. Advanced users are welcome to update data directly by editing that data file.
+LeBake data is saved automatically as a JSON file `data/lebake.json`, inside the folder that the terminal is in when you start LeBake. If you start it as described in [Quick start](#quick-start), that is the home folder with the JAR file. Starting LeBake from another folder, for example with `java -jar C:\LeBake\LeBake.jar` from your desktop, makes a new `data` folder there with the sample data, and your saved data in the home folder is not loaded. Advanced users are welcome to update data directly by editing that data file.
+
+If `data/lebake.json` is missing, LeBake starts with sample data and creates the file after a successful command.
 
 Postal codes are compulsory for every customer, including records saved by older versions. Each customer must have a `postalCode` containing exactly six digits. Null, missing, blank or malformed postal codes prevent the file from loading. Back up older files and supply the correct postal codes before launching LeBake.
 
@@ -780,9 +782,26 @@ are ignored, and `null` or `""` means the detail is not set. Any other value pre
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, LeBake starts with an empty customer list at the next run. The invalid file remains on disk until you run a command (LeBake saves after every command). Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause LeBake to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+Close LeBake and back up `data/lebake.json` before editing it. Valid changes load the next time you start LeBake.
 </box>
+
+### When the data file cannot be loaded
+
+If an existing data file is invalid or cannot be read, LeBake shows an error dialog before opening the main window.
+The dialog shows the full file path and the first error detected. Your data file is left unchanged.
+
+For invalid records, the reason identifies the person, field and, where relevant, item:
+
+* `Person 2: invalid email.`
+* `Person 1: item 2: missing status.`
+
+Person and item numbers start at **1** and follow their order in the JSON file: the `persons` list and each preorder's
+`items` list. They refer to the saved order, which can differ from a filtered or sorted view in the app.
+For malformed JSON, the dialog gives the parsing error and its line and column when available.
+
+Press `Enter` or choose `OK` to dismiss the dialog and exit LeBake. Correct the reported data, restore a valid backup,
+or fix the file's read permissions, then start LeBake again. A genuinely missing data file still starts LeBake with
+sample data, as described above.
 
 ### Archiving data files `[coming in v2.0]`
 

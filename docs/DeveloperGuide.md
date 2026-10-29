@@ -431,6 +431,30 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Safe startup after a data loading failure
+
+`JsonUtil.readJsonFile` reads the file directly and returns `Optional.empty()` only for `NoSuchFileException`.
+Other read failures, malformed JSON and a JSON `null` document produce `DataLoadingException`. A genuinely missing
+`data/lebake.json` retains the first-run behavior: load sample data and create the file after a successful command.
+
+The JSON adapters report invalid fields through `DataValidationException`, a subtype of `IllegalValueException`.
+It carries a concise user message while preserving the detailed validation message and cause for diagnostics.
+`JsonSerializableAddressBook` adds the person's position, and `JsonAdaptedPreorder` adds the item's position.
+These positions start at 1 and follow the JSON list order. For example, the dialog can report
+`Person 2: item 3: invalid quantity.` The whole file is rejected at the first failure.
+
+`MainApp.init()` remembers a loading failure and skips model, logic and main UI initialization. It allows the JavaFX
+lifecycle to reach `start(Stage)`, which shows a standalone error alert containing the absolute file path, reason and
+recovery instructions. Malformed JSON errors include their line and column when available. Dismissing the alert
+invokes the exit callback, which defaults to `Platform::exit`, and `stop()` safely handles incomplete initialization.
+The saved data file is never written on this failure path.
+
+`MainAppTest` covers normal and missing-file startup, failed initialization, dialog content and dismissal, safe
+shutdown, and preservation of existing file contents. It also checks JSON errors without a location and uses a
+recording exit callback to verify that shutdown is requested exactly once, after the dialog closes, without stopping
+the shared JavaFX runtime. `DataValidationExceptionTest` checks concise record context and preservation of detailed
+diagnostics. The packaged-JAR checks below verify the actual JavaFX process exit.
+
 ### Customer field length validation
 
 `Name`, `Email`, `Address` and `Tag` define `MAX_LENGTH` values of 100, 254, 300 and 30 respectively.
@@ -514,9 +538,10 @@ LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and on
 These preorders are no longer converted, since every item now needs a quantity and guessing one from the details
 could be wrong. The JSON reader ignores fields it does not know, so `JsonAdaptedPerson` still accepts a
 `"preorder"` field, only to reject the customer with `Person has a preorder in the v1.3 format, which is no longer
-supported!`. Without this check, the old preorder would be dropped without any warning. The exception message does
-not say which customer is affected, so a logged warning names them. A `"preorder"` field that is `null` holds no
-data, so it is ignored. As with any invalid data file, the file itself is not changed.
+supported!` in the detailed diagnostics. Without this check, the old preorder would be dropped without any warning.
+The startup dialog identifies the saved person's position, such as `Person 1: unsupported v1.3 preorder format.`,
+and a logged warning names the customer and explains the required format. A `"preorder"` field that is `null` holds
+no data, so it is ignored. As with any invalid data file, the file itself is not changed.
 
 #### Design considerations
 
@@ -1160,7 +1185,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Using the side panel
 
-Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`.
+Use a fresh copy of the sample data (delete `data/lebake.json` and relaunch), then run `list`.
 
 1. Look at the side panel on the right.<br>
    Expected: It shows **Delivery preparation** with `2 outstanding customer stop(s) | 2 postal group(s)`, and stops for
@@ -1603,34 +1628,40 @@ preorder. Run the steps in order. For every rejected command, check that no card
 ### Loading preorder data
 
 These steps edit the data file, so use a copy of LeBake in an empty folder. Launch it once and run `list` to create
-`data/addressbook.json`, then close LeBake before each edit.
+`data/lebake.json`, then close LeBake before each edit.
 
 1. Loading a preorder saved by v1.3
 
-   1. Prerequisites: In `data/addressbook.json`, replace the first customer's `"preorders"` list with
+   1. Prerequisites: In `data/lebake.json`, replace the first customer's `"preorders"` list with
       `"preorder" : { "details" : "2 chocolate cakes", "status" : "PENDING" }`. Keep a copy of the file.
 
    1. Test case: Launch LeBake.<br>
-      Expected: The data file cannot be loaded, so LeBake starts with an empty customer list. The log warns that
-      the first customer's v1.3 preorder must be moved into the `"preorders"` list, and shows
-      `Person has a preorder in the v1.3 format, which is no longer supported!`. The data file is unchanged.
-      Restore the file from your copy before running a command, as the next command saves the empty list over it.
+      Expected: An error dialog appears before the main window and reports
+      `Person 1: unsupported v1.3 preorder format.` The log explains that the preorder must be moved into the
+      `"preorders"` list, with a quantity for each item.
+
+   1. Test case: Press `Enter` to dismiss the dialog.<br>
+      Expected: LeBake exits, and the invalid file is unchanged. Restore a valid file before the next test.
 
 1. Loading a data file with an invalid item
 
-   1. Prerequisites: In `data/addressbook.json`, change one item's `"quantity"` to `"0"`. Keep a copy of the file.
+   1. Prerequisites: In `data/lebake.json`, change one item's `"quantity"` to `"0"`. Keep a copy of the file.
 
    1. Test case: Launch LeBake.<br>
-      Expected: The data file cannot be loaded, so LeBake starts with an empty customer list, and the log warns
-      that the data file could not be loaded. Restore the file from your copy before running a command, as the
-      next command saves the empty list over it.
+      Expected: An error dialog appears before the main window. Its reason identifies the person and item, such as
+      `Person 1: item 1: invalid quantity.` Person and item numbers follow the order in the file, starting at 1.
+
+   1. Test case: Press `Enter` to dismiss the dialog.<br>
+      Expected: LeBake exits, and the invalid file is unchanged. Restore the valid file from your copy and relaunch;
+      the saved customers and preorders load normally.
 
    1. Test case: Repeat with the item's `"quantity"` set to `null`, and then with the `"quantity"` line removed.<br>
-      Expected: The same as above. The log shows `Item's Quantity field is missing!`.
+      Expected: The dialog reports `Person 1: item 1: missing quantity.` Dismissing it exits LeBake and leaves
+      the file unchanged. The log retains the detailed error `Item's Quantity field is missing!`.
 
 1. Loading hand-edited fulfilment details
 
-   1. Prerequisites: In `data/addressbook.json`, find a customer whose preorder has a `"method"`. Change it to
+   1. Prerequisites: In `data/lebake.json`, find a customer whose preorder has a `"method"`. Change it to
       `"delivery"` and change their `"handoverNotes"` to `""`. Keep a copy of the file.
 
    1. Test case: Launch LeBake.<br>
@@ -1638,12 +1669,13 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
       handover notes line. Their items and other details are unchanged.
 
    1. Test case: Close LeBake, change the same `"method"` to `"pickup"`, then launch LeBake.<br>
-      Expected: The data file cannot be loaded, so LeBake starts with an empty customer list, and the log warns
-      that the data file could not be loaded. Restore the file from your copy before running a command.
+      Expected: An error dialog appears before the main window and reports `Person 1: invalid preorder method.`
+      for the first customer. Dismissing it exits LeBake and leaves the file unchanged. Restore the file from
+      your copy before relaunching.
 
 ### Sorting customers by fulfilment date
 
-Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`.
+Use a fresh copy of the sample data (delete `data/lebake.json` and relaunch), then run `list`.
 
 1. Run `sort date`.<br>
    Expected: `Sorted 6 customer(s) by fulfilment date. Customers without a date are listed last.`
@@ -1669,8 +1701,50 @@ Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch
 
 ### Saving data
 
-1. Dealing with missing/corrupted data files
+Use a copy of the packaged `LeBake.jar` in a separate test folder. From that folder, launch it with
+`java -jar LeBake.jar`. Close LeBake before changing its data file, and keep a valid backup for restoration.
 
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+1. Missing data file
 
-1. _{ more test cases … }_
+   1. Prerequisites: The test folder has no `data/lebake.json`.
+   1. Test case: Launch LeBake, run `list`, and close the app.<br>
+      Expected: Sample customers appear, and `data/lebake.json` is created after the successful command.
+
+1. Valid manual edit
+
+   1. Prerequisites: In the saved file, change one customer's email to `updated@example.com`. Keep a backup of this
+      valid file.
+   1. Test case: Launch LeBake.<br>
+      Expected: The saved customers load, and the edited email is shown. Close the app before the next test.
+
+1. Malformed JSON
+
+   1. Prerequisites: Replace the file's contents with `{invalid json` and keep a copy of those exact contents.
+   1. Test case: Launch LeBake.<br>
+      Expected: An error dialog shows the absolute data path and parsing error, including its line and column.
+      The main window does not open.
+   1. Test case: Press `Enter`.<br>
+      Expected: The dialog closes, the Java process exits, and the malformed file matches the copy byte for byte.
+
+1. Invalid field in a saved record
+
+   1. Prerequisites: Restore the valid backup, change the second person's email to `not-an-email`, and keep a copy
+      of the invalid file.
+   1. Test case: Launch LeBake.<br>
+      Expected: The dialog reports `Person 2: invalid email.` and the main window does not open.
+   1. Test case: Choose `OK`.<br>
+      Expected: LeBake exits, and the invalid file matches the copy byte for byte.
+
+1. Unreadable data path
+
+   1. Prerequisites: Keep the valid backup outside the `data` folder. Move the data file aside and create a directory
+      named `data/lebake.json` containing a marker file.
+   1. Test case: Launch LeBake and dismiss the error dialog.<br>
+      Expected: LeBake reports a read error and exits. It does not show sample customers or replace the directory;
+      the marker file is unchanged. Move the test directory aside before restoring the backup.
+
+1. Recovery
+
+   1. Prerequisites: Restore the valid backup as `data/lebake.json`.
+   1. Test case: Launch LeBake again.<br>
+      Expected: The main window opens with the restored customers, edited email and saved preorder details.

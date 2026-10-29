@@ -8,6 +8,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import seedu.address.commons.exceptions.DataValidationException;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.model.preorder.FulfilmentDate;
@@ -70,11 +71,17 @@ class JsonAdaptedPreorder {
      */
     public Preorder toModelType() throws IllegalValueException {
         final List<Item> modelItems = new ArrayList<>();
-        for (JsonAdaptedItem item : items) {
+        for (int i = 0; i < items.size(); i++) {
+            JsonAdaptedItem item = items.get(i);
+            String context = "item " + (i + 1);
             if (item == null) {
-                throw new IllegalValueException(MESSAGE_NULL_ITEM);
+                throw new DataValidationException(context + ": missing item data.", MESSAGE_NULL_ITEM);
             }
-            modelItems.add(item.toModelType());
+            try {
+                modelItems.add(item.toModelType());
+            } catch (IllegalValueException e) {
+                throw new DataValidationException(context, e);
+            }
         }
 
         String modelDate = stripToNull(date);
@@ -85,13 +92,13 @@ class JsonAdaptedPreorder {
         }
 
         if (modelDate != null && !FulfilmentDate.isValidDate(modelDate)) {
-            throw new IllegalValueException(FulfilmentDate.MESSAGE_CONSTRAINTS);
+            throw new DataValidationException("invalid preorder date.", FulfilmentDate.MESSAGE_CONSTRAINTS);
         }
         if (modelMethod != null && !FulfilmentMethod.isValidMethod(modelMethod)) {
-            throw new IllegalValueException(FulfilmentMethod.MESSAGE_CONSTRAINTS);
+            throw new DataValidationException("invalid preorder method.", FulfilmentMethod.MESSAGE_CONSTRAINTS);
         }
         if (modelHandoverNotes != null && !HandoverNotes.isValidHandoverNotes(modelHandoverNotes)) {
-            throw new IllegalValueException(HandoverNotes.MESSAGE_CONSTRAINTS);
+            throw new DataValidationException("invalid preorder handoverNotes.", HandoverNotes.MESSAGE_CONSTRAINTS);
         }
 
         Optional<HandoverNotes> notes = Optional.ofNullable(modelHandoverNotes).map(HandoverNotes::new);
