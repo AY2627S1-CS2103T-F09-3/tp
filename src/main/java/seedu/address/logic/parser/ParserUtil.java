@@ -238,17 +238,16 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String name} into an {@code ItemName}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespace is removed, and repeated spaces are replaced with one.
      *
      * @throws ParseException if the given {@code name} is invalid.
      */
     public static ItemName parseItemName(String name) throws ParseException {
         requireNonNull(name);
-        String trimmedName = name.trim();
-        if (!ItemName.isValidItemName(trimmedName)) {
+        if (!ItemName.isValidItemName(name)) {
             throw new ParseException(ItemName.MESSAGE_CONSTRAINTS);
         }
-        return new ItemName(trimmedName);
+        return new ItemName(name);
     }
 
     /**
@@ -268,13 +267,13 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String remark} into a {@code Remark}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespaces, including Unicode spaces, will be trimmed.
      *
      * @throws ParseException if the given {@code remark} is invalid.
      */
     public static Remark parseRemark(String remark) throws ParseException {
         requireNonNull(remark);
-        String trimmedRemark = remark.trim();
+        String trimmedRemark = StringUtil.stripSpaces(remark);
         if (!Remark.isValidRemark(trimmedRemark)) {
             throw new ParseException(Remark.MESSAGE_CONSTRAINTS);
         }
@@ -299,13 +298,13 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String handoverNotes} into a {@code HandoverNotes}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespaces, including Unicode spaces, will be trimmed.
      *
      * @throws ParseException if the given {@code handoverNotes} is invalid.
      */
     public static HandoverNotes parseHandoverNotes(String handoverNotes) throws ParseException {
         requireNonNull(handoverNotes);
-        String trimmedHandoverNotes = handoverNotes.trim();
+        String trimmedHandoverNotes = StringUtil.stripSpaces(handoverNotes);
         if (!HandoverNotes.isValidHandoverNotes(trimmedHandoverNotes)) {
             throw new ParseException(HandoverNotes.MESSAGE_CONSTRAINTS);
         }

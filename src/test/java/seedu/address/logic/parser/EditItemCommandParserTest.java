@@ -50,8 +50,8 @@ public class EditItemCommandParserTest {
 
     @Test
     public void parse_emptyOrInvalidValues_failure() {
-        for (String input : new String[]{" 1 i/1 d/", " 1 i/1 d/   s/PENDING", " 1 i/1 d/Cake\nTarts",
-            " 1 i/1 d/" + "a".repeat(ItemName.MAX_LENGTH + 1)}) {
+        for (String input : new String[]{" 1 i/1 d/", " 1 i/1 d/   s/PENDING", " 1 i/1 d/\u2003",
+            " 1 i/1 d/Cake\nTarts", " 1 i/1 d/" + "a".repeat(ItemName.MAX_LENGTH + 1)}) {
             assertParseFailure(parser, input, ItemName.MESSAGE_CONSTRAINTS);
         }
         for (String input : new String[]{" 1 i/1 s/", " 1 i/1 s/   d/Cake", " 1 i/1 s/DONE"}) {
