@@ -12,7 +12,7 @@ import seedu.address.commons.util.StringUtil;
  */
 public class ItemName {
 
-    // Same limit as the order details in v1.3, so older preorders still load as items
+    // The same limit as the order details in v1.3
     public static final int MAX_LENGTH = 200;
 
     public static final String MESSAGE_CONSTRAINTS = "Invalid item name! Item names must not be blank, "
