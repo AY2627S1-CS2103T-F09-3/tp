@@ -156,6 +156,12 @@ How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
+`LogicManager` coordinates `clear` confirmation before normal command execution, retaining the pending `ClearCommand`
+instance to track whether confirmation is waiting. After `clear`, it accepts only a trimmed, case-insensitive
+`confirm` as approval. Any other input cancels the pending clear and is discarded; an empty input is also forwarded by
+`CommandBox` while confirmation is pending so it can cancel the request. A `confirm` entered without a pending clear
+goes through normal parsing and produces the unknown-command message.
+
 #### Prefix boundaries and error messages
 
 `ArgumentTokenizer` recognizes only the prefixes supplied by a command parser, with whitespace before each prefix.

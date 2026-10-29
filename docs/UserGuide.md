@@ -42,7 +42,7 @@ information.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
-   * `clear` : Deletes all contacts.
+   * `clear` : Starts a confirmation prompt; deletes all contacts and preorder data after confirmation.
 
    * `exit` : Exits the app.
 
@@ -704,9 +704,15 @@ Examples:
 
 ### Clearing all entries: `clear`
 
-Clears all entries from the address book.
+Clears all entries from the address book after confirmation.
 
 Format: `clear`
+
+After entering `clear`, type `confirm` (case-insensitive, with surrounding whitespace ignored) to proceed. The prompt
+warns that all customers and preorder data will be permanently deleted. Any other input cancels the clear and is
+discarded; enter it again after cancellation if you still want to run it. Pressing Enter on an empty input also cancels.
+The word `confirm` is recognized only while a clear confirmation is pending; otherwise it produces the usual
+unknown-command message.
 
 ### Exiting the program: `exit`
 
