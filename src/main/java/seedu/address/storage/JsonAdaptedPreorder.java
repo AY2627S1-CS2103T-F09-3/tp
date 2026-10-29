@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.model.preorder.FulfilmentDate;
 import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.HandoverNotes;
@@ -103,9 +104,11 @@ class JsonAdaptedPreorder {
      * so that a hand-edited detail of {@code ""} loads as not set.
      */
     private static String stripToNull(String value) {
-        if (value == null || value.isBlank()) {
+        if (value == null) {
             return null;
         }
-        return value.strip();
+
+        String strippedValue = StringUtil.stripSpaces(value);
+        return strippedValue.isEmpty() ? null : strippedValue;
     }
 }

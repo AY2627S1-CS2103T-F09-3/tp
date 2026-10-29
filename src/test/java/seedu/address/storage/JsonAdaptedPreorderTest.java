@@ -44,14 +44,14 @@ public class JsonAdaptedPreorderTest {
 
     @Test
     public void toModelType_paddedFulfilmentDetails_returnsStrippedDetails() throws Exception {
-        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), " " + VALID_DATE + " ",
-                " " + VALID_METHOD + " ", " " + VALID_HANDOVER_NOTES + " ");
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), "\u00A0" + VALID_DATE + "\u00A0",
+                "\u00A0" + VALID_METHOD + "\u00A0", "\u00A0" + VALID_HANDOVER_NOTES + "\u00A0");
         assertEquals(buildPreorderWithAllDetails(), preorder.toModelType());
     }
 
     @Test
     public void toModelType_blankFulfilmentDetails_returnsPreorderWithoutDetails() throws Exception {
-        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), "", " ", "");
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), "", "\u00A0", "\u2003");
         assertEquals(new Preorder(List.of()), preorder.toModelType());
     }
 
