@@ -261,7 +261,7 @@ Examples:
 * `tag 1 t/regular` adds the tag `regular` to the 1st customer.
 * `find n/Bernice` followed by `tag 1 t/vip` adds the tag `vip` to the 1st customer in the results of the `find` command.
 * `tag 1 t/FRIENDS` when the 1st customer already has the tag `friends` shows a message that they already have the tag, and leaves their tags unchanged.
-* If Alex Yeoh is displayed at index 1 and does not have the tag `VIP`, `tag 1 t/VIP` adds it and displays `Added tag(s) [VIP] to Alex Yeoh`.
+* If Alex Yeoh is displayed at index 1 and does not have the tag `VIP`, `tag 1 t/VIP` adds it and displays `Added tag [VIP] to Alex Yeoh`.
 
 Common errors:
 

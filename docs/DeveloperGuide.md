@@ -1140,7 +1140,7 @@ normalization. Run `list` before each case and use the current displayed index; 
    1. Prerequisites: Start with the sample data. List all customers using the `list` command. The first customer is `Alex Yeoh`, who has the tag `friends`.
 
    1. Test case: `tag 1 t/regular`<br>
-      Expected: `regular` is added to the first customer's tags. The status message shows `Added tag(s) [regular] to Alex Yeoh`.
+      Expected: `regular` is added to the first customer's tags. The status message shows `Added tag [regular] to Alex Yeoh`.
 
    1. Test case: `tag 1 t/FRIENDS`<br>
       Expected: The customer's tags are unchanged. The status message shows `Alex Yeoh already has tag [FRIENDS]. No changes made.`
@@ -1168,7 +1168,7 @@ normalization. Run `list` before each case and use the current displayed index; 
    1. Prerequisites: Find a customer using `find n/Bernice`. Only `Bernice Yu` is shown.
 
    1. Test case: `tag 1 t/vip`<br>
-      Expected: `vip` is added to `Bernice Yu`'s tags. The status message shows `Added tag(s) [vip] to Bernice Yu`. Only `Bernice Yu` remains displayed; the filter is preserved.
+      Expected: `vip` is added to `Bernice Yu`'s tags. The status message shows `Added tag [vip] to Bernice Yu`. Only `Bernice Yu` remains displayed; the filter is preserved.
 
 ### Untagging a customer
 
