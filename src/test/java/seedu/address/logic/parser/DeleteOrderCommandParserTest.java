@@ -7,6 +7,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.DeleteOrderCommand;
 
 public class DeleteOrderCommandParserTest {
@@ -57,7 +58,8 @@ public class DeleteOrderCommandParserTest {
     }
 
     @Test
-    public void parse_indexOverflow_throwsParseException() {
-        assertParseFailure(parser, "2147483648", MESSAGE_INVALID_FORMAT);
+    public void parse_overflowingIndex_success() {
+        assertParseSuccess(parser, "2147483648",
+                new DeleteOrderCommand(Index.fromZeroBased(Integer.MAX_VALUE)));
     }
 }

@@ -78,6 +78,15 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_overflowingIndex_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_AMY).build();
+        Index outOfRangeIndex = Index.fromZeroBased(Integer.MAX_VALUE);
+
+        assertParseSuccess(parser, "2147483648" + PHONE_DESC_AMY,
+                new EditCommand(outOfRangeIndex, descriptor));
+    }
+
+    @Test
     public void parse_invalidValue_failure() {
         assertParseFailure(parser, "1" + INVALID_NAME_DESC, Name.MESSAGE_CONSTRAINTS); // invalid name
         assertParseFailure(parser, "1" + INVALID_PHONE_DESC, Phone.MESSAGE_CONSTRAINTS); // invalid phone
