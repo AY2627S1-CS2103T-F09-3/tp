@@ -44,6 +44,17 @@ public class JsonAdaptedPreorderTest {
     }
 
     @Test
+    public void toModelType_invalidLegacySlashHandoverNotes_throwsIllegalValueException() {
+        JsonAdaptedPreorder oversizedNotes = new JsonAdaptedPreorder(List.of(), null, null,
+                "N".repeat(HandoverNotes.MAX_LENGTH) + "/");
+        JsonAdaptedPreorder multilineNotes = new JsonAdaptedPreorder(List.of(), null, null,
+                "Leave/\nat door");
+
+        assertThrows(IllegalValueException.class, HandoverNotes.MESSAGE_CONSTRAINTS, oversizedNotes::toModelType);
+        assertThrows(IllegalValueException.class, HandoverNotes.MESSAGE_CONSTRAINTS, multilineNotes::toModelType);
+    }
+
+    @Test
     public void toModelType_lowerCaseMethod_returnsPreorderWithMethod() throws Exception {
         JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), VALID_DATE, "delivery",
                 VALID_HANDOVER_NOTES);
