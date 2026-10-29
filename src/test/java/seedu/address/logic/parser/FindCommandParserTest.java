@@ -342,6 +342,32 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_tagLengthBoundaries_checksTrimmedLength() {
+        for (int length : new int[]{29, 30}) {
+            String tag = "A".repeat(length);
+            FindCommand expected = new FindCommand(new SearchCriteria(List.of(new TagCriterion(new Tag(tag)))));
+            assertParseSuccess(parser, "t/  " + tag + "  ", expected);
+        }
+        assertParseFailure(parser, "t/  " + "A".repeat(31) + "  ", Tag.MESSAGE_LENGTH_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_textBeyondStoredFieldLimits_returnsFindCommand() {
+        String name = "A".repeat(101);
+        String email = "a".repeat(255);
+        String address = "A".repeat(301);
+        String handoverNotes = "A".repeat(101);
+        String product = "A".repeat(201);
+
+        assertParseSuccess(parser, "n/" + name, textCommand(NAME, name));
+        assertParseSuccess(parser, "e/" + email, textCommand(EMAIL, email));
+        assertParseSuccess(parser, "a/" + address, textCommand(ADDRESS, address));
+        assertParseSuccess(parser, "h/" + handoverNotes, textCommand(HANDOVER_NOTES, handoverNotes));
+        assertParseSuccess(parser, "d/" + product,
+                itemCommand(Optional.of(product), EnumSet.allOf(ItemStatus.class)));
+    }
+
+    @Test
     public void parse_fulfilmentCriteria_returnsCombinedFindCommand() {
         FindCommand expected = new FindCommand(new SearchCriteria(List.of(
                 new FulfilmentDateCriterion(new FulfilmentDate("2026-12-20")),

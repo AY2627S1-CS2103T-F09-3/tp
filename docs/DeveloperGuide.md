@@ -421,6 +421,25 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Customer field length validation
+
+`Name`, `Email`, `Address` and `Tag` define `MAX_LENGTH` values of 100, 254, 300 and 30 respectively.
+Lengths use `String.length()` (UTF-16 code units). Names are trimmed and consecutive ASCII spaces collapse before
+validation. `ParserUtil` trims other command values; JSON adapters validate those strings as stored.
+
+Constructors, `ParserUtil`, `JsonAdaptedPerson` and `JsonAdaptedTag` share the value classes' validators and
+`getValidationErrorMessage(String)`. Oversized fields use `MESSAGE_LENGTH_CONSTRAINTS`; other invalid values use
+`MESSAGE_CONSTRAINTS`. Length takes precedence over format within a field, while command syntax checks may fail
+earlier. Parsers may refine either field error into an [unsupported-prefix diagnostic](#prefix-boundaries-and-error-messages).
+`JsonAddressBookStorage` wraps adapter failures in `DataLoadingException`, rejecting the whole file.
+
+Text queries for names, emails, addresses, products and handover notes have no stored-field length limit.
+Phone queries accept one to eight digits. Tag queries use `ParserUtil.parseTag` and share the 30-character limit.
+
+Automated tests cover N−1/N/N+1 across model, parser, command and storage layers, including normalization, UTF-16
+counting and error precedence. Integration tests verify saving and reloading, and preservation of data, search
+state and saved JSON after rejected commands.
+
 ### Preorders and items
 
 A customer's preorder records the products they ordered and how they will be handed over. Each customer has at most
@@ -956,9 +975,9 @@ testers are expected to do more *exploratory* testing.
       Expected: The customer list still shows the top of the first card, with its index and name. The usage message
       scrolls in the result box instead of pushing the customer list out of the window.
 
-   1. In the same window, run `tag 1 t/Christmas2026CorporateOrdersWithSpecialDietaryRequirementsAndPriorityDelivery`.<br>
-      Expected: The long tag wraps onto a second line inside its chip, which stays inside the card, and the rest
-      of the card moves down to make room for it.
+   1. In the same window, run `tag 1 t/WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW` (30 `W` characters).<br>
+      Expected: The tag is accepted. Its full text stays inside its chip and the card, wrapping as needed, and
+      the rest of the card moves down to make room for it.
 
 ### Using the side panel
 
@@ -1046,6 +1065,28 @@ Use a test address book without customers whose names contain `SearchTest` or `O
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
+
+### Customer field length boundaries
+
+Use a test copy with a saved customer. Prepare otherwise valid values at these lengths, measuring names after
+normalization. Run `list` before each case and use the current displayed index; avoid duplicate names in `add` cases.
+
+| Field | Lengths (N−1 / N / N+1) | Commands |
+|-------|------------------------|----------|
+| Name | 99 / 100 / 101 | `add`, `edit` with `n/` |
+| Email | 253 / 254 / 255 | `add`, `edit` with `e/` |
+| Address | 299 / 300 / 301 | `add`, `edit` with `a/` |
+| Tag | 29 / 30 / 31 | `tag`, `find`, `untag` with `t/` |
+
+1. N−1 and N: Expect acceptance. Restart after saving maximum values and verify they are retained. For tags,
+   add, find and remove each value, using the index shown in the search results for removal.
+1. N+1: Expect the [field's length message](UserGuide.md#customer-field-limits), with data, search state and saved
+   JSON unchanged. Repeat with an active search.
+1. Normalization and counting: Use extra spaces in a name whose normalized length is 100; expect acceptance.
+   Addresses containing 150 copies of 🍰 are accepted (300 UTF-16 units); appending `A` is rejected.
+1. Error precedence: Edit an email to 254 copies of `a`, then 255. Expect the format message, then the length message.
+1. Search exceptions: `find n/` with 101 copies of `A` is accepted with no matches; `find t/` with 31 copies of `T`
+   is rejected.
 
 ### Tagging a person
 
