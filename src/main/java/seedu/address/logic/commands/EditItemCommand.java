@@ -32,17 +32,17 @@ import seedu.address.model.preorder.Remark;
 public class EditItemCommand extends Command {
     public static final String COMMAND_WORD = "edititem";
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Edits one numbered item of the person in the displayed list. "
+            + ": Edits one numbered item of the customer in the displayed list. "
             + "Only supplied fields are updated. Empty r/ clears the remark.\n"
             + "Parameters: INDEX (must be a positive integer) "
             + PREFIX_ITEM_INDEX + "ITEM_INDEX (must be a positive integer) "
             + "[" + PREFIX_DETAILS + "NAME] [" + PREFIX_QUANTITY + "QUANTITY] "
             + "[" + PREFIX_STATUS + "STATUS] [" + PREFIX_REMARK + "REMARK]\n"
             + "Example: " + COMMAND_WORD + " 1 " + PREFIX_ITEM_INDEX + "2 " + PREFIX_QUANTITY + "3";
-    public static final String MESSAGE_NO_PREORDER = "Identified person has no preorder.";
+    public static final String MESSAGE_NO_PREORDER = "This customer has no preorder.";
     public static final String MESSAGE_INVALID_ITEM_INDEX = "The item index provided is invalid.";
     public static final String MESSAGE_EDIT_ITEM_SUCCESS =
-            "Edited item %1$d for %2$s: %3$s (%4$s, %5$s)";
+            "Edited item %1$d for %2$s: %3$s (quantity: %4$s, %5$s)";
     public static final String MESSAGE_NOT_EDITED = "No item changes specified.";
 
     private final Index index;
@@ -81,8 +81,7 @@ public class EditItemCommand extends Command {
 
         return new CommandResult(String.format(MESSAGE_EDIT_ITEM_SUCCESS, itemIndex.getOneBased(),
                 identifiedPerson.getName(), updatedItem.getName(),
-                updatedItem.getQuantity().map(quantity -> "quantity: " + quantity)
-                        .orElse(Messages.MISSING_QUANTITY_TEXT), updatedItem.getStatus()));
+                updatedItem.getQuantity(), updatedItem.getStatus()));
     }
 
     /**
@@ -109,11 +108,11 @@ public class EditItemCommand extends Command {
     }
 
     /**
-     * Applies supplied fields, preserving missing quantities on migrated items unless explicitly edited.
+     * Applies supplied fields, keeping the original value of each omitted field.
      */
     private Item createUpdatedItem(Item original) {
         ItemName name = editItemDescriptor.getName().orElse(original.getName());
-        Optional<Quantity> quantity = editItemDescriptor.getQuantity().or(original::getQuantity);
+        Quantity quantity = editItemDescriptor.getQuantity().orElse(original.getQuantity());
         ItemStatus status = editItemDescriptor.getStatus().orElse(original.getStatus());
         Optional<Remark> remark = editItemDescriptor.getRemark().orElse(original.getRemark());
         return new Item(name, quantity, status, remark);

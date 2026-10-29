@@ -111,7 +111,7 @@ public class ProductSummaryPanel extends UiPart<Region> {
                 + " | " + formatStatuses(criterion));
         counts.setText(summary.getCustomerCount() + " customer(s) | "
                 + summary.getMatchingItemCount() + " matching item(s)");
-        quantity.setText(formatQuantity(summary));
+        quantity.setText("Total quantity: " + summary.getTotalQuantity());
         String requests = summary.getMatchingItems().stream()
                 .filter(match -> match.getItem().getRemark().isPresent())
                 .map(ProductSummaryPanel::formatRemark)
@@ -127,14 +127,6 @@ public class ProductSummaryPanel extends UiPart<Region> {
             return "All statuses";
         }
         return criterion.getStatuses().stream().sorted().map(ItemStatus::name).collect(Collectors.joining(", "));
-    }
-
-    private static String formatQuantity(ProductPreparationSummary summary) {
-        if (summary.getMissingQuantityCount() > 0) {
-            return "Known quantity: " + summary.getKnownQuantity() + " | "
-                    + summary.getMissingQuantityCount() + " item(s) need a quantity";
-        }
-        return "Total quantity: " + summary.getKnownQuantity();
     }
 
     private static String formatRemark(MatchingItem match) {

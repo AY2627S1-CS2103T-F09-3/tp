@@ -40,7 +40,7 @@ public class AddItemCommandTest {
         Model model = createModel(ALICE, BENSON);
         CommandResult result = new AddItemCommand(FIRST, ITEM).execute(model);
         assertEquals(new CommandResult(String.format(AddItemCommand.MESSAGE_ADD_ITEM_SUCCESS,
-                1, ALICE.getName(), ITEM.getName(), ITEM.getQuantity().orElseThrow(), ITEM.getStatus())), result);
+                1, ALICE.getName(), ITEM.getName(), ITEM.getQuantity(), ITEM.getStatus())), result);
         assertEquals(List.of(new PersonBuilder(ALICE).withPreorder(ITEM).build(), BENSON),
                 model.getAddressBook().getPersonList());
         assertEquals(Optional.empty(), ALICE.getPreorder());
@@ -58,15 +58,15 @@ public class AddItemCommandTest {
 
     @Test
     public void execute_existingPreorder_preservesItemsAndAppendsDuplicate() throws Exception {
-        Item migrated = new ItemBuilder().withoutQuantity().withStatus(ItemStatus.COMPLETED).build();
-        Person original = new PersonBuilder(ALICE).withPreorder(ITEM, migrated).build();
+        Item completed = new ItemBuilder().withQuantity("5").withStatus(ItemStatus.COMPLETED).build();
+        Person original = new PersonBuilder(ALICE).withPreorder(ITEM, completed).build();
         Model model = createModel(original, BENSON);
         CommandResult result = new AddItemCommand(FIRST, ITEM).execute(model);
         assertEquals(new CommandResult("Added item 3 for Alice Pauline: Pineapple Tarts (quantity: 2, PENDING)"),
                 result);
-        assertEquals(List.of(new PersonBuilder(ALICE).withPreorder(ITEM, migrated, ITEM).build(), BENSON),
+        assertEquals(List.of(new PersonBuilder(ALICE).withPreorder(ITEM, completed, ITEM).build(), BENSON),
                 model.getAddressBook().getPersonList());
-        assertEquals(List.of(ITEM, migrated), original.getPreorder().orElseThrow().getItems());
+        assertEquals(List.of(ITEM, completed), original.getPreorder().orElseThrow().getItems());
     }
 
     @Test
@@ -106,14 +106,6 @@ public class AddItemCommandTest {
     public void constructor_nullArguments_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new AddItemCommand(null, ITEM));
         assertThrows(NullPointerException.class, () -> new AddItemCommand(FIRST, null));
-    }
-
-    @Test
-    public void constructor_missingQuantity_throwsIllegalArgumentException() {
-        Item migrated = new ItemBuilder().withoutQuantity().build();
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                new AddItemCommand(FIRST, migrated));
-        assertEquals(AddItemCommand.MESSAGE_QUANTITY_REQUIRED, exception.getMessage());
     }
 
     @Test

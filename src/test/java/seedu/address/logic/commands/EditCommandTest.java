@@ -31,6 +31,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.SearchCriteria;
@@ -256,7 +257,8 @@ public class EditCommandTest {
         for (String nameVariant : new String[]{"alice pauline", "  Alice   Pauline  ", "  aLiCe   pAuLiNe  "}) {
             EditCommand command = new EditCommandParser().parse("2 " + PREFIX_NAME + nameVariant + PHONE_DESC_BOB);
 
-            assertCommandFailure(command, model, EditCommand.MESSAGE_DUPLICATE_PERSON);
+            String expectedMessage = String.format(Messages.MESSAGE_DUPLICATE_CUSTOMER, new Name(nameVariant));
+            assertCommandFailure(command, model, expectedMessage);
         }
     }
 
@@ -267,7 +269,8 @@ public class EditCommandTest {
         for (String nameVariant : new String[]{"benson meier", "  Benson   Meier  ", "  bEnSoN   mEiEr  "}) {
             EditCommand command = new EditCommandParser().parse("1 " + PREFIX_NAME + nameVariant);
 
-            assertCommandFailure(command, model, EditCommand.MESSAGE_DUPLICATE_PERSON);
+            String expectedMessage = String.format(Messages.MESSAGE_DUPLICATE_CUSTOMER, new Name(nameVariant));
+            assertCommandFailure(command, model, expectedMessage);
         }
     }
 
@@ -277,7 +280,8 @@ public class EditCommandTest {
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder(firstPerson).build();
         EditCommand editCommand = new EditCommand(INDEX_SECOND_PERSON, descriptor);
 
-        assertCommandFailure(editCommand, model, EditCommand.MESSAGE_DUPLICATE_PERSON);
+        assertCommandFailure(editCommand, model,
+                String.format(Messages.MESSAGE_DUPLICATE_CUSTOMER, firstPerson.getName()));
     }
 
     @Test
@@ -289,7 +293,8 @@ public class EditCommandTest {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON,
                 new EditPersonDescriptorBuilder(personInList).build());
 
-        assertCommandFailure(editCommand, model, EditCommand.MESSAGE_DUPLICATE_PERSON);
+        assertCommandFailure(editCommand, model,
+                String.format(Messages.MESSAGE_DUPLICATE_CUSTOMER, personInList.getName()));
     }
 
     @Test

@@ -36,13 +36,13 @@ information.
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to show help in the side panel.<br>
    Some example commands you can try:
 
-   * `list` : Lists all contacts.
+   * `list` : Lists all customers.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 c/123456` : Adds a contact named `John Doe` to LeBake.
+   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 c/123456` : Adds a customer named `John Doe` to LeBake.
 
-   * `delete 3` : Deletes the 3rd contact shown in the current list.
+   * `delete 3` : Deletes the 3rd customer shown in the current list.
 
-   * `clear` : Deletes all contacts.
+   * `clear` : Starts a confirmation prompt; deletes all customers and preorder data after confirmation.
 
    * `exit` : Exits the app.
 
@@ -157,9 +157,9 @@ Shows the format of every command and the [LeBake User Guide URL](https://ay2627
 Format: `help`
 
 
-### Adding a person: `add`
+### Adding a customer: `add`
 
-Adds a person to the address book using their name, phone number, email address, address, and postal code.
+Adds a customer to LeBake using their name, phone number, email address, address, and postal code.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS c/POSTAL_CODE`
 
@@ -171,10 +171,10 @@ Postal codes must contain exactly six digits. They are stored as text, so leadin
 * Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
 * Name, phone, email and postal code values are validated first. An invalid value containing an extra unsupported prefix identifies that prefix. For example, adding `x/foo` after `p/98765432` shows `Unsupported prefix 'x/' for add.` Other invalid values keep their field constraint messages.
 * Addresses preserve unsupported prefix-like text and conventional `c/o` text. For example, `a/Block 123 c/o John x/foo` is kept as `Block 123 c/o John x/foo`.
-* A person is a duplicate if their name matches an existing person's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
-* Duplicate checks include all persons in the address book, even those hidden by a `find` command.
-* New persons are added without tags or a preorder. Use [`tag`](#tagging-a-person-tag) to add tags afterwards.
-* Adding preserves the current search criteria. The new person appears only if they match. For example, they stay hidden after a tag search or `track` because they have no tags or preorder yet. Use `list` to show all customers.
+* A customer is a duplicate if their name matches an existing customer's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
+* Duplicate checks include all saved customers, even those hidden by a `find` command.
+* New customers are added without tags or a preorder. Use [`tag`](#tagging-a-customer-tag) to add tags afterwards.
+* Adding preserves the current search criteria. The new customer appears only if they match. For example, they stay hidden after a tag search or `track` because they have no tags or preorder yet. Use `list` to show all customers.
 
 
 Examples:
@@ -183,25 +183,37 @@ Examples:
 * `add n/Betsy Crowe e/betsycrowe@example.com a/Newgate Prison p/81234567 c/654321`
 * `add n/Mary-Jane O'Brien p/98765432 e/maryjane@example.com a/123 Baker Street c/123456`
 
-### Listing all persons: `list`
+Success feedback begins with `New customer added:`, followed by the customer's details.
 
-Clears the current search criteria, sorting and postal-code grouping, and shows all persons in the address book in their saved order.
+With the sample data, `add n/alex yeoh p/91234567 e/alex2@example.com a/1 Test Road c/123456` is rejected with:
+
+`A customer named "alex yeoh" already exists. Customer names must be unique (ignoring capitalisation and extra spaces). Choose a different name.`
+
+The message uses the name you supplied, with surrounding spaces removed, repeated spaces collapsed to one,
+and capitalization preserved.
+The saved customer, current search criteria and displayed results remain unchanged.
+
+### Listing all customers: `list`
+
+Clears the current search criteria, sorting and postal-code grouping, and shows all saved customers in their saved order.
 
 Format: `list`
 
-### Editing a person: `edit`
+Feedback: `Listed all customers.`
 
-Edits the name, phone number, email address, address, or postal code of an existing person in the address book.
+### Editing a customer: `edit`
+
+Edits the name, phone number, email address, address, or postal code of an existing customer.
 
 Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`
 
-* Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
+* Edits the customer at the specified `INDEX`. The index refers to the index number shown in the displayed customer list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of `n/`, `p/`, `e/`, `a/`, or `c/` must be provided.
 * Fields you provide replace their existing values. Fields you omit remain unchanged.
 * The field validation, [length limits](#customer-field-limits) and spacing rules described for `add` also apply to `edit`.
-* You can retain a person's own name or change its capitalization or spacing while editing. A name matching another person's name is rejected, including persons hidden by a `find` command. Other contact details do not affect this duplicate check.
+* You can retain a customer's own name or change its capitalization or spacing while editing. A name matching another customer's name is rejected, including customers hidden by a `find` command. Other contact details do not affect this duplicate check.
 * Existing tags and preorders are always preserved.
-* Editing preserves the current search criteria. A person disappears from the results if their edited details no longer match. Check the displayed indexes again before your next command, or use `list` to show all customers.
+* Editing preserves the current search criteria. A customer disappears from the results if their edited details no longer match. Check the displayed indexes again before your next command, or use `list` to show all customers.
 
 An unsupported letter-based prefix after whitespace in an invalid `n/`, `p/`, `e/` or `c/` value is named directly.
 For example, `edit 1 p/91234567 x/foo` displays `Unsupported prefix 'x/' for edit.` Remove the unsupported argument
@@ -212,35 +224,44 @@ address `Block 123 c/o Alice x/foo`. Customer names follow the existing name val
 
 Examples:
 
-*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`, preserving all other details and tags.
-*  `edit 1 n/JOHN DOE` Changes the capitalization of the 1st person's name if they are already named `John Doe`.
+*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st customer to be `91234567` and `johndoe@example.com` respectively.
+*  `edit 2 n/Betsy Crower` Edits the name of the 2nd customer to be `Betsy Crower`, preserving all other details and tags.
+*  `edit 1 n/JOHN DOE` Changes the capitalization of the 1st customer's name if they are already named `John Doe`.
 
 If several inputs are invalid, checks run in this order: index format, duplicate prefixes, then name, phone, email,
 address and postal code. Whether the index exists in the displayed list is checked after the supplied fields are valid.
 Rejected edits leave customer data and the current filter unchanged.
 
-### Tagging a person: `tag`
+Success feedback begins with `Edited customer:`, followed by the customer's updated details.
 
-Adds a tag to an existing person, so you can group your customers (for example, `regular` or `vip`).
+With the sample data, `edit 2 n/alex yeoh` is rejected with the same duplicate-name message as `add`:
+
+`A customer named "alex yeoh" already exists. Customer names must be unique (ignoring capitalisation and extra spaces). Choose a different name.`
+
+The message shows the supplied name after space normalization, preserving its capitalization. Choose a name that
+does not match another saved customer. Changing only the capitalization of the customer's own name is allowed.
+
+### Tagging a customer: `tag`
+
+Adds a tag to an existing customer, so you can group your customers (for example, `regular` or `vip`).
 
 Format: `tag INDEX t/TAG`
 
-* Adds the tag to the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
+* Adds the tag to the customer at the specified `INDEX`. The index refers to the index number shown in the displayed customer list. The index **must be a positive integer** 1, 2, 3, ...
 * Only one tag can be added per command.
 * A tag can contain at most 30 characters. Leading and trailing spaces are ignored before checking its length.
 * A tag must be a single word made up of English letters and digits only (`A-Z`, `a-z`, `0-9`). Spaces, hyphens and other symbols are rejected. For example, `vip` and `Christmas2026` are valid; `gluten-free` and `big order` are invalid.
 * Tags are case-insensitive: `VIP`, `Vip` and `vip` are the same tag. A tag keeps the capitalization it had when it was first added.
-* If the person already has the tag, in any capitalization, their tags are left unchanged and a message tells you so.
-* The person's other details, including their preorder, are not changed.
+* If the customer already has the tag, in any capitalization, their tags are left unchanged and a message tells you so.
+* The customer's other details, including their preorder, are not changed.
 * The current list filter is preserved, and the change is saved automatically.
 
 Examples:
 
-* `tag 1 t/regular` adds the tag `regular` to the 1st person.
-* `find n/Bernice` followed by `tag 1 t/vip` adds the tag `vip` to the 1st person in the results of the `find` command.
-* `tag 1 t/FRIENDS` when the 1st person already has the tag `friends` shows a message that they already have the tag, and leaves their tags unchanged.
-* If Alex Yeoh is displayed at index 1 and does not have the tag `VIP`, `tag 1 t/VIP` adds it and displays `Added tag(s) [VIP] to Alex Yeoh`.
+* `tag 1 t/regular` adds the tag `regular` to the 1st customer.
+* `find n/Bernice` followed by `tag 1 t/vip` adds the tag `vip` to the 1st customer in the results of the `find` command.
+* `tag 1 t/FRIENDS` when the 1st customer already has the tag `friends` shows a message that they already have the tag, and leaves their tags unchanged.
+* If Alex Yeoh is displayed at index 1 and does not have the tag `VIP`, `tag 1 t/VIP` adds it and displays `Added tag [VIP] to Alex Yeoh`.
 
 Common errors:
 
@@ -252,28 +273,28 @@ Common errors:
 | `tag 1 t/VIP x/foo` or `tag 1 t/VIP p/91234567` | `Unsupported prefix 'x/' for tag.` or `Unsupported prefix 'p/' for tag.`, respectively. |
 | `tag 1 t/ABCDEFGHIJKLMNOPQRSTUVWXYZ12345` (31 characters) | `Tag names must be at most 30 characters long.` |
 | `tag 1 t/VIP t/regular` | `Multiple values specified for the following single-valued field(s): t/` |
-| `tag 5 t/VIP` when fewer than five persons are displayed, or any valid index when the list is empty | `The person index provided is invalid.` |
-| `tag 1 t/VIP` when the first person is Alex Yeoh and already has the tag `vip` | `Alex Yeoh already has tag [VIP]. No changes made.` |
+| `tag 5 t/VIP` when fewer than five customers are displayed, or any valid index when the list is empty | `The customer index provided is invalid.` |
+| `tag 1 t/VIP` when the first customer is Alex Yeoh and already has the tag `vip` | `Alex Yeoh already has tag [VIP]. No changes made.` |
 
 If several inputs are invalid, only the first detected error is shown. The index format is checked before the tag input; whether the index exists in the displayed list is checked after both inputs are valid.
 
-### Removing a person's tag: `untag`
+### Removing a customer's tag: `untag`
 
-Removes an existing tag from a person in the currently displayed list.
+Removes an existing tag from a customer in the currently displayed list.
 
 Format: `untag INDEX t/TAG`
 
 * `INDEX` must be a positive integer shown in the current list. After a `find` command, use the index shown in its search results.
 * Supply exactly one `t/TAG`, after the index. The tag must contain 1 to 30 English letters (`A-Z`, `a-z`) or digits (`0-9`). Internal spaces and special characters are not allowed. Leading and trailing spaces are ignored before checking its length.
 * Matching is case-insensitive. For example, `t/vip` removes an existing `VIP` tag.
-* Other tags, contact details, and any preorder remain unchanged. Removing the last tag leaves the person with no tags.
+* Other tags, contact details, and any preorder remain unchanged. Removing the last tag leaves the customer with no tags.
 * The current list filter is preserved, and the change is saved automatically.
-* If the command is rejected due to invalid or missing tags, no person's data is changed.
+* If the command is rejected due to invalid or missing tags, no customer's data is changed.
 
 Examples:
 
-* `untag 3 t/wholesale` removes the `wholesale` tag from the third person shown, provided they have that tag.
-* `find n/Bernice` followed by `untag 1 t/friends` removes the `friends` tag from the first search result, provided that person has the tag.
+* `untag 3 t/wholesale` removes the `wholesale` tag from the third customer shown, provided they have that tag.
+* `find n/Bernice` followed by `untag 1 t/friends` removes the `friends` tag from the first search result, provided that customer has the tag.
 * If Alex Yeoh is displayed at index 1 and has the tag `VIP`, `untag 1 t/vip` removes it and displays `Removed tag [vip] from Alex Yeoh`.
 
 Common errors:
@@ -286,8 +307,8 @@ Common errors:
 | `untag 1 t/ABCDEFGHIJKLMNOPQRSTUVWXYZ12345` (31 characters) | `Tag names must be at most 30 characters long.` |
 | Unsupported prefix after the tag, e.g. `untag 1 t/VIP x/foo` | `Unsupported prefix 'x/' for untag.` |
 | `untag 1 t/VIP t/friends` | `Multiple values specified for the following single-valued field(s): t/` |
-| `untag 5 t/VIP` when fewer than five persons are displayed, or any valid index when the list is empty | `The person index provided is invalid.` |
-| `untag 1 t/VIP` when the first person is Alex Yeoh and has no `VIP` tag | `Alex Yeoh does not have tag [VIP]` |
+| `untag 5 t/VIP` when fewer than five customers are displayed, or any valid index when the list is empty | `The customer index provided is invalid.` |
+| `untag 1 t/VIP` when the first customer is Alex Yeoh and has no `VIP` tag | `Alex Yeoh does not have tag [VIP]` |
 
 The unsupported-prefix message names the first unsupported letter-based prefix after whitespace in an invalid tag
 value. Ordinary invalid tags retain their tag constraint message. If several inputs are invalid, checks run in this
@@ -350,9 +371,9 @@ The **Delivery preparation** summary in the side panel, on the right of the wind
 
 * A customer counts as one outstanding stop when their preorder uses `DELIVERY` and has at least one `PENDING` or `PREPARED` item. Multiple items still count as one stop.
 * Collection, empty preorders, completed-only preorders, and preorders without a method do not contribute to the totals.
-* Contacts are grouped by the first two postal digits. Each contact shows their name, phone, address, complete postal code, fulfilment date, and handover notes.
+* Customers are grouped by the first two postal digits. Each customer shows their name, phone, address, complete postal code, fulfilment date, and handover notes.
 * An outstanding delivery without a date shows `Not scheduled`; absent handover notes show `Handover notes: None`.
-* The contact area scrolls and wraps long text. Use Tab to focus it and the arrow keys to scroll.
+* The customer area scrolls and wraps long text. Use Tab to focus it and the arrow keys to scroll.
 
 For the sample data, `list` shows two outstanding delivery stops in two postal groups. `find f/2026-12-20 m/delivery` selects the deliveries for that date; `group postal` groups those results while keeping the search. An empty scheduled preorder may appear in the customer results but does not count as an outstanding stop.
 
@@ -445,7 +466,7 @@ Customer and preorder changes preserve the search and refresh the results. A cus
 | `find t/regular customer` or `find t/VIP!` | The tag constraint message is shown. |
 | `find t/ABCDEFGHIJKLMNOPQRSTUVWXYZ12345` (31 characters) | `Tag names must be at most 30 characters long.` |
 
-Rejected searches leave the current criteria and results unchanged. If no customers match a valid search, the list is empty and the feedback reports `0 person(s) listed!`. Use `list` to clear the search.
+Rejected searches leave the current criteria and results unchanged. If no customers match a valid search, the list is empty and the feedback reports `0 customer(s) listed!`. Use `list` to clear the search.
 
 ### Reading the preparation summary and matching items
 
@@ -454,14 +475,12 @@ the capitalization you typed, with surrounding whitespace removed. Product match
 
 * The selected product and statuses. Without `s/`, **all statuses**, including completed items, contribute.
 * The number of matching customers and matching item entries. Repeated entries count separately.
-* The total quantity of matching items. If migrated items have no quantity, the panel instead shows the
-  **known quantity** subtotal and how many matching items still need a quantity. This subtotal is incomplete.
+* The total quantity of matching items.
 * Special requests from matching items, each labelled with the customer name and original item number.
 
 For example, two matching entries with quantities 2 and 3 contribute two items and a total quantity of 5.
-An additional entry without a quantity raises the item count to three, leaves the known quantity at 5,
-and is reported as one item needing a quantity. Only customers in the current results contribute;
-customer fields such as `n/` and `t/` therefore also restrict the summary.
+Only customers in the current results contribute; customer fields such as `n/` and `t/` therefore also
+restrict the summary.
 
 Matching items on customer cards are shown in a yellow box while retaining their
 status colours. This applies to product/status searches and `track`. All other items remain visible,
@@ -499,7 +518,7 @@ The remark appears on the customer card, rather than in the success message.
 
 Omitting a required prefix displays `Invalid command format!` followed by usage instructions.
 Supplying an empty value displays that field's validation error. In particular, `r/` without text is invalid when adding.
-An index beyond the displayed customer list produces `The person index provided is invalid.`
+An index beyond the displayed customer list produces `The customer index provided is invalid.`
 
 Quantity and status are validated first. If an invalid value contains an extra unsupported prefix, the error names it:
 `additem 1 d/Cake q/2 x/foo s/pending` and `additem 1 d/Cake q/2 s/pending x/foo` both show
@@ -514,8 +533,8 @@ Format: `edititem INDEX i/ITEM_INDEX [d/NAME] [q/QUANTITY] [s/STATUS] [r/REMARK]
 * `INDEX` identifies a customer in the currently displayed list. `ITEM_INDEX` identifies an item by the number on that
   customer's card. Both must be positive integers.
 * At least one edit field must be supplied. Names, quantities, statuses and non-empty remarks follow the rules for `additem`.
-* Omitted fields retain their values. An empty `r/` **clears** the remark; omitting `r/` preserves it.
-* An item migrated from v1.3 keeps its missing quantity until a valid `q/QUANTITY` is supplied.
+* Omitted fields retain their values, so omitting `q/` keeps the item's quantity. An empty `r/` **clears** the remark;
+  omitting `r/` preserves it.
 * Supplying an existing value is accepted and reports success, even if the item does not change.
 * Other items, contact details and tags are preserved. The current filter remains active. Changing an item's status can
   remove its customer from a tracked view, so check the displayed customer indices before the next command.
@@ -528,16 +547,13 @@ Examples:
 
 For Alice's second item, Cake, the success message could be:
 `Edited item 2 for Alice: Cake (quantity: 3, PREPARED)`.
-If its quantity is still missing, the message says so:
-`Edited item 2 for Alice: Cake (quantity needed, PREPARED)`.
-The card continues to display `Qty needed` for that item.
 
 | Situation | Message |
 |-----------|---------|
 | No edit fields, e.g. `edititem 1 i/2` | `No item changes specified.` |
-| Customer has no preorder | `Identified person has no preorder.` |
+| Customer has no preorder | `This customer has no preorder.` |
 | Preorder is empty or item number exceeds the item count | `The item index provided is invalid.` |
-| Customer index exceeds the displayed list | `The person index provided is invalid.` |
+| Customer index exceeds the displayed list | `The customer index provided is invalid.` |
 | Missing or malformed customer index, or missing `i/` prefix | `Invalid command format!` followed by usage instructions |
 | Present but empty or invalid item index, e.g. `i/0` or `i/abc` | `Item index must be a positive integer.` |
 | `edititem 1 i/1 c/012345` | `Unsupported prefix 'c/' for edititem.` |
@@ -568,7 +584,7 @@ An unsupported prefix after the status, such as `track s/pending d/Cake`, displa
 `Unsupported prefix 'd/' for track.` Remove the extra parameter or use `find s/pending d/Cake` to combine both criteria.
 An ordinary invalid status, such as `track s/done`, still displays the status constraint message.
 
-Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count, and an item with a missing quantity still counts as one item. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
+Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
 
 Each customer card shows the customer's number on the left, then their name and tags, their phone number and email on one line, and their address with its postal code, for example `Postal 389030`. A customer without a preorder shows `No preorder`. Long names, tags and addresses wrap onto more lines, so they are always shown in full.
 
@@ -581,8 +597,6 @@ Status | Meaning | Badge colour
 `PENDING` | Recorded but not ready | Amber
 `PREPARED` | Ready for collection or delivery | Blue
 `COMPLETED` | Collected or delivered | Green outline with a tick
-
-After supplying the required postal codes in your data file, each preorder saved by LeBake v1.3 appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Qty needed` with a warning icon instead of a quantity.
 
 ### Deleting a preorder item: `deleteitem`
 
@@ -604,12 +618,12 @@ For example, deleting Alex Yeoh's second sample item shows:
 Deleted item 2 for Alex Yeoh: Almond Cookies (quantity: 1, PREPARED)
 ```
 
-The message uses the item's number before deletion. For a migrated item with no recorded quantity, the quantity value is blank, for example `(quantity: , PENDING)`.
+The message uses the item's number before deletion.
 
 | Situation | Message |
 |-----------|---------|
-| Customer index exceeds the displayed list | `The person index provided is invalid.` |
-| Customer has no preorder | `Identified person has no preorder.` |
+| Customer index exceeds the displayed list | `The customer index provided is invalid.` |
+| Customer has no preorder | `This customer has no preorder.` |
 | Preorder is empty or item index exceeds the item count | `The item index provided is invalid.` |
 | Missing or invalid customer index, or missing `i/` prefix | `Invalid command format!` followed by usage instructions |
 | Present but empty or invalid item index, e.g. `i/0` or `i/abc` | `Item index must be a positive integer.` |
@@ -669,7 +683,7 @@ Common errors:
 | Handover notes longer than 100 characters | `Invalid handover notes! Handover notes must not be blank, must be on a single line, and must be at most 100 characters long.` |
 | `preorder 1 f/2026-12-20 f/2026-12-21` | `Multiple values specified for the following single-valued field(s): f/` |
 | `preorder`, `preorder 0 m/delivery`, `preorder abc m/delivery`, `preorder 1 2 m/delivery`, or a prefix of another command such as `preorder 1 d/Cake` | `Invalid command format!` followed by the preorder usage instructions. |
-| `preorder 7 m/delivery` when fewer than seven customers are displayed | `The person index provided is invalid.` |
+| `preorder 7 m/delivery` when fewer than seven customers are displayed | `The customer index provided is invalid.` |
 | `preorder 6 h/` when Roy Balakrishnan has no preorder | `Roy Balakrishnan has no preorder, so there is nothing to clear. No changes made.` |
 
 If several inputs are invalid, only the first detected error is shown, in this order: the index format, repeated prefixes, the date, method and handover notes values, then the missing details. Whether the index exists in the displayed list is checked last.
@@ -683,7 +697,7 @@ Format: `deleteorder INDEX`
 * `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
 * The whole preorder is removed, including all its items. The customer's name, phone number, email, address and tags are not changed.
 * If the customer has no preorder, nothing is changed and the app shows `NAME has no preorder to delete.`, for example `Alex Yeoh has no preorder to delete.`
-* If `INDEX` is larger than the displayed list, the app shows `The person index provided is invalid.`
+* If `INDEX` is larger than the displayed list, the app shows `The customer index provided is invalid.`
 * A deleted preorder cannot be restored.
 * Deleting a preorder keeps the current filter. After `track`, the customer no longer has a preorder, so they disappear from that view. Check the displayed indices again before your next command. Use `list` to show all customers.
 
@@ -694,26 +708,38 @@ Examples:
 * `track` followed by `deleteorder 1` deletes the preorder of the 1st customer in the results of the `track` command.
 * `find n/Bernice` followed by `deleteorder 1` deletes the preorder of the 1st customer in the results of the `find` command.
 
-### Deleting a person: `delete`
+### Deleting a customer: `delete`
 
-Deletes the specified person from the address book.
+Deletes the specified customer from LeBake.
 
 Format: `delete INDEX`
 
-* Deletes the person at the specified `INDEX`.
-* The index refers to the index number shown in the displayed person list.
+* Deletes the customer at the specified `INDEX`.
+* The index refers to the index number shown in the displayed customer list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * Deleting preserves the active search criteria. The remaining results refresh, and their displayed indexes may change.
 
+Success feedback begins with `Deleted customer:`, followed by the deleted customer's details.
+An index beyond the displayed list produces `The customer index provided is invalid.`
+
 Examples:
-* `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find n/Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+
+* `list` followed by `delete 2` deletes the 2nd saved customer.
+* `find n/Betsy` followed by `delete 1` deletes the 1st customer in the results of the `find` command.
 
 ### Clearing all entries: `clear`
 
-Clears all entries from the address book.
+Clears all customers and their preorder data from LeBake after confirmation.
 
 Format: `clear`
+
+After entering `clear`, type `confirm` (case-insensitive, with surrounding whitespace ignored) to proceed. The prompt
+warns that all customers and preorder data will be permanently deleted. Any other input cancels the clear and is
+discarded; enter it again after cancellation if you still want to run it. Pressing Enter on an empty input also cancels.
+The word `confirm` is recognized only while a clear confirmation is pending; otherwise it produces the usual
+unknown-command message.
+
+Feedback after confirmation: `All customers have been cleared!`
 
 ### Exiting the program: `exit`
 
@@ -731,6 +757,8 @@ LeBake data is saved automatically as a JSON file `data/addressbook.json`, insid
 
 Postal codes are compulsory for every customer, including records saved by older versions. Each customer must have a `postalCode` containing exactly six digits. Null, missing, blank or malformed postal codes prevent the file from loading. Back up older files and supply the correct postal codes before launching LeBake.
 
+Quantities are compulsory for every item, in the same way. Each item must have a `quantity` that is a whole number from 1 to 999, the same as `q/` in `additem`. Null, missing, blank or invalid quantities prevent the file from loading. Preorders saved by LeBake v1.3, which used a single `preorder` field with `details` and `status` and no quantity, are no longer converted. A file that still has such a field cannot be loaded. Back up the file and move each such preorder into a `preorders` list, with a quantity for each item, before launching LeBake.
+
 Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. Item names are normalized in the same way, so items saved by earlier versions with repeated spaces count as the same product. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
 
 The [customer field limits](#customer-field-limits) also apply to saved JSON: 100 characters for each normalized name,
@@ -746,7 +774,7 @@ are ignored, and `null` or `""` means the detail is not set. Any other value pre
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, LeBake starts with an empty address book at the next run. The invalid file remains on disk until you run a command (LeBake saves after every command). Still, we recommend backing up the file before editing it.<br>
+If your changes make the data file invalid, LeBake starts with an empty customer list at the next run. The invalid file remains on disk until you run a command (LeBake saves after every command). Still, we recommend backing up the file before editing it.<br>
 Furthermore, certain edits can cause LeBake to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 

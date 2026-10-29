@@ -156,6 +156,12 @@ How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
+`LogicManager` coordinates `clear` confirmation before normal command execution, retaining the pending `ClearCommand`
+instance to track whether confirmation is waiting. After `clear`, it accepts only a trimmed, case-insensitive
+`confirm` as approval. Any other input cancels the pending clear and is discarded; an empty input is also forwarded by
+`CommandBox` while confirmation is pending so it can cancel the request. A `confirm` entered without a pending clear
+goes through normal parsing and produces the unknown-command message.
+
 #### Prefix boundaries and error messages
 
 `ArgumentTokenizer` recognizes only the prefixes supplied by a command parser, with whitespace before each prefix.
@@ -347,8 +353,8 @@ item criteria. Each new command still replaces the previous search, rather than 
 
 `ItemCriterion.matches(Item)` is the shared item-level check. `getMatchingItems(Person)` returns an unmodifiable list
 that preserves item order and duplicate entries. `TrackCommand` counts filtered customers once each, then sums the
-sizes of their matching-item lists using a `long` total. It counts item entries, not quantities, including migrated
-items without quantities. Explicit status feedback retains the requested status even when both counts are zero.
+sizes of their matching-item lists using a `long` total. It counts item entries, not quantities. Explicit status
+feedback retains the requested status even when both counts are zero.
 
 The criterion rejects null arguments, null status elements and blank product queries, and defensively copies the
 status set. Its normalized conditions define value equality and hash codes for observable search state.
@@ -360,10 +366,9 @@ rather than an individual item.
 `ProductPreparationSummary.from` creates an immutable snapshot from the filtered customers and a product
 `ItemCriterion`. It reuses `ItemCriterion.matches`, retaining matching entries in customer/item order,
 including duplicates. Each `MatchingItem` retains its customer and original one-based item number for
-remark attribution. Customer count is distinct, item count counts entries, and quantity is summed using
-`long`. Missing quantities from migrated data are counted separately so that a known subtotal is never
-presented as a complete total. Constructors reject null inputs and invalid item references; collections
-are defensively copied.
+remark attribution. Customer count is distinct, item count counts entries, and the quantities of all
+matching items are summed into a `long` total quantity. Constructors reject null inputs and invalid item
+references; collections are defensively copied.
 
 `MainWindow` puts `ProductSummaryPanel` in the `SidePanel`. The summary listens to both the filtered
 customer list and `Logic.activeSearchCriteriaProperty()`, so changing criteria refreshes it even when the
@@ -409,7 +414,7 @@ The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
-* saves preorders through `JsonAdaptedPreorder` and `JsonAdaptedItem`, and reads preorders saved by v1.3 through `JsonAdaptedLegacyPreorder` (see [Saving preorders](#saving-preorders)).
+* saves preorders through `JsonAdaptedPreorder` and `JsonAdaptedItem`, and rejects preorders saved in the v1.3 format (see [Saving preorders](#saving-preorders)).
 
 ### Common classes
 
@@ -453,12 +458,12 @@ one `Preorder`, and each `Preorder` holds the customer's `Item`s in the order th
 * `Preorder` also has an optional `FulfilmentDate`, `FulfilmentMethod` (`DELIVERY` or `COLLECTION`) and
   `HandoverNotes`, such as "Call on arrival". They belong to the whole preorder, so all of its items are handed
   over together. `Preorder#withItems()` keeps them when a command changes the items.
-* `Item` has an `ItemName` of up to 200 characters, an `ItemStatus`, and an optional `Quantity` and `Remark`.
+* `Item` has an `ItemName` of up to 200 characters, a `Quantity`, an `ItemStatus`, and an optional `Remark`.
   `ItemName` turns each run of spaces, including Unicode spaces, into one space, so `Butter   Cake` and
   `Butter Cake` are the same product in `find` and the preparation summary.
   A `Quantity` is a whole number from 1 to 999, and a `Remark` is a special request of up to 100 characters.
-* New items always have a quantity. `Item#getQuantity()` is empty only for items converted from v1.3 data, as
-  described under "Loading v1.3 data" below.
+* Every item has a quantity. The `Item` constructor rejects a `null` quantity, and the data file loader rejects an
+  item without one (see [Saving preorders](#saving-preorders)).
 * `ItemStatus` belongs to each item, so a customer can have one item `PREPARED` while another is still
   `PENDING`. There is no overall status for a customer or a preorder. `track` matches a customer when any item
   has one of the requested statuses.
@@ -472,7 +477,7 @@ existing preorder to the new `Person`, so it is not lost.
 `JsonAdaptedPerson` saves a customer's preorder in a `"preorders"` list, which holds one `JsonAdaptedPreorder`, or
 none for a customer without a preorder. Each `JsonAdaptedPreorder` holds its `JsonAdaptedItem`s, and saves the date
 in `YYYY-MM-DD` form, the method by its name, and the handover notes. Each `JsonAdaptedItem` saves each field as a
-string. A missing fulfilment detail or remark, or the missing quantity of a converted item, is saved as `null`.
+string. A missing fulfilment detail or remark is saved as `null`. Every item is saved with its quantity.
 
 ```json
 "preorders" : [ {
@@ -489,24 +494,24 @@ string. A missing fulfilment detail or remark, or the missing quantity of a conv
 ```
 
 When the file is loaded, a customer with more than one preorder, a `null` preorder or item, or a preorder or item
-field that breaks its rules is reported as invalid data, in the same way as an invalid name or phone number. A preorder without
-an `"items"` field loads as a preorder with no items.
+field that breaks its rules is reported as invalid data, in the same way as an invalid name or phone number. An item
+whose `"quantity"` is missing, `null` or blank breaks these rules, just like a missing name or status. A preorder
+without an `"items"` field loads as a preorder with no items.
 
 Before checking a fulfilment detail, `JsonAdaptedPreorder#toModelType()` strips surrounding whitespace, treats a
 blank value as `null`, and uppercases the method. A hand-edited file is therefore read with the same rules as the
 `preorder` command, so `"delivery"` or `""` loads, while a value the command would reject, such as `"PICKUP"` or
 `"2026-02-30"`, still makes the file invalid.
 
-#### Loading v1.3 data
+#### Rejecting v1.3 data
 
-All customer records must first have valid six-digit postal codes; missing codes are not inferred or accepted.
-
-LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and one `"status"`.
-`JsonAdaptedPerson` still reads that field through `JsonAdaptedLegacyPreorder`, which turns it into a preorder with
-one item named after the old details, with the old status. v1.3 did not record a quantity, and guessing one from the
-details could be wrong, so the item has no quantity and its card shows `Qty needed`. The converted preorder has
-no date, method or handover notes, as v1.3 had none. The old field is never written back, so the next save stores
-the customer in the current format.
+LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and one `"status"`, and no quantity.
+These preorders are no longer converted, since every item now needs a quantity and guessing one from the details
+could be wrong. The JSON reader ignores fields it does not know, so `JsonAdaptedPerson` still accepts a
+`"preorder"` field, only to reject the customer with `Person has a preorder in the v1.3 format, which is no longer
+supported!`. Without this check, the old preorder would be dropped without any warning. The exception message does
+not say which customer is affected, so a logged warning names them. A `"preorder"` field that is `null` holds no
+data, so it is ignored. As with any invalid data file, the file itself is not changed.
 
 #### Design considerations
 
@@ -534,13 +539,11 @@ the customer in the current format.
 
 * **Alternative 1 (current choice):** a `Quantity` class.
   * Pros: The rule and its error message are in one place, shared by `ParserUtil#parseQuantity` and the JSON
-    loader. An item without a quantity is an empty `Optional<Quantity>`, the same way an item without a remark is
-    an empty `Optional<Remark>`.
+    loader.
   * Cons: One more small class.
 * **Alternative 2:** a plain `int`.
   * Pros: Less code.
-  * Cons: Each place that creates an item has to repeat the range check, and a missing quantity needs a special
-    value such as 0.
+  * Cons: Each place that creates an item has to repeat the range check.
 
 **Aspect: how preorders are saved**
 
@@ -566,7 +569,7 @@ normal validation and preserve unsupported prefix-like text.
 
 The edit descriptor distinguishes an omitted remark (`null`), removal (`Optional.empty()`) and replacement
 (`Optional.of(remark)`). The command copies the descriptor defensively. Empty remarks are rejected when adding.
-New items must have quantities; editing preserves a migrated missing quantity unless a quantity is supplied.
+Every item has a quantity: `additem` requires `q/`, and `edititem` keeps the existing quantity unless `q/` is supplied.
 
 Both commands resolve the customer against the filtered list, copy the immutable item list, and rebuild the preorder
 and person before calling `model.setPerson`. Addition appends an item, creating a preorder if absent. Editing validates
@@ -579,7 +582,6 @@ same immutable preorder/person replacement path, with the item list appended or 
 <puml src="diagrams/EditItemSequenceDiagram.puml" alt="Interactions for editing one preorder item" />
 
 Success messages use `Added/Edited item NUMBER for CUSTOMER: NAME (quantity: QUANTITY, STATUS)`.
-For migrated items without a quantity, the quantity portion is `quantity needed`; the card shows `Qty needed`.
 Remarks remain visible on the customer card. A missing `i/` produces usage instructions. Empty, non-positive or
 malformed item-index values produce `Item index must be a positive integer.`, unless an unsupported prefix-like token
 is present, in which case the contextual diagnostic above is used. A syntactically valid positive index beyond the
@@ -604,7 +606,7 @@ preconditions in the update helper.
 The command copies the immutable item list, removes only the selected position, and constructs a replacement
 `Preorder` and `Person`. It preserves other customer fields and calls `model.setPerson` without resetting the filter.
 An empty item list remains wrapped in a preorder. The success message uses the deleted item's original number,
-name, quantity and status; missing quantities are displayed as blank values.
+name, quantity and status.
 
 The replacement person preserves the customer's postal code. `Preorder.withItems` preserves the fulfilment date,
 method and handover notes, including when the final item is removed. Missing optional fields remain absent.
@@ -1039,7 +1041,7 @@ After each command above, verify that you can immediately type the next command 
 
 ### Preserving searches after customer changes
 
-Use a test address book without customers whose names contain `SearchTest` or `OtherTest`.
+Use a test copy of LeBake without customers whose names contain `SearchTest` or `OtherTest`.
 
 1. Add two customers:
    * `add n/SearchTest Alice p/81111111 e/searchalice@example.com a/Test Street c/123456`
@@ -1057,22 +1059,67 @@ Use a test address book without customers whose names contain `SearchTest` or `O
 1. Run `list`.<br>
    Expected: All customers are shown, including `OtherTest Alice` and `OtherTest Dana`.
 
-### Deleting a person
+### Duplicate customer feedback
 
-1. Deleting a person while all persons are being shown
+Use a disposable copy of the sample data. For every rejected command below, verify that customer details, tags,
+preorders, saved data, active search criteria and displayed results remain unchanged.
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+1. Run `list`.<br>
+   Expected: `Listed all customers.` Alex Yeoh and Bernice Yu are at indexes 1 and 2.
+1. Run `add n/alex yeoh p/91234567 e/alex2@example.com a/1 Test Road c/123456`.<br>
+   Expected: `A customer named "alex yeoh" already exists. Customer names must be unique (ignoring capitalisation and extra spaces). Choose a different name.`
+1. Run `edit 2 n/alex yeoh`.<br>
+   Expected: `A customer named "alex yeoh" already exists. Customer names must be unique (ignoring capitalisation and extra spaces). Choose a different name.`
+   Bernice's original name and other details are unchanged.
+1. Run `add n/  ALEX   YEOH  p/91234567 e/alex2@example.com a/1 Test Road c/123456`, then
+   `edit 2 n/  ALEX   YEOH  `.<br>
+   Expected: Both show `A customer named "ALEX YEOH" already exists. Customer names must be unique (ignoring capitalisation and extra spaces). Choose a different name.`
+   Extra spaces are normalized, and the supplied capitalization is preserved in the message.
+1. Run `find n/Bernice`.<br>
+   Expected: `1 customer(s) listed!` Only Bernice is shown, at index 1.
+1. Repeat the rejected `add n/alex yeoh p/91234567 e/alex2@example.com a/1 Test Road c/123456`, then run
+   `edit 1 n/alex yeoh`.<br>
+   Expected: Both show `A customer named "alex yeoh" already exists. Customer names must be unique (ignoring capitalisation and extra spaces). Choose a different name.`
+   Alex is detected even though hidden, and Bernice remains the only displayed customer.
+1. Run `edit 1 n/  BERNICE   YU  `.<br>
+   Expected: The edit succeeds. Feedback begins with `Edited customer: BERNICE YU;`, followed by Bernice's
+   other details. Her phone, email, address, postal code, tags and preorder are preserved. The active search remains.
+1. Run `find n/NoMatchingCustomer`.<br>
+   Expected: `0 customer(s) listed!` The displayed list is empty, and the saved customers are unchanged.
+1. Run `list`, then `add n/Message Test p/91234567 e/message@example.com a/1 Test Road c/123456`.<br>
+   Expected: The customer is added. Feedback begins with `New customer added: Message Test;`, followed by their
+   contact details. They have no tags or preorder.
+
+### Deleting a customer
+
+1. Deleting a customer while all customers are being shown
+
+   1. Prerequisites: List all customers using the `list` command, with multiple customers in the list.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The first customer is deleted from the list. Feedback begins with `Deleted customer:`, followed by
+      that customer's details.
 
    1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+      Expected: No customer is deleted. The status message shows `Invalid command format!`, followed by the
+      usage instructions for `delete`.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Test case: `delete 100` (where 100 is larger than the displayed list size)<br>
+      Expected: No customer is deleted. The status message shows `The customer index provided is invalid.`
 
-1. _{ more test cases … }_
+### Clearing customers and exiting
+
+Use a disposable copy of the sample data for this group.
+
+1. Run `clear`.<br>
+   Expected: `This will permanently delete all customers and their preorder data. Type 'confirm' to proceed; any other input cancels and is discarded.`
+   The customer list and saved data remain unchanged.
+1. Run `confirm`.<br>
+   Expected: `All customers have been cleared!` The displayed customer list is empty.
+1. Run `list`.<br>
+   Expected: `Listed all customers.` The list remains empty.
+1. Run `exit`.<br>
+   Expected: LeBake closes.
 
 ### Customer field length boundaries
 
@@ -1096,17 +1143,17 @@ normalization. Run `list` before each case and use the current displayed index; 
 1. Search exceptions: `find n/` with 101 copies of `A` is accepted with no matches; `find t/` with 31 copies of `T`
    is rejected.
 
-### Tagging a person
+### Tagging a customer
 
-1. Tagging a person while all persons are being shown
+1. Tagging a customer while all customers are being shown
 
-   1. Prerequisites: Start with the sample data. List all persons using the `list` command. The first person is `Alex Yeoh`, who has the tag `friends`.
+   1. Prerequisites: Start with the sample data. List all customers using the `list` command. The first customer is `Alex Yeoh`, who has the tag `friends`.
 
    1. Test case: `tag 1 t/regular`<br>
-      Expected: `regular` is added to the first person's tags. The status message shows `Added tag(s) [regular] to Alex Yeoh`.
+      Expected: `regular` is added to the first customer's tags. The status message shows `Added tag [regular] to Alex Yeoh`.
 
    1. Test case: `tag 1 t/FRIENDS`<br>
-      Expected: The person's tags are unchanged. The status message shows `Alex Yeoh already has tag [FRIENDS]. No changes made.`
+      Expected: The customer's tags are unchanged. The status message shows `Alex Yeoh already has tag [FRIENDS]. No changes made.`
 
    1. Test case: `tag 1 t/gluten-free`<br>
       Expected: No tag is added. The status message shows `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.`
@@ -1124,22 +1171,22 @@ normalization. Run `list` before each case and use the current displayed index; 
       Expected: No tag is added. The index format error and usage instructions are shown, rather than the tag constraint message, because the index format is checked first.
 
    1. Test case: `tag 100 t/vip` (where 100 is larger than the list size)<br>
-      Expected: No tag is added. The status message shows `The person index provided is invalid.`
+      Expected: No tag is added. The status message shows `The customer index provided is invalid.`
 
-1. Tagging a person in a filtered list
+1. Tagging a customer in a filtered list
 
-   1. Prerequisites: Find a person using `find n/Bernice`. Only `Bernice Yu` is shown.
+   1. Prerequisites: Find a customer using `find n/Bernice`. Only `Bernice Yu` is shown.
 
    1. Test case: `tag 1 t/vip`<br>
-      Expected: `vip` is added to `Bernice Yu`'s tags. The status message shows `Added tag(s) [vip] to Bernice Yu`. Only `Bernice Yu` remains displayed; the filter is preserved.
+      Expected: `vip` is added to `Bernice Yu`'s tags. The status message shows `Added tag [vip] to Bernice Yu`. Only `Bernice Yu` remains displayed; the filter is preserved.
 
-### Untagging a person
+### Untagging a customer
 
-Run each group below independently, starting with the sample data unless stated otherwise. Within a group, run the test cases in order. For every rejected command, verify that all persons' tags, contact details, preorders, and the displayed list remain unchanged.
+Run each group below independently, starting with the sample data unless stated otherwise. Within a group, run the test cases in order. For every rejected command, verify that all customers' tags, contact details, preorders, and the displayed list remain unchanged.
 
-1. Removing tags while all persons are being shown
+1. Removing tags while all customers are being shown
 
-   1. Prerequisites: Run `list`. The first person is `Alex Yeoh`, who has the tag `friends`. Run `tag 1 t/regular` to give Alex a second tag.
+   1. Prerequisites: Run `list`. The first customer is `Alex Yeoh`, who has the tag `friends`. Run `tag 1 t/regular` to give Alex a second tag.
 
    1. Test case: `untag 1 t/FRIENDS`<br>
       Expected: The `friends` tag is removed despite the different capitalization. The `regular` tag and Alex's contact details remain unchanged. The status message shows `Removed tag [FRIENDS] from Alex Yeoh`.
@@ -1152,7 +1199,7 @@ Run each group below independently, starting with the sample data unless stated 
 
 1. Rejecting invalid input
 
-   1. Prerequisites: Run `list` with the sample persons displayed.
+   1. Prerequisites: Run `list` with the sample customers displayed.
 
    1. Test cases: `untag 0 t/friends`, `untag -1 t/friends`, `untag abc t/friends`<br>
       Expected: Each command shows `Invalid command format!`, followed by the usage instructions for `untag`.
@@ -1170,23 +1217,23 @@ Run each group below independently, starting with the sample data unless stated 
       Expected: The index format error and usage instructions are shown, rather than the tag constraint message, because the index format is checked first.
 
    1. Test case: `untag 100 t/friends` (where 100 is larger than the displayed list size)<br>
-      Expected: The status message shows `The person index provided is invalid.`
+      Expected: The status message shows `The customer index provided is invalid.`
 
 1. Removing a tag in a filtered list
 
    1. Prerequisites: Run `find n/Bernice`. Only `Bernice Yu` is shown, at index 1, with the tags `colleagues` and `friends`.
 
    1. Test case: `untag 2 t/friends`<br>
-      Expected: The status message shows `The person index provided is invalid.`, even though the full address book contains more than one person.
+      Expected: The status message shows `The customer index provided is invalid.`, even though the full customer list contains more than one customer.
 
    1. Test case: `untag 1 t/FRIENDS`<br>
-      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other persons are unchanged.
+      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other customers are unchanged.
 
    1. Test case: `untag 1 t/FRIENDS` again.<br>
       Expected: The status message shows `Bernice Yu does not have tag [FRIENDS]`. Only Bernice remains displayed.
 
    1. Test case: Run `find n/NoMatchingCustomer`, confirm that the displayed list is empty, then run `untag 1 t/friends`.<br>
-      Expected: The status message shows `The person index provided is invalid.` The list remains empty and no data is changed.
+      Expected: The status message shows `The customer index provided is invalid.` The list remains empty and no data is changed.
 
 1. Preserving a preorder and saving tag removal
 
@@ -1273,6 +1320,8 @@ remain unchanged.
 Use a disposable data copy. Run `list` and choose a customer without a preorder, noting their displayed index as `INDEX`.
 Record their contact details and tags before starting. Replace `INDEX` in the examples with the displayed number.
 
+1. Run `edititem INDEX i/1 q/3`.<br>
+   Expected: `This customer has no preorder.` Nothing changes.
 1. Run `additem INDEX d/Cake q/2 s/pending r/Less sugar`.<br>
    Expected: A preorder is created with item 1. The success message includes item number, customer, name, quantity and status.
    The card displays the remark. Contact details and tags are unchanged.
@@ -1291,9 +1340,9 @@ Record their contact details and tags before starting. Replace `INDEX` in the ex
    Run `list` to confirm that both items and the customer remain stored.
 1. Close and reopen the application.<br>
    Expected: Both items retain their quantities and statuses; the second item's remark remains absent.
-1. With a v1.3 migrated item lacking a quantity, edit only its status.<br>
-   Expected: Its success message shows `quantity needed`, and its card shows `Qty needed`.
-   Supply `q/1` to correct it; subsequent success messages and the card show the recorded quantity.
+1. Run `list`, then `edititem INDEX i/1 s/pending`.<br>
+   Expected: Only the status of item 1 changes. The success message ends with `(quantity: 2, PENDING)`, and the card
+   still shows `Qty 2`.
 
 ### Deleting a preorder item
 
@@ -1310,7 +1359,7 @@ is customer 5 without a preorder.
 1. Run `deleteitem 1 i/1` again, then `deleteitem 4 i/1`.<br>
    Expected: Both show `The item index provided is invalid.` because both preorders are empty. Nothing changes.
 1. Run `deleteitem 5 i/1`.<br>
-   Expected: `Identified person has no preorder.` Nothing changes.
+   Expected: `This customer has no preorder.` Nothing changes.
 1. Try `deleteitem`, `deleteitem 0 i/1`, `deleteitem 1`, and `deleteitem 1 o/1`.<br>
    Expected: An invalid-command-format error followed by usage instructions. Nothing changes.
 1. Try `deleteitem 1 i/`, `deleteitem 1 i/0`, and `deleteitem 1 i/abc`.<br>
@@ -1318,7 +1367,7 @@ is customer 5 without a preorder.
 1. Run `deleteitem 1 i/1 i/2`.<br>
    Expected: `Multiple values specified for the following single-valued field(s): i/`. Nothing changes.
 1. Run `deleteitem 100 i/1`, where 100 exceeds the displayed list size.<br>
-   Expected: `The person index provided is invalid.` Nothing changes.
+   Expected: `The customer index provided is invalid.` Nothing changes.
 1. Run `track`, then delete Charlotte's item using her current displayed customer index and `i/1`.<br>
    Expected: Charlotte disappears from the tracked view because her preorder is now empty. Run `list` to confirm
    that she remains a customer. The success message identifies her deleted item, quantity and status.
@@ -1326,9 +1375,6 @@ is customer 5 without a preorder.
    Expected: Alex's and Charlotte's preorders remain empty. Their other customer details are preserved.
 1. Using a fresh sample-data copy, run `list`, then `deleteitem 1 i/1`.<br>
    Expected: Only Pineapple Tarts is removed. Almond Cookies remains and is renumbered from 2 to 1.
-1. With a migrated v1.3 item lacking quantity, delete it using its displayed indices.<br>
-   Expected: Deletion succeeds, and the success message shows a blank quantity value. An empty preorder remains
-   if this was the only item.
 
 ### Deleting a preorder
 
@@ -1341,7 +1387,7 @@ Start with the sample data. List all customers using the `list` command. The fir
 1. Try `deleteorder 0`, `deleteorder` and `deleteorder 1 2`.<br>
    Expected: Nothing changes. The status message shows an invalid command format error, followed by the correct format of the `deleteorder` command.
 1. Run `deleteorder 100` (where 100 is larger than the list size).<br>
-   Expected: Nothing changes. The status message shows `The person index provided is invalid.`
+   Expected: Nothing changes. The status message shows `The customer index provided is invalid.`
 1. Run `track`, then `deleteorder` with the displayed index of `Charlotte Oliveiro`.<br>
    Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder panel.
 
@@ -1353,15 +1399,13 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
 1. Loading a preorder saved by v1.3
 
    1. Prerequisites: In `data/addressbook.json`, replace the first customer's `"preorders"` list with
-      `"preorder" : { "details" : "2 chocolate cakes", "status" : "PENDING" }`.
+      `"preorder" : { "details" : "2 chocolate cakes", "status" : "PENDING" }`. Keep a copy of the file.
 
    1. Test case: Launch LeBake.<br>
-      Expected: The first customer's card shows one item, `2 chocolate cakes`, with `Qty needed` and the
-      status `PENDING`. Their other details are unchanged.
-
-   1. Test case: Run `list`, close LeBake, then open `data/addressbook.json` again.<br>
-      Expected: The customer has a `"preorders"` list holding one item whose `"quantity"` is `null`, and no
-      `"preorder"` field.
+      Expected: The data file cannot be loaded, so LeBake starts with an empty customer list. The log warns that
+      the first customer's v1.3 preorder must be moved into the `"preorders"` list, and shows
+      `Person has a preorder in the v1.3 format, which is no longer supported!`. The data file is unchanged.
+      Restore the file from your copy before running a command, as the next command saves the empty list over it.
 
 1. Loading a data file with an invalid item
 
@@ -1371,6 +1415,9 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
       Expected: The data file cannot be loaded, so LeBake starts with an empty customer list, and the log warns
       that the data file could not be loaded. Restore the file from your copy before running a command, as the
       next command saves the empty list over it.
+
+   1. Test case: Repeat with the item's `"quantity"` set to `null`, and then with the `"quantity"` line removed.<br>
+      Expected: The same as above. The log shows `Item's Quantity field is missing!`.
 
 1. Loading hand-edited fulfilment details
 

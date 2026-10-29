@@ -219,7 +219,7 @@ public class TrackCommandTest {
     @Test
     public void execute_multipleItems_countsCustomersAndMatchingItemsSeparately() {
         Item pending = new ItemBuilder().withStatus(PENDING).withQuantity("20").build();
-        Item prepared = new ItemBuilder().withStatus(PREPARED).withoutQuantity().build();
+        Item prepared = new ItemBuilder().withStatus(PREPARED).withQuantity("1").build();
         Item completed = new ItemBuilder().withStatus(COMPLETED).build();
         Person alice = new PersonBuilder(ALICE).withPreorder(pending, pending, prepared, completed).build();
         Person benson = new PersonBuilder(BENSON).withPreorder(prepared).build();
