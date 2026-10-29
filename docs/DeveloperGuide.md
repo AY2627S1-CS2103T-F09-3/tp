@@ -673,6 +673,43 @@ the same as for `delete` (see the [Logic component](#logic-component)), so the d
   * Pros: Every preorder has at least one item.
   * Cons: The baker has to enter the order in a fixed sequence.
 
+### Sorting by fulfilment date: `sort date`
+
+`sort date` orders the displayed customers by the date of their preorder, earliest first.
+
+`ModelManager` wraps its `FilteredList<Person>` in a JavaFX `SortedList<Person>`, and
+`Model#getFilteredPersonList()` returns the sorted view. The UI and every index-based command use this view, so the
+index a command uses is always the number shown on screen. `Model#updatePersonListComparator(comparator)` sets the
+comparator of the sorted view; `null` restores the saved order.
+
+`SortCommandParser` accepts only the word `date`, ignoring case and surrounding spaces. `SortCommand#execute` calls
+`updatePersonListComparator(SortCommand.DATE_COMPARATOR)`, which orders customers by:
+
+1. fulfilment date, earliest first. Customers with no preorder, or a preorder with no date, use `LocalDate.MAX`, so
+   they are listed last.
+1. name, ignoring case, for customers with the same date (or no date).
+
+The comparator lives in the model, separately from the search criteria, so:
+
+* `find` and `track` change which customers are shown but keep the sort.
+* `group postal` sets its own comparator, which replaces the date sort, and `sort date` replaces the grouping.
+* `list` and `clear` set the comparator to `null`, which restores the saved order.
+* when a command changes a customer, such as `preorder 1 f/2026-12-24`, the `SortedList` moves them to their new
+  place, so their index may change.
+* the sort is not saved, so the app starts in the saved order.
+
+#### Design considerations
+
+**Aspect: how to sort**
+
+* **Alternative 1 (current choice):** sort a view of the list with a comparator.
+  * Pros: The data file keeps its order, so sorting never changes saved data. Searching and sorting are kept apart,
+    and each can change without resetting the other.
+  * Cons: Indices can change after an edit, as described above; the UG warns about this.
+* **Alternative 2:** reorder the customers in `AddressBook`.
+  * Pros: The order would survive a restart.
+  * Cons: Sorting would rewrite the data file, and `list` could no longer show the order in which customers were added.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
