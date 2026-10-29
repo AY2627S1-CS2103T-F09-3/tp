@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalPersons.BENSON;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,6 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.PostalCode;
-import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
 import seedu.address.model.tag.Tag;
@@ -158,33 +158,29 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_legacyPreorder_returnsOneItemWithoutQuantity() throws Exception {
-        JsonAdaptedLegacyPreorder legacyPreorder = new JsonAdaptedLegacyPreorder("2 chocolate cakes", "PREPARED");
-        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
-                VALID_POSTAL_CODE,
-                VALID_TAGS, null, legacyPreorder);
-
-        Item expectedItem = new ItemBuilder().withName("2 chocolate cakes").withoutQuantity()
-                .withStatus(ItemStatus.PREPARED).build();
-        assertEquals(new PersonBuilder(BENSON).withPreorder(expectedItem).build(), person.toModelType());
+    public void toModelType_v13Preorder_throwsIllegalValueException() {
+        // Jackson reads the old field as a map, or as the raw value if it is not an object
+        for (Object legacyPreorder : List.of(Map.of("details", "2 chocolate cakes", "status", "PREPARED"),
+                "2 chocolate cakes")) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                    VALID_POSTAL_CODE, VALID_TAGS, null, legacyPreorder);
+            assertThrows(IllegalValueException.class, JsonAdaptedPerson.MESSAGE_LEGACY_PREORDER, person::toModelType);
+        }
     }
 
     @Test
-    public void toModelType_invalidLegacyPreorder_throwsIllegalValueException() {
-        JsonAdaptedLegacyPreorder legacyPreorder = new JsonAdaptedLegacyPreorder("2 chocolate cakes", "DONE");
+    public void toModelType_v13PreorderBesideCurrentPreorder_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
-                VALID_POSTAL_CODE,
-                VALID_TAGS, null, legacyPreorder);
-        assertThrows(IllegalValueException.class, ItemStatus.MESSAGE_CONSTRAINTS, person::toModelType);
+                VALID_POSTAL_CODE, VALID_TAGS, List.of(new JsonAdaptedPreorder(List.of())),
+                Map.of("details", "2 chocolate cakes", "status", "PENDING"));
+        assertThrows(IllegalValueException.class, JsonAdaptedPerson.MESSAGE_LEGACY_PREORDER, person::toModelType);
     }
 
     @Test
-    public void toModelType_legacyAndCurrentPreorder_throwsIllegalValueException() {
-        JsonAdaptedLegacyPreorder legacyPreorder = new JsonAdaptedLegacyPreorder("2 chocolate cakes", "PENDING");
+    public void toModelType_nullV13Preorder_returnsPersonWithoutPreorder() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
-                VALID_POSTAL_CODE,
-                VALID_TAGS, List.of(new JsonAdaptedPreorder(List.of())), legacyPreorder);
-        assertThrows(IllegalValueException.class, JsonAdaptedPerson.MESSAGE_TOO_MANY_PREORDERS, person::toModelType);
+                VALID_POSTAL_CODE, VALID_TAGS, null, null);
+        assertEquals(BENSON, person.toModelType());
     }
 
     @Test

@@ -18,7 +18,6 @@ import seedu.address.model.Model;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.Preorder;
-import seedu.address.model.preorder.Quantity;
 
 /**
  * Deletes one numbered item of a customer identified using their displayed index.
@@ -70,7 +69,7 @@ public class DeleteItemCommand extends Command {
         logger.info("Deleted item " + itemIndex.getOneBased() + " for " + identifiedPerson.getName());
         return new CommandResult(String.format(MESSAGE_DELETE_ITEM_SUCCESS, itemIndex.getOneBased(),
                 identifiedPerson.getName(), itemToDelete.getName(),
-                itemToDelete.getQuantity().map(Quantity::toString).orElse(""), itemToDelete.getStatus()));
+                itemToDelete.getQuantity(), itemToDelete.getStatus()));
     }
 
     /**

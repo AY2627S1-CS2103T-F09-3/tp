@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.FindCommand;
@@ -198,6 +199,82 @@ public class LogicManagerTest {
         assertEquals(sampleData.getPersonList(), reloaded.getPersonList());
         Model restartedModel = new ModelManager(reloaded, new UserPrefs());
         assertEquals(sampleData.getPersonList(), restartedModel.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_emptyInputWithoutPendingClear_returnsEmptyFeedback() throws Exception {
+        model.addPerson(AMY);
+
+        CommandResult result = logic.execute("");
+
+        assertEquals("", result.getFeedbackToUser());
+        assertEquals(List.of(AMY), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_clearPromptsWithoutDeletingData() throws Exception {
+        model.addPerson(AMY);
+
+        CommandResult result = logic.execute("clear");
+
+        assertEquals(ClearCommand.MESSAGE_CONFIRMATION_REQUIRED, result.getFeedbackToUser());
+        assertEquals(List.of(AMY), model.getAddressBook().getPersonList());
+        assertEquals(List.of(AMY), logic.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_confirmAfterClear_clearsAndSavesAddressBook() throws Exception {
+        model.addPerson(AMY);
+        logic.execute("clear");
+
+        CommandResult result = logic.execute("  CONFIRM  ");
+
+        assertEquals(ClearCommand.MESSAGE_SUCCESS, result.getFeedbackToUser());
+        assertEquals(List.of(), model.getAddressBook().getPersonList());
+        JsonAddressBookStorage reloadedStorage = new JsonAddressBookStorage(
+                temporaryFolder.resolve("addressBook.json"));
+        assertEquals(List.of(), reloadedStorage.readAddressBook().orElseThrow().getPersonList());
+    }
+
+    @Test
+    public void execute_confirmWithNonBreakingSpacesAfterClear_clearsAddressBook() throws Exception {
+        model.addPerson(AMY);
+        logic.execute("clear");
+
+        CommandResult result = logic.execute("\u00A0CONFIRM\u00A0");
+
+        assertEquals(ClearCommand.MESSAGE_SUCCESS, result.getFeedbackToUser());
+        assertEquals(List.of(), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_otherInputDuringClearConfirmation_cancelsAndDiscardsInput() throws Exception {
+        model.addPerson(AMY);
+        SearchCriteria criteria = new SearchCriteria(List.of(new TextContainsCriterion(NAME, "No match")));
+        model.updateFilteredPersonList(criteria);
+        logic.execute("clear");
+
+        CommandResult result = logic.execute("list");
+
+        assertEquals(ClearCommand.MESSAGE_CONFIRMATION_CANCELLED, result.getFeedbackToUser());
+        assertEquals(List.of(AMY), model.getAddressBook().getPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        assertEquals(List.of(), logic.getFilteredPersonList());
+
+        assertEquals(ListCommand.MESSAGE_SUCCESS, logic.execute("list").getFeedbackToUser());
+        assertEquals(List.of(AMY), logic.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_emptyInputDuringClearConfirmation_cancelsRequest() throws Exception {
+        model.addPerson(AMY);
+        logic.execute("clear");
+
+        CommandResult result = logic.execute("");
+
+        assertEquals(ClearCommand.MESSAGE_CONFIRMATION_CANCELLED, result.getFeedbackToUser());
+        assertEquals(List.of(AMY), model.getAddressBook().getPersonList());
+        assertParseException("confirm", MESSAGE_UNKNOWN_COMMAND);
     }
 
     @Test

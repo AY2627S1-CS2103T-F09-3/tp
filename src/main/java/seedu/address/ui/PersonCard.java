@@ -36,14 +36,12 @@ public class PersonCard extends UiPart<Region> {
     public static final String ITEM_NUMBER_STYLE_CLASS = "preorder-item-number";
     public static final String ITEM_NAME_STYLE_CLASS = "preorder-item-name";
     public static final String QUANTITY_STYLE_CLASS = "preorder-quantity";
-    public static final String MISSING_QUANTITY_STYLE_CLASS = "preorder-quantity-missing";
     public static final String STATUS_CHIP_STYLE_CLASS = "status-chip";
     public static final String REMARK_STYLE_CLASS = "preorder-remark";
     public static final String NO_ITEMS_STYLE_CLASS = "preorder-empty";
 
     public static final String MATCH_STYLE_CLASS = "matching-item";
     private static final String FXML = "PersonListCard.fxml";
-    private static final String WARNING_ICON_STYLE_CLASS = "warning-icon";
     private static final String COMPLETED_ICON_STYLE_CLASS = "completed-icon";
 
     // Wide enough for "COMPLETED" and its tick, so the chips line up from row to row
@@ -202,7 +200,8 @@ public class PersonCard extends UiPart<Region> {
 
         Label number = createLabel(PreorderDisplay.formatItemNumber(itemNumber), ITEM_NUMBER_STYLE_CLASS);
         Label name = createWrappingLabel(item.getName().toString(), ITEM_NAME_STYLE_CLASS);
-        row.addRow(0, number, name, createQuantity(item), createStatusChip(item.getStatus()));
+        Label quantity = createLabel(PreorderDisplay.formatQuantity(item), QUANTITY_STYLE_CLASS);
+        row.addRow(0, number, name, quantity, createStatusChip(item.getStatus()));
         if (!itemCriteria.isEmpty() && itemCriteria.stream().allMatch(criterion -> criterion.matches(item))) {
             row.getStyleClass().add(MATCH_STYLE_CLASS);
         }
@@ -213,15 +212,6 @@ public class PersonCard extends UiPart<Region> {
             row.add(remarkLabel, 1, 1, row.getColumnCount() - 1, 1);
         });
         return row;
-    }
-
-    private static Label createQuantity(Item item) {
-        if (item.getQuantity().isPresent()) {
-            return createLabel(PreorderDisplay.formatQuantity(item), QUANTITY_STYLE_CLASS);
-        }
-        Label quantity = createLabel(PreorderDisplay.formatQuantity(item), MISSING_QUANTITY_STYLE_CLASS);
-        quantity.setGraphic(createIcon(PreorderDisplay.WARNING_ICON, WARNING_ICON_STYLE_CLASS));
-        return quantity;
     }
 
     private static Label createStatusChip(ItemStatus status) {

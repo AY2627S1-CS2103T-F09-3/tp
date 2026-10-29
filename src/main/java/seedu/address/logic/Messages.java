@@ -15,7 +15,6 @@ import seedu.address.model.preorder.Preorder;
  * Container for user visible messages.
  */
 public class Messages {
-    public static final String MISSING_QUANTITY_TEXT = "quantity needed";
     public static final String MESSAGE_INVALID_ITEM_INDEX = "Item index must be a positive integer.";
     public static final String MESSAGE_UNKNOWN_COMMAND = "Unknown command.";
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";

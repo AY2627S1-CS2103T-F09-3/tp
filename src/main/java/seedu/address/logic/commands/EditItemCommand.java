@@ -42,7 +42,7 @@ public class EditItemCommand extends Command {
     public static final String MESSAGE_NO_PREORDER = "This customer has no preorder.";
     public static final String MESSAGE_INVALID_ITEM_INDEX = "The item index provided is invalid.";
     public static final String MESSAGE_EDIT_ITEM_SUCCESS =
-            "Edited item %1$d for %2$s: %3$s (%4$s, %5$s)";
+            "Edited item %1$d for %2$s: %3$s (quantity: %4$s, %5$s)";
     public static final String MESSAGE_NOT_EDITED = "No item changes specified.";
 
     private final Index index;
@@ -81,8 +81,7 @@ public class EditItemCommand extends Command {
 
         return new CommandResult(String.format(MESSAGE_EDIT_ITEM_SUCCESS, itemIndex.getOneBased(),
                 identifiedPerson.getName(), updatedItem.getName(),
-                updatedItem.getQuantity().map(quantity -> "quantity: " + quantity)
-                        .orElse(Messages.MISSING_QUANTITY_TEXT), updatedItem.getStatus()));
+                updatedItem.getQuantity(), updatedItem.getStatus()));
     }
 
     /**
@@ -109,11 +108,11 @@ public class EditItemCommand extends Command {
     }
 
     /**
-     * Applies supplied fields, preserving missing quantities on migrated items unless explicitly edited.
+     * Applies supplied fields, keeping the original value of each omitted field.
      */
     private Item createUpdatedItem(Item original) {
         ItemName name = editItemDescriptor.getName().orElse(original.getName());
-        Optional<Quantity> quantity = editItemDescriptor.getQuantity().or(original::getQuantity);
+        Quantity quantity = editItemDescriptor.getQuantity().orElse(original.getQuantity());
         ItemStatus status = editItemDescriptor.getStatus().orElse(original.getStatus());
         Optional<Remark> remark = editItemDescriptor.getRemark().orElse(original.getRemark());
         return new Item(name, quantity, status, remark);

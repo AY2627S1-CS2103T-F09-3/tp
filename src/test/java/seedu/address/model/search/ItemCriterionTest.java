@@ -81,10 +81,10 @@ public class ItemCriterionTest {
     }
 
     @Test
-    public void matches_productOnly_acceptsEveryStatusAndMissingQuantity() {
+    public void matches_productOnly_acceptsEveryStatus() {
         ItemCriterion criterion = productCriterion("Pineapple Tarts", ItemStatus.values());
         for (ItemStatus status : ItemStatus.values()) {
-            assertTrue(criterion.matches(new ItemBuilder(PENDING_TARTS).withStatus(status).withoutQuantity().build()));
+            assertTrue(criterion.matches(new ItemBuilder(PENDING_TARTS).withStatus(status).build()));
         }
     }
 
