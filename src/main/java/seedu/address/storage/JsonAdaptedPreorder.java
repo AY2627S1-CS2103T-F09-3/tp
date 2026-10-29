@@ -2,12 +2,14 @@ package seedu.address.storage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.model.preorder.FulfilmentDate;
 import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.HandoverNotes;
@@ -75,26 +77,46 @@ class JsonAdaptedPreorder {
             modelItems.add(item.toModelType());
         }
 
-        if (date != null && !FulfilmentDate.isValidDate(date)) {
+        String modelDate = stripToNull(date);
+        String modelMethod = stripToNull(method);
+        String modelHandoverNotes = stripToNull(handoverNotes);
+        if (modelMethod != null) {
+            modelMethod = modelMethod.toUpperCase(Locale.ROOT);
+        }
+
+        if (modelDate != null && !FulfilmentDate.isValidDate(modelDate)) {
             throw new IllegalValueException(FulfilmentDate.MESSAGE_CONSTRAINTS);
         }
-        if (method != null && !FulfilmentMethod.isValidMethod(method)) {
+        if (modelMethod != null && !FulfilmentMethod.isValidMethod(modelMethod)) {
             throw new IllegalValueException(FulfilmentMethod.MESSAGE_CONSTRAINTS);
         }
-        if (handoverNotes != null && !HandoverNotes.isValidHandoverNotes(handoverNotes)
-                && !isValidLegacyHandoverNotes(handoverNotes)) {
+        if (modelHandoverNotes != null && !HandoverNotes.isValidHandoverNotes(modelHandoverNotes)
+                && !isValidLegacyHandoverNotes(modelHandoverNotes)) {
             throw new IllegalValueException(HandoverNotes.MESSAGE_CONSTRAINTS);
         }
 
-        Optional<HandoverNotes> modelHandoverNotes = Optional.ofNullable(handoverNotes)
+        Optional<HandoverNotes> notes = Optional.ofNullable(modelHandoverNotes)
                 .map(value -> HandoverNotes.isValidHandoverNotes(value)
                         ? new HandoverNotes(value) : HandoverNotes.fromLegacyData(value));
-        return new Preorder(modelItems, Optional.ofNullable(date).map(FulfilmentDate::new),
-                Optional.ofNullable(method).map(FulfilmentMethod::valueOf), modelHandoverNotes);
+        return new Preorder(modelItems, Optional.ofNullable(modelDate).map(FulfilmentDate::new),
+                Optional.ofNullable(modelMethod).map(FulfilmentMethod::valueOf), notes);
     }
 
     private static boolean isValidLegacyHandoverNotes(String value) {
         return value.contains("/") && value.length() <= HandoverNotes.MAX_LENGTH
                 && value.matches(HandoverNotes.VALIDATION_REGEX);
+    }
+
+    /**
+     * Returns {@code value} without surrounding whitespace, or null if it is null or blank,
+     * so that a hand-edited detail of {@code ""} loads as not set.
+     */
+    private static String stripToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String strippedValue = StringUtil.stripSpaces(value);
+        return strippedValue.isEmpty() ? null : strippedValue;
     }
 }

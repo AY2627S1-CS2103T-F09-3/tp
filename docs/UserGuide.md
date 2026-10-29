@@ -769,6 +769,11 @@ The [customer field limits](#customer-field-limits) also apply to saved JSON: 10
 without removing surrounding spaces. In particular, trailing address spaces count towards the limit. A single
 oversized field prevents the file from loading.
 
+A preorder's `date`, `method` and `handoverNotes` follow the same rules as the
+[`preorder` command](#setting-delivery-or-collection-details-preorder): a real calendar date in `YYYY-MM-DD` format,
+`DELIVERY` or `COLLECTION` in any capitalisation, and one line of at most 100 characters. Spaces around these values
+are ignored, and `null` or `""` means the detail is not set. Any other value prevents the file from loading.
+
 <box type="warning" seamless>
 
 **Caution:**
