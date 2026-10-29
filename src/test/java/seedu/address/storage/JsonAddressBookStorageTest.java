@@ -11,8 +11,10 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.util.SampleDataUtil;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PreorderBuilder;
@@ -186,6 +189,76 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void readAndSaveAddressBook_customerFieldLengthBoundaries_success() throws Exception {
+        List<JsonAdaptedPerson> persons = new ArrayList<>();
+        AddressBook expected = new AddressBook();
+        String emoji = "\uD83C\uDF70";
+        for (int offset : new int[]{-1, 0}) {
+            String normalizedName = "A".repeat(98 + offset) + " B";
+            String rawName = "  " + "A".repeat(98 + offset) + "   B  ";
+            String email = createEmailWithLength(254 + offset);
+            String address = emoji.repeat(149) + " ".repeat(2 + offset);
+            String tag = "T".repeat(30 + offset);
+            persons.add(new JsonAdaptedPerson(rawName, "81234567", email, address, "012345",
+                    List.of(new JsonAdaptedTag(tag))));
+            expected.addPerson(new PersonBuilder().withName(normalizedName).withPhone("81234567").withEmail(email)
+                    .withAddress(address).withPostalCode("012345").withTags(tag).build());
+        }
+        Path sourcePath = testFolder.resolve("customer-boundaries.json");
+        JsonUtil.saveJsonFile(new JsonSerializableAddressBook(persons), sourcePath);
+        ReadOnlyAddressBook loaded = new JsonAddressBookStorage(sourcePath).readAddressBook().get();
+        assertEquals(expected, loaded);
+
+        Path savedPath = testFolder.resolve("customer-boundaries-saved.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(savedPath);
+        storage.saveAddressBook(loaded);
+        assertEquals(expected, storage.readAddressBook().get());
+    }
+
+    @Test
+    public void readAddressBook_overLimitCustomerFields_throwsDataLoadingException() throws Exception {
+        List<JsonAdaptedTag> validTags = List.of(new JsonAdaptedTag("friends"));
+        List<JsonAdaptedPerson> invalidPersons = List.of(
+                new JsonAdaptedPerson("  " + "A".repeat(99) + "   B  ", "81234567", "test@example.com",
+                        "Baker Road", "012345", validTags),
+                new JsonAdaptedPerson("New Customer", "81234567", createEmailWithLength(255),
+                        "Baker Road", "012345", validTags),
+                new JsonAdaptedPerson("New Customer", "81234567", "test@example.com",
+                        "A".repeat(301), "012345", validTags),
+                new JsonAdaptedPerson("New Customer", "81234567", "test@example.com",
+                        "\uD83C\uDF70".repeat(150) + "A", "012345", validTags),
+                new JsonAdaptedPerson("New Customer", "81234567", "test@example.com",
+                        "A".repeat(298) + "   ", "012345", validTags),
+                new JsonAdaptedPerson("New Customer", "81234567", "test@example.com",
+                        "Baker Road", "012345", List.of(new JsonAdaptedTag("friends"),
+                                new JsonAdaptedTag("T".repeat(31)))));
+        Path filePath = testFolder.resolve("over-limit-customer.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        for (JsonAdaptedPerson invalidPerson : invalidPersons) {
+            JsonSerializableAddressBook data = new JsonSerializableAddressBook(
+                    List.of(new JsonAdaptedPerson(ALICE), invalidPerson, new JsonAdaptedPerson(BENSON)));
+            JsonUtil.saveJsonFile(data, filePath);
+            String originalJson = Files.readString(filePath);
+
+            assertThrows(DataLoadingException.class, storage::readAddressBook);
+            assertEquals(originalJson, Files.readString(filePath));
+        }
+    }
+
+    @Test
+    public void readAndSaveAddressBook_sampleData_success() throws Exception {
+        Path filePath = testFolder.resolve("sample-data.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        assertTrue(storage.readAddressBook().isEmpty());
+        ReadOnlyAddressBook sampleData = SampleDataUtil.getSampleAddressBook();
+        assertFalse(sampleData.getPersonList().isEmpty());
+
+        storage.saveAddressBook(sampleData);
+
+        assertEquals(sampleData, storage.readAddressBook().get());
+    }
+
+    @Test
     public void readAndSaveAddressBook_allInOrder_success() throws Exception {
         Path filePath = testFolder.resolve("TempAddressBook.json");
         AddressBook original = getTypicalAddressBook();
@@ -314,5 +387,10 @@ public class JsonAddressBookStorageTest {
     @Test
     public void saveAddressBook_nullFilePath_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> saveAddressBook(new AddressBook(), null));
+    }
+
+    private static String createEmailWithLength(int length) {
+        String prefix = "a".repeat(64) + "@" + "b".repeat(63) + "." + "c".repeat(63) + ".";
+        return prefix + "d".repeat(length - prefix.length());
     }
 }

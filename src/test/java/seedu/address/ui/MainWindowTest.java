@@ -184,9 +184,9 @@ public class MainWindowTest {
     }
 
     @Test
-    public void card_tagLongerThanLineAtMinimumWidth_wrapsInsideCard() throws Exception {
+    public void card_maximumLengthTagAtMinimumWidth_wrapsInsideCard() throws Exception {
         runInWindow((window, logic, root) -> {
-            String longTag = "Christmas2026CorporateOrdersWithSpecialDietaryRequirementsAndPriorityDelivery";
+            String longTag = "W".repeat(30);
             enterCommand(root, "tag 1 t/" + longTag);
             enterCommand(root, "tag 1 t/vip");
             Parent nameAndTags = (Parent) root.lookup("#nameAndTags");

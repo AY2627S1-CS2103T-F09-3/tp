@@ -10,9 +10,15 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Name {
 
+    /** Maximum normalized length in UTF-16 code units. */
+    public static final int MAX_LENGTH = 100;
+
     public static final String MESSAGE_CONSTRAINTS =
             "Invalid name! Names must contain at least one English letter and only English letters, spaces, "
                     + "apostrophes or hyphens.";
+
+    public static final String MESSAGE_LENGTH_CONSTRAINTS = "Names must be at most " + MAX_LENGTH
+            + " characters long after spaces are normalized.";
 
     public static final String VALIDATION_REGEX = "(?=.*[A-Za-z])[A-Za-z '-]+";
 
@@ -26,19 +32,32 @@ public class Name {
      */
     public Name(String name) {
         requireNonNull(name);
-        checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
-        fullName = name.trim().replaceAll(" +", " ");
+        checkArgument(isValidName(name), getValidationErrorMessage(name));
+        fullName = normalize(name);
     }
 
     /**
      * Returns true if a given string contains at least one English letter and only English letters,
-     * spaces, apostrophes or hyphens after trimming surrounding whitespace.
+     * spaces, apostrophes or hyphens after trimming surrounding whitespace and collapsing consecutive spaces.
+     * The normalized name must have at most {@link #MAX_LENGTH} UTF-16 code units.
      */
     public static boolean isValidName(String test) {
-        String trimmedName = test.trim();
-        return !trimmedName.isEmpty() && trimmedName.matches(VALIDATION_REGEX);
+        String normalizedName = normalize(test);
+        return !normalizedName.isEmpty() && normalizedName.length() <= MAX_LENGTH
+                && normalizedName.matches(VALIDATION_REGEX);
     }
 
+    /**
+     * Returns the length constraint message if the normalized name exceeds the limit,
+     * or the format constraint message otherwise. Length violations take precedence over invalid characters.
+     */
+    public static String getValidationErrorMessage(String test) {
+        return normalize(test).length() > MAX_LENGTH ? MESSAGE_LENGTH_CONSTRAINTS : MESSAGE_CONSTRAINTS;
+    }
+
+    private static String normalize(String name) {
+        return name.trim().replaceAll(" +", " ");
+    }
 
     @Override
     public String toString() {
