@@ -185,9 +185,9 @@ public class PersonCardTest {
     }
 
     @Test
-    public void prefHeight_tagLongerThanLine_sameAsContent() throws Exception {
+    public void prefHeight_maximumLengthTag_sameAsContent() throws Exception {
         assertCardNotTallerThanContent(new PersonBuilder(ALICE)
-                .withTags("Christmas2026CorporateOrdersWithSpecialDietaryRequirementsAndPriorityDelivery", "vip")
+                .withTags("W".repeat(30), "vip")
                 .build(), WIDE_CARD_WIDTH);
     }
 

@@ -79,6 +79,27 @@ information.
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
+### Customer field limits
+
+`add` and `edit` apply the name, email and address limits below. `tag`, `untag` and `find t/TAG` apply the limit
+to each individual tag.
+
+| Field | Maximum characters | Feedback when the limit is exceeded |
+|-------|--------------------|-------------------------------------|
+| Name | 100 | `Names must be at most 100 characters long after spaces are normalized.` |
+| Email | 254 | `Emails must be at most 254 characters long.` |
+| Address | 300 | `Addresses must be at most 300 characters long.` |
+| Each tag | 30 | `Tag names must be at most 30 characters long.` |
+
+For commands, surrounding spaces are removed before checking these limits. Consecutive spaces in names also
+become one space; internal spaces in addresses are preserved. Spaces and punctuation count towards the limit.
+In addresses, an emoji such as 🍰 counts as two characters.
+
+A value exactly at the maximum is accepted if it also satisfies the field's format rules. When a field is both
+too long and incorrectly formatted, its length message is shown first. Command syntax errors, such as a missing
+required field or an invalid index format, can be reported before the field is checked. Rejected commands leave
+the saved data, current search criteria and displayed results unchanged.
+
 ### How searches and updates affect the list
 
 Search criteria determine which customers are displayed. Keeping the criteria preserves the search; the results still refresh when customer or preorder data changes.
@@ -145,6 +166,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS c/POSTAL_CODE`
 Postal codes must contain exactly six digits. They are stored as text, so leading zeroes are preserved.
 
 * All five fields (`n/`, `p/`, `e/`, `a/`, and `c/`) must be provided.
+* Names, emails and addresses must fit the [customer field limits](#customer-field-limits): 100, 254 and 300 characters respectively.
 * Names must contain at least one English letter (`A-Z` or `a-z`) and may contain only English letters, spaces, straight apostrophes (`'`) and hyphens (`-`). Accented letters, non-English characters, digits and other symbols are rejected. For example, `Mary-Jane O'Brien`, `Li` and `A` are valid names; `José Tan` and `---` are invalid.
 * Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
 * A person is a duplicate if their name matches an existing person's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
@@ -174,7 +196,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CO
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of `n/`, `p/`, `e/`, `a/`, or `c/` must be provided.
 * Fields you provide replace their existing values. Fields you omit remain unchanged.
-* The name validation and spacing rules described for `add` also apply to `edit`.
+* The field validation, [length limits](#customer-field-limits) and spacing rules described for `add` also apply to `edit`.
 * You can retain a person's own name or change its capitalization or spacing while editing. A name matching another person's name is rejected, including persons hidden by a `find` command. Other contact details do not affect this duplicate check.
 * Existing tags and preorders are always preserved.
 * Editing preserves the current search criteria. A person disappears from the results if their edited details no longer match. Check the displayed indexes again before your next command, or use `list` to show all customers.
@@ -193,6 +215,7 @@ Format: `tag INDEX t/TAG`
 
 * Adds the tag to the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * Only one tag can be added per command.
+* A tag can contain at most 30 characters. Leading and trailing spaces are ignored before checking its length.
 * A tag must be a single word made up of English letters and digits only (`A-Z`, `a-z`, `0-9`). Spaces, hyphens and other symbols are rejected. For example, `vip` and `Christmas2026` are valid; `gluten-free` and `big order` are invalid.
 * Tags are case-insensitive: `VIP`, `Vip` and `vip` are the same tag. A tag keeps the capitalization it had when it was first added.
 * If the person already has the tag, in any capitalization, their tags are left unchanged and a message tells you so.
@@ -213,6 +236,7 @@ Common errors:
 | `tag 0 t/VIP`, `tag -1 t/VIP`, or `tag abc t/VIP` | `Invalid command format!` followed by the tag usage instructions. |
 | `tag`, `tag t/VIP`, or `tag 1` | `Invalid command format!` followed by the tag usage instructions. |
 | `tag 1 t/`, `tag 1 t/big order`, or `tag 1 t/gluten-free` | `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.` |
+| `tag 1 t/ABCDEFGHIJKLMNOPQRSTUVWXYZ12345` (31 characters) | `Tag names must be at most 30 characters long.` |
 | `tag 1 t/VIP t/regular` | `Multiple values specified for the following single-valued field(s): t/` |
 | `tag 5 t/VIP` when fewer than five persons are displayed, or any valid index when the list is empty | `The person index provided is invalid.` |
 | `tag 1 t/VIP` when the first person is Alex Yeoh and already has the tag `vip` | `Alex Yeoh already has tag [VIP]. No changes made.` |
@@ -226,7 +250,7 @@ Removes an existing tag from a person in the currently displayed list.
 Format: `untag INDEX t/TAG`
 
 * `INDEX` must be a positive integer shown in the current list. After a `find` command, use the index shown in its search results.
-* Supply exactly one `t/TAG`, after the index. The tag must not be blank and must contain only English letters (`A-Z`, `a-z`) and digits (`0-9`). Internal spaces and special characters are not allowed. Leading and trailing spaces are ignored.
+* Supply exactly one `t/TAG`, after the index. The tag must contain 1 to 30 English letters (`A-Z`, `a-z`) or digits (`0-9`). Internal spaces and special characters are not allowed. Leading and trailing spaces are ignored before checking its length.
 * Matching is case-insensitive. For example, `t/vip` removes an existing `VIP` tag.
 * Other tags, contact details, and any preorder remain unchanged. Removing the last tag leaves the person with no tags.
 * The current list filter is preserved, and the change is saved automatically.
@@ -245,6 +269,7 @@ Common errors:
 | `untag 0 t/VIP`, `untag -1 t/VIP`, or `untag abc t/VIP` | `Invalid command format!` followed by the untag usage instructions. |
 | `untag`, `untag t/VIP`, or `untag 1` | `Invalid command format!` followed by the untag usage instructions. |
 | `untag 1 t/`, `untag 1 t/close friends`, or `untag 1 t/VIP!` | `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.` |
+| `untag 1 t/ABCDEFGHIJKLMNOPQRSTUVWXYZ12345` (31 characters) | `Tag names must be at most 30 characters long.` |
 | `untag 1 t/VIP t/friends` | `Multiple values specified for the following single-valued field(s): t/` |
 | `untag 5 t/VIP` when fewer than five persons are displayed, or any valid index when the list is empty | `The person index provided is invalid.` |
 | `untag 1 t/VIP` when the first person is Alex Yeoh and has no `VIP` tag | `Alex Yeoh does not have tag [VIP]` |
@@ -340,9 +365,10 @@ Supply at least one prefixed criterion. Each prefix may appear at most once, in 
 * Multiword text is one substring: `find n/Alice Tan` can match `Alice Tanaka`, but does not match `Alice Lim` or `Tan Alice`.
 * Surrounding whitespace is ignored. Internal spacing and punctuation remain significant.
 * Phone and email fragments are accepted: `p/8123` and `e/example.com` need not be complete contact details.
+* Text searches (`n/`, `p/`, `e/`, `a/`, `d/` and `h/`) accept queries beyond the character limits used when saving those fields. A valid search can return no matches.
 * Postal searches accept one to six digits. `find c/53` matches codes beginning with `53`, such as `530123` and `531234`; `find c/530` narrows this to codes beginning with `530`. A six-digit query such as `find c/012345` matches only that complete code.
 * When adding a customer or editing their postal code, supply all six digits. Shorter prefixes are accepted only for searching; leading zeros are preserved in both cases.
-* Tags must be single alphanumeric words. `t/reg` does not match a tag named `regular`.
+* Tags must be single alphanumeric words of at most 30 characters. `t/reg` does not match a tag named `regular`.
 * Fulfilment conditions check the preorder's shared information. They can find empty preorders; customers without a preorder or without the requested field do not match. Handover notes are separate from an individual item's request notes.
 * Product names match completely: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Surrounding whitespace is ignored, and repeated spaces count as one, as they do in item names. Punctuation remains significant.
 * Omitting `s/` includes **all statuses**, including `COMPLETED`. A blank `s/` is invalid. A status-only search such as `find s/prepared` accepts any product with that status.
@@ -389,6 +415,7 @@ Customer and preorder changes preserve the search and refresh the results. A cus
 | `find c/012345 c/123456` | `Multiple values specified for the following single-valued field(s): c/` |
 | `find t/regular t/vip` | `Multiple values specified for the following single-valued field(s): t/` |
 | `find t/regular customer` or `find t/VIP!` | The tag constraint message is shown. |
+| `find t/ABCDEFGHIJKLMNOPQRSTUVWXYZ12345` (31 characters) | `Tag names must be at most 30 characters long.` |
 
 Rejected searches leave the current criteria and results unchanged. If no customers match a valid search, the list is empty and the feedback reports `0 person(s) listed!`. Use `list` to clear the search.
 
@@ -671,6 +698,11 @@ LeBake data is saved automatically as a JSON file `data/addressbook.json`, insid
 Postal codes are compulsory for every customer, including records saved by older versions. Each customer must have a `postalCode` containing exactly six digits. Null, missing, blank or malformed postal codes prevent the file from loading. Back up older files and supply the correct postal codes before launching LeBake.
 
 Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. Item names are normalized in the same way, so items saved by earlier versions with repeated spaces count as the same product. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
+
+The [customer field limits](#customer-field-limits) also apply to saved JSON: 100 characters for each normalized name,
+254 for each email, 300 for each address and 30 for each tag. Emails, addresses and tags are checked as stored,
+without removing surrounding spaces. In particular, trailing address spaces count towards the limit. A single
+oversized field prevents the file from loading.
 
 <box type="warning" seamless>
 
