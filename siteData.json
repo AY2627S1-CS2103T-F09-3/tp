@@ -55,6 +55,9 @@
         "preorders-and-items": "Preorders and items",
         "preorder-item-addition-and-editing": "Preorder item addition and editing",
         "preorder-item-deletion": "Preorder item deletion",
+        "setting-fulfilment-details-preorder": "Setting fulfilment details: preorder",
+        "sorting-by-fulfilment-date-sort-date": "Sorting by fulfilment date: sort date",
+        "tagging-customers-tag-and-untag": "Tagging customers: tag and untag",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
@@ -79,6 +82,7 @@
         "adding-and-editing-preorder-items": "Adding and editing preorder items",
         "deleting-a-preorder-item": "Deleting a preorder item",
         "deleting-a-preorder": "Deleting a preorder",
+        "setting-delivery-or-collection-details": "Setting delivery or collection details",
         "loading-preorder-data": "Loading preorder data",
         "sorting-customers-by-fulfilment-date": "Sorting customers by fulfilment date",
         "saving-data": "Saving data"
