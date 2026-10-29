@@ -157,7 +157,7 @@ How the parsing works:
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 `LogicManager` coordinates `clear` confirmation before normal command execution, retaining the pending `ClearCommand`
-instance whose confirmation state is stored by the command. After `clear`, it accepts only a trimmed, case-insensitive
+instance to track whether confirmation is waiting. After `clear`, it accepts only a trimmed, case-insensitive
 `confirm` as approval. Any other input cancels the pending clear and is discarded; an empty input is also forwarded by
 `CommandBox` while confirmation is pending so it can cancel the request. A `confirm` entered without a pending clear
 goes through normal parsing and produces the unknown-command message.

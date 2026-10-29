@@ -42,7 +42,7 @@ information.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
-   * `clear` : Starts the confirmation to delete all contacts.
+   * `clear` : Starts a confirmation prompt; deletes all contacts and preorder data after confirmation.
 
    * `exit` : Exits the app.
 
