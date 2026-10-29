@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
+import seedu.address.commons.exceptions.DataValidationException;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -48,13 +49,20 @@ class JsonSerializableAddressBook {
      */
     public AddressBook toModelType() throws IllegalValueException {
         AddressBook addressBook = new AddressBook();
-        for (JsonAdaptedPerson jsonAdaptedPerson : persons) {
+        for (int i = 0; i < persons.size(); i++) {
+            JsonAdaptedPerson jsonAdaptedPerson = persons.get(i);
+            String context = "Person " + (i + 1);
             if (jsonAdaptedPerson == null) {
-                throw new IllegalValueException(MESSAGE_NULL_PERSON);
+                throw new DataValidationException(context + ": missing person data.", MESSAGE_NULL_PERSON);
             }
-            Person person = jsonAdaptedPerson.toModelType();
+            Person person;
+            try {
+                person = jsonAdaptedPerson.toModelType();
+            } catch (IllegalValueException e) {
+                throw new DataValidationException(context, e);
+            }
             if (addressBook.hasPerson(person)) {
-                throw new IllegalValueException(MESSAGE_DUPLICATE_PERSON);
+                throw new DataValidationException(context + ": duplicate name.", MESSAGE_DUPLICATE_PERSON);
             }
             addressBook.addPerson(person);
         }
