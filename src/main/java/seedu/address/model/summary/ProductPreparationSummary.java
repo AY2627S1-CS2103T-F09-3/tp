@@ -20,18 +20,12 @@ import seedu.address.model.search.ItemCriterion;
 public final class ProductPreparationSummary {
     private final List<MatchingItem> matchingItems;
     private final long customerCount;
-    private final long knownQuantity;
-    // Migrated v1.3 items may lack quantities. Track them separately so the known subtotal
-    // is not presented as a complete total when some quantities still need to be entered.
-    private final long missingQuantityCount;
+    private final long totalQuantity;
 
     private ProductPreparationSummary(List<MatchingItem> matchingItems) {
         this.matchingItems = List.copyOf(matchingItems);
         customerCount = matchingItems.stream().map(MatchingItem::getCustomer).distinct().count();
-        knownQuantity = matchingItems.stream()
-                .mapToLong(match -> match.getItem().getQuantity().map(quantity -> (long) quantity.value).orElse(0L))
-                .sum();
-        missingQuantityCount = matchingItems.stream().filter(match -> match.getItem().getQuantity().isEmpty()).count();
+        totalQuantity = matchingItems.stream().mapToLong(match -> match.getItem().getQuantity().value).sum();
     }
 
     /**
@@ -71,15 +65,8 @@ public final class ProductPreparationSummary {
         return this.matchingItems.size();
     }
 
-    /**
-     * Returns the subtotal of known quantities. Check missing quantities before presenting it as a total.
-     */
-    public long getKnownQuantity() {
-        return this.knownQuantity;
-    }
-
-    public long getMissingQuantityCount() {
-        return this.missingQuantityCount;
+    public long getTotalQuantity() {
+        return this.totalQuantity;
     }
 
     /**

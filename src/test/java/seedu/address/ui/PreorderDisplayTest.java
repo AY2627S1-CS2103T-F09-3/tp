@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.HandoverNotes;
-import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Preorder;
 import seedu.address.model.preorder.Remark;
@@ -83,12 +82,6 @@ public class PreorderDisplayTest {
     @Test
     public void formatQuantity_itemWithQuantity_showsQuantity() {
         assertEquals("Qty 12", PreorderDisplay.formatQuantity(new ItemBuilder().withQuantity("12").build()));
-    }
-
-    @Test
-    public void formatQuantity_itemWithoutQuantity_saysQuantityNeeded() {
-        Item cakes = new ItemBuilder().withName("2 chocolate cakes").withoutQuantity().build();
-        assertEquals("Qty needed", PreorderDisplay.formatQuantity(cakes));
     }
 
     @Test

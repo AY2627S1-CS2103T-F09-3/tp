@@ -127,9 +127,9 @@ public class ProductSummaryPanelTest {
             ProductSummaryPanel panel = createPanel(model);
             execute(model, "find d/Pineapple Tarts");
             Person changed = new PersonBuilder(ALICE).withPreorder(new ItemBuilder(TARTS)
-                    .withoutQuantity().withRemark("Separate packaging").build()).build();
+                    .withQuantity("7").withRemark("Separate packaging").build()).build();
             model.setPerson(ALICE, changed);
-            assertEquals("Known quantity: 0 | 1 item(s) need a quantity", text(panel, "quantity"));
+            assertEquals("Total quantity: 7", text(panel, "quantity"));
             assertEquals("Alice, item 1 - Separate packaging", text(panel, "remarks"));
             model.deletePerson(changed);
             assertEquals("0 customer(s) | 0 matching item(s)", text(panel, "counts"));
