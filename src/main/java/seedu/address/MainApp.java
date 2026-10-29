@@ -52,6 +52,7 @@ public class MainApp extends Application {
 
     private final Path userPrefsFilePath;
     private final Path addressBookFilePath;
+    private final Runnable exitAction;
     private DataLoadingException dataLoadingException;
 
     /**
@@ -62,8 +63,13 @@ public class MainApp extends Application {
     }
 
     MainApp(Path userPrefsFilePath, Path addressBookFilePath) {
+        this(userPrefsFilePath, addressBookFilePath, Platform::exit);
+    }
+
+    MainApp(Path userPrefsFilePath, Path addressBookFilePath, Runnable exitAction) {
         this.userPrefsFilePath = requireNonNull(userPrefsFilePath);
         this.addressBookFilePath = requireNonNull(addressBookFilePath);
+        this.exitAction = requireNonNull(exitAction);
     }
 
     @Override
@@ -161,15 +167,14 @@ public class MainApp extends Application {
         alert.setHeaderText("Unable to load saved data");
         alert.setContentText("LeBake could not load the data file:\n"
                 + storage.getAddressBookFilePath().toAbsolutePath().normalize()
-                + "\n\nReason:\n" + getDataLoadingErrorMessage()
+                + "\n\nReason:\n" + getDataLoadingErrorMessage(dataLoadingException.getCause())
                 + "\n\nYour data file has not been changed.\n\n"
                 + "Check that the file contains valid LeBake JSON and that you have permission to read it. "
                 + "Fix the file or restore a valid backup, then restart LeBake.");
         return alert;
     }
 
-    private String getDataLoadingErrorMessage() {
-        Throwable cause = dataLoadingException.getCause();
+    static String getDataLoadingErrorMessage(Throwable cause) {
         if (cause instanceof DataValidationException validationException) {
             return validationException.getUserMessage();
         }
@@ -185,7 +190,7 @@ public class MainApp extends Application {
     }
 
     void exit() {
-        Platform.exit();
+        exitAction.run();
     }
 
     @Override

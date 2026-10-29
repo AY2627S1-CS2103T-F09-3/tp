@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -133,7 +135,8 @@ public class MainAppTest {
         Files.createDirectories(dataPath().getParent());
         Files.writeString(dataPath(), "{invalid json");
         byte[] originalContent = Files.readAllBytes(dataPath());
-        TestMainApp app = new TestMainApp(prefsPath(), dataPath());
+        AtomicInteger exitRequests = new AtomicInteger();
+        TestMainApp app = new TestMainApp(prefsPath(), dataPath(), exitRequests);
         app.init();
         app.ui = stage -> fail("The main UI must not start after a loading failure.");
         byte[] originalPrefs = Files.readAllBytes(prefsPath());
@@ -157,8 +160,10 @@ public class MainAppTest {
                 assertTrue(alert.getContentText().contains("restore a valid backup"));
                 assertNull(alert.getOwner());
                 assertEquals(ButtonType.OK, alert.getResult());
+                assertFalse(alert.isShowing());
                 assertFalse(stage.isShowing());
-                assertTrue(app.hasExited);
+                assertEquals(0, app.exitRequestsWhenDialogClosed);
+                assertEquals(1, exitRequests.get());
             } finally {
                 stage.close();
             }
@@ -242,6 +247,13 @@ public class MainAppTest {
     }
 
     @Test
+    public void getDataLoadingErrorMessage_jsonErrorWithoutLocation_omitsLineAndColumn() {
+        JsonParseException cause = new JsonParseException(null, "Unexpected token");
+
+        assertEquals("Invalid JSON: Unexpected token", MainApp.getDataLoadingErrorMessage(cause));
+    }
+
+    @Test
     public void createDataLoadingErrorDialog_invalidSecondEmail_identifiesPersonAndField() throws Exception {
         String data = Files.readString(STORAGE_TEST_DATA_FOLDER.resolve("fulfilmentDetails.json"))
                 .replace("\"johnd@example.com\"", "\"not-an-email\"");
@@ -289,7 +301,8 @@ public class MainAppTest {
 
     @Test
     public void start_validData_startsNormalUi() throws Exception {
-        MainApp app = new MainApp(prefsPath(), dataPath());
+        AtomicInteger exitRequests = new AtomicInteger();
+        MainApp app = new MainApp(prefsPath(), dataPath(), exitRequests::incrementAndGet);
         app.init();
         AtomicReference<Stage> startedStage = new AtomicReference<>();
         app.ui = startedStage::set;
@@ -300,6 +313,7 @@ public class MainAppTest {
                 app.start(stage);
 
                 assertSame(stage, startedStage.get());
+                assertEquals(0, exitRequests.get());
             } finally {
                 stage.close();
             }
@@ -381,11 +395,13 @@ public class MainAppTest {
     }
 
     private static class TestMainApp extends MainApp {
+        private final AtomicInteger exitRequests;
         private Alert startupAlert;
-        private boolean hasExited;
+        private int exitRequestsWhenDialogClosed = -1;
 
-        TestMainApp(Path prefsPath, Path dataPath) {
-            super(prefsPath, dataPath);
+        TestMainApp(Path prefsPath, Path dataPath, AtomicInteger exitRequests) {
+            super(prefsPath, dataPath, exitRequests::incrementAndGet);
+            this.exitRequests = exitRequests;
         }
 
         @Override
@@ -394,13 +410,8 @@ public class MainAppTest {
             startupAlert.setOnShown(event -> {
                 Platform.runLater(() -> ((Button) startupAlert.getDialogPane().lookupButton(ButtonType.OK)).fire());
             });
+            startupAlert.setOnHidden(event -> exitRequestsWhenDialogClosed = exitRequests.get());
             return startupAlert;
-        }
-
-        @Override
-        void exit() {
-            assertFalse(startupAlert.isShowing());
-            hasExited = true;
         }
     }
 }

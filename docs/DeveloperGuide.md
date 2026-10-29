@@ -441,12 +441,14 @@ These positions start at 1 and follow the JSON list order. For example, the dial
 `MainApp.init()` remembers a loading failure and skips model, logic and main UI initialization. It allows the JavaFX
 lifecycle to reach `start(Stage)`, which shows a standalone error alert containing the absolute file path, reason and
 recovery instructions. Malformed JSON errors include their line and column when available. Dismissing the alert
-requests `Platform.exit()`, and `stop()` safely handles incomplete initialization. The saved data file is never
-written on this failure path.
+invokes the exit callback, which defaults to `Platform::exit`, and `stop()` safely handles incomplete initialization.
+The saved data file is never written on this failure path.
 
 `MainAppTest` covers normal and missing-file startup, failed initialization, dialog content and dismissal, safe
-shutdown, and preservation of existing file contents. `DataValidationExceptionTest` checks concise record context
-and preservation of detailed diagnostics. The packaged-JAR checks below verify the actual JavaFX process exit.
+shutdown, and preservation of existing file contents. It also checks JSON errors without a location and uses a
+recording exit callback to verify that shutdown is requested exactly once, after the dialog closes, without stopping
+the shared JavaFX runtime. `DataValidationExceptionTest` checks concise record context and preservation of detailed
+diagnostics. The packaged-JAR checks below verify the actual JavaFX process exit.
 
 ### Customer field length validation
 
@@ -1059,7 +1061,7 @@ After each command above, verify that you can immediately type the next command 
 
 ### Preserving searches after customer changes
 
-Use a test address book without customers whose names contain `SearchTest` or `OtherTest`.
+Use a test copy of LeBake without customers whose names contain `SearchTest` or `OtherTest`.
 
 1. Add two customers:
    * `add n/SearchTest Alice p/81111111 e/searchalice@example.com a/Test Street c/123456`
@@ -1077,22 +1079,67 @@ Use a test address book without customers whose names contain `SearchTest` or `O
 1. Run `list`.<br>
    Expected: All customers are shown, including `OtherTest Alice` and `OtherTest Dana`.
 
-### Deleting a person
+### Duplicate customer feedback
 
-1. Deleting a person while all persons are being shown
+Use a disposable copy of the sample data. For every rejected command below, verify that customer details, tags,
+preorders, saved data, active search criteria and displayed results remain unchanged.
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+1. Run `list`.<br>
+   Expected: `Listed all customers.` Alex Yeoh and Bernice Yu are at indexes 1 and 2.
+1. Run `add n/alex yeoh p/91234567 e/alex2@example.com a/1 Test Road c/123456`.<br>
+   Expected: `A customer named "alex yeoh" already exists. Customer names must be unique (ignoring capitalisation and extra spaces). Choose a different name.`
+1. Run `edit 2 n/alex yeoh`.<br>
+   Expected: `A customer named "alex yeoh" already exists. Customer names must be unique (ignoring capitalisation and extra spaces). Choose a different name.`
+   Bernice's original name and other details are unchanged.
+1. Run `add n/  ALEX   YEOH  p/91234567 e/alex2@example.com a/1 Test Road c/123456`, then
+   `edit 2 n/  ALEX   YEOH  `.<br>
+   Expected: Both show `A customer named "ALEX YEOH" already exists. Customer names must be unique (ignoring capitalisation and extra spaces). Choose a different name.`
+   Extra spaces are normalized, and the supplied capitalization is preserved in the message.
+1. Run `find n/Bernice`.<br>
+   Expected: `1 customer(s) listed!` Only Bernice is shown, at index 1.
+1. Repeat the rejected `add n/alex yeoh p/91234567 e/alex2@example.com a/1 Test Road c/123456`, then run
+   `edit 1 n/alex yeoh`.<br>
+   Expected: Both show `A customer named "alex yeoh" already exists. Customer names must be unique (ignoring capitalisation and extra spaces). Choose a different name.`
+   Alex is detected even though hidden, and Bernice remains the only displayed customer.
+1. Run `edit 1 n/  BERNICE   YU  `.<br>
+   Expected: The edit succeeds. Feedback begins with `Edited customer: BERNICE YU;`, followed by Bernice's
+   other details. Her phone, email, address, postal code, tags and preorder are preserved. The active search remains.
+1. Run `find n/NoMatchingCustomer`.<br>
+   Expected: `0 customer(s) listed!` The displayed list is empty, and the saved customers are unchanged.
+1. Run `list`, then `add n/Message Test p/91234567 e/message@example.com a/1 Test Road c/123456`.<br>
+   Expected: The customer is added. Feedback begins with `New customer added: Message Test;`, followed by their
+   contact details. They have no tags or preorder.
+
+### Deleting a customer
+
+1. Deleting a customer while all customers are being shown
+
+   1. Prerequisites: List all customers using the `list` command, with multiple customers in the list.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The first customer is deleted from the list. Feedback begins with `Deleted customer:`, followed by
+      that customer's details.
 
    1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+      Expected: No customer is deleted. The status message shows `Invalid command format!`, followed by the
+      usage instructions for `delete`.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Test case: `delete 100` (where 100 is larger than the displayed list size)<br>
+      Expected: No customer is deleted. The status message shows `The customer index provided is invalid.`
 
-1. _{ more test cases … }_
+### Clearing customers and exiting
+
+Use a disposable copy of the sample data for this group.
+
+1. Run `clear`.<br>
+   Expected: `This will permanently delete all customers and their preorder data. Type 'confirm' to proceed; any other input cancels and is discarded.`
+   The customer list and saved data remain unchanged.
+1. Run `confirm`.<br>
+   Expected: `All customers have been cleared!` The displayed customer list is empty.
+1. Run `list`.<br>
+   Expected: `Listed all customers.` The list remains empty.
+1. Run `exit`.<br>
+   Expected: LeBake closes.
 
 ### Customer field length boundaries
 
@@ -1116,17 +1163,17 @@ normalization. Run `list` before each case and use the current displayed index; 
 1. Search exceptions: `find n/` with 101 copies of `A` is accepted with no matches; `find t/` with 31 copies of `T`
    is rejected.
 
-### Tagging a person
+### Tagging a customer
 
-1. Tagging a person while all persons are being shown
+1. Tagging a customer while all customers are being shown
 
-   1. Prerequisites: Start with the sample data. List all persons using the `list` command. The first person is `Alex Yeoh`, who has the tag `friends`.
+   1. Prerequisites: Start with the sample data. List all customers using the `list` command. The first customer is `Alex Yeoh`, who has the tag `friends`.
 
    1. Test case: `tag 1 t/regular`<br>
-      Expected: `regular` is added to the first person's tags. The status message shows `Added tag [regular] to Alex Yeoh`.
+      Expected: `regular` is added to the first customer's tags. The status message shows `Added tag [regular] to Alex Yeoh`.
 
    1. Test case: `tag 1 t/FRIENDS`<br>
-      Expected: The person's tags are unchanged. The status message shows `Alex Yeoh already has tag [FRIENDS]. No changes made.`
+      Expected: The customer's tags are unchanged. The status message shows `Alex Yeoh already has tag [FRIENDS]. No changes made.`
 
    1. Test case: `tag 1 t/gluten-free`<br>
       Expected: No tag is added. The status message shows `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.`
@@ -1144,22 +1191,22 @@ normalization. Run `list` before each case and use the current displayed index; 
       Expected: No tag is added. The index format error and usage instructions are shown, rather than the tag constraint message, because the index format is checked first.
 
    1. Test case: `tag 100 t/vip` (where 100 is larger than the list size)<br>
-      Expected: No tag is added. The status message shows `The person index provided is invalid.`
+      Expected: No tag is added. The status message shows `The customer index provided is invalid.`
 
-1. Tagging a person in a filtered list
+1. Tagging a customer in a filtered list
 
-   1. Prerequisites: Find a person using `find n/Bernice`. Only `Bernice Yu` is shown.
+   1. Prerequisites: Find a customer using `find n/Bernice`. Only `Bernice Yu` is shown.
 
    1. Test case: `tag 1 t/vip`<br>
       Expected: `vip` is added to `Bernice Yu`'s tags. The status message shows `Added tag [vip] to Bernice Yu`. Only `Bernice Yu` remains displayed; the filter is preserved.
 
-### Untagging a person
+### Untagging a customer
 
-Run each group below independently, starting with the sample data unless stated otherwise. Within a group, run the test cases in order. For every rejected command, verify that all persons' tags, contact details, preorders, and the displayed list remain unchanged.
+Run each group below independently, starting with the sample data unless stated otherwise. Within a group, run the test cases in order. For every rejected command, verify that all customers' tags, contact details, preorders, and the displayed list remain unchanged.
 
-1. Removing tags while all persons are being shown
+1. Removing tags while all customers are being shown
 
-   1. Prerequisites: Run `list`. The first person is `Alex Yeoh`, who has the tag `friends`. Run `tag 1 t/regular` to give Alex a second tag.
+   1. Prerequisites: Run `list`. The first customer is `Alex Yeoh`, who has the tag `friends`. Run `tag 1 t/regular` to give Alex a second tag.
 
    1. Test case: `untag 1 t/FRIENDS`<br>
       Expected: The `friends` tag is removed despite the different capitalization. The `regular` tag and Alex's contact details remain unchanged. The status message shows `Removed tag [FRIENDS] from Alex Yeoh`.
@@ -1172,7 +1219,7 @@ Run each group below independently, starting with the sample data unless stated 
 
 1. Rejecting invalid input
 
-   1. Prerequisites: Run `list` with the sample persons displayed.
+   1. Prerequisites: Run `list` with the sample customers displayed.
 
    1. Test cases: `untag 0 t/friends`, `untag -1 t/friends`, `untag abc t/friends`<br>
       Expected: Each command shows `Invalid command format!`, followed by the usage instructions for `untag`.
@@ -1190,23 +1237,23 @@ Run each group below independently, starting with the sample data unless stated 
       Expected: The index format error and usage instructions are shown, rather than the tag constraint message, because the index format is checked first.
 
    1. Test case: `untag 100 t/friends` (where 100 is larger than the displayed list size)<br>
-      Expected: The status message shows `The person index provided is invalid.`
+      Expected: The status message shows `The customer index provided is invalid.`
 
 1. Removing a tag in a filtered list
 
    1. Prerequisites: Run `find n/Bernice`. Only `Bernice Yu` is shown, at index 1, with the tags `colleagues` and `friends`.
 
    1. Test case: `untag 2 t/friends`<br>
-      Expected: The status message shows `The person index provided is invalid.`, even though the full address book contains more than one person.
+      Expected: The status message shows `The customer index provided is invalid.`, even though the full customer list contains more than one customer.
 
    1. Test case: `untag 1 t/FRIENDS`<br>
-      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other persons are unchanged.
+      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other customers are unchanged.
 
    1. Test case: `untag 1 t/FRIENDS` again.<br>
       Expected: The status message shows `Bernice Yu does not have tag [FRIENDS]`. Only Bernice remains displayed.
 
    1. Test case: Run `find n/NoMatchingCustomer`, confirm that the displayed list is empty, then run `untag 1 t/friends`.<br>
-      Expected: The status message shows `The person index provided is invalid.` The list remains empty and no data is changed.
+      Expected: The status message shows `The customer index provided is invalid.` The list remains empty and no data is changed.
 
 1. Preserving a preorder and saving tag removal
 
@@ -1293,6 +1340,8 @@ remain unchanged.
 Use a disposable data copy. Run `list` and choose a customer without a preorder, noting their displayed index as `INDEX`.
 Record their contact details and tags before starting. Replace `INDEX` in the examples with the displayed number.
 
+1. Run `edititem INDEX i/1 q/3`.<br>
+   Expected: `This customer has no preorder.` Nothing changes.
 1. Run `additem INDEX d/Cake q/2 s/pending r/Less sugar`.<br>
    Expected: A preorder is created with item 1. The success message includes item number, customer, name, quantity and status.
    The card displays the remark. Contact details and tags are unchanged.
@@ -1330,7 +1379,7 @@ is customer 5 without a preorder.
 1. Run `deleteitem 1 i/1` again, then `deleteitem 4 i/1`.<br>
    Expected: Both show `The item index provided is invalid.` because both preorders are empty. Nothing changes.
 1. Run `deleteitem 5 i/1`.<br>
-   Expected: `Identified person has no preorder.` Nothing changes.
+   Expected: `This customer has no preorder.` Nothing changes.
 1. Try `deleteitem`, `deleteitem 0 i/1`, `deleteitem 1`, and `deleteitem 1 o/1`.<br>
    Expected: An invalid-command-format error followed by usage instructions. Nothing changes.
 1. Try `deleteitem 1 i/`, `deleteitem 1 i/0`, and `deleteitem 1 i/abc`.<br>
@@ -1338,7 +1387,7 @@ is customer 5 without a preorder.
 1. Run `deleteitem 1 i/1 i/2`.<br>
    Expected: `Multiple values specified for the following single-valued field(s): i/`. Nothing changes.
 1. Run `deleteitem 100 i/1`, where 100 exceeds the displayed list size.<br>
-   Expected: `The person index provided is invalid.` Nothing changes.
+   Expected: `The customer index provided is invalid.` Nothing changes.
 1. Run `track`, then delete Charlotte's item using her current displayed customer index and `i/1`.<br>
    Expected: Charlotte disappears from the tracked view because her preorder is now empty. Run `list` to confirm
    that she remains a customer. The success message identifies her deleted item, quantity and status.
@@ -1358,7 +1407,7 @@ Start with the sample data. List all customers using the `list` command. The fir
 1. Try `deleteorder 0`, `deleteorder` and `deleteorder 1 2`.<br>
    Expected: Nothing changes. The status message shows an invalid command format error, followed by the correct format of the `deleteorder` command.
 1. Run `deleteorder 100` (where 100 is larger than the list size).<br>
-   Expected: Nothing changes. The status message shows `The person index provided is invalid.`
+   Expected: Nothing changes. The status message shows `The customer index provided is invalid.`
 1. Run `track`, then `deleteorder` with the displayed index of `Charlotte Oliveiro`.<br>
    Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder panel.
 

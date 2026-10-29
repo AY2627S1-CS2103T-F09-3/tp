@@ -23,7 +23,7 @@ public class TagCommand extends Command {
     public static final String COMMAND_WORD = "tag";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Adds a tag to the person identified by the index number used in the displayed person list.\n"
+            + ": Adds a tag to the customer identified by the index number used in the displayed customer list.\n"
             + "Parameters: INDEX (must be a positive integer) " + PREFIX_TAG + "TAG\n"
             + "Example: " + COMMAND_WORD + " 1 " + PREFIX_TAG + "regular";
 
