@@ -159,7 +159,7 @@ public class FindCommandParser implements Parser<FindCommand> {
     }
 
     private void validateQuery(String query, String validationRegex, String constraintMessage) throws ParseException {
-        if (!query.strip().matches(validationRegex)) {
+        if (!StringUtil.stripSpaces(query).matches(validationRegex)) {
             throw new ParseException(constraintMessage);
         }
     }

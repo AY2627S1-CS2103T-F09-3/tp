@@ -103,6 +103,16 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_noBreakSpacesAroundContactFragments_stripped() {
+        for (String whitespace : List.of("\u00A0", "\u202F", "\u00A0\u2003\u202F")) {
+            assertParseSuccess(parser, "n/" + whitespace + "Ali" + whitespace, textCommand(NAME, "Ali"));
+            assertParseSuccess(parser, "p/" + whitespace + "9123" + whitespace, textCommand(PHONE, "9123"));
+            assertParseSuccess(parser, "e/" + whitespace + "example.com" + whitespace,
+                    textCommand(EMAIL, "example.com"));
+        }
+    }
+
+    @Test
     public void parse_invalidContactFragments_throwsSearchConstraintMessage() {
         for (String name : List.of("Alice2", "Alice@Tan", "Alice/Tan", "Alice\tTan", "José")) {
             assertParseFailure(parser, "n/" + name, FindCommandParser.MESSAGE_NAME_QUERY_CONSTRAINTS);
@@ -128,6 +138,14 @@ public class FindCommandParserTest {
             for (String separator : List.of("\t", "\n", "\r\n", " \t ")) {
                 assertParseFailure(parser, query + separator + "x/foo", "Unsupported prefix 'x/' for find.");
             }
+        }
+    }
+
+    @Test
+    public void parse_unsupportedPrefixesInUnicodePaddedContactFragments_namesPrefix() {
+        for (String query : List.of("n/\u00A0Ali\u00A0 x/foo\u00A0", "p/\u00A09123\u00A0 x/foo\u00A0",
+                "e/\u00A0example.com\u00A0 x/foo\u00A0")) {
+            assertParseFailure(parser, query, "Unsupported prefix 'x/' for find.");
         }
     }
 
@@ -290,8 +308,11 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_unicodeSpacesOnly_throwsParseException() {
-        assertParseFailure(parser, "d/\u00A0", FORMAT_ERROR); // no-break space
-        assertParseFailure(parser, "d/\u2003", FORMAT_ERROR); // em space
+        for (Prefix prefix : List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_DETAILS)) {
+            for (String whitespace : List.of("\u00A0", "\u2003", "\u202F", "\u00A0\u2003\u202F")) {
+                assertParseFailure(parser, prefix + whitespace, FORMAT_ERROR);
+            }
+        }
     }
 
     @Test
