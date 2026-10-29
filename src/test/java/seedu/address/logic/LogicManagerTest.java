@@ -11,6 +11,7 @@ import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_POSTAL_CODE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.model.Model.SEARCH_CRITERIA_SHOW_ALL_PERSONS;
+import static seedu.address.model.preorder.FulfilmentMethod.DELIVERY;
 import static seedu.address.model.preorder.ItemStatus.PENDING;
 import static seedu.address.model.search.TextContainsCriterion.Field.NAME;
 import static seedu.address.model.search.TextContainsCriterion.Field.PHONE;
@@ -44,6 +45,7 @@ import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.TrackCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.FindCommandParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -54,6 +56,7 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
+import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.ItemCriterion;
 import seedu.address.model.search.PostalCodeCriterion;
@@ -67,6 +70,7 @@ import seedu.address.storage.StorageManager;
 import seedu.address.testutil.AddressBookBuilder;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
+import seedu.address.testutil.PreorderBuilder;
 
 public class LogicManagerTest {
     private static final IOException DUMMY_IO_EXCEPTION = new IOException("dummy IO exception");
@@ -622,13 +626,128 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_unsupportedMutationArguments_preservesDataAndActiveSearch() throws Exception {
+        setUpTrackPersons();
+        logic.execute("find n/Ali");
+
+        for (String input : List.of(
+                "add n/Nora Lee x/foo p/81112222 e/nora@example.com a/12 Sample Road c/123456",
+                "add n/Nora Lee p/81112222 x/foo e/nora@example.com a/12 Sample Road c/123456",
+                "add n/Nora Lee p/81112222 e/nora@example.com x/foo a/12 Sample Road c/123456",
+                "add n/Nora Lee p/81112222 e/nora@example.com a/12 Sample Road c/123456 x/foo",
+                "additem 1 d/Cake q/2 x/foo s/pending",
+                "additem 1 d/Cake q/2 s/pending x/foo",
+                "preorder 1 f/2026-12-20 x/foo",
+                "preorder 1 m/delivery x/foo",
+                "tag 1 t/VIP x/foo")) {
+            String commandWord = input.substring(0, input.indexOf(' '));
+            assertCommandFailurePreservesFilteredList(input, ParseException.class,
+                    "Unsupported prefix 'x/' for " + commandWord + ".");
+        }
+        assertCommandFailurePreservesFilteredList("additem 1 d/Cake x/earlier q/2 y/later s/pending",
+                ParseException.class, "Unsupported prefix 'y/' for additem.");
+        assertCommandFailurePreservesFilteredList("preorder 1 h/Leave w/o ringing x/earlier m/delivery y/later",
+                ParseException.class, "Unsupported prefix 'y/' for preorder.");
+
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_literalPrefixTextInMutationCommands_roundTripsAndClearsFulfilmentDetails() throws Exception {
+        logic.execute("add n/Nora Lee p/81112222 e/nora@example.com a/Block 123 c/o Nora x/foo c/123456");
+        logic.execute("find n/Nora");
+        SearchCriteria criteria = logic.getActiveSearchCriteria();
+        logic.execute("additem 1 d/Cake w/ candles x/name q/2 s/pending r/Pack w/o nuts x/remark");
+        logic.execute("preorder 1 h/Leave w/o ringing x/notes f/2026-12-20 m/delivery");
+        logic.execute("tag 1 t/VIP");
+
+        Item item = new ItemBuilder().withName("Cake w/ candles x/name")
+                .withRemark("Pack w/o nuts x/remark").build();
+        Person expected = new PersonBuilder().withName("Nora Lee").withPhone("81112222")
+                .withEmail("nora@example.com").withAddress("Block 123 c/o Nora x/foo").withPostalCode("123456")
+                .withTags("VIP").withPreorder(new PreorderBuilder()
+                        .withItems(item).withDate("2026-12-20").withMethod(DELIVERY)
+                        .withHandoverNotes("Leave w/o ringing x/notes").build()).build();
+        assertEquals(List.of(expected), model.getAddressBook().getPersonList());
+        assertEquals(List.of(expected), logic.getFilteredPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(List.of(expected), storage.readAddressBook().orElseThrow().getPersonList());
+
+        logic.execute("preorder 1 f/ m/ h/");
+
+        Person cleared = new PersonBuilder(expected).withPreorder(item).build();
+        assertEquals(List.of(cleared), model.getAddressBook().getPersonList());
+        assertEquals(List.of(cleared), logic.getFilteredPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        assertEquals(List.of(cleared), storage.readAddressBook().orElseThrow().getPersonList());
+    }
+
+    @Test
+    public void execute_findProductAndNotesWithPrefixLikeText_matchesSavedValues() throws Exception {
+        model.addPerson(ALICE);
+        logic.execute("additem 1 d/Cake w/ candles q/2 s/pending");
+        logic.execute("preorder 1 h/Leave w/o ringing x/foo");
+        Person updated = model.getAddressBook().getPersonList().getFirst();
+
+        assertFilteringCommandSuccess("find d/Cake w/ candles s/pending", "1 person(s) listed!", List.of(updated));
+        assertFilteringCommandSuccess("find h/Leave w/o ringing x/foo", "1 person(s) listed!", List.of(updated));
+        assertFilteringCommandSuccess("find d/Cake w/ candles h/Leave w/o ringing x/foo",
+                "1 person(s) listed!", List.of(updated));
+        assertFilteringCommandSuccess("find d/Cake", "0 person(s) listed!", List.of());
+        assertEquals(List.of(updated), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_findContactFragments_matchesCustomerAndPreservesLiteralAddress() throws Exception {
+        Person customer = new PersonBuilder().withName("Alice Tan").withPhone("91234567")
+                .withEmail("alice@example.com").withAddress("Block 123 c/o Alice x/foo").build();
+        model.addPerson(customer);
+
+        assertFilteringCommandSuccess("find n/Ali p/9123 e/example.com", "1 person(s) listed!", List.of(customer));
+        assertFilteringCommandSuccess("find a/Block 123 c/o Alice x/foo n/Ali p/9123 e/example.com",
+                "1 person(s) listed!", List.of(customer));
+        assertEquals(List.of(customer), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_invalidFindContactFragments_preservesDataAndActiveSearch() throws Exception {
+        setUpTrackPersons();
+        logic.execute("find n/Ali");
+
+        for (String input : List.of("find n/Ali x/foo", "find p/9123 x/foo", "find e/example.com x/foo")) {
+            assertCommandFailurePreservesFilteredList(input, ParseException.class, "Unsupported prefix 'x/' for find.");
+        }
+        assertCommandFailurePreservesFilteredList("find n/Ali2", ParseException.class,
+                FindCommandParser.MESSAGE_NAME_QUERY_CONSTRAINTS);
+        assertCommandFailurePreservesFilteredList("find p/91-23", ParseException.class,
+                FindCommandParser.MESSAGE_PHONE_QUERY_CONSTRAINTS);
+        assertCommandFailurePreservesFilteredList("find e/example!.com", ParseException.class,
+                FindCommandParser.MESSAGE_EMAIL_QUERY_CONSTRAINTS);
+    }
+
+    @Test
+    public void execute_unsupportedFindConstrainedArguments_preservesDataAndActiveSearch() throws Exception {
+        setUpTrackPersons();
+        logic.execute("find n/Ali");
+
+        for (String query : List.of("c/123", "t/VIP", "f/2026-12-20", "m/delivery", "s/pending")) {
+            assertCommandFailurePreservesFilteredList("find " + query + " x/foo", ParseException.class,
+                    "Unsupported prefix 'x/' for find.");
+        }
+        assertCommandFailurePreservesFilteredList("find h/Leave w/o ringing x/earlier s/pending y/later",
+                ParseException.class, "Unsupported prefix 'y/' for find.");
+    }
+
+    @Test
     public void execute_invalidFindFormat_preservesDataAndFilteredList() throws Exception {
         setUpTrackPersons();
         assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
 
         for (String input : List.of("find", "find Alice", "find Alice Bob", "find Alice t/friends", "find n/",
-                "find n/Alice p/", "find n/Alice x/value", "find s/", "find n/Alice\td/",
+                "find n/Alice p/", "find x/value n/Alice", "find s/", "find n/Alice\td/",
                 "find h/", "find m/", "find f/", "find i/arrival", "find Alice m/delivery")) {
             assertCommandFailurePreservesFilteredList(input, ParseException.class, expectedMessage);
         }

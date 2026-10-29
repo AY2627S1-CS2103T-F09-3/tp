@@ -19,8 +19,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.FindCommand;
@@ -40,11 +38,18 @@ import seedu.address.model.search.TextContainsCriterion.Field;
  * Parses prefixed customer search criteria and creates a {@code FindCommand}.
  */
 public class FindCommandParser implements Parser<FindCommand> {
+    public static final String MESSAGE_NAME_QUERY_CONSTRAINTS =
+            "Invalid name query! Use English letters, spaces, apostrophes or hyphens.";
+    public static final String MESSAGE_PHONE_QUERY_CONSTRAINTS =
+            "Invalid phone query! Use 1 to 8 digits; a complete phone number is not required.";
+    public static final String MESSAGE_EMAIL_QUERY_CONSTRAINTS =
+            "Invalid email query! Use letters, digits or +_.-@ without spaces; "
+                    + "a complete email address is not required.";
+
     private static final List<Prefix> SUPPORTED_PREFIXES =
             List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_POSTAL_CODE, PREFIX_TAG,
                     PREFIX_DETAILS, PREFIX_STATUS, PREFIX_FULFILMENT_DATE, PREFIX_FULFILMENT_METHOD,
                     PREFIX_HANDOVER_NOTES);
-    private static final Pattern PARAMETER_PREFIX = Pattern.compile("(?<!\\S)([A-Za-z]+/)");
 
     /**
      * Parses one or more prefixed criteria, combined using AND.
@@ -55,7 +60,8 @@ public class FindCommandParser implements Parser<FindCommand> {
     public FindCommand parse(String args) throws ParseException {
         requireNonNull(args);
         String formatError = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
-        String preparedArgs = prepareArguments(args.strip(), formatError);
+        // Supply a separator for the first prefix; only supported prefixes delimit values.
+        String preparedArgs = " " + args.strip();
         Prefix[] prefixes = SUPPORTED_PREFIXES.toArray(Prefix[]::new);
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(preparedArgs, prefixes);
 
@@ -86,31 +92,78 @@ public class FindCommandParser implements Parser<FindCommand> {
 
     private List<PersonCriterion> createCustomerCriteria(ArgumentMultimap arguments) throws ParseException {
         List<PersonCriterion> criteria = new ArrayList<>();
-        addTextCriterion(criteria, arguments, PREFIX_NAME, Field.NAME);
-        addTextCriterion(criteria, arguments, PREFIX_PHONE, Field.PHONE);
-        addTextCriterion(criteria, arguments, PREFIX_EMAIL, Field.EMAIL);
+        addConstrainedTextCriterion(criteria, arguments, PREFIX_NAME, Field.NAME,
+                "[A-Za-z '-]+", MESSAGE_NAME_QUERY_CONSTRAINTS);
+        addConstrainedTextCriterion(criteria, arguments, PREFIX_PHONE, Field.PHONE,
+                "[0-9]{1,8}", MESSAGE_PHONE_QUERY_CONSTRAINTS);
+        addConstrainedTextCriterion(criteria, arguments, PREFIX_EMAIL, Field.EMAIL,
+                "[A-Za-z0-9+_.@-]+", MESSAGE_EMAIL_QUERY_CONSTRAINTS);
         addTextCriterion(criteria, arguments, PREFIX_ADDRESS, Field.ADDRESS);
         addTextCriterion(criteria, arguments, PREFIX_HANDOVER_NOTES, Field.HANDOVER_NOTES);
         if (arguments.getValue(PREFIX_FULFILMENT_DATE).isPresent()) {
-            criteria.add(new FulfilmentDateCriterion(
-                    ParserUtil.parseFulfilmentDate(arguments.getValue(PREFIX_FULFILMENT_DATE).get())));
+            String date = arguments.getValue(PREFIX_FULFILMENT_DATE).get();
+            try {
+                criteria.add(new FulfilmentDateCriterion(ParserUtil.parseFulfilmentDate(date)));
+            } catch (ParseException pe) {
+                throw createFieldParseException(date, pe);
+            }
         }
         if (arguments.getValue(PREFIX_FULFILMENT_METHOD).isPresent()) {
-            criteria.add(new FulfilmentMethodCriterion(
-                    ParserUtil.parseFulfilmentMethod(arguments.getValue(PREFIX_FULFILMENT_METHOD).get())));
+            String method = arguments.getValue(PREFIX_FULFILMENT_METHOD).get();
+            try {
+                criteria.add(new FulfilmentMethodCriterion(ParserUtil.parseFulfilmentMethod(method)));
+            } catch (ParseException pe) {
+                throw createFieldParseException(method, pe);
+            }
         }
         if (arguments.getValue(PREFIX_POSTAL_CODE).isPresent()) {
             String postalCodePrefix = arguments.getValue(PREFIX_POSTAL_CODE).get().strip();
-            if (!PostalCodeCriterion.isValidPrefix(postalCodePrefix)) {
-                throw new ParseException(PostalCodeCriterion.MESSAGE_CONSTRAINTS);
+            try {
+                if (!PostalCodeCriterion.isValidPrefix(postalCodePrefix)) {
+                    throw new ParseException(PostalCodeCriterion.MESSAGE_CONSTRAINTS);
+                }
+                criteria.add(new PostalCodeCriterion(postalCodePrefix));
+            } catch (ParseException pe) {
+                throw createFieldParseException(postalCodePrefix, pe);
             }
-            criteria.add(new PostalCodeCriterion(postalCodePrefix));
         }
         if (arguments.getValue(PREFIX_TAG).isPresent()) {
-            criteria.add(new TagCriterion(ParserUtil.parseTag(arguments.getValue(PREFIX_TAG).get().strip())));
+            String tag = arguments.getValue(PREFIX_TAG).get().strip();
+            try {
+                criteria.add(new TagCriterion(ParserUtil.parseTag(tag)));
+            } catch (ParseException pe) {
+                throw createFieldParseException(tag, pe);
+            }
         }
 
         return criteria;
+    }
+
+    private void addConstrainedTextCriterion(List<PersonCriterion> criteria, ArgumentMultimap arguments,
+            Prefix prefix, Field field, String validationRegex, String constraintMessage) throws ParseException {
+        Optional<String> value = arguments.getValue(prefix);
+        if (value.isEmpty()) {
+            return;
+        }
+
+        String query = value.get();
+        try {
+            validateQuery(query, validationRegex, constraintMessage);
+        } catch (ParseException pe) {
+            throw createFieldParseException(query, pe);
+        }
+        criteria.add(new TextContainsCriterion(field, query));
+    }
+
+    private void validateQuery(String query, String validationRegex, String constraintMessage) throws ParseException {
+        if (!StringUtil.stripSpaces(query).matches(validationRegex)) {
+            throw new ParseException(constraintMessage);
+        }
+    }
+
+    private ParseException createFieldParseException(String value, ParseException cause) {
+        return ParserUtil.createFieldParseException(value, cause, FindCommand.COMMAND_WORD,
+                SUPPORTED_PREFIXES.toArray(Prefix[]::new));
     }
 
     private void addItemCriterion(List<PersonCriterion> criteria, ArgumentMultimap arguments) throws ParseException {
@@ -121,24 +174,17 @@ public class FindCommandParser implements Parser<FindCommand> {
         }
 
         // Omitting s/ accepts all statuses. An empty set would instead match no items.
-        Set<ItemStatus> statuses = status.isPresent()
-                ? Set.of(ParserUtil.parseItemStatus(status.get().strip()))
-                : EnumSet.allOf(ItemStatus.class);
-        // Both conditions belong in one criterion so they cannot match different items.
-        criteria.add(new ItemCriterion(productName, statuses));
-    }
-
-    private String prepareArguments(String args, String formatError) throws ParseException {
-        Matcher matcher = PARAMETER_PREFIX.matcher(args);
-        while (matcher.find()) {
-            if (!SUPPORTED_PREFIXES.contains(new Prefix(matcher.group(1)))) {
-                throw new ParseException(formatError);
+        Set<ItemStatus> statuses = EnumSet.allOf(ItemStatus.class);
+        if (status.isPresent()) {
+            String value = status.get().strip();
+            try {
+                statuses = Set.of(ParserUtil.parseItemStatus(value));
+            } catch (ParseException pe) {
+                throw createFieldParseException(value, pe);
             }
         }
-
-        // Supply a separator for the first prefix; the shared tokenizer handles whitespace boundaries.
-        // Leave all text inside search values unchanged, including whitespace before literal c/o in an address.
-        return " " + args;
+        // Both conditions belong in one criterion so they cannot match different items.
+        criteria.add(new ItemCriterion(productName, statuses));
     }
 
     private void addTextCriterion(List<PersonCriterion> criteria, ArgumentMultimap arguments,

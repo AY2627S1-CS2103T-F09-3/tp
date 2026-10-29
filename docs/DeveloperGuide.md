@@ -163,7 +163,7 @@ A supported prefix ends the preceding value. Unsupported prefix-like text stays 
 The tokenizer preserves conventional `c/o` text inside an address instead of treating it as a postal-code prefix.
 Quotation marks and backslashes do not escape supported prefixes.
 
-The following parsers refine errors from constrained fields using `ParserUtil.findUnsupportedPrefix`:
+The following parsers refine errors from constrained fields using `ParserUtil.createFieldParseException`:
 
 | Parser | Fields with contextual prefix diagnostics |
 |--------|------------------------------------------|
@@ -171,28 +171,41 @@ The following parsers refine errors from constrained fields using `ParserUtil.fi
 | `EditCommandParser` | Customer name (`n/`), phone (`p/`), email (`e/`) and postal code (`c/`) |
 | `EditItemCommandParser` | Item index (`i/`), quantity (`q/`) and status (`s/`) |
 | `TrackCommandParser` | Status (`s/`) |
+| `AddItemCommandParser` | Quantity (`q/`) and status (`s/`) |
+| `PreorderCommandParser` | Date (`f/`) and method (`m/`) |
+| `AddCommandParser` | Name (`n/`), phone (`p/`), email (`e/`) and postal code (`c/`) |
+| `TagCommandParser` | Tag (`t/`) |
 | `UntagCommandParser` | Tag (`t/`) |
+| `FindCommandParser` | Name (`n/`), phone (`p/`), email (`e/`), postal code (`c/`), tag (`t/`), date (`f/`), method (`m/`) and status (`s/`) queries |
 
-Each field is validated normally first. If parsing fails, the helper finds the first token matching
-`\s([A-Za-z]+/)` whose prefix is absent from that command's supported-prefix list. It preserves the prefix's case
-and returns an `Optional<Prefix>`. The parser formats `Messages.MESSAGE_UNSUPPORTED_PREFIX` with the offending
-prefix and command name, for example `Unsupported prefix 'd/' for track.` If no unsupported prefix is found,
-the original field constraint message is used. A slash embedded without a preceding whitespace boundary does not
-trigger this diagnostic. Customer-index and duplicate-prefix checks retain their earlier precedence.
+Each field is validated normally first. If parsing fails, the parser passes the failed value, exception, command word
+and supported prefixes to `ParserUtil.createFieldParseException`. This shared helper uses `findUnsupportedPrefix`
+to find the first token matching `\s([A-Za-z]+/)` whose prefix is absent from that command's supported-prefix list.
+It preserves the prefix's case and formats `Messages.MESSAGE_UNSUPPORTED_PREFIX` with the offending prefix and
+command name, for example `Unsupported prefix 'd/' for track.` If no unsupported prefix is found, the original field
+constraint message is used. An overload accepts a custom fallback for item-index errors. Both overloads retain the
+original exception as the direct cause. A slash embedded without a preceding whitespace boundary does not trigger
+this diagnostic. Customer-index and duplicate-prefix checks retain their earlier precedence.
 
 `EditCommandParser` preserves its field-validation order: name, phone, email, address, then postal code. Customer
 names are constrained by `Name` and do not permit slashes. Addresses retain their normal validation and preserve
 unsupported prefix-like text, including `Block 123 c/o Alice x/foo`.
 
-`UntagCommandParser` checks the index format, required `t/` prefix and duplicate `t/` prefixes before calling
-`ParserUtil.parseTag`. Only a tag-value failure is refined. The refinement stays in the command parser;
-`TagCommandParser` continues to use `ParserUtil.parseSingleTag` with its existing diagnostics.
+`TagCommandParser` and `UntagCommandParser` check the index format before calling `ParserUtil.parseSingleTag`
+with their format-error message and command word. This shared helper checks the required `t/` prefix and duplicate
+`t/` prefixes before calling `ParserUtil.parseTag`. Only a tag-value failure is passed to
+`ParserUtil.createFieldParseException`, so each command retains its own unsupported-prefix message.
 
 This is an error-message refinement rather than a global rejection rule. Addresses, item names, remarks and handover notes
 can contain unsupported prefix-like text, subject to their model constraints. Do not apply the helper to free-text
 values or scan the complete command before field validation: text such as `Pack w/o nuts x/2` can be intentional.
-`FindCommandParser` has a separate, stricter rule that rejects unsupported letter-based prefixes throughout the
-arguments, including text criteria. Its behaviour is unchanged by these contextual diagnostics.
+`FindCommandParser` uses the shared tokenizer too. It validates name, phone, email and postal-code queries using
+search-specific constraints, and validates tags, dates, methods and statuses through their existing validators.
+Each failed constrained value is passed to `ParserUtil.createFieldParseException` to refine its error. For example,
+`find c/123 x/foo` identifies `x/` while `find c/123` remains a valid postal-prefix search. Address, product and
+handover-note queries preserve unsupported prefix-like text. Only the failed field's value is inspected, so
+`find h/Leave w/o ringing x/foo s/invalid` still reports the status constraint rather than an error about the notes.
+Unsupported arguments in the preamble are rejected by the existing nonempty-preamble check.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/model/Model.java)
@@ -261,10 +274,16 @@ SearchCriteria criteria = new SearchCriteria(List.of(
         new TagCriterion(new Tag("regular"))));
 ```
 
-`TextContainsCriterion` supports name, phone, email and address fields. It strips surrounding query whitespace and
+`TextContainsCriterion` supports name, phone, email, address and handover-note fields. It strips surrounding query whitespace and
 matches the entire query as a case-insensitive substring using locale-independent case normalization. Internal spacing
-and punctuation remain significant. Queries must be nonblank, but may be fragments such as `8123` or `example.com`;
-they do not use the validation rules for creating complete contact fields. `TagCriterion` accepts a validated `Tag` and
+and punctuation remain significant. Queries must be nonblank. `FindCommandParser` validates contact fragments before
+creating their criteria: names allow English letters, spaces, apostrophes and hyphens; phones allow one to eight ASCII
+digits with no first-digit restriction; emails allow ASCII letters, digits and `+_.-@`, without requiring a complete
+address. These rules accept `Ali`, `9123`, `example.com`, punctuation-only name fragments such as `-`, and email
+fragments such as `tan@`. They do not use the validators for creating complete contact fields or normalize internal
+name spacing. A failed contact-query validation is refined with the unsupported-prefix helper; otherwise its
+search-specific constraint message is retained. Address and handover-note queries use the generic substring matcher
+without contact-query validation. `TagCriterion` accepts a validated `Tag` and
 uses its complete, case-insensitive equality rule.
 
 `FulfilmentDateCriterion` and `FulfilmentMethodCriterion` inspect the optional shared fields on `Preorder`, independently
@@ -274,10 +293,11 @@ matching fields do. Searches for handover notes do not inspect item remarks.
 
 The `f/` and `m/` values are parsed through `ParserUtil.parseFulfilmentDate` and `parseFulfilmentMethod`. Dates must be
 real calendar dates in `YYYY-MM-DD` format; methods are stripped and normalized with `Locale.ROOT` to `DELIVERY` or
-`COLLECTION`. Invalid values produce the corresponding model constraint message. The shared `PREFIX_HANDOVER_NOTES`
+`COLLECTION`. Invalid values are refined with the unsupported-prefix helper, falling back to the corresponding model
+constraint message when no extra unsupported prefix is present. The shared `PREFIX_HANDOVER_NOTES`
 constant defines `h/` for handover notes. These queries follow existing text search rules: surrounding whitespace is
-stripped, while internal spacing and punctuation remain significant. Blank values, repeated prefixes and unsupported
-prefixes retain the shared parser's error handling.
+stripped, while internal spacing and punctuation remain significant. Unsupported prefix-like text stays literal in
+handover-note queries. Blank values, repeated prefixes and nonempty preambles retain the existing parser checks.
 
 All `find` searches require a supported prefix, including `n/` for names. Unprefixed searches and bare preambles are
 rejected; `find Alice m/delivery` must use `find n/Alice m/delivery` instead.
@@ -285,7 +305,8 @@ rejected; `find Alice m/delivery` must use `find n/Alice m/delivery` instead.
 `PostalCodeCriterion` accepts a search prefix stored as a string. `FindCommandParser` strips surrounding whitespace
 from the `c/` value and validates it using `PostalCodeCriterion.isValidPrefix`, which accepts one to six ASCII digits
 (`[0-9]{1,6}`). Blank values produce the existing invalid-command-format error; other invalid values produce
-`PostalCodeCriterion.MESSAGE_CONSTRAINTS`. The criterion also validates its constructor argument and matches using
+`PostalCodeCriterion.MESSAGE_CONSTRAINTS` unless the failed value contains an extra unsupported prefix. For example,
+`find c/123 x/foo` reports `Unsupported prefix 'x/' for find.` The criterion also validates its constructor argument and matches using
 `postalCode.value.startsWith(postalCodePrefix)`. Leading zeros remain significant, and a six-digit query is an exact match.
 This criterion joins the same `SearchCriteria` collection as
 other conditions, so `find n/Alice c/53` requires both conditions and each new `find` replaces the previous criteria.
@@ -301,7 +322,7 @@ To add a search condition with different matching rules, implement `PersonCriter
 `SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
 CLI prefixes belong in the parser, not in the criteria. Add the prefix to `FindCommandParser`'s supported-prefix list
 and construct its criterion there. The parser accepts each supported prefix once, requires a prefix before the first
-value, rejects blank or unsupported parameters, and validates tags using `ParserUtil.parseTag` and postal search
+value, rejects blank values and nonempty preambles, and validates tags using `ParserUtil.parseTag` and postal search
 prefixes using `PostalCodeCriterion.isValidPrefix`.
 It recognizes prefixes at whitespace boundaries without collapsing internal query spacing, including `c/o` inside an
 address. `FindCommand` passes `SearchCriteria` directly to
@@ -316,7 +337,8 @@ in one criterion and one badge.
 Product names match completely after stripping surrounding whitespace, collapsing repeated spaces as `ItemName`
 does, and normalizing case with `Locale.ROOT`; punctuation remains significant. The criterion also retains the
 cleaned-up input name for display; matching, equality and hash codes use the normalized name. Status input is
-validated with `ParserUtil.parseItemStatus`.
+validated with `ParserUtil.parseItemStatus`; failures use the same contextual unsupported-prefix diagnostics as
+other constrained queries.
 
 The parser supplies `EnumSet.allOf(ItemStatus.class)` when `s/` is omitted. This is deliberate: an empty status set
 in `ItemCriterion` matches **nothing**, rather than meaning "any status". An absent product name accepts any product.
@@ -411,8 +433,8 @@ Constructors, `ParserUtil`, `JsonAdaptedPerson` and `JsonAdaptedTag` share the v
 earlier. Parsers may refine either field error into an [unsupported-prefix diagnostic](#prefix-boundaries-and-error-messages).
 `JsonAddressBookStorage` wraps adapter failures in `DataLoadingException`, rejecting the whole file.
 
-Text queries for names, phones, emails, addresses, products and handover notes have no stored-field length limit.
-Tag queries use `ParserUtil.parseTag` and share the 30-character limit.
+Text queries for names, emails, addresses, products and handover notes have no stored-field length limit.
+Phone queries accept one to eight digits. Tag queries use `ParserUtil.parseTag` and share the 30-character limit.
 
 Automated tests cover N−1/N/N+1 across model, parser, command and storage layers, including normalization, UTF-16
 counting and error precedence. Integration tests verify saving and reloading, and preservation of data, search
@@ -564,8 +586,8 @@ preorder's item count produces `The item index provided is invalid.`
 `DeleteItemCommandParser` parses `deleteitem INDEX i/ITEM_INDEX`. It validates the customer-index preamble,
 rejects duplicate `i/` prefixes, and parses the required item index using `ParserUtil.parseIndex`.
 A missing `i/` shows usage instructions. An unsupported prefix after the item-index value, such as
-`deleteitem 1 i/1 x/2`, shows `Unsupported prefix 'x/' for deleteitem.`. An item index that is empty, non-positive 
-or malformed shows `Item index must be a positive integer.` A positive item index beyond the preorder's item count is 
+`deleteitem 1 i/1 x/2`, shows `Unsupported prefix 'x/' for deleteitem.` An item index that is empty, non-positive
+or malformed shows `Item index must be a positive integer.` A positive item index beyond the preorder's item count is
 parsed and later produces `The item index provided is invalid.`
 `AddressBookParser` dispatches `deleteitem` to this parser.
 
@@ -1174,6 +1196,8 @@ Run each group below independently, starting with the sample data unless stated 
 ### Unsupported prefix diagnostics
 
 Use a disposable copy of the sample data and run `list`.
+For every rejected command below, confirm that customer data, saved data, active search criteria and displayed results
+remain unchanged.
 
 1. Try `deleteitem 1 i/1 x/2`.<br>
    Expected: `Unsupported prefix 'x/' for deleteitem.` No data changes.
@@ -1181,6 +1205,27 @@ Use a disposable copy of the sample data and run `list`.
    Expected: `Unsupported prefix 'c/' for edititem.` No data changes.
 1. Try `track s/pending d/Cake`.<br>
    Expected: `Unsupported prefix 'd/' for track.` The current criteria and displayed list remain unchanged.
+1. Run `find n/Alex`, then try each command below. Each error must identify `x/` for the specified command, while
+   Alex remains the only displayed customer.
+
+   | Input | Expected feedback |
+   |-------|-------------------|
+   | `add n/Prefix Test p/91234567 x/foo e/prefix@example.com a/Block 123 c/123456` | `Unsupported prefix 'x/' for add.` |
+   | `additem 1 d/Cake q/2 x/foo s/pending` | `Unsupported prefix 'x/' for additem.` |
+   | `additem 1 d/Cake q/2 s/pending x/foo` | `Unsupported prefix 'x/' for additem.` |
+   | `preorder 1 f/2026-12-20 x/foo` | `Unsupported prefix 'x/' for preorder.` |
+   | `preorder 1 m/delivery x/foo` | `Unsupported prefix 'x/' for preorder.` |
+   | `tag 1 t/VIP x/foo` | `Unsupported prefix 'x/' for tag.` |
+
+   Repeat the `add` test with `x/foo` after the name, email and postal code instead of the phone. All four constrained
+   fields must identify `x/`.
+1. Try each of `find n/Ali x/foo`, `find p/9123 x/foo`, `find e/example.com x/foo`, `find c/123 x/foo`,
+   `find t/VIP x/foo`, `find f/2026-12-20 x/foo`, `find m/delivery x/foo` and `find s/pending x/foo`.<br>
+   Expected: `Unsupported prefix 'x/' for find.` The active Alex search remains unchanged.
+1. Try `find h/Leave w/o ringing x/earlier s/pending y/later`.<br>
+   Expected: `Unsupported prefix 'y/' for find.` The literal notes must not mask the invalid status argument.
+1. Try `find n/Ali2`, `find p/91-23`, `find e/example!.com` and `find c/1234567`.<br>
+   Expected: The corresponding query constraint message, with no unsupported-prefix error.
 1. Run `find n/Alex`, then try `edit 1 p/91234567 x/foo`.<br>
    Expected: `Unsupported prefix 'x/' for edit.` Customer data, the displayed list and the active criteria are unchanged.
 1. Try `untag 1 t/VIP x/foo`.<br>
@@ -1202,6 +1247,21 @@ Use a disposable copy of the sample data and run `list`.
    Expected: The handover notes are exactly `Leave w/o ringing x/2`.
 1. Run `edititem 1 i/1 r/Less sugar s/prepared`.<br>
    Expected: The remark is `Less sugar` and the status is `PREPARED`; the supported `s/` starts a separate field.
+1. Run `add n/Prefix Test p/91234567 e/prefix@example.com a/Block 123 c/o Prefix Test x/foo c/123456`, followed by
+   `find n/Pre p/9123 e/example.com a/Block 123 c/o Prefix Test x/foo`.<br>
+   Expected: Only `Prefix Test` is displayed. The address keeps both `c/o` and `x/foo`; contact fragments remain valid.
+1. Run `additem 1 d/Cake w/ candles q/2 s/pending r/Pack w/o nuts x/2`, then
+   `preorder 1 h/Leave w/o ringing x/2 f/2026-12-20 m/delivery`, then `tag 1 t/VIP`.<br>
+   Expected: The item name, remark and handover notes keep their literal prefix-like text. Date, method, quantity,
+   status and tag are stored as separate fields.
+1. Run `find d/Cake w/ candles h/Leave w/o ringing x/2`, then
+   `find n/Pre p/9123 e/example.com c/123 t/VIP f/2026-12-20 m/delivery s/pending`.<br>
+   Expected: Both searches show only `Prefix Test`.
+1. Restart LeBake, run `find n/Prefix`, and inspect the customer.<br>
+   Expected: All fields, including the literal address, item name, remark and notes, are preserved after reloading.
+1. Run `preorder 1 f/ m/ h/`.<br>
+   Expected: Date, method and handover notes are cleared. The item, its remark, contact details and tag remain, and
+   `Prefix Test` remains displayed under the active name search.
 
 ### Adding and editing preorder items
 

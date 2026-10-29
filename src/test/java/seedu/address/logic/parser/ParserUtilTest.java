@@ -1,7 +1,9 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_ITEM_INDEX;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -13,6 +15,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
@@ -97,6 +100,46 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void createFieldParseException_unsupportedPrefix_usesCommandWordAndPreservesCause() {
+        ParseException cause = new ParseException(ItemStatus.MESSAGE_CONSTRAINTS);
+        for (String commandWord : List.of("track", "find")) {
+            ParseException actual = ParserUtil.createFieldParseException("invalid s/pending X/foo y/bar", cause,
+                    commandWord, CliSyntax.PREFIX_STATUS);
+            assertEquals("Unsupported prefix 'X/' for " + commandWord + ".", actual.getMessage());
+            assertSame(cause, actual.getCause());
+        }
+    }
+
+    @Test
+    public void createFieldParseException_noUnsupportedPrefix_keepsOriginalMessageAndCause() {
+        ParseException cause = new ParseException(ItemStatus.MESSAGE_CONSTRAINTS);
+        for (String value : List.of("done", "donex/foo", "done s/pending")) {
+            ParseException actual = ParserUtil.createFieldParseException(value, cause, "track",
+                    CliSyntax.PREFIX_STATUS);
+            assertEquals(ItemStatus.MESSAGE_CONSTRAINTS, actual.getMessage());
+            assertSame(cause, actual.getCause());
+        }
+    }
+
+    @Test
+    public void createFieldParseException_customFallback_usesFallbackAndPreservesCause() {
+        ParseException cause = new ParseException(MESSAGE_INVALID_INDEX);
+        ParseException actual = ParserUtil.createFieldParseException("0", cause, "deleteitem",
+                MESSAGE_INVALID_ITEM_INDEX, CliSyntax.PREFIX_ITEM_INDEX);
+        assertEquals(MESSAGE_INVALID_ITEM_INDEX, actual.getMessage());
+        assertSame(cause, actual.getCause());
+    }
+
+    @Test
+    public void createFieldParseException_customFallbackWithUnsupportedPrefix_namesPrefix() {
+        ParseException cause = new ParseException(MESSAGE_INVALID_INDEX);
+        ParseException actual = ParserUtil.createFieldParseException("1 x/foo", cause, "deleteitem",
+                MESSAGE_INVALID_ITEM_INDEX, CliSyntax.PREFIX_ITEM_INDEX);
+        assertEquals("Unsupported prefix 'x/' for deleteitem.", actual.getMessage());
+        assertSame(cause, actual.getCause());
+    }
+
+    @Test
     public void parseFulfilmentDate_validAndInvalidCalendarDates() throws Exception {
         assertEquals(new FulfilmentDate("2024-02-29"), ParserUtil.parseFulfilmentDate(" 2024-02-29 "));
         for (String date : List.of("2026-02-29", "2026-02-30", "2026-1-05", "2026/12/20", "")) {
@@ -125,8 +168,47 @@ public class ParserUtilTest {
     @Test
     public void parseSingleTag_missingPrefix_usesSuppliedMessage() {
         ArgumentMultimap args = ArgumentTokenizer.tokenize("1", CliSyntax.PREFIX_TAG);
-        assertThrows(ParseException.class, "Expected t/TAG", ()
-            -> ParserUtil.parseSingleTag(args, "Expected t/TAG"));
+        for (String commandWord : List.of("tag", "untag")) {
+            assertThrows(ParseException.class, "Expected t/TAG", ()
+                -> ParserUtil.parseSingleTag(args, "Expected t/TAG", commandWord));
+        }
+    }
+
+    @Test
+    public void parseSingleTag_validTag_returnsTag() throws Exception {
+        ArgumentMultimap args = ArgumentTokenizer.tokenize("1 t/  VIP123  ", CliSyntax.PREFIX_TAG);
+        for (String commandWord : List.of("tag", "untag")) {
+            assertEquals(new Tag("VIP123"), ParserUtil.parseSingleTag(args, "Expected t/TAG", commandWord));
+        }
+    }
+
+    @Test
+    public void parseSingleTag_duplicatePrefixes_reportsDuplicateBeforeTagError() {
+        ArgumentMultimap args = ArgumentTokenizer.tokenize("1 t/VIP t/friends x/foo", CliSyntax.PREFIX_TAG);
+        for (String commandWord : List.of("tag", "untag")) {
+            assertThrows(ParseException.class, Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_TAG), ()
+                -> ParserUtil.parseSingleTag(args, "Expected t/TAG", commandWord));
+        }
+    }
+
+    @Test
+    public void parseSingleTag_invalidTag_keepsConstraintMessage() {
+        for (String commandWord : List.of("tag", "untag")) {
+            for (String value : List.of("", "close friends", "VIP!", "VIPx/foo")) {
+                ArgumentMultimap args = ArgumentTokenizer.tokenize("1 t/" + value, CliSyntax.PREFIX_TAG);
+                assertThrows(ParseException.class, Tag.MESSAGE_CONSTRAINTS, ()
+                    -> ParserUtil.parseSingleTag(args, "Expected t/TAG", commandWord));
+            }
+        }
+    }
+
+    @Test
+    public void parseSingleTag_unsupportedPrefix_usesCommandWord() {
+        ArgumentMultimap args = ArgumentTokenizer.tokenize("1 t/VIP x/foo p/91234567", CliSyntax.PREFIX_TAG);
+        for (String commandWord : List.of("tag", "untag")) {
+            assertThrows(ParseException.class, "Unsupported prefix 'x/' for " + commandWord + ".", ()
+                -> ParserUtil.parseSingleTag(args, "Expected t/TAG", commandWord));
+        }
     }
 
     @Test

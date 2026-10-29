@@ -25,8 +25,7 @@ public class TagCommandParser implements Parser<TagCommand> {
 
         String formatErrorMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, TagCommand.MESSAGE_USAGE);
         Index index = ParserUtil.parsePreambleIndex(argMultimap, formatErrorMessage);
-        Tag tag = ParserUtil.parseSingleTag(argMultimap, formatErrorMessage);
-
+        Tag tag = ParserUtil.parseSingleTag(argMultimap, formatErrorMessage, TagCommand.COMMAND_WORD);
         return new TagCommand(index, tag);
     }
 

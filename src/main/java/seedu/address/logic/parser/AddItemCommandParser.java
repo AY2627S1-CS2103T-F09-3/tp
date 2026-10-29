@@ -54,10 +54,27 @@ public class AddItemCommandParser implements Parser<AddItemCommand> {
         assert arePrefixesPresent(argMultimap, PREFIX_DETAILS, PREFIX_QUANTITY, PREFIX_STATUS)
                 : "Required prefixes must be checked before parsing an item";
         ItemName itemName = ParserUtil.parseItemName(argMultimap.getValue(PREFIX_DETAILS).get());
-        Quantity quantity = ParserUtil.parseQuantity(argMultimap.getValue(PREFIX_QUANTITY).get());
-        ItemStatus status = ParserUtil.parseItemStatus(argMultimap.getValue(PREFIX_STATUS).get());
+        String quantityValue = argMultimap.getValue(PREFIX_QUANTITY).get();
+        Quantity quantity;
+        try {
+            quantity = ParserUtil.parseQuantity(quantityValue);
+        } catch (ParseException pe) {
+            throw createFieldParseException(quantityValue, pe);
+        }
+        String statusValue = argMultimap.getValue(PREFIX_STATUS).get();
+        ItemStatus status;
+        try {
+            status = ParserUtil.parseItemStatus(statusValue);
+        } catch (ParseException pe) {
+            throw createFieldParseException(statusValue, pe);
+        }
         Optional<Remark> remark = parseRemark(argMultimap);
         return new Item(itemName, Optional.of(quantity), status, remark);
+    }
+
+    private ParseException createFieldParseException(String value, ParseException cause) {
+        return ParserUtil.createFieldParseException(value, cause, AddItemCommand.COMMAND_WORD,
+                PREFIX_DETAILS, PREFIX_QUANTITY, PREFIX_STATUS, PREFIX_REMARK);
     }
 
     /**
