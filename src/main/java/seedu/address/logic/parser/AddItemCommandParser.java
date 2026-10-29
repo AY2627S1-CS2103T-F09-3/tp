@@ -69,7 +69,7 @@ public class AddItemCommandParser implements Parser<AddItemCommand> {
             throw createFieldParseException(statusValue, pe);
         }
         Optional<Remark> remark = parseRemark(argMultimap);
-        return new Item(itemName, Optional.of(quantity), status, remark);
+        return new Item(itemName, quantity, status, remark);
     }
 
     private ParseException createFieldParseException(String value, ParseException cause) {

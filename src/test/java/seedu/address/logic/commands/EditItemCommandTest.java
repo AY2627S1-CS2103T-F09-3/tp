@@ -208,18 +208,21 @@ public class EditItemCommandTest {
     }
 
     @Test
-    public void execute_migratedItem_preservesMissingQuantityUntilSupplied() throws Exception {
-        Item migrated = new ItemBuilder().withoutQuantity().withRemark("Less sugar").build();
-        Model model = createModel(new PersonBuilder(ALICE).withPreorder(migrated).build());
+    public void execute_quantityOmitted_keepsQuantityUntilSupplied() throws Exception {
+        Item original = new ItemBuilder().withQuantity("3").withRemark("Less sugar").build();
+        Model model = createModel(new PersonBuilder(ALICE).withPreorder(original).build());
         CommandResult result = command(1, null, COMPLETED).execute(model);
         assertEquals(new CommandResult(
-                "Edited item 1 for Alice Pauline: Pineapple Tarts (quantity needed, COMPLETED)"), result);
-        Item completed = new ItemBuilder(migrated).withStatus(COMPLETED).build();
+                "Edited item 1 for Alice Pauline: Pineapple Tarts (quantity: 3, COMPLETED)"), result);
+        Item completed = new ItemBuilder(original).withStatus(COMPLETED).build();
         assertEquals(new PersonBuilder(ALICE).withPreorder(completed).build(),
                 model.getFilteredPersonList().getFirst());
         EditItemDescriptor descriptor = new EditItemDescriptor();
         descriptor.setQuantity(new Quantity("1"));
-        new EditItemCommand(Index.fromOneBased(1), Index.fromOneBased(1), descriptor).execute(model);
+        CommandResult quantityResult =
+                new EditItemCommand(Index.fromOneBased(1), Index.fromOneBased(1), descriptor).execute(model);
+        assertEquals(new CommandResult(
+                "Edited item 1 for Alice Pauline: Pineapple Tarts (quantity: 1, COMPLETED)"), quantityResult);
         Person expected = new PersonBuilder(ALICE)
                 .withPreorder(new ItemBuilder(completed).withQuantity("1").build()).build();
         assertEquals(expected,
@@ -268,7 +271,7 @@ public class EditItemCommandTest {
         Model model = createModel(ORDERED_ALICE);
         Person expected = new PersonBuilder(ALICE).withPreorder(expectedName, expectedStatus).build();
         assertEquals(new CommandResult(String.format(EditItemCommand.MESSAGE_EDIT_ITEM_SUCCESS,
-                1, ALICE.getName(), expectedName, "quantity: 1", expectedStatus)),
+                1, ALICE.getName(), expectedName, "1", expectedStatus)),
                 command(1, name, status).execute(model));
         assertEquals(List.of(expected), model.getAddressBook().getPersonList());
     }
@@ -303,7 +306,7 @@ public class EditItemCommandTest {
     private void assertFulfilmentPreserved(String postalCode, Optional<FulfilmentDate> date,
             Optional<FulfilmentMethod> method, Optional<HandoverNotes> notes) throws Exception {
         Item first = new ItemBuilder().build();
-        Item target = new ItemBuilder().withoutQuantity().withRemark("Less sugar").build();
+        Item target = new ItemBuilder().withQuantity("4").withRemark("Less sugar").build();
         Preorder preorder = new Preorder(List.of(first, target), date, method, notes);
         Person original = new PersonBuilder(ALICE).withPostalCode(postalCode).withPreorder(preorder).build();
         Model model = createModel(BENSON, original);
@@ -312,7 +315,7 @@ public class EditItemCommandTest {
         descriptor.setStatus(COMPLETED);
         descriptor.setRemark(Optional.empty());
         new EditItemCommand(Index.fromOneBased(1), Index.fromOneBased(2), descriptor).execute(model);
-        Item updated = new Item(target.getName(), Optional.empty(), COMPLETED, Optional.empty());
+        Item updated = new Item(target.getName(), target.getQuantity(), COMPLETED, Optional.empty());
         Person expected = new PersonBuilder(original)
                 .withPreorder(new Preorder(List.of(first, updated), date, method, notes)).build();
         assertEquals(List.of(BENSON, expected), model.getAddressBook().getPersonList());
