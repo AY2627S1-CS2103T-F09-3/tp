@@ -454,14 +454,12 @@ the capitalization you typed, with surrounding whitespace removed. Product match
 
 * The selected product and statuses. Without `s/`, **all statuses**, including completed items, contribute.
 * The number of matching customers and matching item entries. Repeated entries count separately.
-* The total quantity of matching items. If migrated items have no quantity, the panel instead shows the
-  **known quantity** subtotal and how many matching items still need a quantity. This subtotal is incomplete.
+* The total quantity of matching items.
 * Special requests from matching items, each labelled with the customer name and original item number.
 
 For example, two matching entries with quantities 2 and 3 contribute two items and a total quantity of 5.
-An additional entry without a quantity raises the item count to three, leaves the known quantity at 5,
-and is reported as one item needing a quantity. Only customers in the current results contribute;
-customer fields such as `n/` and `t/` therefore also restrict the summary.
+Only customers in the current results contribute; customer fields such as `n/` and `t/` therefore also
+restrict the summary.
 
 Matching items on customer cards are shown in a yellow box while retaining their
 status colours. This applies to product/status searches and `track`. All other items remain visible,
@@ -514,8 +512,8 @@ Format: `edititem INDEX i/ITEM_INDEX [d/NAME] [q/QUANTITY] [s/STATUS] [r/REMARK]
 * `INDEX` identifies a customer in the currently displayed list. `ITEM_INDEX` identifies an item by the number on that
   customer's card. Both must be positive integers.
 * At least one edit field must be supplied. Names, quantities, statuses and non-empty remarks follow the rules for `additem`.
-* Omitted fields retain their values. An empty `r/` **clears** the remark; omitting `r/` preserves it.
-* An item migrated from v1.3 keeps its missing quantity until a valid `q/QUANTITY` is supplied.
+* Omitted fields retain their values, so omitting `q/` keeps the item's quantity. An empty `r/` **clears** the remark;
+  omitting `r/` preserves it.
 * Supplying an existing value is accepted and reports success, even if the item does not change.
 * Other items, contact details and tags are preserved. The current filter remains active. Changing an item's status can
   remove its customer from a tracked view, so check the displayed customer indices before the next command.
@@ -528,9 +526,6 @@ Examples:
 
 For Alice's second item, Cake, the success message could be:
 `Edited item 2 for Alice: Cake (quantity: 3, PREPARED)`.
-If its quantity is still missing, the message says so:
-`Edited item 2 for Alice: Cake (quantity needed, PREPARED)`.
-The card continues to display `Qty needed` for that item.
 
 | Situation | Message |
 |-----------|---------|
@@ -568,7 +563,7 @@ An unsupported prefix after the status, such as `track s/pending d/Cake`, displa
 `Unsupported prefix 'd/' for track.` Remove the extra parameter or use `find s/pending d/Cake` to combine both criteria.
 An ordinary invalid status, such as `track s/done`, still displays the status constraint message.
 
-Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count, and an item with a missing quantity still counts as one item. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
+Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
 
 Each customer card shows the customer's number on the left, then their name and tags, their phone number and email on one line, and their address with its postal code, for example `Postal 389030`. A customer without a preorder shows `No preorder`. Long names, tags and addresses wrap onto more lines, so they are always shown in full.
 
@@ -581,8 +576,6 @@ Status | Meaning | Badge colour
 `PENDING` | Recorded but not ready | Amber
 `PREPARED` | Ready for collection or delivery | Blue
 `COMPLETED` | Collected or delivered | Green outline with a tick
-
-After supplying the required postal codes in your data file, each preorder saved by LeBake v1.3 appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Qty needed` with a warning icon instead of a quantity.
 
 ### Deleting a preorder item: `deleteitem`
 
@@ -604,7 +597,7 @@ For example, deleting Alex Yeoh's second sample item shows:
 Deleted item 2 for Alex Yeoh: Almond Cookies (quantity: 1, PREPARED)
 ```
 
-The message uses the item's number before deletion. For a migrated item with no recorded quantity, the quantity value is blank, for example `(quantity: , PENDING)`.
+The message uses the item's number before deletion.
 
 | Situation | Message |
 |-----------|---------|
@@ -730,6 +723,8 @@ LeBake automatically saves data after every successful command. You do not need 
 LeBake data is saved automatically as a JSON file `data/addressbook.json`, inside the folder that the terminal is in when you start LeBake. If you start it as described in [Quick start](#quick-start), that is the home folder with the JAR file. Starting LeBake from another folder, for example with `java -jar C:\LeBake\LeBake.jar` from your desktop, makes a new `data` folder there with the sample data, and your saved data in the home folder is not loaded. Advanced users are welcome to update data directly by editing that data file.
 
 Postal codes are compulsory for every customer, including records saved by older versions. Each customer must have a `postalCode` containing exactly six digits. Null, missing, blank or malformed postal codes prevent the file from loading. Back up older files and supply the correct postal codes before launching LeBake.
+
+Quantities are compulsory for every item, in the same way. Each item must have a `quantity` that is a whole number from 1 to 999, the same as `q/` in `additem`. Null, missing, blank or invalid quantities prevent the file from loading. Preorders saved by LeBake v1.3, which used a single `preorder` field with `details` and `status` and no quantity, are no longer converted. A file that still has such a field cannot be loaded. Back up the file and move each such preorder into a `preorders` list, with a quantity for each item, before launching LeBake.
 
 Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. Item names are normalized in the same way, so items saved by earlier versions with repeated spaces count as the same product. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
 

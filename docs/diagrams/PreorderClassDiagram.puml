@@ -31,7 +31,7 @@ Preorder --> "0..1" FulfilmentMethod
 Preorder *--> "0..1" HandoverNotes
 Preorder *--> "*" Item
 Item *--> "1" ItemName
-Item *--> "0..1" Quantity
+Item *--> "1" Quantity
 Item --> "1" ItemStatus
 Item *--> "0..1" Remark
 
