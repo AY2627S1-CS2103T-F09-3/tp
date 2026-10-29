@@ -604,6 +604,75 @@ name, quantity and status; missing quantities are displayed as blank values.
 The replacement person preserves the customer's postal code. `Preorder.withItems` preserves the fulfilment date,
 method and handover notes, including when the final item is removed. Missing optional fields remain absent.
 
+### Setting fulfilment details: `preorder`
+
+`preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]` sets when and how a customer's preorder is handed over.
+The three details belong to the whole `Preorder`, not to its items (see [Preorders and items](#preorders-and-items)).
+
+**Parsing.** `PreorderCommandParser` parses the index with `ParserUtil#parsePreambleIndex`, rejects repeated
+prefixes, and fills an `EditFulfilmentDescriptor`. For each detail, the descriptor records whether its prefix was
+supplied and, if so, the new value:
+
+* a prefix with a value, such as `f/2026-12-20`, sets that detail. The value is checked by
+  `ParserUtil#parseFulfilmentDate`, `#parseFulfilmentMethod` (case-insensitive) or `#parseHandoverNotes`.
+* a prefix with no value, such as `h/`, clears that detail.
+* a prefix that is not supplied leaves that detail unchanged.
+
+If no prefix is supplied, the parser rejects the command, so a command that changes nothing never reaches the model.
+An invalid date or method that contains another prefix, such as `m/delivery x/1`, is reported as an unsupported
+prefix (see [Prefix boundaries and error messages](#prefix-boundaries-and-error-messages)). Handover notes are free
+text, so they keep such text.
+
+**Execution.** The sequence diagram below shows `PreorderCommand#execute` for `preorder 1 m/delivery`. Parsing is
+the same as for `delete` (see the [Logic component](#logic-component)), so the diagram starts at `execute(m)`.
+
+<puml src="diagrams/PreorderSequenceDiagram.puml" alt="Interactions inside PreorderCommand for the `preorder 1 m/delivery` command" />
+
+1. The command gets the customer at `INDEX` in the displayed list, or throws a `CommandException` if the index is
+   out of range.
+1. If the customer has no preorder and the command only clears details, it returns
+   `CUSTOMER has no preorder, so there is nothing to clear. No changes made.` and the model is not changed.
+1. Otherwise, it starts from the customer's preorder, or from an empty `Preorder` if they have none.
+   `createUpdatedPreorder` builds a new `Preorder` with the same items, taking each detail from the descriptor if
+   it was supplied and from the current preorder if not.
+1. `createPersonWithPreorder` builds a new `Person` with the same contact details, postal code and tags, and the
+   updated preorder. `Model#setPerson` replaces the customer. The active search is kept.
+1. The success message shows all three details through `Messages#formatFulfilmentDetails`, using `Not scheduled`,
+   `Not set` and `None` for missing ones. If the supplied date is before today, a second line adds
+   `Note: DATE is in the past.`
+
+#### Design considerations
+
+**Aspect: how to clear a detail**
+
+* **Alternative 1 (current choice):** an empty prefix clears that detail, e.g. `preorder 1 h/`.
+  * Pros: One command both sets and clears details, so there is one less command to learn. It works the same way
+    as removing a remark with an empty `r/` in `edititem`.
+  * Cons: The descriptor has to tell "not supplied" apart from "supplied but empty", which needs a flag per detail.
+* **Alternative 2:** a separate `clearpreorder INDEX` command.
+  * Pros: Clearing is explicit.
+  * Cons: Another command word. It clears all three details at once, so clearing only the notes still needs
+    another way.
+
+**Aspect: dates in the past**
+
+* **Alternative 1 (current choice):** accept the date and add a note.
+  * Pros: A baker may record an order that has already been handed over, or fix an old record. Blocking these
+    would be overzealous validation.
+  * Cons: A mistyped year is saved; the baker has to notice the note.
+* **Alternative 2:** reject past dates.
+  * Pros: Catches some typing mistakes.
+  * Cons: Blocks legitimate records, and depends on the computer's clock being right.
+
+**Aspect: what `preorder` does for a customer without a preorder**
+
+* **Alternative 1 (current choice):** create a preorder with no items.
+  * Pros: The baker can record the date and method first and add items later, in any order.
+  * Cons: An empty preorder must be handled by `track`, `find`, `sort date` and the summaries.
+* **Alternative 2:** require an item first.
+  * Pros: Every preorder has at least one item.
+  * Cons: The baker has to enter the order in a fixed sequence.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
