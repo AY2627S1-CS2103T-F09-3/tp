@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
@@ -132,13 +133,13 @@ public class PersonCardTest {
     }
 
     @Test
-    public void constructor_itemWithoutQuantity_showsQuantityNeeded() throws Exception {
-        Item cakes = new ItemBuilder().withName("2 chocolate cakes").withoutQuantity().build();
+    public void constructor_item_showsQuantityWithoutIcon() throws Exception {
+        Item cakes = new ItemBuilder().withName("2 chocolate cakes").withQuantity("3").build();
         GridPane row = getRows(createCard(new PersonBuilder(ALICE).withPreorder(cakes).build())).get(0);
-        Label quantity = (Label) row.lookup("." + PersonCard.MISSING_QUANTITY_STYLE_CLASS);
+        Label quantity = (Label) row.lookup("." + PersonCard.QUANTITY_STYLE_CLASS);
 
-        assertEquals(PreorderDisplay.MISSING_QUANTITY_TEXT, quantity.getText());
-        assertTrue(quantity.getGraphic() instanceof SVGPath);
+        assertEquals("Qty 3", quantity.getText());
+        assertNull(quantity.getGraphic());
     }
 
     @Test
@@ -185,9 +186,9 @@ public class PersonCardTest {
     }
 
     @Test
-    public void prefHeight_tagLongerThanLine_sameAsContent() throws Exception {
+    public void prefHeight_maximumLengthTag_sameAsContent() throws Exception {
         assertCardNotTallerThanContent(new PersonBuilder(ALICE)
-                .withTags("Christmas2026CorporateOrdersWithSpecialDietaryRequirementsAndPriorityDelivery", "vip")
+                .withTags("W".repeat(30), "vip")
                 .build(), WIDE_CARD_WIDTH);
     }
 

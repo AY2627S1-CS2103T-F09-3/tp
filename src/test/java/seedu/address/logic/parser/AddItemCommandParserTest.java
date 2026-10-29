@@ -58,10 +58,17 @@ public class AddItemCommandParserTest {
 
     @Test
     public void parse_missingOrInvalidCustomerIndex_failure() {
-        for (String index : new String[]{"", "0", "-1", "abc", "1.5", "2147483648", "1 extra"}) {
+        for (String index : new String[]{"", "0", "-1", "abc", "1.5", "1 extra"}) {
             assertParseFailure(parser, index + VALID_FIELDS, USAGE);
         }
         assertParseFailure(parser, "", USAGE);
+    }
+
+    @Test
+    public void parse_overflowingCustomerIndex_success() {
+        Item item = new ItemBuilder().withName("Cake").withQuantity("2").build();
+        assertParseSuccess(parser, "2147483648" + VALID_FIELDS,
+                new AddItemCommand(Index.fromZeroBased(Integer.MAX_VALUE), item));
     }
 
     @Test
@@ -108,6 +115,64 @@ public class AddItemCommandParserTest {
         for (String status : new String[]{"", "   ", "DONE", "pending prepared"}) {
             assertParseFailure(parser, "1 d/Cake q/2 s/" + status, ItemStatus.MESSAGE_CONSTRAINTS);
         }
+    }
+
+    @Test
+    public void parse_unsupportedPrefixesInConstrainedFields_namesPrefix() {
+        for (String prefix : new String[]{"x/", "c/", "i/", "Q/", "status/"}) {
+            String message = "Unsupported prefix '" + prefix + "' for additem.";
+            assertParseFailure(parser, "1 d/Cake q/2 " + prefix + "foo s/pending", message);
+            assertParseFailure(parser, "1 d/Cake q/2 s/pending " + prefix + "foo", message);
+        }
+        assertParseFailure(parser, "1 d/Cake q/2 x/ s/pending", "Unsupported prefix 'x/' for additem.");
+        assertParseFailure(parser, "1 d/Cake q/2 s/pending x/", "Unsupported prefix 'x/' for additem.");
+        assertParseFailure(parser, "1 d/Cake q/2 x/foo c/012345 s/pending",
+                "Unsupported prefix 'x/' for additem.");
+        assertParseFailure(parser, "1 d/Cake q/2 s/pending x/foo c/012345",
+                "Unsupported prefix 'x/' for additem.");
+    }
+
+    @Test
+    public void parse_unsupportedPrefixAfterWhitespace_namesPrefix() {
+        for (String separator : new String[]{"\t", "\n", "\r\n", " \t "}) {
+            assertParseFailure(parser, "1 d/Cake q/2" + separator + "x/foo s/pending",
+                    "Unsupported prefix 'x/' for additem.");
+            assertParseFailure(parser, "1 d/Cake q/2 s/pending" + separator + "x/foo",
+                    "Unsupported prefix 'x/' for additem.");
+        }
+    }
+
+    @Test
+    public void parse_invalidValuesWithoutUnsupportedPrefixes_keepsConstraintMessages() {
+        for (String suffix : new String[]{"x/foo", " x /foo", " #04/08", " https://example.com/path"}) {
+            assertParseFailure(parser, "1 d/Cake q/2" + suffix + " s/pending", Quantity.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, "1 d/Cake q/2 s/pending" + suffix, ItemStatus.MESSAGE_CONSTRAINTS);
+        }
+        assertParseFailure(parser, "1 d/Cake q/x/foo s/pending", Quantity.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 d/Cake q/2 s/x/foo", ItemStatus.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_slashesInNameOrRemark_failure() {
+        assertParseFailure(parser, "1 d/Cake w/o nuts q/2 s/pending", ItemName.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 d/Cake q/2 s/pending r/Pack w/o nuts", Remark.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_invalidFreeTextWithPrefixLikeText_keepsConstraintMessages() {
+        assertParseFailure(parser, "1 d/Cake\nx/foo q/2 s/pending", ItemName.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 d/Cake q/2 s/pending r/Pack\nx/foo", Remark.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_unsupportedPrefixWithEarlierErrors_preservesValidationOrder() {
+        assertParseFailure(parser, "0 d/Cake q/2 x/foo s/pending", USAGE);
+        assertParseFailure(parser, "1 x/foo d/Cake q/2 s/pending", USAGE);
+        assertParseFailure(parser, "1 q/2 x/foo s/pending", USAGE);
+        assertParseFailure(parser, "1 d/Cake q/2 x/foo q/3 s/pending",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_QUANTITY));
+        assertParseFailure(parser, "1 d/ q/2 x/foo s/pending", ItemName.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 d/Cake q/0 s/pending x/foo", Quantity.MESSAGE_CONSTRAINTS);
     }
 
     @Test

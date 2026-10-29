@@ -36,6 +36,14 @@ public class JsonAdaptedPreorderTest {
     }
 
     @Test
+    public void toModelType_legacySlashHandoverNotes_preservesValue() throws Exception {
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), VALID_DATE, VALID_METHOD,
+                "Leave w/o ringing");
+
+        assertEquals("Leave w/o ringing", preorder.toModelType().getHandoverNotes().orElseThrow().value);
+    }
+
+    @Test
     public void toModelType_invalidDate_throwsIllegalValueException() {
         JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), "2026-02-30", VALID_METHOD,
                 VALID_HANDOVER_NOTES);

@@ -8,6 +8,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.UntagCommand;
 import seedu.address.model.tag.Tag;
@@ -41,8 +42,13 @@ public class UntagCommandParserTest {
         assertParseFailure(parser, "-1 t/friends", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, "a t/friends", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, "1.5 t/friends", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, "2147483648 t/friends", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, "1 extra t/friends", MESSAGE_INVALID_FORMAT);
+    }
+
+    @Test
+    public void parse_overflowingIndex_success() {
+        assertParseSuccess(parser, "2147483648 t/friends",
+                new UntagCommand(Index.fromZeroBased(Integer.MAX_VALUE), new Tag("friends")));
     }
 
     @Test
@@ -95,6 +101,25 @@ public class UntagCommandParserTest {
         String duplicateMessage = Messages.getErrorMessageForDuplicatePrefixes(PREFIX_TAG);
         assertParseFailure(parser, "1 t/VIP x/foo t/friends", duplicateMessage);
         assertParseFailure(parser, "1 t/VIP t/friends x/foo", duplicateMessage);
+    }
+
+    @Test
+    public void parse_tagLengthBoundaries_checksTrimmedLength() {
+        for (int length : new int[]{29, 30}) {
+            String tag = "A".repeat(length);
+            assertParseSuccess(parser, "1 t/  " + tag + "  ",
+                    new UntagCommand(INDEX_FIRST_PERSON, new Tag(tag)));
+        }
+        assertParseFailure(parser, "1 t/  " + "A".repeat(31) + "  ", Tag.MESSAGE_LENGTH_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_lengthBoundariesWithUnsupportedPrefixes_namesPrefix() {
+        String suffix = " x/foo";
+        for (int length : new int[]{29, 30, 31}) {
+            String tag = "A".repeat(length - suffix.length()) + suffix;
+            assertParseFailure(parser, "1 t/" + tag, "Unsupported prefix 'x/' for untag.");
+        }
     }
 
     @Test

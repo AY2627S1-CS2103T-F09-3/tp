@@ -2,7 +2,6 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.Messages.MESSAGE_UNSUPPORTED_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 
 import java.util.Optional;
@@ -41,10 +40,7 @@ public class TrackCommandParser implements Parser<TrackCommand> {
             ItemStatus status = ParserUtil.parseItemStatus(value);
             return new TrackCommand(Optional.of(status));
         } catch (ParseException pe) {
-            String message = ParserUtil.findUnsupportedPrefix(value, PREFIX_STATUS)
-                    .map(prefix -> String.format(MESSAGE_UNSUPPORTED_PREFIX, prefix, TrackCommand.COMMAND_WORD))
-                    .orElse(pe.getMessage());
-            throw new ParseException(message, pe);
+            throw ParserUtil.createFieldParseException(value, pe, TrackCommand.COMMAND_WORD, PREFIX_STATUS);
         }
     }
 }

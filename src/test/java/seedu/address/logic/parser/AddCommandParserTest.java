@@ -44,6 +44,9 @@ import seedu.address.model.person.PostalCode;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddCommandParserTest {
+    private static final String VALID_FIELDS = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
+            + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB;
+
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
@@ -67,6 +70,47 @@ public class AddCommandParserTest {
 
         assertParseSuccess(parser, NAME_DESC_MARY_JANE_WITH_EXTRA_SPACES + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB, new AddCommand(expectedPerson));
+    }
+
+    @Test
+    public void parse_nameLengthBoundaries_checksNormalizedLength() {
+        for (int length : new int[]{99, 100}) {
+            String normalizedName = "A".repeat(length - 2) + " B";
+            Person expectedPerson = new PersonBuilder(BOB).withName(normalizedName)
+                    .withPostalCode("654321").withTags().build();
+            assertParseSuccess(parser, " n/  " + "A".repeat(length - 2) + "   B  "
+                    + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB,
+                    new AddCommand(expectedPerson));
+        }
+        assertParseFailure(parser, " n/  " + "A".repeat(99) + "   B  "
+                + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB,
+                Name.MESSAGE_LENGTH_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_emailLengthBoundaries_checksTrimmedLength() {
+        for (int length : new int[]{253, 254}) {
+            String email = createEmailWithLength(length);
+            Person expectedPerson = new PersonBuilder(BOB).withEmail(email)
+                    .withPostalCode("654321").withTags().build();
+            assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " e/  " + email + "  "
+                    + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB, new AddCommand(expectedPerson));
+        }
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " e/  " + createEmailWithLength(255) + "  "
+                + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB, Email.MESSAGE_LENGTH_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_addressLengthBoundaries_checksTrimmedLength() {
+        for (int length : new int[]{299, 300}) {
+            String address = "A".repeat(length);
+            Person expectedPerson = new PersonBuilder(BOB).withAddress(address)
+                    .withPostalCode("654321").withTags().build();
+            assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + " a/  " + address + "  "
+                    + POSTAL_CODE_DESC_BOB, new AddCommand(expectedPerson));
+        }
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + " a/  " + "A".repeat(301) + "  "
+                + POSTAL_CODE_DESC_BOB, Address.MESSAGE_LENGTH_CONSTRAINTS);
     }
 
     @Test
@@ -157,6 +201,80 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_unsupportedPrefixesInConstrainedFields_namesPrefix() {
+        for (String field : new String[]{NAME_DESC_BOB, PHONE_DESC_BOB, EMAIL_DESC_BOB, POSTAL_CODE_DESC_BOB}) {
+            for (String prefix : new String[]{"x/", "t/", "P/", "status/", "w/"}) {
+                assertParseFailure(parser, VALID_FIELDS.replace(field, field + " " + prefix + "foo"),
+                        "Unsupported prefix '" + prefix + "' for add.");
+            }
+            assertParseFailure(parser, VALID_FIELDS.replace(field, field + " x/"),
+                    "Unsupported prefix 'x/' for add.");
+            assertParseFailure(parser, VALID_FIELDS.replace(field, field + " x/2 t/VIP"),
+                    "Unsupported prefix 'x/' for add.");
+        }
+    }
+
+    @Test
+    public void parse_unsupportedPrefixAfterWhitespace_namesPrefix() {
+        for (String field : new String[]{NAME_DESC_BOB, PHONE_DESC_BOB, EMAIL_DESC_BOB, POSTAL_CODE_DESC_BOB}) {
+            for (String separator : new String[]{"\t", "\n", "\r\n", " \t "}) {
+                assertParseFailure(parser, VALID_FIELDS.replace(field, field + separator + "x/foo"),
+                        "Unsupported prefix 'x/' for add.");
+            }
+        }
+    }
+
+    @Test
+    public void parse_invalidValuesWithoutUnsupportedPrefixes_keepsConstraintMessages() {
+        for (String suffix : new String[]{"x/foo", " x /foo", " #04/08", " https://example.com/path"}) {
+            assertParseFailure(parser, VALID_FIELDS.replace(NAME_DESC_BOB, " n/Bob" + suffix),
+                    Name.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, VALID_FIELDS.replace(PHONE_DESC_BOB, PHONE_DESC_BOB + suffix),
+                    Phone.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, VALID_FIELDS.replace(EMAIL_DESC_BOB, EMAIL_DESC_BOB + suffix),
+                    Email.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, VALID_FIELDS.replace(POSTAL_CODE_DESC_BOB, POSTAL_CODE_DESC_BOB + suffix),
+                    PostalCode.MESSAGE_CONSTRAINTS);
+        }
+        assertParseFailure(parser, VALID_FIELDS.replace(NAME_DESC_BOB, " n/x/foo"), Name.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, VALID_FIELDS.replace(PHONE_DESC_BOB, " p/x/foo"), Phone.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, VALID_FIELDS.replace(EMAIL_DESC_BOB, " e/x/foo"), Email.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, VALID_FIELDS.replace(POSTAL_CODE_DESC_BOB, " c/x/foo"),
+                PostalCode.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_addressWithPrefixLikeTextAndOtherFields_preservesEveryValue() {
+        String address = "Block 123 c/o Alice w/o lift x/foo #04/08";
+        Person expectedPerson = new PersonBuilder(BOB).withPostalCode("654321").withAddress(address).withTags().build();
+        assertParseSuccess(parser, " a/" + address + POSTAL_CODE_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
+                + NAME_DESC_BOB, new AddCommand(expectedPerson));
+    }
+
+    @Test
+    public void parse_invalidAddressWithPrefixLikeText_keepsConstraintMessage() {
+        assertParseFailure(parser, VALID_FIELDS.replace(ADDRESS_DESC_BOB, " a/Block 123\nx/foo"),
+                Address.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_unsupportedPrefixWithEarlierErrors_preservesValidationOrder() {
+        String formatError = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, "x/foo " + VALID_FIELDS, formatError);
+        assertParseFailure(parser, VALID_FIELDS.replace(NAME_DESC_BOB, "") + " x/foo", formatError);
+        assertParseFailure(parser, VALID_FIELDS.replace(PHONE_DESC_BOB, PHONE_DESC_BOB + " x/foo") + PHONE_DESC_AMY,
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE));
+        assertParseFailure(parser, VALID_FIELDS.replace(NAME_DESC_BOB, INVALID_NAME_DESC)
+                .replace(PHONE_DESC_BOB, PHONE_DESC_BOB + " x/foo"), Name.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, VALID_FIELDS.replace(PHONE_DESC_BOB, INVALID_PHONE_DESC)
+                .replace(EMAIL_DESC_BOB, EMAIL_DESC_BOB + " x/foo"), Phone.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, VALID_FIELDS.replace(EMAIL_DESC_BOB, INVALID_EMAIL_DESC) + " x/foo",
+                Email.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, VALID_FIELDS.replace(ADDRESS_DESC_BOB, INVALID_ADDRESS_DESC) + " x/foo",
+                Address.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
     public void parse_compulsoryFieldMissing_failure() {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
 
@@ -226,5 +344,10 @@ public class AddCommandParserTest {
         assertParseFailure(parser, PREAMBLE_NON_EMPTY + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB,
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+    }
+
+    private static String createEmailWithLength(int length) {
+        String prefix = "a".repeat(64) + "@" + "b".repeat(63) + "." + "c".repeat(63) + ".";
+        return prefix + "d".repeat(length - prefix.length());
     }
 }

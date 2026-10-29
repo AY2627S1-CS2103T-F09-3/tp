@@ -3,7 +3,6 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_ITEM_INDEX;
-import static seedu.address.logic.Messages.MESSAGE_UNSUPPORTED_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ITEM_INDEX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_QUANTITY;
@@ -56,11 +55,8 @@ public class EditItemCommandParser implements Parser<EditItemCommand> {
     }
 
     private ParseException createFieldParseException(String value, String fallbackMessage, ParseException cause) {
-        String message = ParserUtil.findUnsupportedPrefix(value,
-                PREFIX_ITEM_INDEX, PREFIX_DETAILS, PREFIX_QUANTITY, PREFIX_STATUS, PREFIX_REMARK)
-                .map(prefix -> String.format(MESSAGE_UNSUPPORTED_PREFIX, prefix, EditItemCommand.COMMAND_WORD))
-                .orElse(fallbackMessage);
-        return new ParseException(message, cause);
+        return ParserUtil.createFieldParseException(value, cause, EditItemCommand.COMMAND_WORD, fallbackMessage,
+                PREFIX_ITEM_INDEX, PREFIX_DETAILS, PREFIX_QUANTITY, PREFIX_STATUS, PREFIX_REMARK);
     }
 
     private EditItemDescriptor parseDescriptor(ArgumentMultimap argumentMultimap) throws ParseException {

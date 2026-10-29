@@ -69,15 +69,35 @@ information.
   For example, `edititem 1 i/1 r/Less sugar s/pending` sets the remark to `Less sugar` and the status to `PENDING`.
   Quotation marks do not escape a supported prefix. Conventional `c/o` text is preserved inside addresses.
 
-* Except in `find`, unsupported prefix-like text inside a free-text value is kept, subject to that field's validation rules.<br>
-  For example, `edititem 1 i/1 r/Pack w/o nuts` keeps `Pack w/o nuts` as the remark.
-  There is no general ban on slash-containing text. The stricter rules for `find` are described in its section below.
+* Unsupported prefix-like text is kept only when the field permits it. Item names, remarks and handover notes reject
+  forward slashes; addresses can contain slash text, including conventional `c/o` text.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
+
+### Customer field limits
+
+`add` and `edit` apply the name, email and address limits below. `tag`, `untag` and `find t/TAG` apply the limit
+to each individual tag.
+
+| Field | Maximum characters | Feedback when the limit is exceeded |
+|-------|--------------------|-------------------------------------|
+| Name | 100 | `Names must be at most 100 characters long after spaces are normalized.` |
+| Email | 254 | `Emails must be at most 254 characters long.` |
+| Address | 300 | `Addresses must be at most 300 characters long.` |
+| Each tag | 30 | `Tag names must be at most 30 characters long.` |
+
+For commands, surrounding spaces are removed before checking these limits. Consecutive spaces in names also
+become one space; internal spaces in addresses are preserved. Spaces and punctuation count towards the limit.
+In addresses, an emoji such as 🍰 counts as two characters.
+
+A value exactly at the maximum is accepted if it also satisfies the field's format rules. Field validators report
+length violations before format violations. `edit` and `untag` can replace a field error with an unsupported-prefix
+message. Command syntax errors, such as a missing required field or an invalid index format, can be reported before
+the field is checked. Rejected commands leave the saved data, current search criteria and displayed results unchanged.
 
 ### How searches and updates affect the list
 
@@ -145,8 +165,11 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS c/POSTAL_CODE`
 Postal codes must contain exactly six digits. They are stored as text, so leading zeroes are preserved.
 
 * All five fields (`n/`, `p/`, `e/`, `a/`, and `c/`) must be provided.
+* Names, emails and addresses must fit the [customer field limits](#customer-field-limits): 100, 254 and 300 characters respectively.
 * Names must contain at least one English letter (`A-Z` or `a-z`) and may contain only English letters, spaces, straight apostrophes (`'`) and hyphens (`-`). Accented letters, non-English characters, digits and other symbols are rejected. For example, `Mary-Jane O'Brien`, `Li` and `A` are valid names; `José Tan` and `---` are invalid.
 * Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
+* Name, phone, email and postal code values are validated first. An invalid value containing an extra unsupported prefix identifies that prefix. For example, adding `x/foo` after `p/98765432` shows `Unsupported prefix 'x/' for add.` Other invalid values keep their field constraint messages.
+* Addresses preserve unsupported prefix-like text and conventional `c/o` text. For example, `a/Block 123 c/o John x/foo` is kept as `Block 123 c/o John x/foo`.
 * A person is a duplicate if their name matches an existing person's name after ignoring capitalization and normalizing spaces. For example, `John Doe`, `john doe` and `  JOHN   DOE  ` refer to the same name. Phone number, email, address and tags do not affect this check.
 * Duplicate checks include all persons in the address book, even those hidden by a `find` command.
 * New persons are added without tags or a preorder. Use [`tag`](#tagging-a-person-tag) to add tags afterwards.
@@ -174,7 +197,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CO
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of `n/`, `p/`, `e/`, `a/`, or `c/` must be provided.
 * Fields you provide replace their existing values. Fields you omit remain unchanged.
-* The name validation and spacing rules described for `add` also apply to `edit`.
+* The field validation, [length limits](#customer-field-limits) and spacing rules described for `add` also apply to `edit`.
 * You can retain a person's own name or change its capitalization or spacing while editing. A name matching another person's name is rejected, including persons hidden by a `find` command. Other contact details do not affect this duplicate check.
 * Existing tags and preorders are always preserved.
 * Editing preserves the current search criteria. A person disappears from the results if their edited details no longer match. Check the displayed indexes again before your next command, or use `list` to show all customers.
@@ -204,6 +227,7 @@ Format: `tag INDEX t/TAG`
 
 * Adds the tag to the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * Only one tag can be added per command.
+* A tag can contain at most 30 characters. Leading and trailing spaces are ignored before checking its length.
 * A tag must be a single word made up of English letters and digits only (`A-Z`, `a-z`, `0-9`). Spaces, hyphens and other symbols are rejected. For example, `vip` and `Christmas2026` are valid; `gluten-free` and `big order` are invalid.
 * Tags are case-insensitive: `VIP`, `Vip` and `vip` are the same tag. A tag keeps the capitalization it had when it was first added.
 * If the person already has the tag, in any capitalization, their tags are left unchanged and a message tells you so.
@@ -215,7 +239,7 @@ Examples:
 * `tag 1 t/regular` adds the tag `regular` to the 1st person.
 * `find n/Bernice` followed by `tag 1 t/vip` adds the tag `vip` to the 1st person in the results of the `find` command.
 * `tag 1 t/FRIENDS` when the 1st person already has the tag `friends` shows a message that they already have the tag, and leaves their tags unchanged.
-* If Alex Yeoh is displayed at index 1 and does not have the tag `VIP`, `tag 1 t/VIP` adds it and displays `Added tag(s) [VIP] to Alex Yeoh`.
+* If Alex Yeoh is displayed at index 1 and does not have the tag `VIP`, `tag 1 t/VIP` adds it and displays `Added tag [VIP] to Alex Yeoh`.
 
 Common errors:
 
@@ -224,6 +248,8 @@ Common errors:
 | `tag 0 t/VIP`, `tag -1 t/VIP`, or `tag abc t/VIP` | `Invalid command format!` followed by the tag usage instructions. |
 | `tag`, `tag t/VIP`, or `tag 1` | `Invalid command format!` followed by the tag usage instructions. |
 | `tag 1 t/`, `tag 1 t/big order`, or `tag 1 t/gluten-free` | `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.` |
+| `tag 1 t/VIP x/foo` or `tag 1 t/VIP p/91234567` | `Unsupported prefix 'x/' for tag.` or `Unsupported prefix 'p/' for tag.`, respectively. |
+| `tag 1 t/ABCDEFGHIJKLMNOPQRSTUVWXYZ12345` (31 characters) | `Tag names must be at most 30 characters long.` |
 | `tag 1 t/VIP t/regular` | `Multiple values specified for the following single-valued field(s): t/` |
 | `tag 5 t/VIP` when fewer than five persons are displayed, or any valid index when the list is empty | `The person index provided is invalid.` |
 | `tag 1 t/VIP` when the first person is Alex Yeoh and already has the tag `vip` | `Alex Yeoh already has tag [VIP]. No changes made.` |
@@ -237,7 +263,7 @@ Removes an existing tag from a person in the currently displayed list.
 Format: `untag INDEX t/TAG`
 
 * `INDEX` must be a positive integer shown in the current list. After a `find` command, use the index shown in its search results.
-* Supply exactly one `t/TAG`, after the index. The tag must not be blank and must contain only English letters (`A-Z`, `a-z`) and digits (`0-9`). Internal spaces and special characters are not allowed. Leading and trailing spaces are ignored.
+* Supply exactly one `t/TAG`, after the index. The tag must contain 1 to 30 English letters (`A-Z`, `a-z`) or digits (`0-9`). Internal spaces and special characters are not allowed. Leading and trailing spaces are ignored before checking its length.
 * Matching is case-insensitive. For example, `t/vip` removes an existing `VIP` tag.
 * Other tags, contact details, and any preorder remain unchanged. Removing the last tag leaves the person with no tags.
 * The current list filter is preserved, and the change is saved automatically.
@@ -256,6 +282,7 @@ Common errors:
 | `untag 0 t/VIP`, `untag -1 t/VIP`, or `untag abc t/VIP` | `Invalid command format!` followed by the untag usage instructions. |
 | `untag`, `untag t/VIP`, or `untag 1` | `Invalid command format!` followed by the untag usage instructions. |
 | `untag 1 t/`, `untag 1 t/close friends`, or `untag 1 t/VIP!` | `Tag names must not be blank and must contain only letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. Examples: VIP, friends, regular123.` |
+| `untag 1 t/ABCDEFGHIJKLMNOPQRSTUVWXYZ12345` (31 characters) | `Tag names must be at most 30 characters long.` |
 | Unsupported prefix after the tag, e.g. `untag 1 t/VIP x/foo` | `Unsupported prefix 'x/' for untag.` |
 | `untag 1 t/VIP t/friends` | `Multiple values specified for the following single-valued field(s): t/` |
 | `untag 5 t/VIP` when fewer than five persons are displayed, or any valid index when the list is empty | `The person index provided is invalid.` |
@@ -355,9 +382,13 @@ Supply at least one prefixed criterion. Each prefix may appear at most once, in 
 * Multiword text is one substring: `find n/Alice Tan` can match `Alice Tanaka`, but does not match `Alice Lim` or `Tan Alice`.
 * Surrounding whitespace is ignored. Internal spacing and punctuation remain significant.
 * Phone and email fragments are accepted: `p/8123` and `e/example.com` need not be complete contact details.
+* Name queries allow English letters, spaces, apostrophes and hyphens. Fragments such as `n/Ali`, `n/O'` and `n/-Jane` are valid; digits and other symbols are rejected.
+* Phone queries accept one to eight digits and may start with any digit, since a fragment can match inside a phone number. Spaces, hyphens and country-code symbols are rejected.
+* Email queries allow letters, digits and `+_.-@`, without spaces. Fragments such as `e/example.com`, `e/tan@` and `e/.com` are valid; a complete email address is not required.
+* Name, email, address, product and handover-note searches accept queries beyond the character limits used when saving those fields. A valid search can return no matches.
 * Postal searches accept one to six digits. `find c/53` matches codes beginning with `53`, such as `530123` and `531234`; `find c/530` narrows this to codes beginning with `530`. A six-digit query such as `find c/012345` matches only that complete code.
 * When adding a customer or editing their postal code, supply all six digits. Shorter prefixes are accepted only for searching; leading zeros are preserved in both cases.
-* Tags must be single alphanumeric words. `t/reg` does not match a tag named `regular`.
+* Tags must be single alphanumeric words of at most 30 characters. `t/reg` does not match a tag named `regular`.
 * Fulfilment conditions check the preorder's shared information. They can find empty preorders; customers without a preorder or without the requested field do not match. Handover notes are separate from an individual item's request notes.
 * Product names match completely: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Surrounding whitespace is ignored, and repeated spaces count as one, as they do in item names. Punctuation remains significant.
 * Omitting `s/` includes **all statuses**, including `COMPLETED`. A blank `s/` is invalid. A status-only search such as `find s/prepared` accepts any product with that status.
@@ -366,7 +397,9 @@ Supply at least one prefixed criterion. Each prefix may appear at most once, in 
 * All items on matching customer cards remain visible with their existing item numbers, including items that did not match. Searches do not change stored items.
 * Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
 * Results use the current displayed indices. Use `list` to show all customers again.
-* Use lowercase prefixes. A prefix starts at the beginning of the arguments or after whitespace. Unknown letter-based prefixes such as `x/` are rejected, including inside text values; embedded slashes such as `#04/08` remain ordinary text.
+* Use lowercase prefixes. A supported prefix starts at the beginning of the arguments or after whitespace and ends the previous value. The existing `c/o` exception keeps conventional care-of text inside an address.
+* Address queries preserve slash text, including `c/o`. New product names and handover notes cannot contain slashes. Slash-containing values from older data files are preserved when loaded, but may not be searchable: slash-containing `d/` and `h/` queries are rejected, and a supported prefix inside a legacy value starts a separate criterion. For example, `find d/Cake n/ chocolate` treats `n/` as a name criterion, not part of the product name `Cake n/ chocolate`.
+* Name, phone, email, postal code, tag, date, method and status queries are validated first. If an invalid query contains an extra unsupported prefix, such as `find c/123 x/foo`, the error identifies `x/`. Other invalid queries show the corresponding constraint message. Unsupported arguments before the first recognised criterion still show command-format guidance.
 
 Examples:
 
@@ -395,6 +428,11 @@ Customer and preorder changes preserve the search and refresh the results. A cus
 | `find n/`, `find c/` or `find n/Alice p/` | Invalid command format; every supplied prefix needs a value. |
 | `find x/Alice` or `find o/Pineapple Tarts` | Invalid command format; only the eleven prefixes above are supported. |
 | `find Alice m/delivery` | Invalid command format; use `find n/Alice m/delivery`. |
+| `find n/Ali2` | Name query constraint message; use English letters, spaces, apostrophes or hyphens. |
+| `find p/91-23` or `find p/912345678` | Phone query constraint message; use one to eight digits. |
+| `find e/example!.com` | Email query constraint message; use letters, digits or `+_.-@`, without spaces. |
+| `find n/Ali x/foo`, `find p/9123 x/foo` or `find e/example.com x/foo` | `Unsupported prefix 'x/' for find.` |
+| `find c/123 x/foo`, `find t/VIP x/foo`, `find f/2026-12-20 x/foo`, `find m/delivery x/foo` or `find s/pending x/foo` | `Unsupported prefix 'x/' for find.` |
 | `find f/2026-02-30` or `find f/2026-2-03` | The date constraint message is shown; supply a real date in `YYYY-MM-DD` format. |
 | `find m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
 | `find h/` or `find m/` | Invalid command format; every supplied prefix needs a value. |
@@ -404,6 +442,7 @@ Customer and preorder changes preserve the search and refresh the results. A cus
 | `find c/012345 c/123456` | `Multiple values specified for the following single-valued field(s): c/` |
 | `find t/regular t/vip` | `Multiple values specified for the following single-valued field(s): t/` |
 | `find t/regular customer` or `find t/VIP!` | The tag constraint message is shown. |
+| `find t/ABCDEFGHIJKLMNOPQRSTUVWXYZ12345` (31 characters) | `Tag names must be at most 30 characters long.` |
 
 Rejected searches leave the current criteria and results unchanged. If no customers match a valid search, the list is empty and the feedback reports `0 person(s) listed!`. Use `list` to clear the search.
 
@@ -414,14 +453,12 @@ the capitalization you typed, with surrounding whitespace removed. Product match
 
 * The selected product and statuses. Without `s/`, **all statuses**, including completed items, contribute.
 * The number of matching customers and matching item entries. Repeated entries count separately.
-* The total quantity of matching items. If migrated items have no quantity, the panel instead shows the
-  **known quantity** subtotal and how many matching items still need a quantity. This subtotal is incomplete.
+* The total quantity of matching items.
 * Special requests from matching items, each labelled with the customer name and original item number.
 
 For example, two matching entries with quantities 2 and 3 contribute two items and a total quantity of 5.
-An additional entry without a quantity raises the item count to three, leaves the known quantity at 5,
-and is reported as one item needing a quantity. Only customers in the current results contribute;
-customer fields such as `n/` and `t/` therefore also restrict the summary.
+Only customers in the current results contribute; customer fields such as `n/` and `t/` therefore also
+restrict the summary.
 
 Matching items on customer cards are shown in a yellow box while retaining their
 status colours. This applies to product/status searches and `track`. All other items remain visible,
@@ -442,12 +479,13 @@ Adds one item to a customer's preorder. If the customer has no preorder, one is 
 Format: `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`
 
 * `INDEX` is a positive integer identifying a customer in the **currently displayed list**.
-* Name, quantity and status are required. A name must be non-blank, on one line, at most 200 characters long and must 
-* not contain forward slashes (`/`). Repeated spaces in a name become one, so `d/Butter   Cake` is saved as 
-* `Butter Cake`.
+* Name, quantity and status are required. A name must be non-blank, on one line, at most 200 characters long and must
+  not contain forward slashes (`/`). Repeated spaces in a name become one, so `d/Butter   Cake` is saved as
+  `Butter Cake`.
 * Quantity must be a whole number from 1 to 999, without leading zeros.
 * Status must be `PENDING`, `PREPARED` or `COMPLETED`, ignoring capitalisation.
-* Remarks are optional. If supplied, a remark must be non-blank, on one line and at most 100 characters long.
+* Remarks are optional. If supplied, a remark must be non-blank, contain no forward slashes, be on one line and be at most 100 characters long.
+* Names and remarks reject slash-containing text, including prefix-like strings such as `Cake w/ candles` and `Pack w/o nuts`. Supported prefixes still start separate fields.
 * Surrounding spaces in values are trimmed. A value of only spaces, including Unicode spaces such as an em space, is blank. Prefixes may appear in any order, but each can appear only once.
 * The item is appended to the preorder. Repeated product names, including identical items, remain separate entries.
 * Existing items, contact details and tags are preserved. The current filter remains active.
@@ -462,6 +500,10 @@ Omitting a required prefix displays `Invalid command format!` followed by usage 
 Supplying an empty value displays that field's validation error. In particular, `r/` without text is invalid when adding.
 An index beyond the displayed customer list produces `The person index provided is invalid.`
 
+Quantity and status are validated first. If an invalid value contains an extra unsupported prefix, the error names it:
+`additem 1 d/Cake q/2 x/foo s/pending` and `additem 1 d/Cake q/2 s/pending x/foo` both show
+`Unsupported prefix 'x/' for additem.` Without an extra unsupported prefix, the usual quantity or status constraint is shown.
+
 ### Editing a preorder item: `edititem`
 
 Edits one numbered item, preserving omitted fields and all other items.
@@ -471,8 +513,8 @@ Format: `edititem INDEX i/ITEM_INDEX [d/NAME] [q/QUANTITY] [s/STATUS] [r/REMARK]
 * `INDEX` identifies a customer in the currently displayed list. `ITEM_INDEX` identifies an item by the number on that
   customer's card. Both must be positive integers.
 * At least one edit field must be supplied. Names, quantities, statuses and non-empty remarks follow the rules for `additem`.
-* Omitted fields retain their values. An empty `r/` **clears** the remark; omitting `r/` preserves it.
-* An item migrated from v1.3 keeps its missing quantity until a valid `q/QUANTITY` is supplied.
+* Omitted fields retain their values, so omitting `q/` keeps the item's quantity. An empty `r/` **clears** the remark;
+  omitting `r/` preserves it.
 * Supplying an existing value is accepted and reports success, even if the item does not change.
 * Other items, contact details and tags are preserved. The current filter remains active. Changing an item's status can
   remove its customer from a tracked view, so check the displayed customer indices before the next command.
@@ -485,9 +527,6 @@ Examples:
 
 For Alice's second item, Cake, the success message could be:
 `Edited item 2 for Alice: Cake (quantity: 3, PREPARED)`.
-If its quantity is still missing, the message says so:
-`Edited item 2 for Alice: Cake (quantity needed, PREPARED)`.
-The card continues to display `Qty needed` for that item.
 
 | Situation | Message |
 |-----------|---------|
@@ -501,8 +540,8 @@ The card continues to display `Qty needed` for that item.
 | `edititem 1 i/1 q/2 x/3` or `edititem 1 i/1 s/pending x/3` | `Unsupported prefix 'x/' for edititem.` |
 
 The unsupported-prefix message identifies the first unsupported letter-based prefix after whitespace in an invalid
-`i/`, `q/` or `s/` value. Names (`d/`) and remarks (`r/`) keep unsupported prefix-like text as part of the value.
-For example, `edititem 1 i/1 r/Pack w/o nuts x/2` keeps the complete remark `Pack w/o nuts x/2`.
+`i/`, `q/` or `s/` value. Names (`d/`) and remarks (`r/`) reject forward slashes, including prefix-like text such as
+`Cake w/ candles` and `Pack w/o nuts`.
 
 For both commands, repeated prefixes produce `Multiple values specified for the following single-valued field(s): `
 followed by the repeated prefixes. Input validation reports the first error: customer-index syntax, duplicate prefixes,
@@ -525,7 +564,7 @@ An unsupported prefix after the status, such as `track s/pending d/Cake`, displa
 `Unsupported prefix 'd/' for track.` Remove the extra parameter or use `find s/pending d/Cake` to combine both criteria.
 An ordinary invalid status, such as `track s/done`, still displays the status constraint message.
 
-Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count, and an item with a missing quantity still counts as one item. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
+Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
 
 Each customer card shows the customer's number on the left, then their name and tags, their phone number and email on one line, and their address with its postal code, for example `Postal 389030`. A customer without a preorder shows `No preorder`. Long names, tags and addresses wrap onto more lines, so they are always shown in full.
 
@@ -538,8 +577,6 @@ Status | Meaning | Badge colour
 `PENDING` | Recorded but not ready | Amber
 `PREPARED` | Ready for collection or delivery | Blue
 `COMPLETED` | Collected or delivered | Green outline with a tick
-
-After supplying the required postal codes in your data file, each preorder saved by LeBake v1.3 appears as one item with the same details and status. v1.3 did not record quantities, so these items show `Qty needed` with a warning icon instead of a quantity.
 
 ### Deleting a preorder item: `deleteitem`
 
@@ -561,7 +598,7 @@ For example, deleting Alex Yeoh's second sample item shows:
 Deleted item 2 for Alex Yeoh: Almond Cookies (quantity: 1, PREPARED)
 ```
 
-The message uses the item's number before deletion. For a migrated item with no recorded quantity, the quantity value is blank, for example `(quantity: , PENDING)`.
+The message uses the item's number before deletion.
 
 | Situation | Message |
 |-----------|---------|
@@ -603,7 +640,7 @@ Format: `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`
 * If the customer has no preorder yet, supplying at least one nonempty value creates one with no items, so you can record the arrangements before adding items with [`additem`](#adding-a-preorder-item-additem). Supplying only empty values makes no changes because there is nothing to clear.
 * A past date is accepted, so you can still record late orders. The success message then adds a note on a new line, for example `Note: 20 Dec 2025 is in the past.`
 * The customer's items (with their quantities, statuses and remarks), contact details, postal code and tags are not changed. The current filter remains active.
-* Surrounding spaces in values are trimmed. Handover notes of only spaces, including Unicode spaces such as an em space, are rejected as blank. A supported prefix (`f/`, `m/` or `h/`) after whitespace ends the previous value, so avoid it inside handover notes. Unsupported prefix-like text is preserved: `preorder 1 h/Leave w/o ringing x/2` keeps `Leave w/o ringing x/2` as the handover notes.
+* Surrounding spaces in values are trimmed. Handover notes of only spaces, including Unicode spaces such as an em space, are rejected as blank. Handover notes must not contain forward slashes. A supported prefix (`f/`, `m/` or `h/`) after whitespace ends the previous value.
 
 On success, the app shows the customer's details after the change, for example:
 `Updated preorder details for Alex Yeoh: Date: 21 Dec 2026 | Method: COLLECTION | Handover notes: Collect from side gate`.
@@ -622,7 +659,8 @@ Common errors:
 | `preorder 1` | `At least one of f/DATE, m/METHOD or h/HANDOVER_NOTES must be provided.` |
 | `preorder 1 f/2026-02-30` or `preorder 1 f/20-12-2026` | `Invalid date! Dates must be real calendar dates in YYYY-MM-DD format, e.g. 2026-12-20.` |
 | `preorder 1 m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
-| Handover notes longer than 100 characters | `Invalid handover notes! Handover notes must not be blank, must be on a single line, and must be at most 100 characters long.` |
+| `preorder 1 f/2026-12-20 x/foo` or `preorder 1 m/delivery x/foo` | `Unsupported prefix 'x/' for preorder.` |
+| Handover notes longer than 100 characters or containing `/` | `Invalid handover notes! Handover notes must not be blank, must not contain forward slashes, must be on a single line, and must be at most 100 characters long.` |
 | `preorder 1 f/2026-12-20 f/2026-12-21` | `Multiple values specified for the following single-valued field(s): f/` |
 | `preorder`, `preorder 0 m/delivery`, `preorder abc m/delivery`, `preorder 1 2 m/delivery`, or a prefix of another command such as `preorder 1 d/Cake` | `Invalid command format!` followed by the preorder usage instructions. |
 | `preorder 7 m/delivery` when fewer than seven customers are displayed | `The person index provided is invalid.` |
@@ -687,7 +725,16 @@ LeBake data is saved automatically as a JSON file `data/addressbook.json`, insid
 
 Postal codes are compulsory for every customer, including records saved by older versions. Each customer must have a `postalCode` containing exactly six digits. Null, missing, blank or malformed postal codes prevent the file from loading. Back up older files and supply the correct postal codes before launching LeBake.
 
+Quantities are compulsory for every item, in the same way. Each item must have a `quantity` that is a whole number from 1 to 999, the same as `q/` in `additem`. Null, missing, blank or invalid quantities prevent the file from loading. Preorders saved by LeBake v1.3, which used a single `preorder` field with `details` and `status` and no quantity, are no longer converted. A file that still has such a field cannot be loaded. Back up the file and move each such preorder into a `preorders` list, with a quantity for each item, before launching LeBake.
+
 Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. Item names are normalized in the same way, so items saved by earlier versions with repeated spaces count as the same product. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
+
+For compatibility, existing item names, remarks and handover notes containing `/` are preserved when loading saved data, provided they satisfy the other field constraints. New values entered with `additem`, `edititem` or `preorder` still cannot contain `/`. Some legacy values cannot be searched literally with `find`: slash-containing product-name and handover-note queries are rejected, and supported prefixes such as `n/` start a separate criterion even when they occur inside an old value. Use `list` to locate the record, then replace the legacy value with slash-free text using `edititem` for an item name or remark, or `preorder` for handover notes.
+
+The [customer field limits](#customer-field-limits) also apply to saved JSON: 100 characters for each normalized name,
+254 for each email, 300 for each address and 30 for each tag. Emails, addresses and tags are checked as stored,
+without removing surrounding spaces. In particular, trailing address spaces count towards the limit. A single
+oversized field prevents the file from loading.
 
 <box type="warning" seamless>
 

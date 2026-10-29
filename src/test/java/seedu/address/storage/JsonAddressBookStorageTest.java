@@ -11,8 +11,10 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -25,8 +27,8 @@ import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.preorder.FulfilmentMethod;
-import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
+import seedu.address.model.util.SampleDataUtil;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PreorderBuilder;
@@ -149,23 +151,27 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
-    public void readAndSaveAddressBook_legacyPreorder_savedAsOneItemWithoutQuantity() throws Exception {
-        ReadOnlyAddressBook loaded = new JsonAddressBookStorage(TEST_DATA_FOLDER.resolve("legacyPreorder.json"))
-                .readAddressBook().get();
+    public void readAndSaveAddressBook_legacySlashPreorderFields_preservesValues() throws Exception {
+        JsonAdaptedItem legacyItem = new JsonAdaptedItem("Cake w/ candles", "2", "PENDING", "Pack w/o nuts");
+        JsonAdaptedPreorder legacyPreorder = new JsonAdaptedPreorder(List.of(legacyItem), null, null,
+                "Leave w/o ringing");
+        JsonAdaptedPerson legacyPerson = new JsonAdaptedPerson(ALICE.getName().fullName, ALICE.getPhone().value,
+                ALICE.getEmail().value, ALICE.getAddress().value, ALICE.getPostalCode().value,
+                ALICE.getTags().stream().map(JsonAdaptedTag::new).toList(), List.of(legacyPreorder), null);
+        Path sourcePath = testFolder.resolve("legacy-slash-fields.json");
+        JsonUtil.saveJsonFile(new JsonSerializableAddressBook(List.of(legacyPerson)), sourcePath);
 
-        Item convertedItem = new ItemBuilder().withName("2 chocolate cakes, no nuts").withoutQuantity()
-                .withStatus(ItemStatus.PENDING).build();
-        AddressBook expected = new AddressBook();
-        expected.addPerson(new PersonBuilder(ALICE).withPreorder(convertedItem).build());
-        assertEquals(expected, new AddressBook(loaded));
+        ReadOnlyAddressBook loaded = new JsonAddressBookStorage(sourcePath).readAddressBook().orElseThrow();
+        var preorder = loaded.getPersonList().get(0).getPreorder().orElseThrow();
+        assertEquals("Cake w/ candles", preorder.getItems().get(0).getName().value);
+        assertEquals("Pack w/o nuts", preorder.getItems().get(0).getRemark().orElseThrow().value);
+        assertEquals("Leave w/o ringing", preorder.getHandoverNotes().orElseThrow().value);
 
-        Path savedPath = testFolder.resolve("legacyPreorderSaved.json");
-        new JsonAddressBookStorage(savedPath).saveAddressBook(loaded);
-        JsonNode personJson = JsonUtil.readJsonFile(savedPath, JsonNode.class).get().get("persons").get(0);
-        assertTrue(personJson.get("preorder") == null);
-        assertTrue(personJson.get("preorders").get(0).get("items").get(0).get("quantity").isNull());
-        assertEquals(new AddressBook(loaded), new AddressBook(new JsonAddressBookStorage(savedPath)
-                .readAddressBook().get()));
+        Path savedPath = testFolder.resolve("legacy-slash-fields-saved.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(savedPath);
+        storage.saveAddressBook(loaded);
+        ReadOnlyAddressBook reloaded = storage.readAddressBook().orElseThrow();
+        assertEquals(loaded, reloaded);
     }
 
     @Test
@@ -183,6 +189,76 @@ public class JsonAddressBookStorageTest {
         assertEquals("mArY-JaNe O'BrIeN", savedJson.get("persons").get(0).get("name").asText());
         assertEquals("Jose Tan", savedJson.get("persons").get(1).get("name").asText());
         assertEquals(loaded, storage.readAddressBook().get());
+    }
+
+    @Test
+    public void readAndSaveAddressBook_customerFieldLengthBoundaries_success() throws Exception {
+        List<JsonAdaptedPerson> persons = new ArrayList<>();
+        AddressBook expected = new AddressBook();
+        String emoji = "\uD83C\uDF70";
+        for (int offset : new int[]{-1, 0}) {
+            String normalizedName = "A".repeat(98 + offset) + " B";
+            String rawName = "  " + "A".repeat(98 + offset) + "   B  ";
+            String email = createEmailWithLength(254 + offset);
+            String address = emoji.repeat(149) + " ".repeat(2 + offset);
+            String tag = "T".repeat(30 + offset);
+            persons.add(new JsonAdaptedPerson(rawName, "81234567", email, address, "012345",
+                    List.of(new JsonAdaptedTag(tag))));
+            expected.addPerson(new PersonBuilder().withName(normalizedName).withPhone("81234567").withEmail(email)
+                    .withAddress(address).withPostalCode("012345").withTags(tag).build());
+        }
+        Path sourcePath = testFolder.resolve("customer-boundaries.json");
+        JsonUtil.saveJsonFile(new JsonSerializableAddressBook(persons), sourcePath);
+        ReadOnlyAddressBook loaded = new JsonAddressBookStorage(sourcePath).readAddressBook().get();
+        assertEquals(expected, loaded);
+
+        Path savedPath = testFolder.resolve("customer-boundaries-saved.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(savedPath);
+        storage.saveAddressBook(loaded);
+        assertEquals(expected, storage.readAddressBook().get());
+    }
+
+    @Test
+    public void readAddressBook_overLimitCustomerFields_throwsDataLoadingException() throws Exception {
+        List<JsonAdaptedTag> validTags = List.of(new JsonAdaptedTag("friends"));
+        List<JsonAdaptedPerson> invalidPersons = List.of(
+                new JsonAdaptedPerson("  " + "A".repeat(99) + "   B  ", "81234567", "test@example.com",
+                        "Baker Road", "012345", validTags),
+                new JsonAdaptedPerson("New Customer", "81234567", createEmailWithLength(255),
+                        "Baker Road", "012345", validTags),
+                new JsonAdaptedPerson("New Customer", "81234567", "test@example.com",
+                        "A".repeat(301), "012345", validTags),
+                new JsonAdaptedPerson("New Customer", "81234567", "test@example.com",
+                        "\uD83C\uDF70".repeat(150) + "A", "012345", validTags),
+                new JsonAdaptedPerson("New Customer", "81234567", "test@example.com",
+                        "A".repeat(298) + "   ", "012345", validTags),
+                new JsonAdaptedPerson("New Customer", "81234567", "test@example.com",
+                        "Baker Road", "012345", List.of(new JsonAdaptedTag("friends"),
+                                new JsonAdaptedTag("T".repeat(31)))));
+        Path filePath = testFolder.resolve("over-limit-customer.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        for (JsonAdaptedPerson invalidPerson : invalidPersons) {
+            JsonSerializableAddressBook data = new JsonSerializableAddressBook(
+                    List.of(new JsonAdaptedPerson(ALICE), invalidPerson, new JsonAdaptedPerson(BENSON)));
+            JsonUtil.saveJsonFile(data, filePath);
+            String originalJson = Files.readString(filePath);
+
+            assertThrows(DataLoadingException.class, storage::readAddressBook);
+            assertEquals(originalJson, Files.readString(filePath));
+        }
+    }
+
+    @Test
+    public void readAndSaveAddressBook_sampleData_success() throws Exception {
+        Path filePath = testFolder.resolve("sample-data.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        assertTrue(storage.readAddressBook().isEmpty());
+        ReadOnlyAddressBook sampleData = SampleDataUtil.getSampleAddressBook();
+        assertFalse(sampleData.getPersonList().isEmpty());
+
+        storage.saveAddressBook(sampleData);
+
+        assertEquals(sampleData, storage.readAddressBook().get());
     }
 
     @Test
@@ -314,5 +390,10 @@ public class JsonAddressBookStorageTest {
     @Test
     public void saveAddressBook_nullFilePath_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> saveAddressBook(new AddressBook(), null));
+    }
+
+    private static String createEmailWithLength(int length) {
+        String prefix = "a".repeat(64) + "@" + "b".repeat(63) + "." + "c".repeat(63) + ".";
+        return prefix + "d".repeat(length - prefix.length());
     }
 }

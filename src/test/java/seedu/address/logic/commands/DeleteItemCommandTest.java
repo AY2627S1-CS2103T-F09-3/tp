@@ -47,7 +47,7 @@ public class DeleteItemCommandTest {
     private static final Item PENDING_ITEM = PENDING_BENSON.getPreorder().orElseThrow().getItems().getFirst();
     private static final String EXPECTED_SUCCESS_MESSAGE = String.format(
             DeleteItemCommand.MESSAGE_DELETE_ITEM_SUCCESS, 1, BENSON.getName(), PENDING_ITEM.getName(),
-            PENDING_ITEM.getQuantity().orElseThrow(), PENDING_ITEM.getStatus());
+            PENDING_ITEM.getQuantity(), PENDING_ITEM.getStatus());
 
     private Model model;
 
@@ -71,7 +71,7 @@ public class DeleteItemCommandTest {
     public void execute_preorderWithSeveralItems_removesOnlySelectedItem() {
         Item first = new ItemBuilder().withName("Pineapple Tarts").withRemark("Less sugar").build();
         Item middle = new ItemBuilder().withName("Almond Cookies").build();
-        Item last = new ItemBuilder().withName("Cake").withoutQuantity().build();
+        Item last = new ItemBuilder().withName("Cake").withQuantity("1").build();
         List<Item> originalItems = List.of(first, middle, last);
         for (int position = 0; position < originalItems.size(); position++) {
             setUp();
@@ -83,8 +83,7 @@ public class DeleteItemCommandTest {
             Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
             expectedModel.setPerson(BENSON, expected);
             String message = String.format(DeleteItemCommand.MESSAGE_DELETE_ITEM_SUCCESS, position + 1,
-                    BENSON.getName(), removed.getName(), removed.getQuantity().map(Object::toString).orElse(""),
-                    removed.getStatus());
+                    BENSON.getName(), removed.getName(), removed.getQuantity(), removed.getStatus());
             assertCommandSuccess(new DeleteItemCommand(INDEX_BENSON, Index.fromZeroBased(position)),
                     model, message, expectedModel);
             assertEquals(originalItems, original.getPreorder().orElseThrow().getItems());

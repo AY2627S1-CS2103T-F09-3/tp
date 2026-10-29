@@ -38,6 +38,9 @@ public class HandoverNotesTest {
         // more than one line
         assertFalse(HandoverNotes.isValidHandoverNotes("Call on arrival\nLeave at door"));
 
+        // forward slashes are not allowed
+        assertFalse(HandoverNotes.isValidHandoverNotes("Leave w/o ringing"));
+
         // length boundary
         assertTrue(HandoverNotes.isValidHandoverNotes("a".repeat(HandoverNotes.MAX_LENGTH)));
         assertFalse(HandoverNotes.isValidHandoverNotes("a".repeat(HandoverNotes.MAX_LENGTH + 1)));

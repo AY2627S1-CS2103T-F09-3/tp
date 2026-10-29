@@ -145,10 +145,11 @@ public class TagCommandTest {
     }
 
     /**
-     * Returns the success message for adding {@code TAG_HUSBAND} to {@code personToTag}.
+     * Returns the expected success message, written out in full, for adding {@code TAG_HUSBAND}
+     * to {@code personToTag}.
      */
     private static String getSuccessMessage(Person personToTag) {
-        return String.format(TagCommand.MESSAGE_TAG_PERSON_SUCCESS, TAG_HUSBAND, personToTag.getName());
+        return "Added tag [" + VALID_TAG_HUSBAND + "] to " + personToTag.getName();
     }
 
     /**

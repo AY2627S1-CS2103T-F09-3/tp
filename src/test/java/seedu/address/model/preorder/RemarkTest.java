@@ -38,6 +38,9 @@ public class RemarkTest {
         // more than one line
         assertFalse(Remark.isValidRemark("Less sugar\nNo nuts"));
 
+        // forward slashes are not allowed
+        assertFalse(Remark.isValidRemark("Less sugar w/o nuts"));
+
         // length boundary
         assertTrue(Remark.isValidRemark("a".repeat(Remark.MAX_LENGTH)));
         assertFalse(Remark.isValidRemark("a".repeat(Remark.MAX_LENGTH + 1)));

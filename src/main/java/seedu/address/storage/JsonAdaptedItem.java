@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemName;
 import seedu.address.model.preorder.ItemStatus;
@@ -20,7 +21,7 @@ class JsonAdaptedItem {
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Item's %s field is missing!";
 
     private final String name;
-    private final String quantity; // null when the item came from v1.3 without a quantity
+    private final String quantity;
     private final String status;
     private final String remark; // null when the item has no remark
 
@@ -41,7 +42,7 @@ class JsonAdaptedItem {
      */
     public JsonAdaptedItem(Item source) {
         name = source.getName().value;
-        quantity = source.getQuantity().map(Quantity::toString).orElse(null);
+        quantity = source.getQuantity().toString();
         status = source.getStatus().name();
         remark = source.getRemark().map(itemRemark -> itemRemark.value).orElse(null);
     }
@@ -56,11 +57,15 @@ class JsonAdaptedItem {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
                     ItemName.class.getSimpleName()));
         }
-        if (!ItemName.isValidItemName(name)) {
+        if (!ItemName.isValidItemName(name) && !isValidLegacyItemName(name)) {
             throw new IllegalValueException(ItemName.MESSAGE_CONSTRAINTS);
         }
 
-        if (quantity != null && !Quantity.isValidQuantity(quantity)) {
+        if (quantity == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
+                    Quantity.class.getSimpleName()));
+        }
+        if (!Quantity.isValidQuantity(quantity)) {
             throw new IllegalValueException(Quantity.MESSAGE_CONSTRAINTS);
         }
 
@@ -72,11 +77,24 @@ class JsonAdaptedItem {
             throw new IllegalValueException(ItemStatus.MESSAGE_CONSTRAINTS);
         }
 
-        if (remark != null && !Remark.isValidRemark(remark)) {
+        if (remark != null && !Remark.isValidRemark(remark) && !isValidLegacyRemark(remark)) {
             throw new IllegalValueException(Remark.MESSAGE_CONSTRAINTS);
         }
 
-        return new Item(new ItemName(name), Optional.ofNullable(quantity).map(Quantity::new),
-                ItemStatus.valueOf(status), Optional.ofNullable(remark).map(Remark::new));
+        ItemName itemName = ItemName.isValidItemName(name) ? new ItemName(name) : ItemName.fromLegacyData(name);
+        Optional<Remark> itemRemark = Optional.ofNullable(remark).map(value -> Remark.isValidRemark(value)
+                ? new Remark(value) : Remark.fromLegacyData(value));
+        return new Item(itemName, new Quantity(quantity), ItemStatus.valueOf(status), itemRemark);
+    }
+
+    private static boolean isValidLegacyItemName(String value) {
+        String normalizedValue = StringUtil.normalizeSpaces(value);
+        return normalizedValue.contains("/") && normalizedValue.length() <= ItemName.MAX_LENGTH
+                && normalizedValue.matches(ItemName.VALIDATION_REGEX);
+    }
+
+    private static boolean isValidLegacyRemark(String value) {
+        return value.contains("/") && value.length() <= Remark.MAX_LENGTH
+                && value.matches(Remark.VALIDATION_REGEX);
     }
 }
