@@ -36,6 +36,26 @@ public class JsonAdaptedPreorderTest {
     }
 
     @Test
+    public void toModelType_lowerCaseMethod_returnsPreorderWithMethod() throws Exception {
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), VALID_DATE, "delivery",
+                VALID_HANDOVER_NOTES);
+        assertEquals(buildPreorderWithAllDetails(), preorder.toModelType());
+    }
+
+    @Test
+    public void toModelType_paddedFulfilmentDetails_returnsStrippedDetails() throws Exception {
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), " " + VALID_DATE + " ",
+                " " + VALID_METHOD + " ", " " + VALID_HANDOVER_NOTES + " ");
+        assertEquals(buildPreorderWithAllDetails(), preorder.toModelType());
+    }
+
+    @Test
+    public void toModelType_blankFulfilmentDetails_returnsPreorderWithoutDetails() throws Exception {
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), "", " ", "");
+        assertEquals(new Preorder(List.of()), preorder.toModelType());
+    }
+
+    @Test
     public void toModelType_invalidDate_throwsIllegalValueException() {
         JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), "2026-02-30", VALID_METHOD,
                 VALID_HANDOVER_NOTES);
@@ -54,5 +74,13 @@ public class JsonAdaptedPreorderTest {
         JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), VALID_DATE, VALID_METHOD,
                 "Call on arrival\nLeave at door");
         assertThrows(IllegalValueException.class, HandoverNotes.MESSAGE_CONSTRAINTS, preorder::toModelType);
+    }
+
+    /**
+     * Returns an empty preorder with the valid date, method and handover notes.
+     */
+    private Preorder buildPreorderWithAllDetails() {
+        return new PreorderBuilder().withDate(VALID_DATE).withMethod(FulfilmentMethod.DELIVERY)
+                .withHandoverNotes(VALID_HANDOVER_NOTES).build();
     }
 }
