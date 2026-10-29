@@ -2,7 +2,6 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.Messages.MESSAGE_UNSUPPORTED_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
@@ -165,10 +164,8 @@ public class FindCommandParser implements Parser<FindCommand> {
     }
 
     private ParseException createFieldParseException(String value, ParseException cause) {
-        String message = ParserUtil.findUnsupportedPrefix(value, SUPPORTED_PREFIXES.toArray(Prefix[]::new))
-                .map(prefix -> String.format(MESSAGE_UNSUPPORTED_PREFIX, prefix, FindCommand.COMMAND_WORD))
-                .orElse(cause.getMessage());
-        return new ParseException(message, cause);
+        return ParserUtil.createFieldParseException(value, cause, FindCommand.COMMAND_WORD,
+                SUPPORTED_PREFIXES.toArray(Prefix[]::new));
     }
 
     private void addItemCriterion(List<PersonCriterion> criteria, ArgumentMultimap arguments) throws ParseException {

@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.Messages.MESSAGE_UNSUPPORTED_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Arrays;
@@ -57,6 +58,42 @@ public class ParserUtil {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Creates an error that names an unsupported prefix or keeps the original field constraint message.
+     * Call this only after constrained-field validation fails. The original exception remains the direct cause.
+     *
+     * @param value The invalid field value to inspect.
+     * @param cause The field validation failure.
+     * @param commandWord The command name used in an unsupported-prefix message.
+     * @param supportedPrefixes Prefixes supported by the command.
+     */
+    public static ParseException createFieldParseException(String value, ParseException cause, String commandWord,
+            Prefix... supportedPrefixes) {
+        requireNonNull(cause);
+        return createFieldParseException(value, cause, commandWord, cause.getMessage(), supportedPrefixes);
+    }
+
+    /**
+     * Creates an error that names an unsupported prefix or uses a supplied fallback message.
+     * The original exception remains the direct cause. Use this overload for fields with a specialized message,
+     * such as an item index parsed through the generic index validator.
+     *
+     * @param value The invalid field value to inspect.
+     * @param cause The field validation failure.
+     * @param commandWord The command name used in an unsupported-prefix message.
+     * @param fallbackMessage The message used when no unsupported prefix is found.
+     * @param supportedPrefixes Prefixes supported by the command.
+     */
+    public static ParseException createFieldParseException(String value, ParseException cause, String commandWord,
+            String fallbackMessage, Prefix... supportedPrefixes) {
+        requireNonNull(cause);
+        requireNonNull(commandWord);
+        String message = findUnsupportedPrefix(value, supportedPrefixes)
+                .map(prefix -> String.format(MESSAGE_UNSUPPORTED_PREFIX, prefix, commandWord))
+                .orElse(fallbackMessage);
+        return new ParseException(message, cause);
     }
 
     /**

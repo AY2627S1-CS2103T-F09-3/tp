@@ -2,7 +2,6 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.Messages.MESSAGE_UNSUPPORTED_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FULFILMENT_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FULFILMENT_METHOD;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_HANDOVER_NOTES;
@@ -79,11 +78,8 @@ public class PreorderCommandParser implements Parser<PreorderCommand> {
     }
 
     private static ParseException createFieldParseException(String value, ParseException cause) {
-        String message = ParserUtil.findUnsupportedPrefix(value,
-                PREFIX_FULFILMENT_DATE, PREFIX_FULFILMENT_METHOD, PREFIX_HANDOVER_NOTES)
-                .map(prefix -> String.format(MESSAGE_UNSUPPORTED_PREFIX, prefix, PreorderCommand.COMMAND_WORD))
-                .orElse(cause.getMessage());
-        return new ParseException(message, cause);
+        return ParserUtil.createFieldParseException(value, cause, PreorderCommand.COMMAND_WORD,
+                PREFIX_FULFILMENT_DATE, PREFIX_FULFILMENT_METHOD, PREFIX_HANDOVER_NOTES);
     }
 
 }

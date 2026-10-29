@@ -163,7 +163,7 @@ A supported prefix ends the preceding value. Unsupported prefix-like text stays 
 The tokenizer preserves conventional `c/o` text inside an address instead of treating it as a postal-code prefix.
 Quotation marks and backslashes do not escape supported prefixes.
 
-The following parsers refine errors from constrained fields using `ParserUtil.findUnsupportedPrefix`:
+The following parsers refine errors from constrained fields using `ParserUtil.createFieldParseException`:
 
 | Parser | Fields with contextual prefix diagnostics |
 |--------|------------------------------------------|
@@ -178,26 +178,28 @@ The following parsers refine errors from constrained fields using `ParserUtil.fi
 | `UntagCommandParser` | Tag (`t/`) |
 | `FindCommandParser` | Name (`n/`), phone (`p/`), email (`e/`), postal code (`c/`), tag (`t/`), date (`f/`), method (`m/`) and status (`s/`) queries |
 
-Each field is validated normally first. If parsing fails, the helper finds the first token matching
-`\s([A-Za-z]+/)` whose prefix is absent from that command's supported-prefix list. It preserves the prefix's case
-and returns an `Optional<Prefix>`. The parser formats `Messages.MESSAGE_UNSUPPORTED_PREFIX` with the offending
-prefix and command name, for example `Unsupported prefix 'd/' for track.` If no unsupported prefix is found,
-the original field constraint message is used. A slash embedded without a preceding whitespace boundary does not
-trigger this diagnostic. Customer-index and duplicate-prefix checks retain their earlier precedence.
+Each field is validated normally first. If parsing fails, the parser passes the failed value, exception, command word
+and supported prefixes to `ParserUtil.createFieldParseException`. This shared helper uses `findUnsupportedPrefix`
+to find the first token matching `\s([A-Za-z]+/)` whose prefix is absent from that command's supported-prefix list.
+It preserves the prefix's case and formats `Messages.MESSAGE_UNSUPPORTED_PREFIX` with the offending prefix and
+command name, for example `Unsupported prefix 'd/' for track.` If no unsupported prefix is found, the original field
+constraint message is used. An overload accepts a custom fallback for item-index errors. Both overloads retain the
+original exception as the direct cause. A slash embedded without a preceding whitespace boundary does not trigger
+this diagnostic. Customer-index and duplicate-prefix checks retain their earlier precedence.
 
 `EditCommandParser` preserves its field-validation order: name, phone, email, address, then postal code. Customer
 names are constrained by `Name` and do not permit slashes. Addresses retain their normal validation and preserve
 unsupported prefix-like text, including `Block 123 c/o Alice x/foo`.
 
 `TagCommandParser` and `UntagCommandParser` check the index format, required `t/` prefix and duplicate `t/` prefixes
-before calling `ParserUtil.parseTag`. Only a tag-value failure is refined. The refinement stays in each command parser.
+before calling `ParserUtil.parseTag`. Only a tag-value failure is passed to the shared error-refinement helper.
 
 This is an error-message refinement rather than a global rejection rule. Addresses, item names, remarks and handover notes
 can contain unsupported prefix-like text, subject to their model constraints. Do not apply the helper to free-text
 values or scan the complete command before field validation: text such as `Pack w/o nuts x/2` can be intentional.
 `FindCommandParser` uses the shared tokenizer too. It validates name, phone, email and postal-code queries using
 search-specific constraints, and validates tags, dates, methods and statuses through their existing validators.
-Each failed constrained value is passed to `createFieldParseException` to refine its error. For example,
+Each failed constrained value is passed to `ParserUtil.createFieldParseException` to refine its error. For example,
 `find c/123 x/foo` identifies `x/` while `find c/123` remains a valid postal-prefix search. Address, product and
 handover-note queries preserve unsupported prefix-like text. Only the failed field's value is inspected, so
 `find h/Leave w/o ringing x/foo s/invalid` still reports the status constraint rather than an error about the notes.

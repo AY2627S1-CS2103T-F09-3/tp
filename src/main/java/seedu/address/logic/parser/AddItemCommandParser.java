@@ -2,7 +2,6 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.Messages.MESSAGE_UNSUPPORTED_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_QUANTITY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
@@ -74,11 +73,8 @@ public class AddItemCommandParser implements Parser<AddItemCommand> {
     }
 
     private ParseException createFieldParseException(String value, ParseException cause) {
-        String message = ParserUtil.findUnsupportedPrefix(value,
-                PREFIX_DETAILS, PREFIX_QUANTITY, PREFIX_STATUS, PREFIX_REMARK)
-                .map(prefix -> String.format(MESSAGE_UNSUPPORTED_PREFIX, prefix, AddItemCommand.COMMAND_WORD))
-                .orElse(cause.getMessage());
-        return new ParseException(message, cause);
+        return ParserUtil.createFieldParseException(value, cause, AddItemCommand.COMMAND_WORD,
+                PREFIX_DETAILS, PREFIX_QUANTITY, PREFIX_STATUS, PREFIX_REMARK);
     }
 
     /**

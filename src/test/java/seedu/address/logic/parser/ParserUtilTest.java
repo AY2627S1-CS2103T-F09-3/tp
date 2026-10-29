@@ -1,7 +1,9 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_ITEM_INDEX;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -93,6 +95,46 @@ public class ParserUtilTest {
                 "1 https://example.com/path", "1 2x/3")) {
             assertEquals(Optional.empty(), ParserUtil.findUnsupportedPrefix(value, CliSyntax.PREFIX_ITEM_INDEX));
         }
+    }
+
+    @Test
+    public void createFieldParseException_unsupportedPrefix_usesCommandWordAndPreservesCause() {
+        ParseException cause = new ParseException(ItemStatus.MESSAGE_CONSTRAINTS);
+        for (String commandWord : List.of("track", "find")) {
+            ParseException actual = ParserUtil.createFieldParseException("invalid s/pending X/foo y/bar", cause,
+                    commandWord, CliSyntax.PREFIX_STATUS);
+            assertEquals("Unsupported prefix 'X/' for " + commandWord + ".", actual.getMessage());
+            assertSame(cause, actual.getCause());
+        }
+    }
+
+    @Test
+    public void createFieldParseException_noUnsupportedPrefix_keepsOriginalMessageAndCause() {
+        ParseException cause = new ParseException(ItemStatus.MESSAGE_CONSTRAINTS);
+        for (String value : List.of("done", "donex/foo", "done s/pending")) {
+            ParseException actual = ParserUtil.createFieldParseException(value, cause, "track",
+                    CliSyntax.PREFIX_STATUS);
+            assertEquals(ItemStatus.MESSAGE_CONSTRAINTS, actual.getMessage());
+            assertSame(cause, actual.getCause());
+        }
+    }
+
+    @Test
+    public void createFieldParseException_customFallback_usesFallbackAndPreservesCause() {
+        ParseException cause = new ParseException(MESSAGE_INVALID_INDEX);
+        ParseException actual = ParserUtil.createFieldParseException("0", cause, "deleteitem",
+                MESSAGE_INVALID_ITEM_INDEX, CliSyntax.PREFIX_ITEM_INDEX);
+        assertEquals(MESSAGE_INVALID_ITEM_INDEX, actual.getMessage());
+        assertSame(cause, actual.getCause());
+    }
+
+    @Test
+    public void createFieldParseException_customFallbackWithUnsupportedPrefix_namesPrefix() {
+        ParseException cause = new ParseException(MESSAGE_INVALID_INDEX);
+        ParseException actual = ParserUtil.createFieldParseException("1 x/foo", cause, "deleteitem",
+                MESSAGE_INVALID_ITEM_INDEX, CliSyntax.PREFIX_ITEM_INDEX);
+        assertEquals("Unsupported prefix 'x/' for deleteitem.", actual.getMessage());
+        assertSame(cause, actual.getCause());
     }
 
     @Test
