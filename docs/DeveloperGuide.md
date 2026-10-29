@@ -225,7 +225,7 @@ The `Model` component,
 * stores each customer's preorder, if any, as a `Preorder` holding the `Item`s they ordered (see [Preorders and items](#preorders-and-items)).
 * retains one active `SearchCriteria` in `ModelManager` to select which customers appear in the filtered list
   (see [Customer search criteria](#customer-search-criteria)).
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
+* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list, and shows them through a _sorted_ view of that list. `Model#getFilteredPersonList()` returns the sorted view as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes. The sorted view keeps the saved order until `sort date` or `group postal` sets an order (see [Sorting by fulfilment date](#sorting-by-fulfilment-date-sort-date)).
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
@@ -611,6 +611,165 @@ name, quantity and status.
 The replacement person preserves the customer's postal code. `Preorder.withItems` preserves the fulfilment date,
 method and handover notes, including when the final item is removed. Missing optional fields remain absent.
 
+### Setting fulfilment details: `preorder`
+
+`preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]` sets when and how a customer's preorder is handed over.
+The three details belong to the whole `Preorder`, not to its items (see [Preorders and items](#preorders-and-items)).
+
+**Parsing.** `PreorderCommandParser` parses the index with `ParserUtil#parsePreambleIndex`, rejects repeated
+prefixes, and fills an `EditFulfilmentDescriptor`. For each detail, the descriptor records whether its prefix was
+supplied and, if so, the new value:
+
+* a prefix with a value, such as `f/2026-12-20`, sets that detail. The value is checked by
+  `ParserUtil#parseFulfilmentDate`, `#parseFulfilmentMethod` (case-insensitive) or `#parseHandoverNotes`.
+* a prefix with no value, such as `h/`, clears that detail.
+* a prefix that is not supplied leaves that detail unchanged.
+
+If no prefix is supplied, the parser rejects the command, so a command that changes nothing never reaches the model.
+An invalid date or method that contains another prefix, such as `m/delivery x/1`, is reported as an unsupported
+prefix (see [Prefix boundaries and error messages](#prefix-boundaries-and-error-messages)). Handover notes are free
+text, so they keep such text.
+
+**Execution.** The sequence diagram below shows `PreorderCommand#execute` for `preorder 1 m/delivery`. Parsing is
+the same as for `delete` (see the [Logic component](#logic-component)), so the diagram starts at `execute(m)`.
+
+<puml src="diagrams/PreorderSequenceDiagram.puml" alt="Interactions inside PreorderCommand for the `preorder 1 m/delivery` command" />
+
+1. The command gets the customer at `INDEX` in the displayed list, or throws a `CommandException` if the index is
+   out of range.
+1. If the customer has no preorder and the command only clears details, it returns
+   `CUSTOMER has no preorder, so there is nothing to clear. No changes made.` and the model is not changed.
+1. Otherwise, it starts from the customer's preorder, or from an empty `Preorder` if they have none.
+   `createUpdatedPreorder` builds a new `Preorder` with the same items, taking each detail from the descriptor if
+   it was supplied and from the current preorder if not.
+1. `createPersonWithPreorder` builds a new `Person` with the same contact details, postal code and tags, and the
+   updated preorder. `Model#setPerson` replaces the customer. The active search is kept.
+1. The success message shows all three details through `Messages#formatFulfilmentDetails`, using `Not scheduled`,
+   `Not set` and `None` for missing ones. If the supplied date is before today, a second line adds
+   `Note: DATE is in the past.`
+
+#### Design considerations
+
+**Aspect: how to clear a detail**
+
+* **Alternative 1 (current choice):** an empty prefix clears that detail, e.g. `preorder 1 h/`.
+  * Pros: One command both sets and clears details, so there is one less command to learn. It works the same way
+    as removing a remark with an empty `r/` in `edititem`.
+  * Cons: The descriptor has to tell "not supplied" apart from "supplied but empty", which needs a flag per detail.
+* **Alternative 2:** a separate `clearpreorder INDEX` command.
+  * Pros: Clearing is explicit.
+  * Cons: Another command word. It clears all three details at once, so clearing only the notes still needs
+    another way.
+
+**Aspect: dates in the past**
+
+* **Alternative 1 (current choice):** accept the date and add a note.
+  * Pros: A baker may record an order that has already been handed over, or fix an old record. Blocking these
+    would be overzealous validation.
+  * Cons: A mistyped year is saved; the baker has to notice the note.
+* **Alternative 2:** reject past dates.
+  * Pros: Catches some typing mistakes.
+  * Cons: Blocks legitimate records, and depends on the computer's clock being right.
+
+**Aspect: what `preorder` does for a customer without a preorder**
+
+* **Alternative 1 (current choice):** create a preorder with no items.
+  * Pros: The baker can record the date and method first and add items later, in any order.
+  * Cons: An empty preorder must be handled by `track`, `find`, `sort date` and the summaries.
+* **Alternative 2:** require an item first.
+  * Pros: Every preorder has at least one item.
+  * Cons: The baker has to enter the order in a fixed sequence.
+
+### Sorting by fulfilment date: `sort date`
+
+`sort date` orders the displayed customers by the date of their preorder, earliest first.
+
+`ModelManager` wraps its `FilteredList<Person>` in a JavaFX `SortedList<Person>`, and
+`Model#getFilteredPersonList()` returns the sorted view. The UI and every index-based command use this view, so the
+index a command uses is always the number shown on screen. `Model#updatePersonListComparator(comparator)` sets the
+comparator of the sorted view; `null` restores the saved order.
+
+`SortCommandParser` accepts only the word `date`, ignoring case and surrounding spaces. `SortCommand#execute` calls
+`updatePersonListComparator(SortCommand.DATE_COMPARATOR)`, which orders customers by:
+
+1. fulfilment date, earliest first. Customers with no preorder, or a preorder with no date, use `LocalDate.MAX`, so
+   they are listed last.
+1. name, ignoring case, for customers with the same date (or no date).
+
+The comparator lives in the model, separately from the search criteria, so:
+
+* `find` and `track` change which customers are shown but keep the sort.
+* `group postal` sets its own comparator, which replaces the date sort, and `sort date` replaces the grouping.
+* `list` and `clear` set the comparator to `null`, which restores the saved order.
+* when a command changes a customer, such as `preorder 1 f/2026-12-24`, the `SortedList` moves them to their new
+  place, so their index may change.
+* the sort is not saved, so the app starts in the saved order.
+
+#### Design considerations
+
+**Aspect: how to sort**
+
+* **Alternative 1 (current choice):** sort a view of the list with a comparator.
+  * Pros: The data file keeps its order, so sorting never changes saved data. Searching and sorting are kept apart,
+    and each can change without resetting the other.
+  * Cons: Indices can change after an edit, as described above; the UG warns about this.
+* **Alternative 2:** reorder the customers in `AddressBook`.
+  * Pros: The order would survive a restart.
+  * Cons: Sorting would rewrite the data file, and `list` could no longer show the order in which customers were added.
+
+### Tagging customers: `tag` and `untag`
+
+`tag INDEX t/TAG` adds one tag to the customer at `INDEX` in the displayed list,
+and `untag INDEX t/TAG` removes one.
+
+**Parsing.** Both commands take the same input, so `TagCommandParser` and
+`UntagCommandParser` share two helpers: `ParserUtil#parsePreambleIndex` for the
+index, and `ParserUtil#parseSingleTag`, which requires exactly one `t/` and
+checks that the tag is one word of letters and digits, at most 30 characters.
+The index is checked first, so `tag 0 t/!` reports the index error.
+
+**Execution.** Both commands follow the same pattern as `delete`, shown in the
+sequence diagram under [Logic component](#logic-component). They get the customer
+from the displayed list, build a new `Person` with the updated tags and the same
+contact details, postal code and preorder, and replace the customer with
+`Model#setPerson`, keeping the active search and sort. If the customer already
+has the tag, `tag` shows `CUSTOMER already has tag [TAG]. No changes made.` and
+leaves the model unchanged.
+
+#### Design considerations
+
+**Aspect: where tags are changed**
+
+* **Alternative 1 (current choice):** separate `tag` and `untag` commands; `add`
+  and `edit` do not take tags.
+  * Pros: Adding a tag never removes the others. In AB3, `edit 1 t/vip`
+    replaced all of a customer's tags.
+  * Cons: Two more command words.
+* **Alternative 2:** `t/` in `add` and `edit`, as in AB3.
+  * Pros: Fewer commands.
+  * Cons: Adding one tag means retyping all the others.
+
+**Aspect: case of tags**
+
+* **Alternative 1 (current choice):** `Tag#equals` and `Tag#hashCode` ignore
+  case.
+  * Pros: `VIP` and `vip` cannot both be on one customer, `untag 1 t/vip`
+    removes `VIP`, and `find t/` follows the same rule.
+  * Cons: A tag keeps the capitalisation it was first typed with.
+* **Alternative 2:** compare case-insensitively only in the tag commands.
+  * Pros: Smaller change to `Tag`.
+  * Cons: Other commands could disagree about which tags are the same.
+
+**Aspect: adding a tag the customer already has**
+
+* **Alternative 1 (current choice):** show a note and change nothing.
+  * Pros: The customer already has the tag the user wanted, so nothing went
+    wrong, and repeating a command does no harm.
+  * Cons: A user who picked the wrong customer is not stopped as firmly.
+* **Alternative 2:** reject the command with an error.
+  * Pros: The mistake stands out more.
+  * Cons: Treats a harmless request as a failure.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -751,18 +910,20 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | keyboard-oriented home baker                         | exit LeBake using a command                                                       | complete my workflow without using a mouse                          |
 | `* * *`  | home baker                                           | add or remove tags from an existing customer                                      | keep the customer’s classifications current                         |
 | `* * *`  | home baker entering contacts quickly                 | be warned about possible duplicate profiles                                       | avoid recording the same customer twice                             |
-| `* * *`  | home baker                                           | record a concise seasonal pre-order summary in a customer’s profile               | keep the order connected to the correct customer                    |
+| `* * *`  | home baker                                           | record the products and quantities a customer pre-ordered                         | keep the order connected to the correct customer                    |
 | `* * *`  | home baker                                           | update a customer’s current pre-order requirements                                | record later changes accurately                                     |
 | `* * *`  | home baker preparing an order                        | view its requirements together with the customer’s contact and address details    | avoid searching in separate places                                  |
-| `* * *`  | home baker                                           | record a customer’s fulfilment status                                             | know whether their order is pending, prepared, or completed         |
+| `* * *`  | home baker                                           | record the fulfilment status of each item in a pre-order                          | know which products are pending, prepared, or completed             |
 | `* * *`  | home baker during a busy season                      | filter customer profiles by fulfilment status                                     | focus on customers requiring the same next action                   |
 | `* * *`  | home baker                                           | view only customers with active pre-orders                                        | focus on active orders without distraction from inactive contacts   |
+| `* * *`  | home baker arranging order handovers                 | set the date of a pre-order and whether it is delivered or collected              | know when and how to hand it over                                   |
 | `* * *`  | keyboard-oriented home baker                         | perform common customer-management tasks without using a mouse                    | work efficiently through the CLI                                    |
 | `* * *`  | home baker with a large customer base                | receive search and update results promptly                                        | keep using LeBake efficiently during peak periods                   |
 | `* *`    | home baker                                           | find a customer by phone number                                                   | identify someone who contacts me by phone                           |
 | `* *`    | home baker                                           | find a customer by email address                                                  | identify someone from an email enquiry                              |
 | `* *`    | home baker who remembers only part of a name         | search using partial and case-insensitive text                                    | still locate the correct customer                                   |
 | `* *`    | home baker with many customers                       | sort customer profiles alphabetically                                             | browse them predictably                                             |
+| `* *`    | home baker prioritising upcoming orders              | sort customers by the fulfilment date of their pre-order                          | prepare the orders due soonest first                                |
 | `* *`    | home baker                                           | filter customers by tag                                                           | focus on a relevant group of contacts                               |
 | `* *`    | home baker                                           | record notes about a customer                                                     | remember information relevant to serving them                       |
 | `* *`    | home baker serving repeat customers                  | record their contact and delivery preferences                                     | provide consistent service                                          |
@@ -771,7 +932,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *`    | home baker                                           | identify customer profiles with missing essential information                     | complete them before fulfilment begins                              |
 | `* *`    | home baker migrating from another system             | import existing customer contacts                                                 | avoid re-entering every profile manually                            |
 | `* *`    | home baker                                           | export my customer contacts                                                       | keep a backup or use them outside LeBake                            |
-| `* *`    | home baker                                           | record handover notes for a delivery                                              | remember access details such as gate codes or drop-off directions   |
+| `* *`    | home baker                                           | record handover notes for a delivery or collection                                | remember access details such as gate codes or drop-off directions   |
 | `* *`    | home baker preparing deliveries                      | mark an address as verified or unverified                                         | identify addresses that still require confirmation                  |
 | `* *`    | home baker                                           | find customers using an address or postal-code keyword                            | retrieve contacts based on delivery location                        |
 | `* *`    | home baker planning deliveries                       | filter customers by neighbourhood or postal area                                  | focus on customers in the same vicinity                             |
@@ -938,7 +1099,10 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 * **Archived customer**: A customer hidden from the active customer list but kept, so that it can be restored for a future seasonal campaign
 * **Customer**: A person whose contact and delivery details are stored in LeBake, represented by the `Person` class in the code
 * **Duplicate customer**: A customer with the same name as an existing customer, ignoring case and extra spaces (phone number, email and address are not compared)
+* **Fulfilment date**: The date a pre-order is to be delivered or collected, shared by all items in the pre-order
+* **Fulfilment method**: How a pre-order is handed over, which is `DELIVERY` (the baker brings it to the customer) or `COLLECTION` (the customer picks it up)
 * **Fulfilment status**: The stage an item in a pre-order has reached, which is `PENDING` (recorded but not ready), `PREPARED` (ready for collection or delivery), or `COMPLETED` (collected or delivered). Each item has its own status, represented by `ItemStatus` in the code; a pre-order has no overall status
+* **Handover notes**: A short note about handing over a pre-order, such as "Call on arrival" or "Collect from side gate", shared by all items in the pre-order
 * **Item**: One product in a pre-order, with its name, quantity, fulfilment status and an optional remark
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Postal area**: A group of nearby addresses that share the same leading digits of their postal code, used to group deliveries
@@ -1293,20 +1457,20 @@ remain unchanged.
 1. Run `edit 1 a/Block 123 c/o Alice x/foo`.<br>
    Expected: The complete address is `Block 123 c/o Alice x/foo`. Other contact details, tags, postal code and preorder
    are preserved. The active criteria are unchanged. Run `list` before continuing.
-1. Run `edititem 1 i/1 r/Pack w/o nuts x/2`.<br>
-   Expected: The edit succeeds and the remark is exactly `Pack w/o nuts x/2`.
-1. Run `preorder 1 h/Leave w/o ringing x/2`.<br>
-   Expected: The handover notes are exactly `Leave w/o ringing x/2`.
+1. Run `edititem 1 i/1 r/Pack without nuts`.<br>
+   Expected: The edit succeeds and the remark is exactly `Pack without nuts`.
+1. Run `preorder 1 h/Leave at side gate`.<br>
+   Expected: The handover notes are exactly `Leave at side gate`.
 1. Run `edititem 1 i/1 r/Less sugar s/prepared`.<br>
    Expected: The remark is `Less sugar` and the status is `PREPARED`; the supported `s/` starts a separate field.
 1. Run `add n/Prefix Test p/91234567 e/prefix@example.com a/Block 123 c/o Prefix Test x/foo c/123456`, followed by
    `find n/Pre p/9123 e/example.com a/Block 123 c/o Prefix Test x/foo`.<br>
    Expected: Only `Prefix Test` is displayed. The address keeps both `c/o` and `x/foo`; contact fragments remain valid.
-1. Run `additem 1 d/Cake w/ candles q/2 s/pending r/Pack w/o nuts x/2`, then
-   `preorder 1 h/Leave w/o ringing x/2 f/2026-12-20 m/delivery`, then `tag 1 t/VIP`.<br>
-   Expected: The item name, remark and handover notes keep their literal prefix-like text. Date, method, quantity,
-   status and tag are stored as separate fields.
-1. Run `find d/Cake w/ candles h/Leave w/o ringing x/2`, then
+1. Run `additem 1 d/Cake with candles q/2 s/pending r/Pack without nuts`, then
+   `preorder 1 h/Leave at side gate f/2026-12-20 m/delivery`, then `tag 1 t/VIP`.<br>
+   Expected: The item name, remark and handover notes are stored correctly. Date, method, quantity, status and tag
+   are stored as separate fields.
+1. Run `find d/Cake with candles h/Leave at side gate`, then
    `find n/Pre p/9123 e/example.com c/123 t/VIP f/2026-12-20 m/delivery s/pending`.<br>
    Expected: Both searches show only `Prefix Test`.
 1. Restart LeBake, run `find n/Prefix`, and inspect the customer.<br>
@@ -1390,6 +1554,46 @@ Start with the sample data. List all customers using the `list` command. The fir
    Expected: Nothing changes. The status message shows `The customer index provided is invalid.`
 1. Run `track`, then `deleteorder` with the displayed index of `Charlotte Oliveiro`.<br>
    Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder panel.
+
+### Setting delivery or collection details
+
+Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`. `Alex Yeoh` (1) has
+a delivery on 20 Dec 2026 with the notes `Call on arrival`; `Irfan Ibrahim` (5) and `Roy Balakrishnan` (6) have no
+preorder. Run the steps in order. For every rejected command, check that no card changes.
+
+1. Run `preorder 1 f/2026-12-24`.<br>
+   Expected: `Updated preorder details for Alex Yeoh: Date: 24 Dec 2026 | Method: DELIVERY | Handover notes: Call on arrival`.
+   Only the date on Alex's card changes; both items, their quantities and statuses are unchanged.
+1. Run `preorder 1 m/Collection h/`.<br>
+   Expected: `Updated preorder details for Alex Yeoh: Date: 24 Dec 2026 | Method: COLLECTION | Handover notes: None`.
+   The method changes and the handover notes are removed from the card.
+1. Run `preorder 1 h/Gate code 1234`.<br>
+   Expected: Succeeds. The handover notes are `Gate code 1234`.
+1. Run `preorder 5 m/delivery`.<br>
+   Expected: `Updated preorder details for Irfan Ibrahim: Date: Not scheduled | Method: DELIVERY | Handover notes: None`.
+   Irfan's card now shows a preorder with `No items yet`.
+1. Run `preorder 6 f/ m/ h/`.<br>
+   Expected: `Roy Balakrishnan has no preorder, so there is nothing to clear. No changes made.` Roy still has no preorder.
+1. Run `preorder 1 f/2025-12-20`.<br>
+   Expected: The update succeeds, and a second line says `Note: 20 Dec 2025 is in the past.`
+1. Try `preorder 1 f/2026-02-30` and `preorder 1 f/20-12-2026`.<br>
+   Expected: `Invalid date! Dates must be real calendar dates in YYYY-MM-DD format, e.g. 2026-12-20.`
+1. Run `preorder 1 m/drone`.<br>
+   Expected: `Invalid method! Method must be DELIVERY or COLLECTION.`
+1. Run `preorder 1 m/delivery x/2`.<br>
+   Expected: `Unsupported prefix 'x/' for preorder.`
+1. Run `preorder 1 h/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` (101 characters of notes).<br>
+   Expected: `Invalid handover notes! Handover notes must not be blank, must be on a single line, and must be at most 100 characters long.`
+1. Run `preorder 1 f/2026-12-24 f/2026-12-25`.<br>
+   Expected: `Multiple values specified for the following single-valued field(s): f/`
+1. Run `preorder 1`.<br>
+   Expected: `At least one of f/DATE, m/METHOD or h/HANDOVER_NOTES must be provided.`
+1. Try `preorder 0 f/2026-12-24`, `preorder f/2026-12-24` and `preorder x m/delivery`.<br>
+   Expected: `Invalid command format!`, followed by the usage instructions for `preorder`.
+1. Run `preorder 100 m/delivery` (where 100 is larger than the list size).<br>
+   Expected: `The person index provided is invalid.`
+1. Run `find n/Bernice`, then `preorder 1 m/delivery`.<br>
+   Expected: Bernice Yu's method changes to `DELIVERY`. Only Bernice remains displayed; the search is kept.
 
 ### Loading preorder data
 
