@@ -984,7 +984,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Using the side panel
 
-Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`.
+Use a fresh copy of the sample data (delete `data/lebake.json` and relaunch), then run `list`.
 
 1. Look at the side panel on the right.<br>
    Expected: It shows **Delivery preparation** with `2 outstanding customer stop(s) | 2 postal group(s)`, and stops for
@@ -1343,24 +1343,24 @@ Start with the sample data. List all customers using the `list` command. The fir
 ### Loading preorder data
 
 These steps edit the data file, so use a copy of LeBake in an empty folder. Launch it once and run `list` to create
-`data/addressbook.json`, then close LeBake before each edit.
+`data/lebake.json`, then close LeBake before each edit.
 
 1. Loading a preorder saved by v1.3
 
-   1. Prerequisites: In `data/addressbook.json`, replace the first customer's `"preorders"` list with
+   1. Prerequisites: In `data/lebake.json`, replace the first customer's `"preorders"` list with
       `"preorder" : { "details" : "2 chocolate cakes", "status" : "PENDING" }`.
 
    1. Test case: Launch LeBake.<br>
       Expected: The first customer's card shows one item, `2 chocolate cakes`, with `Qty needed` and the
       status `PENDING`. Their other details are unchanged.
 
-   1. Test case: Run `list`, close LeBake, then open `data/addressbook.json` again.<br>
+   1. Test case: Run `list`, close LeBake, then open `data/lebake.json` again.<br>
       Expected: The customer has a `"preorders"` list holding one item whose `"quantity"` is `null`, and no
       `"preorder"` field.
 
 1. Loading a data file with an invalid item
 
-   1. Prerequisites: In `data/addressbook.json`, change one item's `"quantity"` to `"0"`. Keep a copy of the file.
+   1. Prerequisites: In `data/lebake.json`, change one item's `"quantity"` to `"0"`. Keep a copy of the file.
 
    1. Test case: Launch LeBake.<br>
       Expected: The data file cannot be loaded, so LeBake starts with an empty customer list, and the log warns
@@ -1369,7 +1369,7 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
 
 ### Sorting customers by fulfilment date
 
-Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`.
+Use a fresh copy of the sample data (delete `data/lebake.json` and relaunch), then run `list`.
 
 1. Run `sort date`.<br>
    Expected: `Sorted 6 customer(s) by fulfilment date. Customers without a date are listed last.`

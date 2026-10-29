@@ -727,7 +727,9 @@ LeBake automatically saves data after every successful command. You do not need 
 
 ### Editing the data file
 
-LeBake data is saved automatically as a JSON file `data/addressbook.json`, inside the folder that the terminal is in when you start LeBake. If you start it as described in [Quick start](#quick-start), that is the home folder with the JAR file. Starting LeBake from another folder, for example with `java -jar C:\LeBake\LeBake.jar` from your desktop, makes a new `data` folder there with the sample data, and your saved data in the home folder is not loaded. Advanced users are welcome to update data directly by editing that data file.
+LeBake data is saved automatically as a JSON file `data/lebake.json`, inside the folder that the terminal is in when you start LeBake. If you start it as described in [Quick start](#quick-start), that is the home folder with the JAR file. Starting LeBake from another folder, for example with `java -jar C:\LeBake\LeBake.jar` from your desktop, makes a new `data` folder there with the sample data, and your saved data in the home folder is not loaded. Advanced users are welcome to update data directly by editing that data file.
+
+If `data/lebake.json` is missing, LeBake starts with sample data and creates the file after a successful command.
 
 Postal codes are compulsory for every customer, including records saved by older versions. Each customer must have a `postalCode` containing exactly six digits. Null, missing, blank or malformed postal codes prevent the file from loading. Back up older files and supply the correct postal codes before launching LeBake.
 
