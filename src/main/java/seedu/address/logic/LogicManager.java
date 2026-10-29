@@ -1,5 +1,7 @@
 package seedu.address.logic;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.util.logging.Logger;
@@ -8,6 +10,8 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.util.StringUtil;
+import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -32,6 +36,7 @@ public class LogicManager implements Logic {
     private final Model model;
     private final Storage storage;
     private final AddressBookParser addressBookParser;
+    private ClearCommand pendingClearCommand;
 
     /**
      * Constructs a {@code LogicManager} with the given {@code Model} and {@code Storage}.
@@ -44,12 +49,39 @@ public class LogicManager implements Logic {
 
     @Override
     public CommandResult execute(String commandText) throws CommandException, ParseException {
+        requireNonNull(commandText);
+        if (commandText.isEmpty() && !isClearConfirmationPending()) {
+            return new CommandResult("");
+        }
         logger.info("----------------[USER COMMAND][" + commandText + "]");
 
-        CommandResult commandResult;
-        Command command = addressBookParser.parseCommand(commandText);
-        commandResult = command.execute(model);
+        // A pending clear consumes the next input so commands typed during confirmation are not run accidentally.
+        if (isClearConfirmationPending()) {
+            ClearCommand clearCommand = pendingClearCommand;
+            pendingClearCommand = null;
+            if (StringUtil.stripSpaces(commandText).equalsIgnoreCase(ClearCommand.CONFIRMATION_INPUT)) {
+                return executeAndSave(clearCommand);
+            }
+            return new CommandResult(ClearCommand.MESSAGE_CONFIRMATION_CANCELLED);
+        }
 
+        Command command = addressBookParser.parseCommand(commandText);
+        if (command instanceof ClearCommand) {
+            // Defer the destructive command until the user explicitly confirms it.
+            pendingClearCommand = (ClearCommand) command;
+            return new CommandResult(ClearCommand.MESSAGE_CONFIRMATION_REQUIRED);
+        }
+
+        return executeAndSave(command);
+    }
+
+    private boolean isClearConfirmationPending() {
+        return pendingClearCommand != null;
+    }
+
+    private CommandResult executeAndSave(Command command) throws CommandException {
+        // Only executed commands reach persistence; prompts and cancellations return before this method.
+        CommandResult commandResult = command.execute(model);
         try {
             storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
