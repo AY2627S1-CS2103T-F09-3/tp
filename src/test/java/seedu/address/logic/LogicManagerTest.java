@@ -25,6 +25,7 @@ import static seedu.address.testutil.TypicalPersons.PREPARED_CARL;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.TrackCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -48,6 +50,9 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Address;
+import seedu.address.model.person.Email;
+import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.search.ItemCriterion;
@@ -159,6 +164,124 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_addAtLengthBoundaries_savesNormalizedValues() throws Exception {
+        List<Person> expectedPersons = new ArrayList<>();
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        for (int offset : new int[]{-1, 0}) {
+            String name = "A".repeat(98 + offset) + " B";
+            String email = createEmailWithLength(254 + offset);
+            String address = "A".repeat(300 + offset);
+            Person expectedPerson = new PersonBuilder().withName(name).withPhone("81234567")
+                    .withEmail(email).withAddress(address).withPostalCode("012345").build();
+
+            logic.execute("add n/  " + "A".repeat(98 + offset) + "   B  p/81234567 e/  " + email
+                    + "  a/  " + address + "  c/012345");
+
+            expectedPersons.add(expectedPerson);
+            assertEquals(expectedPersons, model.getAddressBook().getPersonList());
+            assertEquals(expectedPersons, logic.getFilteredPersonList());
+            assertEquals(expectedPersons, storage.readAddressBook().orElseThrow().getPersonList());
+        }
+    }
+
+    @Test
+    public void execute_editAtLengthBoundaries_savesNormalizedValuesAndPreservesSearch() throws Exception {
+        model.addPerson(PENDING_BENSON);
+        logic.execute("find p/" + PENDING_BENSON.getPhone().value);
+        SearchCriteria originalCriteria = logic.getActiveSearchCriteria();
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        for (int offset : new int[]{-1, 0}) {
+            String name = "A".repeat(98 + offset) + " B";
+            String email = createEmailWithLength(254 + offset);
+            String address = "A".repeat(300 + offset);
+            Person editedPerson = new PersonBuilder(PENDING_BENSON).withName(name)
+                    .withEmail(email).withAddress(address).build();
+
+            logic.execute("edit 1 n/  " + "A".repeat(98 + offset) + "   B  e/  " + email
+                    + "  a/  " + address + "  ");
+
+            assertEquals(List.of(editedPerson), model.getAddressBook().getPersonList());
+            assertEquals(List.of(editedPerson), logic.getFilteredPersonList());
+            assertEquals(originalCriteria, logic.getActiveSearchCriteria());
+            assertEquals(List.of(editedPerson), storage.readAddressBook().orElseThrow().getPersonList());
+        }
+    }
+
+    @Test
+    public void execute_tagFindUntagAtLengthBoundaries_savesChangesAndPreservesSearch() throws Exception {
+        model.addPerson(PENDING_BENSON);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        for (int length : new int[]{29, 30}) {
+            logic.execute("list");
+            String tag = "A".repeat(length);
+            Person taggedPerson = new PersonBuilder(PENDING_BENSON).withTags("friends", "owesMoney", tag).build();
+
+            logic.execute("tag 1 t/  " + tag + "  ");
+
+            assertEquals(List.of(taggedPerson), model.getAddressBook().getPersonList());
+            assertEquals(List.of(taggedPerson), storage.readAddressBook().orElseThrow().getPersonList());
+            assertFilteringCommandSuccess("find t/" + "a".repeat(length), "1 person(s) listed!", List.of(taggedPerson));
+            SearchCriteria tagCriteria = logic.getActiveSearchCriteria();
+
+            logic.execute("untag 1 t/  " + "a".repeat(length) + "  ");
+
+            assertEquals(List.of(PENDING_BENSON), model.getAddressBook().getPersonList());
+            assertEquals(List.of(), logic.getFilteredPersonList());
+            assertEquals(tagCriteria, logic.getActiveSearchCriteria());
+            assertEquals(List.of(PENDING_BENSON), storage.readAddressBook().orElseThrow().getPersonList());
+        }
+    }
+
+    @Test
+    public void execute_overLimitFields_preservesDataSearchAndSavedFile() throws Exception {
+        setUpTrackPersons();
+        logic.execute("find n/Alice");
+        Path filePath = temporaryFolder.resolve("addressBook.json");
+        String originalJson = Files.readString(filePath);
+        String overLimitName = "A".repeat(99) + "   B";
+        String overLimitEmail = createEmailWithLength(255);
+        String overLimitAddress = "A".repeat(301);
+        String overLimitTag = "A".repeat(31);
+        String invalidName = "A".repeat(99) + "   !";
+        String invalidEmail = "a".repeat(255);
+        String invalidAddress = "A".repeat(299) + "\nB";
+        String invalidTag = "A".repeat(30) + "!";
+        String multilineCommandMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE);
+        String[][] invalidCommands = {
+            {"add n/" + overLimitName + " p/81234567 e/new@example.com a/123 Baker Road c/012345",
+                Name.MESSAGE_LENGTH_CONSTRAINTS},
+            {"edit 1 n/" + overLimitName, Name.MESSAGE_LENGTH_CONSTRAINTS},
+            {"add n/New Customer p/81234567 e/" + overLimitEmail + " a/123 Baker Road c/012345",
+                Email.MESSAGE_LENGTH_CONSTRAINTS},
+            {"edit 1 e/" + overLimitEmail, Email.MESSAGE_LENGTH_CONSTRAINTS},
+            {"add n/New Customer p/81234567 e/new@example.com a/" + overLimitAddress + " c/012345",
+                Address.MESSAGE_LENGTH_CONSTRAINTS},
+            {"edit 1 a/" + overLimitAddress, Address.MESSAGE_LENGTH_CONSTRAINTS},
+            {"tag 1 t/" + overLimitTag, Tag.MESSAGE_LENGTH_CONSTRAINTS},
+            {"untag 1 t/" + overLimitTag, Tag.MESSAGE_LENGTH_CONSTRAINTS},
+            {"find t/" + overLimitTag, Tag.MESSAGE_LENGTH_CONSTRAINTS},
+            {"add n/" + invalidName + " p/81234567 e/new@example.com a/123 Baker Road c/012345",
+                Name.MESSAGE_LENGTH_CONSTRAINTS},
+            {"edit 1 n/" + invalidName, Name.MESSAGE_LENGTH_CONSTRAINTS},
+            {"add n/New Customer p/81234567 e/" + invalidEmail + " a/123 Baker Road c/012345",
+                Email.MESSAGE_LENGTH_CONSTRAINTS},
+            {"edit 1 e/" + invalidEmail, Email.MESSAGE_LENGTH_CONSTRAINTS},
+            // Multiline commands are rejected before individual fields are validated.
+            {"add n/New Customer p/81234567 e/new@example.com a/" + invalidAddress + " c/012345",
+                multilineCommandMessage},
+            {"edit 1 a/" + invalidAddress, multilineCommandMessage},
+            {"tag 1 t/" + invalidTag, Tag.MESSAGE_LENGTH_CONSTRAINTS},
+            {"untag 1 t/" + invalidTag, Tag.MESSAGE_LENGTH_CONSTRAINTS},
+            {"find t/" + invalidTag, Tag.MESSAGE_LENGTH_CONSTRAINTS}
+        };
+
+        for (String[] invalidCommand : invalidCommands) {
+            assertCommandFailurePreservesFilteredList(invalidCommand[0], ParseException.class, invalidCommand[1]);
+            assertEquals(originalJson, Files.readString(filePath));
+        }
     }
 
     @Test
@@ -646,6 +769,11 @@ public class LogicManagerTest {
     @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> logic.getFilteredPersonList().remove(0));
+    }
+
+    private static String createEmailWithLength(int length) {
+        String prefix = "a".repeat(64) + "@" + "b".repeat(63) + "." + "c".repeat(63) + ".";
+        return prefix + "d".repeat(length - prefix.length());
     }
 
     private void setUpTrackPersons() {

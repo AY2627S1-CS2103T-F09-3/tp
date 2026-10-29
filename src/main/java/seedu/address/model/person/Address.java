@@ -9,7 +9,13 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Address {
 
+    /** Maximum length in UTF-16 code units. */
+    public static final int MAX_LENGTH = 300;
+
     public static final String MESSAGE_CONSTRAINTS = "Addresses can take any values, and should not be blank";
+
+    public static final String MESSAGE_LENGTH_CONSTRAINTS = "Addresses must be at most " + MAX_LENGTH
+            + " characters long.";
 
     /*
      * The first character of the address must not be a whitespace,
@@ -26,15 +32,23 @@ public class Address {
      */
     public Address(String address) {
         requireNonNull(address);
-        checkArgument(isValidAddress(address), MESSAGE_CONSTRAINTS);
+        checkArgument(isValidAddress(address), getValidationErrorMessage(address));
         value = address;
     }
 
     /**
-     * Returns true if a given string is a valid address.
+     * Returns true if a given string is a valid address with at most {@link #MAX_LENGTH} UTF-16 code units.
      */
     public static boolean isValidAddress(String test) {
-        return test.matches(VALIDATION_REGEX);
+        return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX);
+    }
+
+    /**
+     * Returns the length constraint message if the address exceeds the limit,
+     * or the format constraint message otherwise. Length violations take precedence over format violations.
+     */
+    public static String getValidationErrorMessage(String test) {
+        return test.length() > MAX_LENGTH ? MESSAGE_LENGTH_CONSTRAINTS : MESSAGE_CONSTRAINTS;
     }
 
     @Override

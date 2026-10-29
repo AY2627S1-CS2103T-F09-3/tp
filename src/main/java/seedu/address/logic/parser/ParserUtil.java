@@ -82,7 +82,7 @@ public class ParserUtil {
     public static Name parseName(String name) throws ParseException {
         requireNonNull(name);
         if (!Name.isValidName(name)) {
-            throw new ParseException(Name.MESSAGE_CONSTRAINTS);
+            throw new ParseException(Name.getValidationErrorMessage(name));
         }
         return new Name(name);
     }
@@ -112,7 +112,7 @@ public class ParserUtil {
         requireNonNull(address);
         String trimmedAddress = address.trim();
         if (!Address.isValidAddress(trimmedAddress)) {
-            throw new ParseException(Address.MESSAGE_CONSTRAINTS);
+            throw new ParseException(Address.getValidationErrorMessage(trimmedAddress));
         }
         return new Address(trimmedAddress);
     }
@@ -168,7 +168,7 @@ public class ParserUtil {
         requireNonNull(email);
         String trimmedEmail = email.trim();
         if (!Email.isValidEmail(trimmedEmail)) {
-            throw new ParseException(Email.MESSAGE_CONSTRAINTS);
+            throw new ParseException(Email.getValidationErrorMessage(trimmedEmail));
         }
         return new Email(trimmedEmail);
     }
@@ -183,7 +183,7 @@ public class ParserUtil {
         requireNonNull(tag);
         String trimmedTag = tag.trim();
         if (!Tag.isValidTagName(trimmedTag)) {
-            throw new ParseException(Tag.MESSAGE_CONSTRAINTS);
+            throw new ParseException(Tag.getValidationErrorMessage(trimmedTag));
         }
         return new Tag(trimmedTag);
     }

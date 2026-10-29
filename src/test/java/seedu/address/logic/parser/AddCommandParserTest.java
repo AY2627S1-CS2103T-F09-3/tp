@@ -70,6 +70,47 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_nameLengthBoundaries_checksNormalizedLength() {
+        for (int length : new int[]{99, 100}) {
+            String normalizedName = "A".repeat(length - 2) + " B";
+            Person expectedPerson = new PersonBuilder(BOB).withName(normalizedName)
+                    .withPostalCode("654321").withTags().build();
+            assertParseSuccess(parser, " n/  " + "A".repeat(length - 2) + "   B  "
+                    + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB,
+                    new AddCommand(expectedPerson));
+        }
+        assertParseFailure(parser, " n/  " + "A".repeat(99) + "   B  "
+                + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB,
+                Name.MESSAGE_LENGTH_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_emailLengthBoundaries_checksTrimmedLength() {
+        for (int length : new int[]{253, 254}) {
+            String email = createEmailWithLength(length);
+            Person expectedPerson = new PersonBuilder(BOB).withEmail(email)
+                    .withPostalCode("654321").withTags().build();
+            assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " e/  " + email + "  "
+                    + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB, new AddCommand(expectedPerson));
+        }
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " e/  " + createEmailWithLength(255) + "  "
+                + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB, Email.MESSAGE_LENGTH_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_addressLengthBoundaries_checksTrimmedLength() {
+        for (int length : new int[]{299, 300}) {
+            String address = "A".repeat(length);
+            Person expectedPerson = new PersonBuilder(BOB).withAddress(address)
+                    .withPostalCode("654321").withTags().build();
+            assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + " a/  " + address + "  "
+                    + POSTAL_CODE_DESC_BOB, new AddCommand(expectedPerson));
+        }
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + " a/  " + "A".repeat(301) + "  "
+                + POSTAL_CODE_DESC_BOB, Address.MESSAGE_LENGTH_CONSTRAINTS);
+    }
+
+    @Test
     public void parse_invalidNames_failure() {
         for (String invalidName : new String[]{"", "   ", "John2", "John@Tan", "John\tTan", "-", "'", " - ' ",
             "José Tan"}) {
@@ -226,5 +267,10 @@ public class AddCommandParserTest {
         assertParseFailure(parser, PREAMBLE_NON_EMPTY + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB,
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+    }
+
+    private static String createEmailWithLength(int length) {
+        String prefix = "a".repeat(64) + "@" + "b".repeat(63) + "." + "c".repeat(63) + ".";
+        return prefix + "d".repeat(length - prefix.length());
     }
 }
