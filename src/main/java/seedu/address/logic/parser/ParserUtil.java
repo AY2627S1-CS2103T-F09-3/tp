@@ -257,20 +257,27 @@ public class ParserUtil {
 
     /**
      * Parses the single {@code t/TAG} value in {@code argMultimap} into a {@code Tag}.
+     * Checks for missing and duplicate prefixes before validating the tag. Refines tag-value failures using the
+     * command's unsupported-prefix diagnostic.
      *
      * @param argMultimap Tokenized arguments containing the tag prefix and value.
      * @param errorMessage Complete error message shown when the tag prefix is missing.
+     * @param commandWord The command name used in an unsupported-prefix message.
      * @throws ParseException If the tag prefix is missing or repeated, or the tag is invalid.
      */
-    public static Tag parseSingleTag(ArgumentMultimap argMultimap, String errorMessage) throws ParseException {
+    public static Tag parseSingleTag(ArgumentMultimap argMultimap, String errorMessage, String commandWord)
+            throws ParseException {
         requireNonNull(argMultimap);
         requireNonNull(errorMessage);
-        if (argMultimap.getValue(PREFIX_TAG).isEmpty()) {
-            throw new ParseException(errorMessage);
-        }
+        requireNonNull(commandWord);
+        String value = argMultimap.getValue(PREFIX_TAG).orElseThrow(() -> new ParseException(errorMessage));
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_TAG);
-        return parseTag(argMultimap.getValue(PREFIX_TAG).get());
+        try {
+            return parseTag(value);
+        } catch (ParseException pe) {
+            throw createFieldParseException(value, pe, commandWord, PREFIX_TAG);
+        }
     }
 
     /**

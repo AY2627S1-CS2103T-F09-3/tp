@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
@@ -166,8 +167,47 @@ public class ParserUtilTest {
     @Test
     public void parseSingleTag_missingPrefix_usesSuppliedMessage() {
         ArgumentMultimap args = ArgumentTokenizer.tokenize("1", CliSyntax.PREFIX_TAG);
-        assertThrows(ParseException.class, "Expected t/TAG", ()
-            -> ParserUtil.parseSingleTag(args, "Expected t/TAG"));
+        for (String commandWord : List.of("tag", "untag")) {
+            assertThrows(ParseException.class, "Expected t/TAG", ()
+                -> ParserUtil.parseSingleTag(args, "Expected t/TAG", commandWord));
+        }
+    }
+
+    @Test
+    public void parseSingleTag_validTag_returnsTag() throws Exception {
+        ArgumentMultimap args = ArgumentTokenizer.tokenize("1 t/  VIP123  ", CliSyntax.PREFIX_TAG);
+        for (String commandWord : List.of("tag", "untag")) {
+            assertEquals(new Tag("VIP123"), ParserUtil.parseSingleTag(args, "Expected t/TAG", commandWord));
+        }
+    }
+
+    @Test
+    public void parseSingleTag_duplicatePrefixes_reportsDuplicateBeforeTagError() {
+        ArgumentMultimap args = ArgumentTokenizer.tokenize("1 t/VIP t/friends x/foo", CliSyntax.PREFIX_TAG);
+        for (String commandWord : List.of("tag", "untag")) {
+            assertThrows(ParseException.class, Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_TAG), ()
+                -> ParserUtil.parseSingleTag(args, "Expected t/TAG", commandWord));
+        }
+    }
+
+    @Test
+    public void parseSingleTag_invalidTag_keepsConstraintMessage() {
+        for (String commandWord : List.of("tag", "untag")) {
+            for (String value : List.of("", "close friends", "VIP!", "VIPx/foo")) {
+                ArgumentMultimap args = ArgumentTokenizer.tokenize("1 t/" + value, CliSyntax.PREFIX_TAG);
+                assertThrows(ParseException.class, Tag.MESSAGE_CONSTRAINTS, ()
+                    -> ParserUtil.parseSingleTag(args, "Expected t/TAG", commandWord));
+            }
+        }
+    }
+
+    @Test
+    public void parseSingleTag_unsupportedPrefix_usesCommandWord() {
+        ArgumentMultimap args = ArgumentTokenizer.tokenize("1 t/VIP x/foo p/91234567", CliSyntax.PREFIX_TAG);
+        for (String commandWord : List.of("tag", "untag")) {
+            assertThrows(ParseException.class, "Unsupported prefix 'x/' for " + commandWord + ".", ()
+                -> ParserUtil.parseSingleTag(args, "Expected t/TAG", commandWord));
+        }
     }
 
     @Test

@@ -25,16 +25,8 @@ public class TagCommandParser implements Parser<TagCommand> {
 
         String formatErrorMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, TagCommand.MESSAGE_USAGE);
         Index index = ParserUtil.parsePreambleIndex(argMultimap, formatErrorMessage);
-        String value = argMultimap.getValue(PREFIX_TAG)
-                .orElseThrow(() -> new ParseException(formatErrorMessage));
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_TAG);
-
-        try {
-            Tag tag = ParserUtil.parseTag(value);
-            return new TagCommand(index, tag);
-        } catch (ParseException pe) {
-            throw ParserUtil.createFieldParseException(value, pe, TagCommand.COMMAND_WORD, PREFIX_TAG);
-        }
+        Tag tag = ParserUtil.parseSingleTag(argMultimap, formatErrorMessage, TagCommand.COMMAND_WORD);
+        return new TagCommand(index, tag);
     }
 
 }

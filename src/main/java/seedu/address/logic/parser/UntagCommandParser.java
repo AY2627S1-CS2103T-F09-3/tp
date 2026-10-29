@@ -27,15 +27,7 @@ public class UntagCommandParser implements Parser<UntagCommand> {
 
         String formatErrorMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, UntagCommand.MESSAGE_USAGE);
         Index index = ParserUtil.parsePreambleIndex(argMultimap, formatErrorMessage);
-        String value = argMultimap.getValue(PREFIX_TAG)
-                .orElseThrow(() -> new ParseException(formatErrorMessage));
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_TAG);
-
-        try {
-            Tag tag = ParserUtil.parseTag(value);
-            return new UntagCommand(index, tag);
-        } catch (ParseException pe) {
-            throw ParserUtil.createFieldParseException(value, pe, UntagCommand.COMMAND_WORD, PREFIX_TAG);
-        }
+        Tag tag = ParserUtil.parseSingleTag(argMultimap, formatErrorMessage, UntagCommand.COMMAND_WORD);
+        return new UntagCommand(index, tag);
     }
 }

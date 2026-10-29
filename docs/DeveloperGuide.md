@@ -191,8 +191,10 @@ this diagnostic. Customer-index and duplicate-prefix checks retain their earlier
 names are constrained by `Name` and do not permit slashes. Addresses retain their normal validation and preserve
 unsupported prefix-like text, including `Block 123 c/o Alice x/foo`.
 
-`TagCommandParser` and `UntagCommandParser` check the index format, required `t/` prefix and duplicate `t/` prefixes
-before calling `ParserUtil.parseTag`. Only a tag-value failure is passed to the shared error-refinement helper.
+`TagCommandParser` and `UntagCommandParser` check the index format before calling `ParserUtil.parseSingleTag`
+with their format-error message and command word. This shared helper checks the required `t/` prefix and duplicate
+`t/` prefixes before calling `ParserUtil.parseTag`. Only a tag-value failure is passed to
+`ParserUtil.createFieldParseException`, so each command retains its own unsupported-prefix message.
 
 This is an error-message refinement rather than a global rejection rule. Addresses, item names, remarks and handover notes
 can contain unsupported prefix-like text, subject to their model constraints. Do not apply the helper to free-text
