@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
@@ -134,9 +135,18 @@ public class ParserUtilTest {
     }
 
     @Test
-    public void parseIndex_outOfRangeInput_throwsParseException() {
-        assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, ()
-            -> ParserUtil.parseIndex(Long.toString(Integer.MAX_VALUE + 1)));
+    public void parseIndex_overflowingPositiveValue_returnsOutOfRangeIndex() throws Exception {
+        Index outOfRangeIndex = Index.fromZeroBased(Integer.MAX_VALUE);
+        assertEquals(outOfRangeIndex, ParserUtil.parseIndex("2147483648"));
+        assertEquals(outOfRangeIndex, ParserUtil.parseIndex("9".repeat(1000)));
+    }
+
+    @Test
+    public void parseIndex_nonPositiveOrMalformedValue_throwsParseException() {
+        for (String invalidIndex : List.of("", "0", "000", "-1", "+1", "1.5", "1 a")) {
+            assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, ()
+                    -> ParserUtil.parseIndex(invalidIndex));
+        }
     }
 
     @Test

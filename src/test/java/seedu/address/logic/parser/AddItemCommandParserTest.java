@@ -58,10 +58,17 @@ public class AddItemCommandParserTest {
 
     @Test
     public void parse_missingOrInvalidCustomerIndex_failure() {
-        for (String index : new String[]{"", "0", "-1", "abc", "1.5", "2147483648", "1 extra"}) {
+        for (String index : new String[]{"", "0", "-1", "abc", "1.5", "1 extra"}) {
             assertParseFailure(parser, index + VALID_FIELDS, USAGE);
         }
         assertParseFailure(parser, "", USAGE);
+    }
+
+    @Test
+    public void parse_overflowingCustomerIndex_success() {
+        Item item = new ItemBuilder().withName("Cake").withQuantity("2").build();
+        assertParseSuccess(parser, "2147483648" + VALID_FIELDS,
+                new AddItemCommand(Index.fromZeroBased(Integer.MAX_VALUE), item));
     }
 
     @Test

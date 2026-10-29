@@ -553,8 +553,10 @@ same immutable preorder/person replacement path, with the item list appended or 
 
 Success messages use `Added/Edited item NUMBER for CUSTOMER: NAME (quantity: QUANTITY, STATUS)`.
 For migrated items without a quantity, the quantity portion is `quantity needed`; the card shows `Qty needed`.
-Remarks remain visible on the customer card. A missing `i/` produces usage instructions. Invalid item-index values
-use the contextual diagnostics above, with `Item index must be a positive integer.` as the fallback message.
+Remarks remain visible on the customer card. A missing `i/` produces usage instructions. Empty, non-positive or
+malformed item-index values produce `Item index must be a positive integer.`, unless an unsupported prefix-like token
+is present, in which case the contextual diagnostic above is used. A syntactically valid positive index beyond the
+preorder's item count produces `The item index provided is invalid.`
 `deleteorder` still removes the whole preorder; its item-level replacement is a separate feature.
 
 ### Preorder item deletion
@@ -562,8 +564,9 @@ use the contextual diagnostics above, with `Item index must be a positive intege
 `DeleteItemCommandParser` parses `deleteitem INDEX i/ITEM_INDEX`. It validates the customer-index preamble,
 rejects duplicate `i/` prefixes, and parses the required item index using `ParserUtil.parseIndex`.
 A missing `i/` shows usage instructions. An unsupported prefix after the item-index value, such as
-`deleteitem 1 i/1 x/2`, shows `Unsupported prefix 'x/' for deleteitem.` Other empty or invalid item-index values
-show `Item index must be a positive integer.`
+`deleteitem 1 i/1 x/2`, shows `Unsupported prefix 'x/' for deleteitem.`. An item index that is empty, non-positive 
+or malformed shows `Item index must be a positive integer.` A positive item index beyond the preorder's item count is 
+parsed and later produces `The item index provided is invalid.`
 `AddressBookParser` dispatches `deleteitem` to this parser.
 
 `DeleteItemCommand` resolves the customer from `model.getFilteredPersonList()`, checks that a preorder exists,

@@ -8,6 +8,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.PreorderCommand;
 import seedu.address.logic.commands.PreorderCommand.EditFulfilmentDescriptor;
@@ -38,6 +39,13 @@ public class PreorderCommandParserTest {
                 new EditFulfilmentDescriptorBuilder().withMethod(FulfilmentMethod.DELIVERY).build());
         assertParseDescriptor("1 h/" + VALID_HANDOVER_NOTES,
                 new EditFulfilmentDescriptorBuilder().withHandoverNotes(VALID_HANDOVER_NOTES).build());
+    }
+
+    @Test
+    public void parse_overflowingIndex_success() {
+        assertParseSuccess(parser, "2147483648 f/" + VALID_DATE,
+                new PreorderCommand(Index.fromZeroBased(Integer.MAX_VALUE),
+                        new EditFulfilmentDescriptorBuilder().withDate(VALID_DATE).build()));
     }
 
     @Test
