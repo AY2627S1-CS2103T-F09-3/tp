@@ -19,6 +19,7 @@ public class Messages {
     public static final String MESSAGE_INVALID_ITEM_INDEX = "Item index must be a positive integer.";
     public static final String MESSAGE_UNKNOWN_COMMAND = "Unknown command.";
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
+    public static final String MESSAGE_UNSUPPORTED_PREFIX = "Unsupported prefix '%1$s' for %2$s.";
     public static final String MESSAGE_INVALID_PERSON_DISPLAYED_INDEX = "The person index provided is invalid.";
     public static final String MESSAGE_PERSONS_LISTED_OVERVIEW = "%1$d person(s) listed!";
     public static final String MESSAGE_DUPLICATE_FIELDS =
@@ -52,7 +53,7 @@ public class Messages {
                 .append("; Address: ")
                 .append(person.getAddress())
                 .append("; Postal code: ")
-                .append(person.getPostalCode() == null ? "Postal code needed" : person.getPostalCode())
+                .append(person.getPostalCode())
                 .append("; Tags: ");
         person.getTags().forEach(builder::append);
         return builder.toString();

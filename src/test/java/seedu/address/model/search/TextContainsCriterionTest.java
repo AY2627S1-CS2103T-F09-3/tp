@@ -35,6 +35,16 @@ public class TextContainsCriterionTest {
     }
 
     @Test
+    public void constructor_noBreakSpacesAround_stripped() {
+        TextContainsCriterion criterion = new TextContainsCriterion(TextContainsCriterion.Field.HANDOVER_NOTES,
+                "\u00A0side gate\u202F");
+        assertEquals("side gate", criterion.getQuery());
+        assertTrue(criterion.test(new PersonBuilder().withPreorder(new PreorderBuilder()
+                .withHandoverNotes("Collect from side gate").build()).build()));
+        assertThrows(IllegalArgumentException.class, () -> new TextContainsCriterion(NAME, "\u00A0"));
+    }
+
+    @Test
     public void getters_exposeFieldAndNormalizedQuery() {
         TextContainsCriterion criterion = new TextContainsCriterion(ADDRESS, "  HOUGANG  Avenue, #04-08 \t");
 

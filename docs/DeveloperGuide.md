@@ -156,6 +156,45 @@ How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
+#### Prefix boundaries and error messages
+
+`ArgumentTokenizer` recognizes only the prefixes supplied by a command parser, with whitespace before each prefix.
+A supported prefix ends the preceding value. Unsupported prefix-like text stays in the current value or preamble.
+The tokenizer preserves conventional `c/o` text inside an address instead of treating it as a postal-code prefix.
+Quotation marks and backslashes do not escape supported prefixes.
+
+The following parsers refine errors from constrained fields using `ParserUtil.findUnsupportedPrefix`:
+
+| Parser | Fields with contextual prefix diagnostics |
+|--------|------------------------------------------|
+| `DeleteItemCommandParser` | Item index (`i/`) |
+| `EditCommandParser` | Customer name (`n/`), phone (`p/`), email (`e/`) and postal code (`c/`) |
+| `EditItemCommandParser` | Item index (`i/`), quantity (`q/`) and status (`s/`) |
+| `TrackCommandParser` | Status (`s/`) |
+| `UntagCommandParser` | Tag (`t/`) |
+
+Each field is validated normally first. If parsing fails, the helper finds the first token matching
+`\s([A-Za-z]+/)` whose prefix is absent from that command's supported-prefix list. It preserves the prefix's case
+and returns an `Optional<Prefix>`. The parser formats `Messages.MESSAGE_UNSUPPORTED_PREFIX` with the offending
+prefix and command name, for example `Unsupported prefix 'd/' for track.` If no unsupported prefix is found,
+the original field constraint message is used. A slash embedded without a preceding whitespace boundary does not
+trigger this diagnostic. Customer-index and duplicate-prefix checks retain their earlier precedence.
+
+`EditCommandParser` preserves its field-validation order: name, phone, email, address, then postal code. Customer
+names are constrained by `Name` and do not permit slashes. Addresses retain their normal validation and preserve
+unsupported prefix-like text, including `Block 123 c/o Alice x/foo`.
+
+`UntagCommandParser` checks the index format, required `t/` prefix and duplicate `t/` prefixes before calling
+`ParserUtil.parseTag`. Only a tag-value failure is refined. The refinement stays in the command parser;
+`TagCommandParser` continues to use `ParserUtil.parseSingleTag` with its existing diagnostics.
+
+This is an error-message refinement rather than a global rejection rule. Addresses, remarks and handover notes can
+contain unsupported prefix-like text, subject to their model constraints. Item names have their own slash restriction.
+Do not apply the helper to free-text values or scan the complete command before field validation: text such as
+`Pack w/o nuts x/2` can be intentional.
+`FindCommandParser` has a separate, stricter rule that rejects unsupported letter-based prefixes throughout the
+arguments, including text criteria. Its behaviour is unchanged by these contextual diagnostics.
+
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/model/Model.java)
 
@@ -248,12 +287,16 @@ rejected; `find Alice m/delivery` must use `find n/Alice m/delivery` instead.
 from the `c/` value and validates it using `PostalCodeCriterion.isValidPrefix`, which accepts one to six ASCII digits
 (`[0-9]{1,6}`). Blank values produce the existing invalid-command-format error; other invalid values produce
 `PostalCodeCriterion.MESSAGE_CONSTRAINTS`. The criterion also validates its constructor argument and matches using
-`postalCode.value.startsWith(postalCodePrefix)`. Leading zeros remain significant, a six-digit query is an exact match,
-and customers whose postal code is null do not match. This criterion joins the same `SearchCriteria` collection as
+`postalCode.value.startsWith(postalCodePrefix)`. Leading zeros remain significant, and a six-digit query is an exact match.
+This criterion joins the same `SearchCriteria` collection as
 other conditions, so `find n/Alice c/53` requires both conditions and each new `find` replaces the previous criteria.
 
 Customer-record validation remains separate: `add` and `edit` continue to use `ParserUtil.parsePostalCode` and
 `PostalCode`, which require exactly six digits. A valid search prefix is never used as a customer's stored postal code.
+
+Postal codes are mandatory in the model and saved data too. `Person` requires a non-null `PostalCode`, and
+`JsonAdaptedPerson` rejects null or missing postal codes with the standard missing-field error and malformed values
+with `PostalCode.MESSAGE_CONSTRAINTS`. Older files must contain valid postal codes before they can be loaded.
 
 To add a search condition with different matching rules, implement `PersonCriterion` and include it in a
 `SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
@@ -271,9 +314,10 @@ in one criterion and one badge.
 
 `FindCommandParser` combines `d/` (`PREFIX_DETAILS`) and `s/` into **one** `ItemCriterion`. Separate predicates for
 "has this product" and "has this status" would incorrectly allow different items to satisfy the conditions.
-Product names match completely after stripping surrounding whitespace and normalizing case with `Locale.ROOT`;
-internal spacing and punctuation remain significant. The criterion also retains the stripped input name for display;
-matching, equality and hash codes use the normalized name. Status input is validated with `ParserUtil.parseItemStatus`.
+Product names match completely after stripping surrounding whitespace, collapsing repeated spaces as `ItemName`
+does, and normalizing case with `Locale.ROOT`; punctuation remains significant. The criterion also retains the
+cleaned-up input name for display; matching, equality and hash codes use the normalized name. Status input is
+validated with `ParserUtil.parseItemStatus`.
 
 The parser supplies `EnumSet.allOf(ItemStatus.class)` when `s/` is omitted. This is deliberate: an empty status set
 in `ItemCriterion` matches **nothing**, rather than meaning "any status". An absent product name accepts any product.
@@ -318,8 +362,8 @@ JavaFX keyboard navigation and selects its first entry when focused without an e
 `DeliveryPreparationSummary` takes a snapshot of the current displayed customer results. It reuses
 `ItemCriterion` with no product condition and statuses `PENDING` and `PREPARED`, then requires the preorder's method
 to be `DELIVERY`. It counts customers, not matching items. Collection, unset methods, empty wrappers and completed-only
-preorders are excluded. Missing postal codes remain represented by one additional group; dates and notes may be unset
-without excluding an otherwise outstanding delivery. The immutable snapshot orders contacts by postal code and name,
+preorders are excluded. Dates and notes may be unset without excluding an otherwise outstanding delivery.
+The immutable snapshot orders contacts by postal code and name,
 without mutating the address book or the active search criteria.
 
 `MainWindow` puts a `DeliverySummaryPanel` in the `SidePanel`. The panel observes the existing
@@ -370,6 +414,8 @@ one `Preorder`, and each `Preorder` holds the customer's `Item`s in the order th
   `HandoverNotes`, such as "Call on arrival". They belong to the whole preorder, so all of its items are handed
   over together. `Preorder#withItems()` keeps them when a command changes the items.
 * `Item` has an `ItemName` of up to 200 characters, an `ItemStatus`, and an optional `Quantity` and `Remark`.
+  `ItemName` turns each run of spaces, including Unicode spaces, into one space, so `Butter   Cake` and
+  `Butter Cake` are the same product in `find` and the preparation summary.
   A `Quantity` is a whole number from 1 to 999, and a `Remark` is a special request of up to 100 characters.
 * New items always have a quantity. `Item#getQuantity()` is empty only for items converted from v1.3 data, as
   described under "Loading v1.3 data" below.
@@ -407,6 +453,8 @@ field that breaks its rules is reported as invalid data, in the same way as an i
 an `"items"` field loads as a preorder with no items.
 
 #### Loading v1.3 data
+
+All customer records must first have valid six-digit postal codes; missing codes are not inferred or accepted.
 
 LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and one `"status"`.
 `JsonAdaptedPerson` still reads that field through `JsonAdaptedLegacyPreorder`, which turns it into a preorder with
@@ -464,6 +512,12 @@ the customer in the current format.
 `EditItemCommandParser` additionally requires `i/ITEM_INDEX` and constructs an `EditItemDescriptor` for supplied fields.
 Both parsers validate the customer-index syntax first, reject duplicate prefixes, check required inputs, and validate
 item fields in the order name, quantity, status, remark. They reuse the model validators through `ParserUtil`.
+`ParserUtil` trims remarks and handover notes with `StringUtil#stripSpaces()` rather than `String#strip()`, which
+keeps no-break spaces, so a value pasted with one around it is still accepted. Spaces inside the value are kept.
+
+For `edititem`, failures in `i/`, `q/` and `s/` use the contextual diagnostics described under
+[Prefix boundaries and error messages](#prefix-boundaries-and-error-messages). Names and remarks retain their
+normal validation and preserve unsupported prefix-like text.
 
 The edit descriptor distinguishes an omitted remark (`null`), removal (`Optional.empty()`) and replacement
 (`Optional.of(remark)`). The command copies the descriptor defensively. Empty remarks are rejected when adding.
@@ -481,16 +535,17 @@ same immutable preorder/person replacement path, with the item list appended or 
 
 Success messages use `Added/Edited item NUMBER for CUSTOMER: NAME (quantity: QUANTITY, STATUS)`.
 For migrated items without a quantity, the quantity portion is `quantity needed`; the card shows `Qty needed`.
-Remarks remain visible on the customer card. A missing `i/` produces usage instructions; a supplied but invalid
-item index produces `Item index must be a positive integer.`
+Remarks remain visible on the customer card. A missing `i/` produces usage instructions. Invalid item-index values
+use the contextual diagnostics above, with `Item index must be a positive integer.` as the fallback message.
 `deleteorder` still removes the whole preorder; its item-level replacement is a separate feature.
 
 ### Preorder item deletion
 
 `DeleteItemCommandParser` parses `deleteitem INDEX i/ITEM_INDEX`. It validates the customer-index preamble,
 rejects duplicate `i/` prefixes, and parses the required item index using `ParserUtil.parseIndex`.
-A missing `i/` shows usage instructions; a supplied empty or invalid value shows
-`Item index must be a positive integer.`
+A missing `i/` shows usage instructions. An unsupported prefix after the item-index value, such as
+`deleteitem 1 i/1 x/2`, shows `Unsupported prefix 'x/' for deleteitem.` Other empty or invalid item-index values
+show `Item index must be a positive integer.`
 `AddressBookParser` dispatches `deleteitem` to this parser.
 
 `DeleteItemCommand` resolves the customer from `model.getFilteredPersonList()`, checks that a preorder exists,
@@ -880,6 +935,10 @@ testers are expected to do more *exploratory* testing.
       Expected: The customer list still shows the top of the first card, with its index and name. The usage message
       scrolls in the result box instead of pushing the customer list out of the window.
 
+   1. In the same window, run `tag 1 t/Christmas2026CorporateOrdersWithSpecialDietaryRequirementsAndPriorityDelivery`.<br>
+      Expected: The long tag wraps onto a second line inside its chip, which stays inside the card, and the rest
+      of the card moves down to make room for it.
+
 ### Using the side panel
 
 Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`.
@@ -1013,10 +1072,10 @@ Run each group below independently, starting with the sample data unless stated 
    1. Prerequisites: Run `list`. The first person is `Alex Yeoh`, who has the tag `friends`. Run `tag 1 t/regular` to give Alex a second tag.
 
    1. Test case: `untag 1 t/FRIENDS`<br>
-      Expected: The `friends` tag is removed despite the different capitalization. The `regular` tag and Alex's contact details remain unchanged. The status message shows `Removed tag(s) [FRIENDS] from Alex Yeoh`.
+      Expected: The `friends` tag is removed despite the different capitalization. The `regular` tag and Alex's contact details remain unchanged. The status message shows `Removed tag [FRIENDS] from Alex Yeoh`.
 
    1. Test case: `untag 1 t/regular`<br>
-      Expected: Alex has no tags left, but remains in the list with the same contact details. The status message shows `Removed tag(s) [regular] from Alex Yeoh`.
+      Expected: Alex has no tags left, but remains in the list with the same contact details. The status message shows `Removed tag [regular] from Alex Yeoh`.
 
    1. Test case: Repeat `untag 1 t/regular`.<br>
       Expected: No data is changed. The status message shows `Alex Yeoh does not have tag [regular]`.
@@ -1051,7 +1110,7 @@ Run each group below independently, starting with the sample data unless stated 
       Expected: The status message shows `The person index provided is invalid.`, even though the full address book contains more than one person.
 
    1. Test case: `untag 1 t/FRIENDS`<br>
-      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag(s) [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other persons are unchanged.
+      Expected: Bernice's `friends` tag is removed and `colleagues` remains. The status message shows `Removed tag [FRIENDS] from Bernice Yu`. Only Bernice remains displayed; the filter is preserved. Other persons are unchanged.
 
    1. Test case: `untag 1 t/FRIENDS` again.<br>
       Expected: The status message shows `Bernice Yu does not have tag [FRIENDS]`. Only Bernice remains displayed.
@@ -1068,6 +1127,38 @@ Run each group below independently, starting with the sample data unless stated 
 
    1. Test case: Close and relaunch the application, then locate the same customer.<br>
       Expected: The removed tag remains absent. The customer's other tags, contact details, and preorder are preserved.
+
+### Unsupported prefix diagnostics
+
+Use a disposable copy of the sample data and run `list`.
+
+1. Try `deleteitem 1 i/1 x/2`.<br>
+   Expected: `Unsupported prefix 'x/' for deleteitem.` No data changes.
+1. Try `edititem 1 i/1 c/012345`.<br>
+   Expected: `Unsupported prefix 'c/' for edititem.` No data changes.
+1. Try `track s/pending d/Cake`.<br>
+   Expected: `Unsupported prefix 'd/' for track.` The current criteria and displayed list remain unchanged.
+1. Run `find n/Alex`, then try `edit 1 p/91234567 x/foo`.<br>
+   Expected: `Unsupported prefix 'x/' for edit.` Customer data, the displayed list and the active criteria are unchanged.
+1. Try `untag 1 t/VIP x/foo`.<br>
+   Expected: `Unsupported prefix 'x/' for untag.` Customer data, the displayed list and the active criteria are unchanged,
+   whether or not the customer has a `VIP` tag.
+1. Try `edit 1 n/Alex Yeoh x/foo`, `edit 1 e/alex@example.com x/foo` and `edit 1 c/012345 x/foo`.<br>
+   Expected: Each command shows `Unsupported prefix 'x/' for edit.` No data or filter changes.
+1. Try `edit 1 p/12345` and `untag 1 t/close friends`.<br>
+   Expected: The existing phone and tag constraint messages respectively. No data or filter changes.
+1. Try `edit 0 p/91234567 x/foo` and `untag 1 t/VIP x/foo t/friends`.<br>
+   Expected: Respectively, the edit format error and usage instructions, and the duplicate-`t/` error.
+   No data or filter changes.
+1. Run `edit 1 a/Block 123 c/o Alice x/foo`.<br>
+   Expected: The complete address is `Block 123 c/o Alice x/foo`. Other contact details, tags, postal code and preorder
+   are preserved. The active criteria are unchanged. Run `list` before continuing.
+1. Run `edititem 1 i/1 r/Pack w/o nuts x/2`.<br>
+   Expected: The edit succeeds and the remark is exactly `Pack w/o nuts x/2`.
+1. Run `preorder 1 h/Leave w/o ringing x/2`.<br>
+   Expected: The handover notes are exactly `Leave w/o ringing x/2`.
+1. Run `edititem 1 i/1 r/Less sugar s/prepared`.<br>
+   Expected: The remark is `Less sugar` and the status is `PREPARED`; the supported `s/` starts a separate field.
 
 ### Adding and editing preorder items
 

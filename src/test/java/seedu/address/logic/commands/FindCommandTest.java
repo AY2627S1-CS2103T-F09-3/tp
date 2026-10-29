@@ -136,9 +136,9 @@ public class FindCommandTest {
         Person match = new PersonBuilder().withName("Alice Tan").withPostalCode("012345").build();
         Person differentName = new PersonBuilder().withName("Bob Tan").withPostalCode("012345").build();
         Person differentCode = new PersonBuilder().withName("Alice Lim").withPostalCode("123456").build();
-        Person missingCode = new PersonBuilder().withName("Alice Lee").build();
+        Person otherCode = new PersonBuilder().withName("Alice Lee").withPostalCode("999999").build();
         Model searchModel = new ModelManager();
-        List.of(match, differentName, differentCode, missingCode).forEach(searchModel::addPerson);
+        List.of(match, differentName, differentCode, otherCode).forEach(searchModel::addPerson);
         SearchCriteria criteria = new SearchCriteria(List.of(
                 new TextContainsCriterion(NAME, "Alice"),
                 new PostalCodeCriterion("01")));

@@ -3,10 +3,14 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
@@ -31,6 +35,29 @@ import seedu.address.model.tag.Tag;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+
+    private static final Pattern PREFIX_LIKE_TOKEN = Pattern.compile("\\s([A-Za-z]+/)");
+
+    /**
+     * Returns the first letter-based prefix after whitespace in {@code value} that is not supported by the command.
+     * Use this only to refine errors for an already-invalid constrained field, as free text can contain literal
+     * prefix-like text.
+     *
+     * @param value An invalid field value to inspect.
+     * @param supportedPrefixes Prefixes supported by the command.
+     */
+    public static Optional<Prefix> findUnsupportedPrefix(String value, Prefix... supportedPrefixes) {
+        requireNonNull(value);
+        requireNonNull(supportedPrefixes);
+        Matcher matcher = PREFIX_LIKE_TOKEN.matcher(value);
+        while (matcher.find()) {
+            Prefix prefix = new Prefix(matcher.group(1));
+            if (Arrays.stream(supportedPrefixes).noneMatch(prefix::equals)) {
+                return Optional.of(prefix);
+            }
+        }
+        return Optional.empty();
+    }
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
@@ -211,17 +238,16 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String name} into an {@code ItemName}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespace is removed, and repeated spaces are replaced with one.
      *
      * @throws ParseException if the given {@code name} is invalid.
      */
     public static ItemName parseItemName(String name) throws ParseException {
         requireNonNull(name);
-        String trimmedName = name.trim();
-        if (!ItemName.isValidItemName(trimmedName)) {
+        if (!ItemName.isValidItemName(name)) {
             throw new ParseException(ItemName.MESSAGE_CONSTRAINTS);
         }
-        return new ItemName(trimmedName);
+        return new ItemName(name);
     }
 
     /**
@@ -241,13 +267,13 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String remark} into a {@code Remark}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespaces, including Unicode spaces, will be trimmed.
      *
      * @throws ParseException if the given {@code remark} is invalid.
      */
     public static Remark parseRemark(String remark) throws ParseException {
         requireNonNull(remark);
-        String trimmedRemark = remark.trim();
+        String trimmedRemark = StringUtil.stripSpaces(remark);
         if (!Remark.isValidRemark(trimmedRemark)) {
             throw new ParseException(Remark.MESSAGE_CONSTRAINTS);
         }
@@ -272,13 +298,13 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String handoverNotes} into a {@code HandoverNotes}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespaces, including Unicode spaces, will be trimmed.
      *
      * @throws ParseException if the given {@code handoverNotes} is invalid.
      */
     public static HandoverNotes parseHandoverNotes(String handoverNotes) throws ParseException {
         requireNonNull(handoverNotes);
-        String trimmedHandoverNotes = handoverNotes.trim();
+        String trimmedHandoverNotes = StringUtil.stripSpaces(handoverNotes);
         if (!HandoverNotes.isValidHandoverNotes(trimmedHandoverNotes)) {
             throw new ParseException(HandoverNotes.MESSAGE_CONSTRAINTS);
         }

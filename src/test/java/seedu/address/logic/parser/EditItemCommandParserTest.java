@@ -50,8 +50,8 @@ public class EditItemCommandParserTest {
 
     @Test
     public void parse_emptyOrInvalidValues_failure() {
-        for (String input : new String[]{" 1 i/1 d/", " 1 i/1 d/   s/PENDING", " 1 i/1 d/Cake\nTarts",
-            " 1 i/1 d/Cake/Tarts",
+        for (String input : new String[]{" 1 i/1 d/", " 1 i/1 d/   s/PENDING", " 1 i/1 d/\u2003",
+            " 1 i/1 d/Cake\nTarts", " 1 i/1 d/Cake/Tarts",
             " 1 i/1 d/" + "a".repeat(ItemName.MAX_LENGTH + 1)}) {
             assertParseFailure(parser, input, ItemName.MESSAGE_CONSTRAINTS);
         }
@@ -84,7 +84,8 @@ public class EditItemCommandParserTest {
 
     @Test
     public void parse_invalidItemIndex_showsIndexConstraint() {
-        for (String value : new String[]{"", "   ", "0", "-1", "+1", "abc", "1.5", "2147483648", "1 extra"}) {
+        for (String value : new String[]{"", "   ", "0", "-1", "+1", "abc", "1.5", "2147483648", "1 extra",
+            "1x/2", "x/2", "1 x /2", "1 #04/08"}) {
             assertParseFailure(parser, "1 i/" + value + " d/Cake", Messages.MESSAGE_INVALID_ITEM_INDEX);
             assertParseFailure(parser, "1 i/" + value, Messages.MESSAGE_INVALID_ITEM_INDEX);
         }
@@ -93,6 +94,45 @@ public class EditItemCommandParserTest {
     @Test
     public void parse_noEditFields_showsNoChangesMessage() {
         assertParseFailure(parser, "1 i/1", EditItemCommand.MESSAGE_NOT_EDITED);
+    }
+
+    @Test
+    public void parse_unsupportedPrefixesInConstrainedFields_namesPrefix() {
+        for (String args : new String[]{"1 i/1", "1 i/1 q/2", "1 i/1 s/pending"}) {
+            for (String prefix : new String[]{"c/", "x/", "h/", "Q/", "status/"}) {
+                assertParseFailure(parser, args + " " + prefix + "2",
+                        "Unsupported prefix '" + prefix + "' for edititem.");
+            }
+            assertParseFailure(parser, args + " x/2 c/012345", "Unsupported prefix 'x/' for edititem.");
+            assertParseFailure(parser, args + " x/", "Unsupported prefix 'x/' for edititem.");
+        }
+    }
+
+    @Test
+    public void parse_unsupportedPrefixAfterWhitespace_namesPrefix() {
+        for (String args : new String[]{"1 i/1", "1 i/1 q/2", "1 i/1 s/pending"}) {
+            for (String separator : new String[]{"\t", "\n", "\r\n", " \t "}) {
+                assertParseFailure(parser, args + separator + "x/2", "Unsupported prefix 'x/' for edititem.");
+            }
+        }
+    }
+
+    @Test
+    public void parse_prefixLikeTextInRemark_preservesText() {
+        String text = "Less sugar c/012345 x/2";
+        EditItemDescriptor descriptor = new EditItemDescriptor();
+        descriptor.setName(new ItemName("Cake"));
+        descriptor.setRemark(Optional.of(new Remark(text)));
+        descriptor.setQuantity(new Quantity("2"));
+        descriptor.setStatus(ItemStatus.PENDING);
+        assertParseSuccess(parser, "1 i/1 d/Cake r/" + text + " q/2 s/pending",
+                new EditItemCommand(Index.fromOneBased(1), Index.fromOneBased(1), descriptor));
+    }
+
+    @Test
+    public void parse_invalidFreeTextWithPrefixLikeText_keepsConstraintMessage() {
+        assertParseFailure(parser, "1 i/1 d/Cake\nx/2", ItemName.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 i/1 r/Pack\nx/2", Remark.MESSAGE_CONSTRAINTS);
     }
 
     @Test
@@ -112,8 +152,12 @@ public class EditItemCommandParserTest {
 
     @Test
     public void parse_invalidQuantityOrRemark_failure() {
-        for (String quantity : new String[]{"", "0", "-1", "01", "1.5", "1000", "abc", "999999999999"}) {
+        for (String quantity : new String[]{"", "0", "-1", "01", "1.5", "1000", "abc", "999999999999",
+            "2x/3", "x/2", "2 x /3", "2 #04/08"}) {
             assertParseFailure(parser, "1 i/1 q/" + quantity, Quantity.MESSAGE_CONSTRAINTS);
+        }
+        for (String status : new String[]{"PENDINGx/2", "x/2", "PENDING x /2", "PENDING #04/08"}) {
+            assertParseFailure(parser, "1 i/1 s/" + status, ItemStatus.MESSAGE_CONSTRAINTS);
         }
         for (String remark : new String[]{"a".repeat(Remark.MAX_LENGTH + 1), "Less\nsugar"}) {
             assertParseFailure(parser, "1 i/1 r/" + remark, Remark.MESSAGE_CONSTRAINTS);
@@ -152,6 +196,20 @@ public class EditItemCommandParserTest {
         assertParseFailure(parser, "1 i/1 d/Cake q/0 s/invalid", Quantity.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "1 i/1 d/Cake q/1 s/invalid r/" + "a".repeat(Remark.MAX_LENGTH + 1),
                 ItemStatus.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_unsupportedPrefixWithEarlierErrors_preservesValidationOrder() {
+        String usage = String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, EditItemCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, "0 i/1 c/012345", usage);
+        assertParseFailure(parser, "1 c/012345 i/1 q/2", usage);
+        assertParseFailure(parser, "1 i/1 c/012345 i/2",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_ITEM_INDEX));
+        assertParseFailure(parser, "1 i/1 s/pending c/012345 s/prepared",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_STATUS));
+        assertParseFailure(parser, "1 i/0 q/2 x/3", Messages.MESSAGE_INVALID_ITEM_INDEX);
+        assertParseFailure(parser, "1 i/1 d/ q/2 x/3", ItemName.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 i/1 q/0 s/pending x/3", Quantity.MESSAGE_CONSTRAINTS);
     }
 
     @Test

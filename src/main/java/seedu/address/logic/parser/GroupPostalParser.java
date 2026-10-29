@@ -9,9 +9,9 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class GroupPostalParser implements Parser<GroupPostalCommand> {
     @Override
     public GroupPostalCommand parse(String args) throws ParseException {
-        if (!GroupPostalCommand.POSTAL_ARGUMENT.equals(args.trim())) {
+        if (!GroupPostalCommand.POSTAL_ARGUMENT.equalsIgnoreCase(args.trim())) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT,
-                    "group postal: Groups customers by postal code."));
+                    GroupPostalCommand.MESSAGE_USAGE));
         }
         return new GroupPostalCommand();
     }
