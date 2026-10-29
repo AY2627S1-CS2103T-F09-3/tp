@@ -22,6 +22,8 @@ public class Messages {
     public static final String MESSAGE_UNSUPPORTED_PREFIX = "Unsupported prefix '%1$s' for %2$s.";
     public static final String MESSAGE_INVALID_PERSON_DISPLAYED_INDEX = "The person index provided is invalid.";
     public static final String MESSAGE_PERSONS_LISTED_OVERVIEW = "%1$d person(s) listed!";
+    public static final String MESSAGE_DUPLICATE_CUSTOMER = "A customer named \"%1$s\" already exists. "
+            + "Customer names must be unique (ignoring capitalisation and extra spaces). Choose a different name.";
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";
     public static final String NO_FULFILMENT_DATE_TEXT = "Not scheduled";

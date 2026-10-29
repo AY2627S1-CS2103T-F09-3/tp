@@ -35,7 +35,6 @@ public class AddCommand extends Command {
             + PREFIX_POSTAL_CODE + "123456";
 
     public static final String MESSAGE_SUCCESS = "New person added: %1$s";
-    public static final String MESSAGE_DUPLICATE_PERSON = "Customer already exists!";
 
     private final Person toAdd;
 
@@ -52,7 +51,7 @@ public class AddCommand extends Command {
         requireNonNull(model);
 
         if (model.hasPerson(toAdd)) {
-            throw new CommandException(MESSAGE_DUPLICATE_PERSON);
+            throw new CommandException(String.format(Messages.MESSAGE_DUPLICATE_CUSTOMER, toAdd.getName()));
         }
 
         model.addPerson(toAdd);
