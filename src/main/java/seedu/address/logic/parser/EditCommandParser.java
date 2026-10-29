@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_UNSUPPORTED_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
@@ -43,21 +44,40 @@ public class EditCommandParser implements Parser<EditCommand> {
         EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();
 
         if (argMultimap.getValue(PREFIX_NAME).isPresent()) {
-            editPersonDescriptor.setName(ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get()));
+            String name = argMultimap.getValue(PREFIX_NAME).get();
+            try {
+                editPersonDescriptor.setName(ParserUtil.parseName(name));
+            } catch (ParseException pe) {
+                throw createFieldParseException(name, pe);
+            }
         }
         if (argMultimap.getValue(PREFIX_PHONE).isPresent()) {
-            editPersonDescriptor.setPhone(ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get()));
+            String phone = argMultimap.getValue(PREFIX_PHONE).get();
+            try {
+                editPersonDescriptor.setPhone(ParserUtil.parsePhone(phone));
+            } catch (ParseException pe) {
+                throw createFieldParseException(phone, pe);
+            }
         }
         if (argMultimap.getValue(PREFIX_EMAIL).isPresent()) {
-            editPersonDescriptor.setEmail(ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get()));
+            String email = argMultimap.getValue(PREFIX_EMAIL).get();
+            try {
+                editPersonDescriptor.setEmail(ParserUtil.parseEmail(email));
+            } catch (ParseException pe) {
+                throw createFieldParseException(email, pe);
+            }
         }
         if (argMultimap.getValue(PREFIX_ADDRESS).isPresent()) {
             editPersonDescriptor.setAddress(ParserUtil.parseAddress(argMultimap.getValue(PREFIX_ADDRESS).get()));
         }
 
         if (argMultimap.getValue(PREFIX_POSTAL_CODE).isPresent()) {
-            editPersonDescriptor.setPostalCode(
-                    ParserUtil.parsePostalCode(argMultimap.getValue(PREFIX_POSTAL_CODE).get()));
+            String postalCode = argMultimap.getValue(PREFIX_POSTAL_CODE).get();
+            try {
+                editPersonDescriptor.setPostalCode(ParserUtil.parsePostalCode(postalCode));
+            } catch (ParseException pe) {
+                throw createFieldParseException(postalCode, pe);
+            }
         }
 
         if (!editPersonDescriptor.isAnyFieldEdited()) {
@@ -65,5 +85,13 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
 
         return new EditCommand(index, editPersonDescriptor);
+    }
+
+    private ParseException createFieldParseException(String value, ParseException cause) {
+        String message = ParserUtil.findUnsupportedPrefix(value,
+                PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_POSTAL_CODE)
+                .map(prefix -> String.format(MESSAGE_UNSUPPORTED_PREFIX, prefix, EditCommand.COMMAND_WORD))
+                .orElse(cause.getMessage());
+        return new ParseException(message, cause);
     }
 }

@@ -78,10 +78,21 @@ public class AddItemCommandParserTest {
 
     @Test
     public void parse_invalidName_failure() {
-        for (String name : new String[]{"", "   ", "Cake\nTarts", "Cake\rTarts",
+        for (String name : new String[]{"", "   ", "\u2003", "Cake\nTarts", "Cake\rTarts",
             "a".repeat(ItemName.MAX_LENGTH + 1)}) {
             assertParseFailure(parser, "1 d/" + name + " q/2 s/pending", ItemName.MESSAGE_CONSTRAINTS);
         }
+    }
+
+    @Test
+    public void parse_noBreakSpaceBeforeRemark_trimmed() {
+        assertValid("1" + VALID_FIELDS + " r/\u00A0Less sugar",
+                new ItemBuilder().withName("Cake").withRemark("Less sugar").build());
+    }
+
+    @Test
+    public void parse_repeatedSpacesInName_savedWithOneSpace() {
+        assertValid("1 d/Butter   Cake q/2 s/pending", new ItemBuilder().withName("Butter Cake").build());
     }
 
     @Test
@@ -161,7 +172,7 @@ public class AddItemCommandParserTest {
 
     @Test
     public void parse_emptyOrInvalidRemark_failure() {
-        for (String remark : new String[]{"", "   ", "Less\nsugar", "Less\rsugar",
+        for (String remark : new String[]{"", "   ", "\u2003", "Less\nsugar", "Less\rsugar",
             "a".repeat(Remark.MAX_LENGTH + 1)}) {
             assertParseFailure(parser, "1" + VALID_FIELDS + " r/" + remark, Remark.MESSAGE_CONSTRAINTS);
         }

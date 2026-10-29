@@ -315,6 +315,17 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseItemName_unicodeSpacesOnly_throwsParseException() {
+        assertThrows(ParseException.class, ItemName.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseItemName("\u2003"));
+    }
+
+    @Test
+    public void parseItemName_repeatedSpaces_returnsItemNameWithOneSpace() throws Exception {
+        assertEquals("Butter Cake", ParserUtil.parseItemName("Butter   Cake").value);
+        assertEquals("Butter Cake", ParserUtil.parseItemName("\u2003Butter\u2003Cake\u00A0").value);
+    }
+
+    @Test
     public void parseItemName_maxLengthAfterTrimming_returnsItemName() throws Exception {
         String longestName = "a".repeat(ItemName.MAX_LENGTH);
         assertEquals(new ItemName(longestName), ParserUtil.parseItemName(" " + longestName + " "));
@@ -356,6 +367,18 @@ public class ParserUtilTest {
     public void parseRemark_validValueWithWhitespace_returnsTrimmedRemark() throws Exception {
         String remarkWithWhitespace = WHITESPACE + VALID_REMARK + WHITESPACE;
         assertEquals(new Remark(VALID_REMARK), ParserUtil.parseRemark(remarkWithWhitespace));
+        assertEquals(new Remark(VALID_REMARK), ParserUtil.parseRemark("\u2003" + VALID_REMARK + "\u2003"));
+    }
+
+    @Test
+    public void parseRemark_unicodeSpacesOnly_throwsParseException() {
+        assertThrows(ParseException.class, Remark.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseRemark("\u2003"));
+    }
+
+    @Test
+    public void parseRemark_noBreakSpacesAround_returnsTrimmedRemark() throws Exception {
+        assertEquals(new Remark(VALID_REMARK), ParserUtil.parseRemark("\u00A0" + VALID_REMARK + "\u202F"));
+        assertEquals(new Remark("Less\u00A0 sugar"), ParserUtil.parseRemark("\u2007Less\u00A0 sugar\u00A0"));
     }
 
     @Test
@@ -404,6 +427,22 @@ public class ParserUtilTest {
         String handoverNotesWithWhitespace = WHITESPACE + VALID_HANDOVER_NOTES + WHITESPACE;
         assertEquals(new HandoverNotes(VALID_HANDOVER_NOTES),
                 ParserUtil.parseHandoverNotes(handoverNotesWithWhitespace));
+        assertEquals(new HandoverNotes(VALID_HANDOVER_NOTES),
+                ParserUtil.parseHandoverNotes("\u2003" + VALID_HANDOVER_NOTES + "\u2003"));
+    }
+
+    @Test
+    public void parseHandoverNotes_noBreakSpacesAround_returnsTrimmedHandoverNotes() throws Exception {
+        assertEquals(new HandoverNotes(VALID_HANDOVER_NOTES),
+                ParserUtil.parseHandoverNotes("\u00A0" + VALID_HANDOVER_NOTES + "\u202F"));
+        assertEquals(new HandoverNotes("Call\u00A0 on arrival"),
+                ParserUtil.parseHandoverNotes("\u2007Call\u00A0 on arrival\u00A0"));
+    }
+
+    @Test
+    public void parseHandoverNotes_unicodeSpacesOnly_throwsParseException() {
+        assertThrows(ParseException.class, HandoverNotes.MESSAGE_CONSTRAINTS, ()
+            -> ParserUtil.parseHandoverNotes("\u2003"));
     }
 
     @Test

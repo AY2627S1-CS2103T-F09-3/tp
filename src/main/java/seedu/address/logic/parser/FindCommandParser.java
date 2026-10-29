@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.preorder.ItemStatus;
@@ -83,7 +84,8 @@ public class FindCommandParser implements Parser<FindCommand> {
         arguments.verifyNoDuplicatePrefixesFor(prefixes);
         for (Prefix prefix : SUPPORTED_PREFIXES) {
             Optional<String> value = arguments.getValue(prefix);
-            if (value.isPresent() && value.get().isBlank()) {
+            // Unicode spaces count as blank too, such as a no-break space, which isBlank() keeps
+            if (value.isPresent() && StringUtil.normalizeSpaces(value.get()).isEmpty()) {
                 throw new ParseException(formatError);
             }
         }

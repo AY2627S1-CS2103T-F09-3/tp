@@ -67,6 +67,13 @@ public class PreorderCommandParserTest {
         assertParseFailure(parser, "1 m/pickup", FulfilmentMethod.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "1 h/" + "a".repeat(HandoverNotes.MAX_LENGTH + 1),
                 HandoverNotes.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 h/\u2003", HandoverNotes.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_noBreakSpaceBeforeHandoverNotes_trimmed() {
+        assertParseDescriptor("1 h/\u00A0Call on arrival",
+                new EditFulfilmentDescriptorBuilder().withHandoverNotes("Call on arrival").build());
     }
 
     @Test

@@ -304,6 +304,45 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_unsupportedPrefixesInCustomerFields_preservesDataAndFilteredList() throws Exception {
+        Person taggedDaniel = new PersonBuilder(COMPLETED_DANIEL).withPostalCode("012345")
+                .withTags("friends", "VIP").build();
+        List<Person> originalPersons = List.of(ALICE, taggedDaniel, PREPARED_CARL);
+        originalPersons.forEach(model::addPerson);
+        assertFilteringCommandSuccess("find t/VIP", "1 person(s) listed!", List.of(taggedDaniel));
+
+        for (String field : new String[]{"n/Amy Bee", "p/91234567", "e/amy@example.com", "c/012345"}) {
+            assertCommandFailurePreservesFilteredList("edit 1 " + field + " x/foo", ParseException.class,
+                    "Unsupported prefix 'x/' for edit.");
+        }
+        assertCommandFailurePreservesFilteredList("untag 1 t/VIP x/foo", ParseException.class,
+                "Unsupported prefix 'x/' for untag.");
+
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(originalPersons, storage.readAddressBook().orElseThrow().getPersonList());
+    }
+
+    @Test
+    public void execute_editAddressWithPrefixLikeText_preservesAndSavesEveryValue() throws Exception {
+        Person originalDaniel = new PersonBuilder(COMPLETED_DANIEL).withPostalCode("012345").build();
+        List.of(ALICE, originalDaniel, PREPARED_CARL).forEach(model::addPerson);
+        assertFilteringCommandSuccess("find n/Daniel", "1 person(s) listed!", List.of(originalDaniel));
+        SearchCriteria criteria = logic.getActiveSearchCriteria();
+        String address = "Block 123 c/o Alice x/foo w/o lift #04/08";
+
+        logic.execute("edit 1 a/" + address);
+
+        Person editedDaniel = new PersonBuilder(originalDaniel).withAddress(address).build();
+        List<Person> expectedPersons = List.of(ALICE, editedDaniel, PREPARED_CARL);
+        assertEquals(expectedPersons, model.getAddressBook().getPersonList());
+        assertEquals(List.of(editedDaniel), logic.getFilteredPersonList());
+        assertEquals(criteria, logic.getActiveSearchCriteria());
+        assertEquals(criteria, logic.activeSearchCriteriaProperty().get());
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(expectedPersons, storage.readAddressBook().orElseThrow().getPersonList());
+    }
+
+    @Test
     public void execute_findThenTrack_listsActivePreordersFromAllCustomers() throws Exception {
         setUpTrackPersons();
         assertFilteringCommandSuccess("find n/Alice", "1 person(s) listed!", List.of(ALICE));
