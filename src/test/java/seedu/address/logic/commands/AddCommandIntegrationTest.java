@@ -26,12 +26,15 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
 import seedu.address.logic.parser.AddCommandParser;
+import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.search.SearchCriteria;
 import seedu.address.model.search.TextContainsCriterion;
+import seedu.address.model.util.SampleDataUtil;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -105,7 +108,8 @@ public class AddCommandIntegrationTest {
             AddCommand command = new AddCommandParser().parse(" " + PREFIX_NAME + nameVariant
                     + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB);
 
-            assertCommandFailure(command, model, AddCommand.MESSAGE_DUPLICATE_PERSON);
+            String expectedMessage = String.format(Messages.MESSAGE_DUPLICATE_CUSTOMER, new Name(nameVariant));
+            assertCommandFailure(command, model, expectedMessage);
         }
     }
 
@@ -116,14 +120,31 @@ public class AddCommandIntegrationTest {
         AddCommand command = new AddCommandParser().parse(" " + PREFIX_NAME + "  ALICE   PAULINE  "
                 + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB);
 
-        assertCommandFailure(command, model, AddCommand.MESSAGE_DUPLICATE_PERSON);
+        String expectedMessage = String.format(Messages.MESSAGE_DUPLICATE_CUSTOMER, "ALICE PAULINE");
+        assertCommandFailure(command, model, expectedMessage);
     }
 
     @Test
     public void execute_duplicatePerson_throwsCommandException() {
         Person personInList = model.getAddressBook().getPersonList().get(0);
         assertCommandFailure(new AddCommand(personInList), model,
-                AddCommand.MESSAGE_DUPLICATE_PERSON);
+                String.format(Messages.MESSAGE_DUPLICATE_CUSTOMER, personInList.getName()));
+    }
+
+    @Test
+    public void execute_duplicateName_addAndEditShowSameMessage() throws Exception {
+        Model sampleModel = new ModelManager(SampleDataUtil.getSampleAddressBook(), new UserPrefs());
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("list").execute(sampleModel);
+
+        Command addCommand = parser.parseCommand(
+                "add n/alex yeoh p/91234567 e/alex2@example.com a/1 Test Road c/123456");
+        Command editCommand = parser.parseCommand("edit 2 n/alex yeoh");
+        String expectedMessage = "A customer named \"alex yeoh\" already exists. "
+                + "Customer names must be unique (ignoring capitalisation and extra spaces). Choose a different name.";
+
+        assertCommandFailure(addCommand, sampleModel, expectedMessage);
+        assertCommandFailure(editCommand, sampleModel, expectedMessage);
     }
 
     private void assertAddPreservesSearch(Person person, SearchCriteria criteria, List<Person> expectedPersons) {

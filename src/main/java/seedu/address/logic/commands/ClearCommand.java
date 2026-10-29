@@ -17,7 +17,7 @@ public class ClearCommand extends Command {
             + "preorder data. Type 'confirm' to proceed; any other input cancels and is discarded.";
     public static final String MESSAGE_CONFIRMATION_CANCELLED = "Clear cancelled. No data was deleted. Any typed input "
             + "was discarded; enter it again if needed.";
-    public static final String MESSAGE_SUCCESS = "Address book has been cleared!";
+    public static final String MESSAGE_SUCCESS = "All customers have been cleared!";
 
     @Override
     public CommandResult execute(Model model) {
