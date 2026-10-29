@@ -28,6 +28,7 @@ class JsonAdaptedPerson {
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Person's %s field is missing!";
     public static final String MESSAGE_TOO_MANY_PREORDERS = "Person has more than one preorder!";
     public static final String MESSAGE_NULL_PREORDER = "Person's preorder list contains a null entry!";
+    public static final String MESSAGE_NULL_TAG = "Person's tag list contains a null entry!";
 
     private final String name;
     private final String phone;
@@ -93,6 +94,9 @@ class JsonAdaptedPerson {
     public Person toModelType() throws IllegalValueException {
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
+            if (tag == null) {
+                throw new IllegalValueException(MESSAGE_NULL_TAG);
+            }
             personTags.add(tag.toModelType());
         }
 
