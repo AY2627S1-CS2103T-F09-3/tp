@@ -90,7 +90,7 @@ public class NameTest {
             String name = "A".repeat(length);
             assertEquals(name, new Name(name).fullName);
         }
-        assertThrows(IllegalArgumentException.class, Name.MESSAGE_CONSTRAINTS, () -> new Name("A".repeat(101)));
+        assertThrows(IllegalArgumentException.class, Name.MESSAGE_LENGTH_CONSTRAINTS, () -> new Name("A".repeat(101)));
     }
 
     @Test
@@ -109,7 +109,20 @@ public class NameTest {
             assertEquals(normalizedName, new Name(name).fullName);
         }
         String overLimitName = "  " + "A".repeat(99) + "   B  ";
-        assertThrows(IllegalArgumentException.class, Name.MESSAGE_CONSTRAINTS, () -> new Name(overLimitName));
+        assertThrows(IllegalArgumentException.class, Name.MESSAGE_LENGTH_CONSTRAINTS, () -> new Name(overLimitName));
+    }
+
+    @Test
+    public void constructor_lengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{99, 100}) {
+            String invalidName = "  " + "A".repeat(length - 2) + "   !  ";
+            assertTrue(invalidName.length() > 100);
+            assertThrows(IllegalArgumentException.class, Name.MESSAGE_CONSTRAINTS, () -> new Name(invalidName));
+        }
+        String overLimitName = "  " + "A".repeat(99) + "   !  ";
+        assertThrows(IllegalArgumentException.class,
+                "Names must be at most 100 characters long after spaces are normalized.", ()
+                    -> new Name(overLimitName));
     }
 
     @Test

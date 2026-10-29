@@ -40,6 +40,7 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.TrackCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -244,19 +245,37 @@ public class LogicManagerTest {
         String overLimitEmail = createEmailWithLength(255);
         String overLimitAddress = "A".repeat(301);
         String overLimitTag = "A".repeat(31);
+        String invalidName = "A".repeat(99) + "   !";
+        String invalidEmail = "a".repeat(255);
+        String invalidAddress = "A".repeat(299) + "\nB";
+        String invalidTag = "A".repeat(30) + "!";
+        String multilineCommandMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE);
         String[][] invalidCommands = {
             {"add n/" + overLimitName + " p/81234567 e/new@example.com a/123 Baker Road c/012345",
-                Name.MESSAGE_CONSTRAINTS},
-            {"edit 1 n/" + overLimitName, Name.MESSAGE_CONSTRAINTS},
+                Name.MESSAGE_LENGTH_CONSTRAINTS},
+            {"edit 1 n/" + overLimitName, Name.MESSAGE_LENGTH_CONSTRAINTS},
             {"add n/New Customer p/81234567 e/" + overLimitEmail + " a/123 Baker Road c/012345",
-                Email.MESSAGE_CONSTRAINTS},
-            {"edit 1 e/" + overLimitEmail, Email.MESSAGE_CONSTRAINTS},
+                Email.MESSAGE_LENGTH_CONSTRAINTS},
+            {"edit 1 e/" + overLimitEmail, Email.MESSAGE_LENGTH_CONSTRAINTS},
             {"add n/New Customer p/81234567 e/new@example.com a/" + overLimitAddress + " c/012345",
-                Address.MESSAGE_CONSTRAINTS},
-            {"edit 1 a/" + overLimitAddress, Address.MESSAGE_CONSTRAINTS},
-            {"tag 1 t/" + overLimitTag, Tag.MESSAGE_CONSTRAINTS},
-            {"untag 1 t/" + overLimitTag, Tag.MESSAGE_CONSTRAINTS},
-            {"find t/" + overLimitTag, Tag.MESSAGE_CONSTRAINTS}
+                Address.MESSAGE_LENGTH_CONSTRAINTS},
+            {"edit 1 a/" + overLimitAddress, Address.MESSAGE_LENGTH_CONSTRAINTS},
+            {"tag 1 t/" + overLimitTag, Tag.MESSAGE_LENGTH_CONSTRAINTS},
+            {"untag 1 t/" + overLimitTag, Tag.MESSAGE_LENGTH_CONSTRAINTS},
+            {"find t/" + overLimitTag, Tag.MESSAGE_LENGTH_CONSTRAINTS},
+            {"add n/" + invalidName + " p/81234567 e/new@example.com a/123 Baker Road c/012345",
+                Name.MESSAGE_LENGTH_CONSTRAINTS},
+            {"edit 1 n/" + invalidName, Name.MESSAGE_LENGTH_CONSTRAINTS},
+            {"add n/New Customer p/81234567 e/" + invalidEmail + " a/123 Baker Road c/012345",
+                Email.MESSAGE_LENGTH_CONSTRAINTS},
+            {"edit 1 e/" + invalidEmail, Email.MESSAGE_LENGTH_CONSTRAINTS},
+            // Multiline commands are rejected before individual fields are validated.
+            {"add n/New Customer p/81234567 e/new@example.com a/" + invalidAddress + " c/012345",
+                multilineCommandMessage},
+            {"edit 1 a/" + invalidAddress, multilineCommandMessage},
+            {"tag 1 t/" + invalidTag, Tag.MESSAGE_LENGTH_CONSTRAINTS},
+            {"untag 1 t/" + invalidTag, Tag.MESSAGE_LENGTH_CONSTRAINTS},
+            {"find t/" + invalidTag, Tag.MESSAGE_LENGTH_CONSTRAINTS}
         };
 
         for (String[] invalidCommand : invalidCommands) {

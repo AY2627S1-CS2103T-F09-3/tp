@@ -17,7 +17,10 @@ public class Tag {
 
     public static final String MESSAGE_CONSTRAINTS = "Tag names must not be blank and must contain only "
             + "letters (A-Z, a-z) and digits (0-9), with no spaces or special characters. "
-            + "Tag names must be at most " + MAX_LENGTH + " characters long. Examples: VIP, friends, regular123.";
+            + "Examples: VIP, friends, regular123.";
+
+    public static final String MESSAGE_LENGTH_CONSTRAINTS = "Tag names must be at most " + MAX_LENGTH
+            + " characters long.";
     public static final String VALIDATION_REGEX = "\\p{Alnum}+";
 
     public final String tagName;
@@ -31,7 +34,7 @@ public class Tag {
      */
     public Tag(String tagName) {
         requireNonNull(tagName);
-        checkArgument(isValidTagName(tagName), MESSAGE_CONSTRAINTS);
+        checkArgument(isValidTagName(tagName), getValidationErrorMessage(tagName));
         this.tagName = tagName;
     }
 
@@ -44,6 +47,14 @@ public class Tag {
      */
     public static boolean isValidTagName(String test) {
         return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX);
+    }
+
+    /**
+     * Returns the length constraint message if the tag name exceeds the limit,
+     * or the format constraint message otherwise. Length violations take precedence over invalid characters.
+     */
+    public static String getValidationErrorMessage(String test) {
+        return test.length() > MAX_LENGTH ? MESSAGE_LENGTH_CONSTRAINTS : MESSAGE_CONSTRAINTS;
     }
 
     @Override

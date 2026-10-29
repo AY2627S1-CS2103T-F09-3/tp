@@ -81,7 +81,7 @@ public class AddCommandParserTest {
         }
         assertParseFailure(parser, " n/  " + "A".repeat(99) + "   B  "
                 + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB,
-                Name.MESSAGE_CONSTRAINTS);
+                Name.MESSAGE_LENGTH_CONSTRAINTS);
     }
 
     @Test
@@ -94,7 +94,7 @@ public class AddCommandParserTest {
                     + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB, new AddCommand(expectedPerson));
         }
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " e/  " + createEmailWithLength(255) + "  "
-                + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB, Email.MESSAGE_CONSTRAINTS);
+                + ADDRESS_DESC_BOB + POSTAL_CODE_DESC_BOB, Email.MESSAGE_LENGTH_CONSTRAINTS);
     }
 
     @Test
@@ -107,7 +107,7 @@ public class AddCommandParserTest {
                     + POSTAL_CODE_DESC_BOB, new AddCommand(expectedPerson));
         }
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + " a/  " + "A".repeat(301) + "  "
-                + POSTAL_CODE_DESC_BOB, Address.MESSAGE_CONSTRAINTS);
+                + POSTAL_CODE_DESC_BOB, Address.MESSAGE_LENGTH_CONSTRAINTS);
     }
 
     @Test

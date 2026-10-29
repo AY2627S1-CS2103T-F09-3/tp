@@ -48,7 +48,8 @@ public class AddressTest {
             String address = "A".repeat(length);
             assertEquals(address, new Address(address).value);
         }
-        assertThrows(IllegalArgumentException.class, Address.MESSAGE_CONSTRAINTS, () -> new Address("A".repeat(301)));
+        assertThrows(IllegalArgumentException.class, Address.MESSAGE_LENGTH_CONSTRAINTS, ()
+            -> new Address("A".repeat(301)));
     }
 
     @Test
@@ -67,7 +68,8 @@ public class AddressTest {
             assertEquals(address, new Address(address).value);
         }
         String overLimitAddress = emoji.repeat(150) + "A";
-        assertThrows(IllegalArgumentException.class, Address.MESSAGE_CONSTRAINTS, () -> new Address(overLimitAddress));
+        assertThrows(IllegalArgumentException.class, Address.MESSAGE_LENGTH_CONSTRAINTS, ()
+            -> new Address(overLimitAddress));
     }
 
     @Test
@@ -78,7 +80,20 @@ public class AddressTest {
 
         String overLimitAddress = address + " ";
         assertFalse(Address.isValidAddress(overLimitAddress));
-        assertThrows(IllegalArgumentException.class, Address.MESSAGE_CONSTRAINTS, () -> new Address(overLimitAddress));
+        assertThrows(IllegalArgumentException.class, Address.MESSAGE_LENGTH_CONSTRAINTS, ()
+            -> new Address(overLimitAddress));
+    }
+
+    @Test
+    public void constructor_lengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{299, 300}) {
+            String invalidAddress = "A".repeat(length - 2) + "\nB";
+            assertThrows(IllegalArgumentException.class, Address.MESSAGE_CONSTRAINTS, ()
+                -> new Address(invalidAddress));
+        }
+        String overLimitAddress = "A".repeat(299) + "\nB";
+        assertThrows(IllegalArgumentException.class, "Addresses must be at most 300 characters long.", ()
+            -> new Address(overLimitAddress));
     }
 
     @Test

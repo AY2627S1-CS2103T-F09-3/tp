@@ -15,8 +15,10 @@ public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
             "Invalid name! Names must contain at least one English letter and only English letters, spaces, "
-                    + "apostrophes or hyphens. Names must be at most " + MAX_LENGTH + " characters long after "
-                    + "trimming surrounding whitespace and collapsing consecutive spaces.";
+                    + "apostrophes or hyphens.";
+
+    public static final String MESSAGE_LENGTH_CONSTRAINTS = "Names must be at most " + MAX_LENGTH
+            + " characters long after spaces are normalized.";
 
     public static final String VALIDATION_REGEX = "(?=.*[A-Za-z])[A-Za-z '-]+";
 
@@ -30,7 +32,7 @@ public class Name {
      */
     public Name(String name) {
         requireNonNull(name);
-        checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
+        checkArgument(isValidName(name), getValidationErrorMessage(name));
         fullName = normalize(name);
     }
 
@@ -43,6 +45,14 @@ public class Name {
         String normalizedName = normalize(test);
         return !normalizedName.isEmpty() && normalizedName.length() <= MAX_LENGTH
                 && normalizedName.matches(VALIDATION_REGEX);
+    }
+
+    /**
+     * Returns the length constraint message if the normalized name exceeds the limit,
+     * or the format constraint message otherwise. Length violations take precedence over invalid characters.
+     */
+    public static String getValidationErrorMessage(String test) {
+        return normalize(test).length() > MAX_LENGTH ? MESSAGE_LENGTH_CONSTRAINTS : MESSAGE_CONSTRAINTS;
     }
 
     private static String normalize(String name) {

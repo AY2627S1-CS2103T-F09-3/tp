@@ -67,7 +67,7 @@ public class UntagCommandParserTest {
             assertParseSuccess(parser, "1 t/  " + tag + "  ",
                     new UntagCommand(INDEX_FIRST_PERSON, new Tag(tag)));
         }
-        assertParseFailure(parser, "1 t/  " + "A".repeat(31) + "  ", Tag.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 t/  " + "A".repeat(31) + "  ", Tag.MESSAGE_LENGTH_CONSTRAINTS);
     }
 
     @Test

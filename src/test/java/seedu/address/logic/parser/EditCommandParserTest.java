@@ -108,7 +108,7 @@ public class EditCommandParserTest {
             assertParseSuccess(parser, "1 n/  " + "A".repeat(length - 2) + "   B  ",
                     new EditCommand(INDEX_FIRST_PERSON, descriptor));
         }
-        assertParseFailure(parser, "1 n/  " + "A".repeat(99) + "   B  ", Name.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 n/  " + "A".repeat(99) + "   B  ", Name.MESSAGE_LENGTH_CONSTRAINTS);
     }
 
     @Test
@@ -118,7 +118,7 @@ public class EditCommandParserTest {
             EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withEmail(email).build();
             assertParseSuccess(parser, "1 e/  " + email + "  ", new EditCommand(INDEX_FIRST_PERSON, descriptor));
         }
-        assertParseFailure(parser, "1 e/  " + createEmailWithLength(255) + "  ", Email.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 e/  " + createEmailWithLength(255) + "  ", Email.MESSAGE_LENGTH_CONSTRAINTS);
     }
 
     @Test
@@ -128,7 +128,7 @@ public class EditCommandParserTest {
             EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withAddress(address).build();
             assertParseSuccess(parser, "1 a/  " + address + "  ", new EditCommand(INDEX_FIRST_PERSON, descriptor));
         }
-        assertParseFailure(parser, "1 a/  " + "A".repeat(301) + "  ", Address.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 a/  " + "A".repeat(301) + "  ", Address.MESSAGE_LENGTH_CONSTRAINTS);
     }
 
     @Test

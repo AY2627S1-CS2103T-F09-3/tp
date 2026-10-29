@@ -23,6 +23,7 @@ import seedu.address.model.person.PostalCode;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Quantity;
+import seedu.address.model.tag.Tag;
 import seedu.address.testutil.ItemBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -206,6 +207,59 @@ public class JsonAdaptedPersonTest {
                             VALID_POSTAL_CODE, VALID_TAGS);
             assertThrows(IllegalValueException.class, Name.MESSAGE_CONSTRAINTS, person::toModelType);
         }
+    }
+
+    @Test
+    public void toModelType_nameLengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{99, 100}) {
+            String invalidName = "  " + "A".repeat(length - 2) + "   !  ";
+            JsonAdaptedPerson person = new JsonAdaptedPerson(invalidName, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                    VALID_POSTAL_CODE, VALID_TAGS);
+            assertThrows(IllegalValueException.class, Name.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
+        JsonAdaptedPerson person = new JsonAdaptedPerson("  " + "A".repeat(99) + "   !  ", VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, VALID_POSTAL_CODE, VALID_TAGS);
+        assertThrows(IllegalValueException.class,
+                "Names must be at most 100 characters long after spaces are normalized.", person::toModelType);
+    }
+
+    @Test
+    public void toModelType_emailLengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{253, 254}) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, "a".repeat(length), VALID_ADDRESS,
+                    VALID_POSTAL_CODE, VALID_TAGS);
+            assertThrows(IllegalValueException.class, Email.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, "a".repeat(255), VALID_ADDRESS,
+                VALID_POSTAL_CODE, VALID_TAGS);
+        assertThrows(IllegalValueException.class, "Emails must be at most 254 characters long.", person::toModelType);
+    }
+
+    @Test
+    public void toModelType_addressLengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{299, 300}) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                    "A".repeat(length - 2) + "\nB", VALID_POSTAL_CODE, VALID_TAGS);
+            assertThrows(IllegalValueException.class, Address.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                "A".repeat(299) + "\nB", VALID_POSTAL_CODE, VALID_TAGS);
+        assertThrows(IllegalValueException.class, "Addresses must be at most 300 characters long.",
+                person::toModelType);
+    }
+
+    @Test
+    public void toModelType_tagLengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{29, 30}) {
+            List<JsonAdaptedTag> invalidTags = List.of(new JsonAdaptedTag("A".repeat(length - 1) + "!"));
+            JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                    VALID_POSTAL_CODE, invalidTags);
+            assertThrows(IllegalValueException.class, Tag.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
+        List<JsonAdaptedTag> invalidTags = List.of(new JsonAdaptedTag("A".repeat(30) + "!"));
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_POSTAL_CODE, invalidTags);
+        assertThrows(IllegalValueException.class, "Tag names must be at most 30 characters long.", person::toModelType);
     }
 
     @Test

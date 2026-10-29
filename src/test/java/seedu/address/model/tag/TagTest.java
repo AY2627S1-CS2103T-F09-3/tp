@@ -60,7 +60,17 @@ public class TagTest {
             String tagName = "A".repeat(length);
             assertEquals(tagName, new Tag(tagName).tagName);
         }
-        assertThrows(IllegalArgumentException.class, Tag.MESSAGE_CONSTRAINTS, () -> new Tag("A".repeat(31)));
+        assertThrows(IllegalArgumentException.class, Tag.MESSAGE_LENGTH_CONSTRAINTS, () -> new Tag("A".repeat(31)));
+    }
+
+    @Test
+    public void constructor_lengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{29, 30}) {
+            String invalidTag = "A".repeat(length - 1) + "!";
+            assertThrows(IllegalArgumentException.class, Tag.MESSAGE_CONSTRAINTS, () -> new Tag(invalidTag));
+        }
+        assertThrows(IllegalArgumentException.class, "Tag names must be at most 30 characters long.", ()
+            -> new Tag("A".repeat(30) + "!"));
     }
 
     @Test

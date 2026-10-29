@@ -189,7 +189,7 @@ public class ParserUtilTest {
             assertEquals(normalizedName, ParserUtil.parseName(input).fullName);
         }
         String overLimitName = WHITESPACE + "A".repeat(99) + "   B" + WHITESPACE;
-        assertThrows(ParseException.class, Name.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseName(overLimitName));
+        assertThrows(ParseException.class, Name.MESSAGE_LENGTH_CONSTRAINTS, () -> ParserUtil.parseName(overLimitName));
     }
 
     @Test
@@ -245,7 +245,7 @@ public class ParserUtilTest {
             assertEquals(address, ParserUtil.parseAddress(WHITESPACE + address + WHITESPACE).value);
         }
         String overLimitAddress = WHITESPACE + "A".repeat(301) + WHITESPACE;
-        assertThrows(ParseException.class, Address.MESSAGE_CONSTRAINTS, ()
+        assertThrows(ParseException.class, Address.MESSAGE_LENGTH_CONSTRAINTS, ()
             -> ParserUtil.parseAddress(overLimitAddress));
     }
 
@@ -256,7 +256,7 @@ public class ParserUtilTest {
             assertEquals(address, ParserUtil.parseAddress(WHITESPACE + address + WHITESPACE).value);
         }
         String overLimitAddress = emoji.repeat(150) + "A";
-        assertThrows(ParseException.class, Address.MESSAGE_CONSTRAINTS, ()
+        assertThrows(ParseException.class, Address.MESSAGE_LENGTH_CONSTRAINTS, ()
             -> ParserUtil.parseAddress(overLimitAddress));
     }
 
@@ -290,7 +290,8 @@ public class ParserUtilTest {
             assertEquals(email, ParserUtil.parseEmail(WHITESPACE + email + WHITESPACE).value);
         }
         String overLimitEmail = WHITESPACE + createEmailWithLength(255) + WHITESPACE;
-        assertThrows(ParseException.class, Email.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseEmail(overLimitEmail));
+        assertThrows(ParseException.class, Email.MESSAGE_LENGTH_CONSTRAINTS, ()
+            -> ParserUtil.parseEmail(overLimitEmail));
     }
 
     @Test
@@ -323,7 +324,7 @@ public class ParserUtilTest {
             assertEquals(tag, ParserUtil.parseTag(WHITESPACE + tag + WHITESPACE).tagName);
         }
         String overLimitTag = WHITESPACE + "A".repeat(31) + WHITESPACE;
-        assertThrows(ParseException.class, Tag.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseTag(overLimitTag));
+        assertThrows(ParseException.class, Tag.MESSAGE_LENGTH_CONSTRAINTS, () -> ParserUtil.parseTag(overLimitTag));
     }
 
     @Test
@@ -355,7 +356,7 @@ public class ParserUtilTest {
         String atLimitTag = "B".repeat(30);
         assertEquals(Set.of(new Tag(belowLimitTag), new Tag(atLimitTag)),
                 ParserUtil.parseTags(List.of(belowLimitTag, atLimitTag)));
-        assertThrows(ParseException.class, Tag.MESSAGE_CONSTRAINTS, () ->
+        assertThrows(ParseException.class, Tag.MESSAGE_LENGTH_CONSTRAINTS, () ->
                 ParserUtil.parseTags(List.of(atLimitTag, "C".repeat(31))));
     }
 
@@ -513,6 +514,50 @@ public class ParserUtilTest {
     public void parseHandoverNotes_maximumLength_returnsHandoverNotes() throws Exception {
         String longestHandoverNotes = "a".repeat(HandoverNotes.MAX_LENGTH);
         assertEquals(new HandoverNotes(longestHandoverNotes), ParserUtil.parseHandoverNotes(longestHandoverNotes));
+    }
+
+    @Test
+    public void parseName_lengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{99, 100}) {
+            String invalidName = WHITESPACE + "A".repeat(length - 2) + "   !" + WHITESPACE;
+            assertThrows(ParseException.class, Name.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseName(invalidName));
+        }
+        String overLimitName = WHITESPACE + "A".repeat(99) + "   !" + WHITESPACE;
+        assertThrows(ParseException.class,
+                "Names must be at most 100 characters long after spaces are normalized.", ()
+                    -> ParserUtil.parseName(overLimitName));
+    }
+
+    @Test
+    public void parseAddress_lengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{299, 300}) {
+            String invalidAddress = WHITESPACE + "A".repeat(length - 2) + "\nB" + WHITESPACE;
+            assertThrows(ParseException.class, Address.MESSAGE_CONSTRAINTS, ()
+                -> ParserUtil.parseAddress(invalidAddress));
+        }
+        String overLimitAddress = WHITESPACE + "A".repeat(299) + "\nB" + WHITESPACE;
+        assertThrows(ParseException.class, "Addresses must be at most 300 characters long.", ()
+            -> ParserUtil.parseAddress(overLimitAddress));
+    }
+
+    @Test
+    public void parseEmail_lengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{253, 254}) {
+            String invalidEmail = WHITESPACE + "a".repeat(length) + WHITESPACE;
+            assertThrows(ParseException.class, Email.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseEmail(invalidEmail));
+        }
+        assertThrows(ParseException.class, "Emails must be at most 254 characters long.", ()
+            -> ParserUtil.parseEmail(WHITESPACE + "a".repeat(255) + WHITESPACE));
+    }
+
+    @Test
+    public void parseTag_lengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{29, 30}) {
+            String invalidTag = WHITESPACE + "A".repeat(length - 1) + "!" + WHITESPACE;
+            assertThrows(ParseException.class, Tag.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseTag(invalidTag));
+        }
+        assertThrows(ParseException.class, "Tag names must be at most 30 characters long.", ()
+            -> ParserUtil.parseTag(WHITESPACE + "A".repeat(30) + "!" + WHITESPACE));
     }
 
     private static String createEmailWithLength(int length) {

@@ -82,7 +82,17 @@ public class EmailTest {
             assertEquals(email, new Email(email).value);
         }
         String overLimitEmail = createEmailWithLength(255);
-        assertThrows(IllegalArgumentException.class, Email.MESSAGE_CONSTRAINTS, () -> new Email(overLimitEmail));
+        assertThrows(IllegalArgumentException.class, Email.MESSAGE_LENGTH_CONSTRAINTS, () -> new Email(overLimitEmail));
+    }
+
+    @Test
+    public void constructor_lengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{253, 254}) {
+            String invalidEmail = "a".repeat(length);
+            assertThrows(IllegalArgumentException.class, Email.MESSAGE_CONSTRAINTS, () -> new Email(invalidEmail));
+        }
+        assertThrows(IllegalArgumentException.class, "Emails must be at most 254 characters long.", ()
+            -> new Email("a".repeat(255)));
     }
 
     @Test

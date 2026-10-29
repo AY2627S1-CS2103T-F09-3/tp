@@ -130,7 +130,7 @@ public class FindCommandParserTest {
             FindCommand expected = new FindCommand(new SearchCriteria(List.of(new TagCriterion(new Tag(tag)))));
             assertParseSuccess(parser, "t/  " + tag + "  ", expected);
         }
-        assertParseFailure(parser, "t/  " + "A".repeat(31) + "  ", Tag.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "t/  " + "A".repeat(31) + "  ", Tag.MESSAGE_LENGTH_CONSTRAINTS);
     }
 
     @Test

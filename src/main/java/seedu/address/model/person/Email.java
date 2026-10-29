@@ -13,8 +13,11 @@ public class Email {
     public static final int MAX_LENGTH = 254;
 
     private static final String SPECIAL_CHARACTERS = "+_.-";
-    public static final String MESSAGE_CONSTRAINTS = "Emails should be of the format local-part@domain, be at most "
-            + MAX_LENGTH + " characters long, and adhere to the following constraints:\n"
+    public static final String MESSAGE_LENGTH_CONSTRAINTS = "Emails must be at most " + MAX_LENGTH
+            + " characters long.";
+
+    public static final String MESSAGE_CONSTRAINTS = "Emails should be of the format local-part@domain "
+            + "and adhere to the following constraints:\n"
             + "1. The local-part should only contain alphanumeric characters and these special characters, excluding "
             + "the parentheses, (" + SPECIAL_CHARACTERS + "). The local-part may not start or end with any special "
             + "characters.\n"
@@ -43,7 +46,7 @@ public class Email {
      */
     public Email(String email) {
         requireNonNull(email);
-        checkArgument(isValidEmail(email), MESSAGE_CONSTRAINTS);
+        checkArgument(isValidEmail(email), getValidationErrorMessage(email));
         value = email;
     }
 
@@ -52,6 +55,14 @@ public class Email {
      */
     public static boolean isValidEmail(String test) {
         return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX);
+    }
+
+    /**
+     * Returns the length constraint message if the email exceeds the limit,
+     * or the format constraint message otherwise. Length violations take precedence over format violations.
+     */
+    public static String getValidationErrorMessage(String test) {
+        return test.length() > MAX_LENGTH ? MESSAGE_LENGTH_CONSTRAINTS : MESSAGE_CONSTRAINTS;
     }
 
     @Override
