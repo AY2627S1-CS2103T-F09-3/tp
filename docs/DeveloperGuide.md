@@ -1488,6 +1488,46 @@ Start with the sample data. List all customers using the `list` command. The fir
 1. Run `track`, then `deleteorder` with the displayed index of `Charlotte Oliveiro`.<br>
    Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder panel.
 
+### Setting delivery or collection details
+
+Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`. `Alex Yeoh` (1) has
+a delivery on 20 Dec 2026 with the notes `Call on arrival`; `Irfan Ibrahim` (5) and `Roy Balakrishnan` (6) have no
+preorder. Run the steps in order. For every rejected command, check that no card changes.
+
+1. Run `preorder 1 f/2026-12-24`.<br>
+   Expected: `Updated preorder details for Alex Yeoh: Date: 24 Dec 2026 | Method: DELIVERY | Handover notes: Call on arrival`.
+   Only the date on Alex's card changes; both items, their quantities and statuses are unchanged.
+1. Run `preorder 1 m/Collection h/`.<br>
+   Expected: `Updated preorder details for Alex Yeoh: Date: 24 Dec 2026 | Method: COLLECTION | Handover notes: None`.
+   The method changes and the handover notes are removed from the card.
+1. Run `preorder 1 h/Gate code 1234 x/2`.<br>
+   Expected: Succeeds. The handover notes are `Gate code 1234 x/2`, because notes are free text.
+1. Run `preorder 5 m/delivery`.<br>
+   Expected: `Updated preorder details for Irfan Ibrahim: Date: Not scheduled | Method: DELIVERY | Handover notes: None`.
+   Irfan's card now shows a preorder with `No items yet`.
+1. Run `preorder 6 f/ m/ h/`.<br>
+   Expected: `Roy Balakrishnan has no preorder, so there is nothing to clear. No changes made.` Roy still has no preorder.
+1. Run `preorder 1 f/2025-12-20`.<br>
+   Expected: The update succeeds, and a second line says `Note: 20 Dec 2025 is in the past.`
+1. Try `preorder 1 f/2026-02-30` and `preorder 1 f/20-12-2026`.<br>
+   Expected: `Invalid date! Dates must be real calendar dates in YYYY-MM-DD format, e.g. 2026-12-20.`
+1. Run `preorder 1 m/drone`.<br>
+   Expected: `Invalid method! Method must be DELIVERY or COLLECTION.`
+1. Run `preorder 1 m/delivery x/2`.<br>
+   Expected: `Unsupported prefix 'x/' for preorder.`
+1. Run `preorder 1 h/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` (101 characters of notes).<br>
+   Expected: `Invalid handover notes! Handover notes must not be blank, must be on a single line, and must be at most 100 characters long.`
+1. Run `preorder 1 f/2026-12-24 f/2026-12-25`.<br>
+   Expected: `Multiple values specified for the following single-valued field(s): f/`
+1. Run `preorder 1`.<br>
+   Expected: `At least one of f/DATE, m/METHOD or h/HANDOVER_NOTES must be provided.`
+1. Try `preorder 0 f/2026-12-24`, `preorder f/2026-12-24` and `preorder x m/delivery`.<br>
+   Expected: `Invalid command format!`, followed by the usage instructions for `preorder`.
+1. Run `preorder 100 m/delivery` (where 100 is larger than the list size).<br>
+   Expected: `The person index provided is invalid.`
+1. Run `find n/Bernice`, then `preorder 1 m/delivery`.<br>
+   Expected: Bernice Yu's method changes to `DELIVERY`. Only Bernice remains displayed; the search is kept.
+
 ### Loading preorder data
 
 These steps edit the data file, so use a copy of LeBake in an empty folder. Launch it once and run `list` to create
