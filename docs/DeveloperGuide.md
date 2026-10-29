@@ -710,47 +710,58 @@ The comparator lives in the model, separately from the search criteria, so:
   * Pros: The order would survive a restart.
   * Cons: Sorting would rewrite the data file, and `list` could no longer show the order in which customers were added.
 
-### Tagging a customer: `tag`
+### Tagging customers: `tag` and `untag`
 
-`tag INDEX t/TAG` adds one tag to the customer at `INDEX` in the displayed list.
+`tag INDEX t/TAG` adds one tag to the customer at `INDEX` in the displayed list,
+and `untag INDEX t/TAG` removes one.
 
-**Parsing.** `TagCommandParser` and `UntagCommandParser` take the same input, so both call two shared helpers:
-`ParserUtil#parsePreambleIndex` for the index and `ParserUtil#parseSingleTag` for the tag. `parseSingleTag` requires
-exactly one `t/`, then checks the tag with `ParserUtil#parseTag`. A tag is one word of letters and digits, at most
-30 characters. Because the index is parsed first, `tag 0 t/!` reports the index format error, not the tag error.
+**Parsing.** Both commands take the same input, so `TagCommandParser` and
+`UntagCommandParser` share two helpers: `ParserUtil#parsePreambleIndex` for the
+index, and `ParserUtil#parseSingleTag`, which requires exactly one `t/` and
+checks that the tag is one word of letters and digits, at most 30 characters.
+The index is checked first, so `tag 0 t/!` reports the index error.
 
-**Execution.** `TagCommand#execute`:
-
-1. gets the customer at `INDEX` in the displayed list, or throws a `CommandException` if the index is out of range.
-1. if the customer already has the tag, returns `CUSTOMER already has tag [TAG]. No changes made.` without changing
-   the model. `Tag#equals` ignores case, so `t/FRIENDS` matches an existing `friends` tag.
-1. otherwise, copies the customer's tags into a new set, adds the tag, and builds a new `Person` with the same
-   contact details, postal code and preorder. `Model#setPerson` replaces the customer, and the active search and
-   sort are kept.
-
-`untag` follows the same steps, removing the tag instead, and reports a tag the customer does not have.
+**Execution.** Both commands follow the same pattern as `delete`, shown in the
+sequence diagram under [Logic component](#logic-component). They get the customer
+from the displayed list, build a new `Person` with the updated tags and the same
+contact details, postal code and preorder, and replace the customer with
+`Model#setPerson`, keeping the active search and sort. If the customer already
+has the tag, `tag` shows `CUSTOMER already has tag [TAG]. No changes made.` and
+leaves the model unchanged.
 
 #### Design considerations
 
 **Aspect: where tags are changed**
 
-* **Alternative 1 (current choice):** separate `tag` and `untag` commands; `add` and `edit` do not take tags.
-  * Pros: Adding a tag never removes the others. In AB3, `edit 1 t/vip` replaced all of a customer's tags, which
-    is easy to do by accident.
+* **Alternative 1 (current choice):** separate `tag` and `untag` commands; `add`
+  and `edit` do not take tags.
+  * Pros: Adding a tag never removes the others. In AB3, `edit 1 t/vip`
+    replaced all of a customer's tags.
   * Cons: Two more command words.
 * **Alternative 2:** `t/` in `add` and `edit`, as in AB3.
   * Pros: Fewer commands.
-  * Cons: Keeping a customer's tags while adding one means retyping all of them.
+  * Cons: Adding one tag means retyping all the others.
 
 **Aspect: case of tags**
 
-* **Alternative 1 (current choice):** `Tag#equals` and `Tag#hashCode` ignore case.
-  * Pros: `VIP` and `vip` cannot both be on one customer, and `untag 1 t/vip` removes `VIP`. Every command that
-    compares tags, including `find t/`, gets the same rule.
-  * Cons: The tag keeps the capitalisation it was first typed with.
-* **Alternative 2:** compare case-insensitively only in `TagCommand`.
+* **Alternative 1 (current choice):** `Tag#equals` and `Tag#hashCode` ignore
+  case.
+  * Pros: `VIP` and `vip` cannot both be on one customer, `untag 1 t/vip`
+    removes `VIP`, and `find t/` follows the same rule.
+  * Cons: A tag keeps the capitalisation it was first typed with.
+* **Alternative 2:** compare case-insensitively only in the tag commands.
   * Pros: Smaller change to `Tag`.
-  * Cons: Other commands could disagree, so a customer could end up with both `VIP` and `vip`.
+  * Cons: Other commands could disagree about which tags are the same.
+
+**Aspect: adding a tag the customer already has**
+
+* **Alternative 1 (current choice):** show a note and change nothing.
+  * Pros: The customer already has the tag the user wanted, so nothing went
+    wrong, and repeating a command does no harm.
+  * Cons: A user who picked the wrong customer is not stopped as firmly.
+* **Alternative 2:** reject the command with an error.
+  * Pros: The mistake stands out more.
+  * Cons: Treats a harmless request as a failure.
 
 ### \[Proposed\] Undo/redo feature
 
