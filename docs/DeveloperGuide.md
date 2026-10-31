@@ -1329,7 +1329,7 @@ normalization. Run `list` before each case and use the current displayed index; 
 
 1. N−1 and N: Expect acceptance. Restart after saving maximum values and verify they are retained. For tags,
    add, find and remove each value, using the index shown in the search results for removal.
-1. N+1: Expect the [field's length message](UserGuide.md#customer-field-limits), with data, search state and saved
+1. N+1: Expect a field-specific error stating its maximum character limit, with data, search state and saved
    JSON unchanged. Repeat with an active search.
 1. Normalization and counting: Use extra spaces in a name whose normalized length is 100; expect acceptance.
    Addresses containing 150 copies of 🍰 are accepted (300 UTF-16 units); appending `A` is rejected.
