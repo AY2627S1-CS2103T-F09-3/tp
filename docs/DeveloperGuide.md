@@ -327,7 +327,7 @@ Customer-record validation remains separate: `add` and `edit` continue to use `P
 
 Postal codes are mandatory in the model and saved data too. `Person` requires a non-null `PostalCode`, and
 `JsonAdaptedPerson` rejects null or missing postal codes with the standard missing-field error and malformed values
-with `PostalCode.MESSAGE_CONSTRAINTS`. Older files must contain valid postal codes before they can be loaded.
+with `PostalCode.MESSAGE_CONSTRAINTS`.
 
 To add a search condition with different matching rules, implement `PersonCriterion` and include it in a
 `SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
@@ -419,7 +419,7 @@ The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
-* saves preorders through `JsonAdaptedPreorder` and `JsonAdaptedItem`, and rejects preorders saved in the v1.3 format (see [Saving preorders](#saving-preorders)).
+* saves preorders through `JsonAdaptedPreorder` and `JsonAdaptedItem` (see [Saving preorders](#saving-preorders)).
 
 ### Common classes
 
@@ -532,17 +532,6 @@ blank value as `null`, and uppercases the method. A hand-edited file is therefor
 `preorder` command, so `"delivery"` or `""` loads, while a value the command would reject, such as `"PICKUP"` or
 `"2026-02-30"`, still makes the file invalid.
 
-#### Rejecting v1.3 data
-
-LeBake v1.3 saved a single `"preorder"` object with free-text `"details"` and one `"status"`, and no quantity.
-These preorders are no longer converted, since every item now needs a quantity and guessing one from the details
-could be wrong. The JSON reader ignores fields it does not know, so `JsonAdaptedPerson` still accepts a
-`"preorder"` field, only to reject the customer with `Person has a preorder in the v1.3 format, which is no longer
-supported!` in the detailed diagnostics. Without this check, the old preorder would be dropped without any warning.
-The startup dialog identifies the saved person's position, such as `Person 1: unsupported v1.3 preorder format.`,
-and a logged warning names the customer and explains the required format. A `"preorder"` field that is `null` holds
-no data, so it is ignored. As with any invalid data file, the file itself is not changed.
-
 #### Design considerations
 
 **Aspect: where the status is kept**
@@ -580,9 +569,9 @@ no data, so it is ignored. As with any invalid data file, the file itself is not
 * **Alternative 1 (current choice):** a list of preorders in the data file, while the model allows only one.
   * Pros: Allowing several preorders per customer later will not change the file format again.
   * Cons: The loader has to reject a list with more than one preorder.
-* **Alternative 2:** a single `"preorder"` object, as in v1.3.
+* **Alternative 2:** a single `"preorder"` object.
   * Pros: Matches the model exactly.
-  * Cons: Supporting several preorders later would need another conversion of saved data.
+  * Cons: Supporting several preorders later would require a change to the saved-data format.
 
 ### Preorder item addition and editing
 
@@ -799,100 +788,6 @@ leaves the model unchanged.
 * **Alternative 2:** reject the command with an error.
   * Pros: The mistake stands out more.
   * Cons: Treats a harmless request as a failure.
-
-### \[Proposed\] Undo/redo feature
-
-#### Proposed Implementation
-
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
-
-* `VersionedAddressBook#commit()` -- Saves the current address book state in its history.
-* `VersionedAddressBook#undo()` -- Restores the previous address book state from its history.
-* `VersionedAddressBook#redo()` -- Restores a previously undone address book state from its history.
-
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
-
-Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
-
-Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial address book state, and the `currentStatePointer` pointing to that single address book state.
-
-<puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
-
-Step 2. The user executes `delete 5` command to delete the 5th person in the address book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the address book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted address book state.
-
-<puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
-
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
-
-<puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
-
-<box type="info" seamless>
-
-**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the address book state will not be saved into the `addressBookStateList`.
-</box>
-
-Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous address book state, and restores the address book to that state.
-
-<puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
-
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index 0, pointing to the initial AddressBook state, then there are no previous AddressBook states to restore. The `undo` command uses `Model#canUndoAddressBook()` to check if this is the case. If so, it will return an error to the user rather
-than attempting to perform the undo.
-</box>
-
-The following sequence diagram shows how an undo operation goes through the `Logic` component:
-
-<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="UndoSequenceDiagram-Logic" />
-
-<box type="info" seamless>
-
-**Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</box>
-
-Similarly, how an undo operation goes through the `Model` component is shown below:
-
-<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
-
-The `redo` command does the opposite — it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the address book to that state.
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest address book state, then there are no undone AddressBook states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
-</box>
-
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
-
-<puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
-
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
-
-<puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
-
-The following activity diagram summarizes what happens when a user executes a new command:
-
-<puml src="diagrams/CommitActivityDiagram.puml" width="250" />
-
-#### Design considerations:
-
-**Aspect: How undo & redo execute:**
-
-* **Alternative 1 (current choice):** Saves the entire address book.
-  * Pros: Easy to implement.
-  * Cons: May have performance issues in terms of memory usage.
-
-* **Alternative 2:** Individual command knows how to undo/redo by
-  itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
-  * Cons: We must ensure that the implementation of each individual command is correct.
-
-_{more aspects and alternatives to be added}_
-
-### \[Proposed\] Data archiving
-
-_{Explain here how the data archiving feature will be implemented}_
-
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -1629,19 +1524,6 @@ preorder. Run the steps in order. For every rejected command, check that no card
 
 These steps edit the data file, so use a copy of LeBake in an empty folder. Launch it once and run `list` to create
 `data/lebake.json`, then close LeBake before each edit.
-
-1. Loading a preorder saved by v1.3
-
-   1. Prerequisites: In `data/lebake.json`, replace the first customer's `"preorders"` list with
-      `"preorder" : { "details" : "2 chocolate cakes", "status" : "PENDING" }`. Keep a copy of the file.
-
-   1. Test case: Launch LeBake.<br>
-      Expected: An error dialog appears before the main window and reports
-      `Person 1: unsupported v1.3 preorder format.` The log explains that the preorder must be moved into the
-      `"preorders"` list, with a quantity for each item.
-
-   1. Test case: Press `Enter` to dismiss the dialog.<br>
-      Expected: LeBake exits, and the invalid file is unchanged. Restore a valid file before the next test.
 
 1. Loading a data file with an invalid item
 
