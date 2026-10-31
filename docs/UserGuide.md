@@ -14,8 +14,40 @@ LeBake is optimized for use through a **Command Line Interface (CLI)** while ret
 Graphical User Interface (GUI). Its text-based commands let you quickly add, find, and update customer and preorder
 information.
 
-<!-- * Table of Contents -->
-<page-nav-print />
+--------------------------------------------------------------------------------------------------------------------
+
+## Table of Contents
+- [Quick start](#quick-start)
+- [Features](#features)
+- [Customer field limits](#customer-field-limits)
+- [How searches and updates affect the list](#how-searches-and-updates-affect-the-list)
+- [Viewing help: `help`](#viewing-help-help)
+- [Adding a customer: `add`](#adding-a-customer-add)
+- [Listing all customers: `list`](#listing-all-customers-list)
+- [Editing a customer: `edit`](#editing-a-customer-edit)
+- [Tagging a customer: `tag`](#tagging-a-customer-tag)
+- [Removing a customer's tag: `untag`](#removing-a-customer-s-tag-untag)
+- [Grouping customers by postal code: `group postal`](#grouping-customers-by-postal-code-group-postal)
+- [Sorting customers by fulfilment date: `sort date`](#sorting-customers-by-fulfilment-date-sort-date)
+- [Preparing deliveries](#preparing-deliveries)
+- [Finding customers by their attributes and preorder items: `find`](#finding-customers-by-their-attributes-and-preorder-items-find)
+- [Reading the preparation summary and matching items](#reading-the-preparation-summary-and-matching-items)
+- [Adding a preorder item: `additem`](#adding-a-preorder-item-additem)
+- [Editing a preorder item: `edititem`](#editing-a-preorder-item-edititem)
+- [Viewing preorders: `track`](#viewing-preorders-track)
+- [Deleting a preorder item: `deleteitem`](#deleting-a-preorder-item-deleteitem)
+- [Setting delivery or collection details: `preorder`](#setting-delivery-or-collection-details-preorder)
+- [Deleting a preorder: `deleteorder`](#deleting-a-preorder-deleteorder)
+- [Deleting a customer: `delete`](#deleting-a-customer-delete)
+- [Clearing all entries: `clear`](#clearing-all-entries-clear)
+- [Exiting the program: `exit`](#exiting-the-program-exit)
+- [Saving the data](#saving-the-data)
+- [Editing the data file](#editing-the-data-file)
+- [When the data file cannot be loaded](#when-the-data-file-cannot-be-loaded)
+- [Archiving data files `[coming in v2.0]`](#archiving-data-files-coming-in-v2-0)
+- [FAQ](#faq)
+- [Known issues](#known-issues)
+- [Command summary](#command-summary)
 
 --------------------------------------------------------------------------------------------------------------------
 
