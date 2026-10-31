@@ -573,7 +573,7 @@ For both commands, repeated prefixes produce `Multiple values specified for the 
 followed by the repeated prefixes. Input validation reports the first error: customer-index syntax, duplicate prefixes,
 required fields/item-index syntax, then name, quantity, status and remark values. Customer and item existence are checked
 only after parsing succeeds. An edit with no supplied changes is rejected before those existence checks.
-Validation failures leave the data unchanged. The former `order` command is no longer supported.
+Validation failures leave the data unchanged.
 
 ### Viewing preorders: `track`
 
@@ -763,11 +763,9 @@ LeBake data is saved automatically as a JSON file `data/lebake.json`, inside the
 
 If `data/lebake.json` is missing, LeBake starts with sample data and creates the file after a successful command.
 
-Postal codes are compulsory for every customer, including records saved by older versions. Each customer must have a `postalCode` containing exactly six digits. Null, missing, blank or malformed postal codes prevent the file from loading. Back up older files and supply the correct postal codes before launching LeBake.
+Edited data must satisfy the same required-field and validation rules as data entered through commands. Missing required fields or invalid values prevent the file from loading.
 
-Quantities are compulsory for every item, in the same way. Each item must have a `quantity` that is a whole number from 1 to 999, the same as `q/` in `additem`. Null, missing, blank or invalid quantities prevent the file from loading. Preorders saved by LeBake v1.3, which used a single `preorder` field with `details` and `status` and no quantity, are no longer converted. A file that still has such a field cannot be loaded. Back up the file and move each such preorder into a `preorders` list, with a quantity for each item, before launching LeBake.
-
-Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Extra spaces are normalized when the file is loaded. Item names are normalized in the same way, so items saved by earlier versions with repeated spaces count as the same product. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
+Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Item names are normalized in the same way, so names differing only in repeated spaces count as the same product. Extra spaces are normalized when the file is loaded. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded.
 
 The [customer field limits](#customer-field-limits) also apply to saved JSON: 100 characters for each normalized name,
 254 for each email, 300 for each address and 30 for each tag. Emails, addresses and tags are checked as stored,
@@ -802,10 +800,6 @@ For malformed JSON, the dialog gives the parsing error and its line and column w
 Press `Enter` or choose `OK` to dismiss the dialog and exit LeBake. Correct the reported data, restore a valid backup,
 or fix the file's read permissions, then start LeBake again. A genuinely missing data file still starts LeBake with
 sample data, as described above.
-
-### Archiving data files `[coming in v2.0]`
-
-_Details coming soon ..._
 
 --------------------------------------------------------------------------------------------------------------------
 
