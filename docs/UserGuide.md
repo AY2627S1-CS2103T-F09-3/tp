@@ -7,8 +7,7 @@
 # LeBake User Guide
 
 LeBake is a **desktop application for independent home bakers to manage customers and seasonal preorders**.
-It keeps customer contact details, delivery addresses, and each customer's current preorder and fulfilment status
-in one place.
+It keeps customer contact details, delivery addresses, and each customer's current preorder in one place.
 
 LeBake is optimized for use through a **Command Line Interface (CLI)** while retaining the benefits of a
 Graphical User Interface (GUI). Its text-based commands let you quickly add, find, and update customer and preorder
@@ -29,8 +28,9 @@ information.
 1. Copy the file to the folder you want to use as the _home folder_ for LeBake.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar LeBake.jar`.<br>
-   LeBake saves its data in the folder the terminal is in, so always start it from the home folder.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
+   LeBake saves its data to `data/lebake.json` inside the terminal's current folder, so always start it from the home folder.<br>
+
+   A GUI similar to the one below should appear. On your first launch, LeBake displays sample data.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to show help in the side panel.<br>
