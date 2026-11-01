@@ -1,0 +1,73 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant "t:TrackCommand" as TrackCommand LOGIC_COLOR
+participant "r:CommandResult" as CommandResult LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+participant "criterion:ItemCriterion" as ItemCriterion MODEL_COLOR
+participant "criteria:SearchCriteria" as SearchCriteria MODEL_COLOR
+end box
+
+[-> TrackCommand : execute(m)
+activate TrackCommand
+
+TrackCommand -> TrackCommand : createItemCriterion()
+activate TrackCommand
+create ItemCriterion
+TrackCommand -> ItemCriterion : ItemCriterion(Optional.empty(), {PENDING})
+activate ItemCriterion
+ItemCriterion --> TrackCommand
+deactivate ItemCriterion
+TrackCommand --> TrackCommand : criterion
+deactivate TrackCommand
+
+create SearchCriteria
+TrackCommand -> SearchCriteria : SearchCriteria(List.of(criterion))
+activate SearchCriteria
+SearchCriteria --> TrackCommand
+deactivate SearchCriteria
+
+TrackCommand -> Model : updateFilteredPersonList(criteria)
+activate Model
+note right of Model
+Replaces the active search criteria.
+The observable list filters all stored customers;
+the current sort order is preserved.
+end note
+Model --> TrackCommand
+deactivate Model
+
+TrackCommand -> Model : getFilteredPersonList()
+activate Model
+Model --> TrackCommand : customers
+deactivate Model
+
+loop for each customer in customers
+TrackCommand -> ItemCriterion : getMatchingItems(customer)
+activate ItemCriterion
+ItemCriterion --> TrackCommand : matchingItems
+deactivate ItemCriterion
+note right of TrackCommand
+Add matchingItems.size() to itemCount.
+end note
+end
+
+TrackCommand -> TrackCommand : formatFeedback(customers.size(), itemCount)
+activate TrackCommand
+TrackCommand --> TrackCommand : feedback
+deactivate TrackCommand
+
+create CommandResult
+TrackCommand -> CommandResult : CommandResult(feedback)
+activate CommandResult
+CommandResult --> TrackCommand
+deactivate CommandResult
+
+[<-- TrackCommand : r
+deactivate TrackCommand
+@enduml

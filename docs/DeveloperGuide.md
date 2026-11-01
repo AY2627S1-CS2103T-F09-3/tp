@@ -573,6 +573,47 @@ blank value as `null`, and uppercases the method. A hand-edited file is therefor
   * Pros: Matches the model exactly.
   * Cons: Supporting several preorders later would require a change to the saved-data format.
 
+### Tracking preorders
+
+`track [s/STATUS]` displays customers with at least one matching preorder item. Bare `track` selects active items
+(`PENDING` or `PREPARED`); supplying `s/` selects only that status. Status belongs to each item, so a customer with
+mixed-status items can appear in more than one status search. Customers without a preorder, or with an empty
+preorder, never match.
+
+**Parsing.** `TrackCommandParser` tokenizes the optional `s/` prefix, rejects a nonempty preamble, then rejects
+duplicate status prefixes. With no status prefix, it constructs `TrackCommand(Optional.empty())`. Otherwise,
+`ParserUtil#parseItemStatus` trims surrounding whitespace and accepts `PENDING`, `PREPARED` or `COMPLETED`
+case-insensitively. An empty or invalid status is rejected before execution. An unsupported prefix after the status,
+such as `track s/pending d/Cake`, uses the contextual diagnostic described under
+[Prefix boundaries and error messages](#prefix-boundaries-and-error-messages). A rejected command leaves the
+active criteria and displayed results unchanged.
+
+**Execution.** The sequence diagram below shows `TrackCommand#execute` for `track s/pending`. It starts after
+parsing and shows the command's interactions with the model and the shared item criterion.
+
+<puml src="diagrams/TrackSequenceDiagram.puml" alt="Interactions inside TrackCommand for the track s/pending command" />
+
+1. `createItemCriterion` creates an `ItemCriterion` with no product condition and either the supplied status or
+   the default set `{PENDING, PREPARED}`.
+1. The command wraps this criterion in a `SearchCriteria` and calls `Model#updateFilteredPersonList`. This replaces
+   the previous `find` or `track` criteria and filters all stored customers, while keeping the current sort order.
+   The model's observable filtering mechanism is described under [Customer search criteria](#customer-search-criteria).
+1. `Model#getFilteredPersonList` returns the matching customers. Each customer appears once, even if several of
+   their items match. Filtering selects customers; their other preorder items remain visible, with matching items
+   highlighted (see [Preparation summary and matching-item highlighting](#preparation-summary-and-matching-item-highlighting)).
+1. For each matching customer, the command calls `ItemCriterion#getMatchingItems` and sums the list sizes into a
+   `long` total. This counts item entries, including repeated products, rather than adding their quantities.
+1. `formatFeedback` creates the message for a new `CommandResult`. Bare `track` reports
+   `N customer(s) with M matching item(s) listed!`; an explicit status reports
+   `N customer(s) with M matching item(s) for STATUS listed!`, including when both counts are zero.
+
+For example, if one customer has two pending Cake entries with quantities 10 and 20, and another has one pending
+Cookies entry, `track s/pending` reports `2 customer(s) with 3 matching item(s) for PENDING listed!`.
+
+Tracking changes the active search without editing customer or preorder data. Later item changes are re-evaluated
+against the same criteria automatically, so a customer disappears when their final matching item changes to a
+nonmatching status or is removed. `list` clears the criteria and restores the saved customer order.
+
 ### Preorder item addition and editing
 
 `AddItemCommandParser` parses a customer index and the required name, quantity and status, with an optional remark.
