@@ -7,8 +7,7 @@
 # LeBake User Guide
 
 LeBake is a **desktop application for independent home bakers to manage customers and seasonal preorders**.
-It keeps customer contact details, delivery addresses, and each customer's current preorder and fulfilment status
-in one place.
+It keeps customer contact details, delivery addresses, and each customer's current preorder in one place.
 
 LeBake is optimized for use through a **Command Line Interface (CLI)** while retaining the benefits of a
 Graphical User Interface (GUI). Its text-based commands let you quickly add, find, and update customer and preorder
@@ -29,8 +28,9 @@ information.
 1. Copy the file to the folder you want to use as the _home folder_ for LeBake.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar LeBake.jar`.<br>
-   LeBake saves its data in the folder the terminal is in, so always start it from the home folder.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
+   LeBake saves its data to `data/lebake.json` inside the terminal's current folder, so always start it from the home folder.<br>
+
+   A GUI similar to the one below should appear. On your first launch, LeBake displays sample data.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to show help in the side panel.<br>
@@ -131,10 +131,9 @@ Use `list` to clear the badges and return to **Showing: All customers**.
 
 Shows the format of every command and the [LeBake User Guide URL](https://ay2627s1-cs2103t-f09-3.github.io/tp/UserGuide.html) in the side panel, on the right of the window. Click **Copy URL** to copy the link to your clipboard. Help stays in the side panel until you run your next command. Pressing F1 or choosing **Help** from the menu also shows it.
 
-![LeBake side panel showing the command formats and the User Guide URL](images/helpPanel.png)
-
 Format: `help`
 
+![LeBake side panel showing the command formats and the User Guide URL](images/helpPanel.png)
 
 ### Adding a customer: `add`
 
@@ -552,7 +551,7 @@ For both commands, repeated prefixes produce `Multiple values specified for the 
 followed by the repeated prefixes. Input validation reports the first error: customer-index syntax, duplicate prefixes,
 required fields/item-index syntax, then name, quantity, status and remark values. Customer and item existence are checked
 only after parsing succeeds. An edit with no supplied changes is rejected before those existence checks.
-Validation failures leave the data unchanged. The former `order` command is no longer supported.
+Validation failures leave the data unchanged.
 
 ### Viewing preorders: `track`
 
@@ -742,9 +741,7 @@ LeBake data is saved automatically as a JSON file `data/lebake.json`, inside the
 
 If `data/lebake.json` is missing, LeBake starts with sample data and creates the file after a successful command.
 
-Postal codes are compulsory for every customer, including records saved by older versions. Each customer must have a `postalCode` containing exactly six digits. Null, missing, blank or malformed postal codes prevent the file from loading. Back up older files and supply the correct postal codes before launching LeBake.
-
-Quantities are compulsory for every item, in the same way. Each item must have a `quantity` that is a whole number from 1 to 999, the same as `q/` in `additem`. Null, missing, blank or invalid quantities prevent the file from loading. Preorders saved by LeBake v1.3, which used a single `preorder` field with `details` and `status` and no quantity, are no longer converted. A file that still has such a field cannot be loaded. Back up the file and move each such preorder into a `preorders` list, with a quantity for each item, before launching LeBake.
+Edited data must satisfy the same required-field and validation rules as data entered through commands. Missing required fields or invalid values prevent the file from loading.
 
 Names in the data file follow the same validation and duplicate rules as [`add`](#adding-a-customer-add) and [`edit`](#editing-a-customer-edit). Extra spaces are normalized when the file is loaded. Item names are normalized in the same way, so items saved by earlier versions with repeated spaces count as the same product. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
 
@@ -778,10 +775,6 @@ For malformed JSON, the dialog gives the parsing error and its line and column w
 Press `Enter` or choose `OK` to dismiss the dialog and exit LeBake. Correct the reported data, restore a valid backup,
 or fix the file's read permissions, then start LeBake again. A genuinely missing data file still starts LeBake with
 sample data, as described above.
-
-### Archiving data files `[coming in v2.0]`
-
-_Details coming soon ..._
 
 --------------------------------------------------------------------------------------------------------------------
 
