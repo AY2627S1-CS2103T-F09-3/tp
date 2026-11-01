@@ -73,6 +73,8 @@ information.
   `#04/08` and conventional `c/o`, but reject a letter-based token followed by `/` at the start or after whitespace,
   such as `s/pending` or `x/foo`.
 
+* Character limits also apply to emoji in addresses, item names, remarks and handover notes. An emoji such as 🍰 counts as two characters; some emoji count as more.
+
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
