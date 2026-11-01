@@ -73,32 +73,13 @@ information.
   `#04/08` and conventional `c/o`, but reject a letter-based token followed by `/` at the start or after whitespace,
   such as `s/pending` or `x/foo`.
 
+* Character limits also apply to emoji in addresses, item names, remarks and handover notes. An emoji such as 🍰 counts as two characters; some emoji count as more.
+
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
-
-### Customer field limits
-
-`add` and `edit` apply the name, email and address limits below. `tag`, `untag` and `find t/TAG` apply the limit
-to each individual tag.
-
-| Field | Maximum characters | Feedback when the limit is exceeded |
-|-------|--------------------|-------------------------------------|
-| Name | 100 | `Names must be at most 100 characters long after spaces are normalized.` |
-| Email | 254 | `Emails must be at most 254 characters long.` |
-| Address | 300 | `Addresses must be at most 300 characters long.` |
-| Each tag | 30 | `Tag names must be at most 30 characters long.` |
-
-For commands, surrounding spaces are removed before checking these limits. Consecutive spaces in names also
-become one space; internal spaces in addresses are preserved. Spaces and punctuation count towards the limit.
-In addresses, an emoji such as 🍰 counts as two characters.
-
-A value exactly at the maximum is accepted if it also satisfies the field's format rules. Field validators report
-length violations before format violations. `edit` and `untag` can replace a field error with an unsupported-prefix
-message. Command syntax errors, such as a missing required field or an invalid index format, can be reported before
-the field is checked. Rejected commands leave the saved data, current search criteria and displayed results unchanged.
 
 ### How searches and updates affect the list
 
@@ -152,10 +133,9 @@ Use `list` to clear the badges and return to **Showing: All customers**.
 
 Shows the format of every command and the [LeBake User Guide URL](https://ay2627s1-cs2103t-f09-3.github.io/tp/UserGuide.html) in the side panel, on the right of the window. Click **Copy URL** to copy the link to your clipboard. Help stays in the side panel until you run your next command. Pressing F1 or choosing **Help** from the menu also shows it.
 
-![LeBake side panel showing the command formats and the User Guide URL](images/helpPanel.png)
-
 Format: `help`
 
+![LeBake side panel showing the command formats and the User Guide URL](images/helpPanel.png)
 
 ### Adding a customer: `add`
 
@@ -166,7 +146,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS c/POSTAL_CODE`
 Postal codes must contain exactly six digits. They are stored as text, so leading zeroes are preserved.
 
 * All five fields (`n/`, `p/`, `e/`, `a/`, and `c/`) must be provided.
-* Names, emails and addresses must fit the [customer field limits](#customer-field-limits): 100, 254 and 300 characters respectively.
+* Names, emails and addresses allow at most 100, 254 and 300 characters respectively, after surrounding spaces are removed.
 * Names must contain at least one English letter (`A-Z` or `a-z`) and may contain only English letters, spaces, straight apostrophes (`'`) and hyphens (`-`). Accented letters, non-English characters, digits and other symbols are rejected. For example, `Mary-Jane O'Brien`, `Li` and `A` are valid names; `José Tan` and `---` are invalid.
 * Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
 * Name, phone, email and postal code values are validated first. An invalid value containing an extra unsupported prefix identifies that prefix. For example, adding `x/foo` after `p/98765432` shows `Unsupported prefix 'x/' for add.` Other invalid values keep their field constraint messages.
@@ -211,7 +191,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CO
 * Edits the customer at the specified `INDEX`. The index refers to the index number shown in the displayed customer list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of `n/`, `p/`, `e/`, `a/`, or `c/` must be provided.
 * Fields you provide replace their existing values. Fields you omit remain unchanged.
-* The field validation, [length limits](#customer-field-limits) and spacing rules described for `add` also apply to `edit`.
+* The same field validation, length limits and spacing rules as [`add`](#adding-a-customer-add) apply to `edit`.
 * You can retain a customer's own name or change its capitalization or spacing while editing. A name matching another customer's name is rejected, including customers hidden by a `find` command. Other contact details do not affect this duplicate check.
 * Existing tags and preorders are always preserved.
 * Editing preserves the current search criteria. A customer disappears from the results if their edited details no longer match. Check the displayed indexes again before your next command, or use `list` to show all customers.
@@ -765,12 +745,9 @@ If `data/lebake.json` is missing, LeBake starts with sample data and creates the
 
 Edited data must satisfy the same required-field and validation rules as data entered through commands. Missing required fields or invalid values prevent the file from loading.
 
-Names in the data file follow the same validation and duplicate rules as `add` and `edit`. Item names are normalized in the same way, so names differing only in repeated spaces count as the same product. Extra spaces are normalized when the file is loaded. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded.
+Names in the data file follow the same validation and duplicate rules as [`add`](#adding-a-customer-add) and [`edit`](#editing-a-customer-edit). Extra spaces are normalized when the file is loaded. Item names are normalized in the same way, so items saved by earlier versions with repeated spaces count as the same product. A file containing names without an English letter, names with unsupported characters (including accented letters and non-English characters), or duplicate names that differ only in capitalization or extra spaces, cannot be loaded. This also applies to data saved by earlier versions.
 
-The [customer field limits](#customer-field-limits) also apply to saved JSON: 100 characters for each normalized name,
-254 for each email, 300 for each address and 30 for each tag. Emails, addresses and tags are checked as stored,
-without removing surrounding spaces. In particular, trailing address spaces count towards the limit. A single
-oversized field prevents the file from loading.
+Saved JSON allows at most 100 characters for each normalized name, 254 for each email, 300 for each address and 30 for each tag. Emails, addresses and tags are checked as stored, without removing surrounding spaces. In particular, trailing address spaces count towards the limit. A single oversized field prevents the file from loading.
 
 A preorder's `date`, `method` and `handoverNotes` follow the same rules as the
 [`preorder` command](#setting-delivery-or-collection-details-preorder): a real calendar date in `YYYY-MM-DD` format,
