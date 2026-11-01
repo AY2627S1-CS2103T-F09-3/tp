@@ -1493,6 +1493,69 @@ remain unchanged.
    Expected: Date, method and handover notes are cleared. The item, its remark, contact details and tag remain, and
    `Prefix Test` remains displayed under the active name search.
 
+### Tracking preorders
+
+Start each group below with a fresh, disposable copy of the sample data and run `list`. Run the steps within each
+group in order. Initially, Alex Yeoh has one pending and one prepared item, Bernice Yu has one completed item,
+Charlotte Oliveiro has one prepared item, David Li has an empty preorder, and Irfan Ibrahim and Roy Balakrishnan
+have no preorder. Tracking commands should preserve all customer and preorder data.
+
+1. Default tracking, status selection and replacing searches
+
+   1. Run `track`.<br>
+      Expected: Alex Yeoh and Charlotte Oliveiro appear, in that order, with
+      `2 customer(s) with 3 matching item(s) listed!`. David, Irfan and Roy are excluded, as is Bernice, whose only
+      item is completed. Both of Alex's items and Charlotte's item are highlighted.
+   1. Run `track s/pEnDiNg`.<br>
+      Expected: Only Alex appears, with `1 customer(s) with 1 matching item(s) for PENDING listed!`.
+      His prepared Almond Cookies remains visible, but only his pending Pineapple Tarts is highlighted.
+   1. Run `track s/PREPARED`.<br>
+      Expected: Alex and Charlotte appear, with `2 customer(s) with 2 matching item(s) for PREPARED listed!`.
+      Only their prepared items are highlighted.
+   1. Run `track s/COMPLETED`.<br>
+      Expected: Only Bernice appears, with `1 customer(s) with 1 matching item(s) for COMPLETED listed!`.
+      She appears even though the previous tracking results excluded her.
+   1. Run `find n/Bernice`, then `track`.<br>
+      Expected: The name search is replaced. Alex and Charlotte appear again, with
+      `2 customer(s) with 3 matching item(s) listed!` and only the `Item status: Pending or Prepared` badge.
+   1. Run `list`.<br>
+      Expected: All six customers appear in their original order. The tracking highlights and status badge are
+      removed, and `Showing: All customers` appears above the list.
+
+1. Rejecting invalid input without changing the search
+
+   1. Run `track s/PENDING`, then try `track s/` and `track s/done`.<br>
+      Expected: Both show `Invalid status! Status must be PENDING, PREPARED, or COMPLETED.`
+   1. Run `track s/PENDING s/PREPARED`.<br>
+      Expected: `Multiple values specified for the following single-valued field(s): s/`.
+   1. Try `track PENDING` and `track 1 s/PENDING`.<br>
+      Expected: Both show `Invalid command format!`, followed by the usage instructions for `track`.
+   1. Run `track s/pending d/Cake`.<br>
+      Expected: `Unsupported prefix 'd/' for track.`
+
+   After each rejected command, verify that only Alex remains displayed, his pending item remains highlighted,
+   and the `Item status: Pending` badge is unchanged. His items, quantities, statuses and customer details are
+   unchanged.
+
+1. Counting repeated item entries and showing empty results
+
+   1. Run `additem 1 d/Pineapple Tarts q/10 s/pending`, then `additem 1 d/Pineapple Tarts q/20 s/pending`.<br>
+      Expected: Alex now has four separate item entries; the two new pending entries are items 3 and 4.
+   1. Run `track s/PENDING`.<br>
+      Expected: Only Alex appears, with `1 customer(s) with 3 matching item(s) for PENDING listed!`.
+      The three pending Pineapple Tarts entries are highlighted and count separately; their quantities are not summed
+      in the feedback. The prepared Almond Cookies remains visible and is not highlighted.
+   1. Run `edititem 1 i/1 s/completed`, then `edititem 1 i/3 s/completed`.<br>
+      Expected: Alex remains displayed because item 4 is still pending. The changed items lose their tracking
+      highlights. The feedback describes each edit; run `track s/PENDING` again to obtain updated tracking counts.
+   1. Run `edititem 1 i/4 s/completed`, then `track s/PENDING`.<br>
+      Expected: Alex disappears after the edit. Tracking reports
+      `0 customer(s) with 0 matching item(s) for PENDING listed!`. The list is empty and the pending-status badge
+      remains visible.
+   1. Run `list`.<br>
+      Expected: All six customers reappear. Alex still has four items, with items 1, 3 and 4 completed and item 2
+      prepared. His quantities and other details are preserved; tracking did not delete any data.
+
 ### Adding and editing preorder items
 
 Use a disposable data copy. Run `list` and choose a customer without a preorder, noting their displayed index as `INDEX`.
