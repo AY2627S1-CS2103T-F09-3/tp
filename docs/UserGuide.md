@@ -737,6 +737,30 @@ Format: `exit`
 
 LeBake automatically saves data after every successful command. You do not need to save manually.
 
+If the result box shows an error starting with `Could not save data`, LeBake stays open. The command may already
+have changed customer or preorder data in memory. Seeing those changes on screen does not mean they were saved.
+
+1. **Keep LeBake open.** Do not repeat the original data-changing command; its changes may already have been applied.
+1. **Resolve the reported write problem** at the existing save destination: `data/lebake.json` inside the folder
+   from which you launched this session. Check write permissions for the file and folder and address any other
+   problem reported in the error.
+1. **Replace the text in the command box with `list` and press Enter.** This attempts to save all current customer and
+   preorder data, including changes from the failed save. It also clears your search, sorting and grouping,
+   showing all customers in their saved order.
+1. **Wait for `Listed all customers.` in the result box.** This normal success message appears only after the save
+   attempt completes without an error. If saving fails again, keep LeBake open, resolve the problem and repeat
+   the `list` step. LeBake does not retry failed saves in the background or undo changes already applied.
+
+Closing the window or choosing **File → Exit** does not retry saving customer data; window preferences are saved
+separately. Restarting loads the data file and cannot recover changes held only in memory. If you cannot resolve
+the save problem, record any changes you cannot afford to lose before deciding to close LeBake.
+
+A failed write can leave the data file incomplete. Do not edit or restore it while LeBake is running: a later save
+can overwrite those external changes. See [Editing the data file](#editing-the-data-file) for the closed-app procedure.
+
+These steps concern save errors while LeBake is running. For errors before the main window opens, see
+[When the data file cannot be loaded](#when-the-data-file-cannot-be-loaded).
+
 ### Editing the data file
 
 LeBake data is saved automatically as a JSON file `data/lebake.json`, inside the folder that the terminal is in when you start LeBake. If you start it as described in [Quick start](#quick-start), that is the home folder with the JAR file. Starting LeBake from another folder, for example with `java -jar C:\LeBake\LeBake.jar` from your desktop, makes a new `data` folder there with the sample data, and your saved data in the home folder is not loaded. Advanced users are welcome to update data directly by editing that data file.
@@ -789,7 +813,13 @@ sample data, as described above.
 **A**: On some computers, double-clicking a JAR file does not run it with Java. Start LeBake from a terminal instead, as described in [Quick start](#quick-start).
 
 **Q**: LeBake shows an error, or my changes are not saved, when I run it from some folders. Why?<br>
-**A**: LeBake saves its data in a `data` folder inside the folder you start it from, so it needs permission to write there. Move the JAR file to a folder you can write to, such as one in your home folder, `cd` to that folder, and start it from there.
+**A**: LeBake needs permission to write to the `data` folder inside the folder you start it from. If LeBake is already
+running and reports a save error, keep it open and follow [Saving the data](#saving-the-data) first. Moving the JAR or
+restarting alone does not preserve changes held only in memory or redirect the running session's saves.
+
+Once your current changes have been saved, you can use a writable folder for future sessions, such as one in your
+home folder. Close LeBake before copying the JAR and its saved `data` folder there, then `cd` to that folder and
+start LeBake as described in [Quick start](#quick-start).
 
 --------------------------------------------------------------------------------------------------------------------
 
