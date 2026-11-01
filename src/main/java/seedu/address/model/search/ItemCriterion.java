@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import seedu.address.commons.util.StringUtil;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.person.Person;
 import seedu.address.model.preorder.Item;
@@ -27,7 +28,8 @@ public final class ItemCriterion implements PersonCriterion {
     /**
      * Creates a criterion for an optional complete product name and accepted statuses.
      * An absent product matches any product; an empty status set matches no items.
-     * Product names ignore case and surrounding whitespace, preserving internal spacing and punctuation.
+     * Product names ignore case and surrounding whitespace, and treat repeated spaces as one, as item names do.
+     * Punctuation is preserved.
      *
      * @throws NullPointerException If either argument or a status element is null.
      * @throws IllegalArgumentException If the supplied product name is blank.
@@ -39,7 +41,7 @@ public final class ItemCriterion implements PersonCriterion {
     }
 
     private static String stripProductName(String productName) {
-        String strippedName = productName.strip();
+        String strippedName = StringUtil.normalizeSpaces(productName);
         checkArgument(!strippedName.isEmpty(), "Product search text must not be blank.");
         return strippedName;
     }

@@ -1,19 +1,26 @@
 package seedu.address;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.exceptions.DataValidationException;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
-import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -36,24 +43,53 @@ public class MainApp extends Application {
 
     private static final Logger logger = LogsCenter.getLogger(MainApp.class);
     private static final Path USER_PREFS_FILE_PATH = Paths.get("preferences.json");
-    private static final Path ADDRESS_BOOK_FILE_PATH = Paths.get("data", "addressbook.json");
+    private static final Path ADDRESS_BOOK_FILE_PATH = Paths.get("data", "lebake.json");
 
     protected Ui ui;
     protected Logic logic;
     protected Storage storage;
     protected Model model;
 
+    private final Path userPrefsFilePath;
+    private final Path addressBookFilePath;
+    private final Runnable exitAction;
+    private DataLoadingException dataLoadingException;
+
+    /**
+     * Creates LeBake with the default preference and data file paths.
+     */
+    public MainApp() {
+        this(USER_PREFS_FILE_PATH, ADDRESS_BOOK_FILE_PATH);
+    }
+
+    MainApp(Path userPrefsFilePath, Path addressBookFilePath) {
+        this(userPrefsFilePath, addressBookFilePath, Platform::exit);
+    }
+
+    MainApp(Path userPrefsFilePath, Path addressBookFilePath, Runnable exitAction) {
+        this.userPrefsFilePath = requireNonNull(userPrefsFilePath);
+        this.addressBookFilePath = requireNonNull(addressBookFilePath);
+        this.exitAction = requireNonNull(exitAction);
+    }
+
     @Override
     public void init() throws Exception {
         logger.info("=============================[ Initializing LeBake ]===========================");
         super.init();
 
-        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(USER_PREFS_FILE_PATH);
+        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(userPrefsFilePath);
         UserPrefs userPrefs = initPrefs(userPrefsStorage);
-        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(ADDRESS_BOOK_FILE_PATH);
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(addressBookFilePath);
         storage = new StorageManager(addressBookStorage, userPrefsStorage);
 
-        model = initModelManager(storage, userPrefs);
+        try {
+            model = initModelManager(storage, userPrefs);
+        } catch (DataLoadingException e) {
+            dataLoadingException = e;
+            logger.severe("Data file at " + storage.getAddressBookFilePath() + " could not be loaded.\n"
+                    + StringUtil.getDetails(e));
+            return;
+        }
 
         logic = new LogicManager(model, storage);
 
@@ -61,27 +97,20 @@ public class MainApp extends Application {
     }
 
     /**
-     * Returns a {@code ModelManager} with the data from {@code storage}'s address book and {@code userPrefs}. <br>
-     * The data from the sample address book will be used instead if {@code storage}'s address book is not found,
-     * or an empty address book will be used instead if errors occur when reading {@code storage}'s address book.
+     * Returns a {@code ModelManager} with the data from {@code storage}'s address book and {@code userPrefs}.
+     * Uses sample data if the address book file is missing.
+     *
+     * @throws DataLoadingException if the address book file cannot be read or contains invalid data.
      */
-    private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
+    private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) throws DataLoadingException {
         logger.info("Using data file : " + storage.getAddressBookFilePath());
 
-        Optional<ReadOnlyAddressBook> addressBookOptional;
-        ReadOnlyAddressBook initialData;
-        try {
-            addressBookOptional = storage.readAddressBook();
-            if (addressBookOptional.isEmpty()) {
-                logger.info("Creating a new data file " + storage.getAddressBookFilePath()
-                        + " populated with a sample AddressBook.");
-            }
-            initialData = addressBookOptional.orElseGet(SampleDataUtil::getSampleAddressBook);
-        } catch (DataLoadingException e) {
-            logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
-                    + " Will be starting with an empty AddressBook.");
-            initialData = new AddressBook();
+        Optional<ReadOnlyAddressBook> addressBookOptional = storage.readAddressBook();
+        if (addressBookOptional.isEmpty()) {
+            logger.info("Data file " + storage.getAddressBookFilePath()
+                    + " not found. Starting with a sample AddressBook.");
         }
+        ReadOnlyAddressBook initialData = addressBookOptional.orElseGet(SampleDataUtil::getSampleAddressBook);
 
         return new ModelManager(initialData, userPrefs);
     }
@@ -121,12 +150,55 @@ public class MainApp extends Application {
     @Override
     public void start(Stage primaryStage) {
         logger.info("Starting LeBake " + MainApp.VERSION);
+        if (dataLoadingException != null) {
+            createDataLoadingErrorDialog().showAndWait();
+            exit();
+            return;
+        }
         ui.start(primaryStage);
+    }
+
+    /**
+     * Creates the startup error dialog without opening the main window.
+     */
+    Alert createDataLoadingErrorDialog() {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("LeBake could not start");
+        alert.setHeaderText("Unable to load saved data");
+        alert.setContentText("LeBake could not load the data file:\n"
+                + storage.getAddressBookFilePath().toAbsolutePath().normalize()
+                + "\n\nReason:\n" + getDataLoadingErrorMessage(dataLoadingException.getCause())
+                + "\n\nYour data file has not been changed.\n\n"
+                + "Check that the file contains valid LeBake JSON and that you have permission to read it. "
+                + "Fix the file or restore a valid backup, then restart LeBake.");
+        return alert;
+    }
+
+    static String getDataLoadingErrorMessage(Throwable cause) {
+        if (cause instanceof DataValidationException validationException) {
+            return validationException.getUserMessage();
+        }
+        if (cause instanceof JsonProcessingException jsonException) {
+            String reason = "Invalid JSON: " + jsonException.getOriginalMessage();
+            JsonLocation location = jsonException.getLocation();
+            if (location != null) {
+                reason += "\nLine " + location.getLineNr() + ", column " + location.getColumnNr() + ".";
+            }
+            return reason;
+        }
+        return cause.getMessage();
+    }
+
+    void exit() {
+        exitAction.run();
     }
 
     @Override
     public void stop() {
         logger.info("============================ [ Stopping LeBake ] =============================");
+        if (storage == null || model == null) {
+            return;
+        }
         try {
             storage.saveUserPrefs(model.getUserPrefs());
         } catch (IOException e) {

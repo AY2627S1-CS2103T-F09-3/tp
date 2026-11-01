@@ -27,7 +27,7 @@ public class UntagCommandParser implements Parser<UntagCommand> {
 
         String formatErrorMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, UntagCommand.MESSAGE_USAGE);
         Index index = ParserUtil.parsePreambleIndex(argMultimap, formatErrorMessage);
-        Tag tag = ParserUtil.parseSingleTag(argMultimap, formatErrorMessage);
+        Tag tag = ParserUtil.parseSingleTag(argMultimap, formatErrorMessage, UntagCommand.COMMAND_WORD);
         return new UntagCommand(index, tag);
     }
 }

@@ -12,6 +12,9 @@ import java.util.Arrays;
  */
 public class StringUtil {
 
+    // Whitespace as Java defines it, which strip() removes, or as Unicode defines it, which adds no-break spaces
+    private static final String WHITESPACE = "[\\p{javaWhitespace}\\p{IsWhite_Space}]";
+
     /**
      * Returns true if the {@code sentence} contains the {@code word}.
      *   Ignores case, but a full word match is required.
@@ -53,6 +56,28 @@ public class StringUtil {
     }
 
     /**
+     * Returns {@code s} with surrounding whitespace removed and each run of spaces replaced by one space.
+     * Tabs and Unicode spaces, such as an em space, count as spaces. Line breaks inside {@code s} are kept.
+     *
+     * @param s cannot be null
+     */
+    public static String normalizeSpaces(String s) {
+        requireNonNull(s);
+        return stripSpaces(s.replaceAll("\\h+", " "));
+    }
+
+    /**
+     * Returns {@code s} with surrounding whitespace removed, including no-break spaces, which {@link String#strip()}
+     * keeps. Spaces inside {@code s} are kept.
+     *
+     * @param s cannot be null
+     */
+    public static String stripSpaces(String s) {
+        requireNonNull(s);
+        return s.replaceAll("^" + WHITESPACE + "+|" + WHITESPACE + "+$", "");
+    }
+
+    /**
      * Returns a detailed message of {@code t}, including the stack trace.
      */
     public static String getDetails(Throwable t) {
@@ -78,5 +103,27 @@ public class StringUtil {
         } catch (NumberFormatException nfe) {
             return false;
         }
+    }
+
+    /**
+     * Returns true if {@code s} represents a positive unsigned integer, without limiting its magnitude.
+     * Will return false for an empty string or any string containing a non-decimal digit.
+     * @throws NullPointerException if {@code s} is null.
+     */
+    public static boolean isPositiveUnsignedInteger(String s) {
+        requireNonNull(s);
+        if (s.isEmpty()) {
+            return false;
+        }
+
+        boolean hasNonZeroDigit = false;
+        for (int index = 0; index < s.length(); index++) {
+            int digit = Character.digit(s.charAt(index), 10);
+            if (digit < 0) {
+                return false;
+            }
+            hasNonZeroDigit |= digit > 0;
+        }
+        return hasNonZeroDigit;
     }
 }

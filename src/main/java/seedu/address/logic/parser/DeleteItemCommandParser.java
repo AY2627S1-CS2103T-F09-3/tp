@@ -35,7 +35,8 @@ public class DeleteItemCommandParser implements Parser<DeleteItemCommand> {
         try {
             return ParserUtil.parseIndex(value);
         } catch (ParseException pe) {
-            throw new ParseException(MESSAGE_INVALID_ITEM_INDEX, pe);
+            throw ParserUtil.createFieldParseException(value, pe, DeleteItemCommand.COMMAND_WORD,
+                    MESSAGE_INVALID_ITEM_INDEX, PREFIX_ITEM_INDEX);
         }
     }
 }

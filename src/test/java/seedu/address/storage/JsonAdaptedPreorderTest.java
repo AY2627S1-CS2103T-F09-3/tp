@@ -1,13 +1,13 @@
 package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static seedu.address.testutil.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.exceptions.DataValidationException;
 import seedu.address.model.preorder.FulfilmentDate;
 import seedu.address.model.preorder.FulfilmentMethod;
 import seedu.address.model.preorder.HandoverNotes;
@@ -36,23 +36,57 @@ public class JsonAdaptedPreorderTest {
     }
 
     @Test
-    public void toModelType_invalidDate_throwsIllegalValueException() {
+    public void toModelType_lowerCaseMethod_returnsPreorderWithMethod() throws Exception {
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), VALID_DATE, "delivery",
+                VALID_HANDOVER_NOTES);
+        assertEquals(buildPreorderWithAllDetails(), preorder.toModelType());
+    }
+
+    @Test
+    public void toModelType_paddedFulfilmentDetails_returnsStrippedDetails() throws Exception {
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), "\u00A0" + VALID_DATE + "\u00A0",
+                "\u00A0" + VALID_METHOD + "\u00A0", "\u00A0" + VALID_HANDOVER_NOTES + "\u00A0");
+        assertEquals(buildPreorderWithAllDetails(), preorder.toModelType());
+    }
+
+    @Test
+    public void toModelType_blankFulfilmentDetails_returnsPreorderWithoutDetails() throws Exception {
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), "", "\u00A0", "\u2003");
+        assertEquals(new Preorder(List.of()), preorder.toModelType());
+    }
+
+    @Test
+    public void toModelType_invalidDate_throwsDataValidationException() {
         JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), "2026-02-30", VALID_METHOD,
                 VALID_HANDOVER_NOTES);
-        assertThrows(IllegalValueException.class, FulfilmentDate.MESSAGE_CONSTRAINTS, preorder::toModelType);
+        DataValidationException exception = assertThrows(DataValidationException.class, preorder::toModelType);
+        assertEquals(FulfilmentDate.MESSAGE_CONSTRAINTS, exception.getMessage());
+        assertEquals("invalid preorder date.", exception.getUserMessage());
     }
 
     @Test
-    public void toModelType_invalidMethod_throwsIllegalValueException() {
-        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), VALID_DATE, "PICKUP",
+    public void toModelType_invalidMethod_throwsDataValidationException() {
+        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), VALID_DATE, " pickup ",
                 VALID_HANDOVER_NOTES);
-        assertThrows(IllegalValueException.class, FulfilmentMethod.MESSAGE_CONSTRAINTS, preorder::toModelType);
+        DataValidationException exception = assertThrows(DataValidationException.class, preorder::toModelType);
+        assertEquals(FulfilmentMethod.MESSAGE_CONSTRAINTS, exception.getMessage());
+        assertEquals("invalid preorder method.", exception.getUserMessage());
     }
 
     @Test
-    public void toModelType_invalidHandoverNotes_throwsIllegalValueException() {
+    public void toModelType_invalidHandoverNotes_throwsDataValidationException() {
         JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), VALID_DATE, VALID_METHOD,
                 "Call on arrival\nLeave at door");
-        assertThrows(IllegalValueException.class, HandoverNotes.MESSAGE_CONSTRAINTS, preorder::toModelType);
+        DataValidationException exception = assertThrows(DataValidationException.class, preorder::toModelType);
+        assertEquals(HandoverNotes.MESSAGE_CONSTRAINTS, exception.getMessage());
+        assertEquals("invalid preorder handoverNotes.", exception.getUserMessage());
+    }
+
+    /**
+     * Returns an empty preorder with the valid date, method and handover notes.
+     */
+    private Preorder buildPreorderWithAllDetails() {
+        return new PreorderBuilder().withDate(VALID_DATE).withMethod(FulfilmentMethod.DELIVERY)
+                .withHandoverNotes(VALID_HANDOVER_NOTES).build();
     }
 }

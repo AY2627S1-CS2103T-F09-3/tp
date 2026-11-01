@@ -20,7 +20,6 @@ Class JsonAdaptedPerson
 Class JsonAdaptedTag
 Class JsonAdaptedPreorder
 Class JsonAdaptedItem
-Class JsonAdaptedLegacyPreorder
 }
 
 }
@@ -37,7 +36,5 @@ JsonSerializableAddressBook --> "*" JsonAdaptedPerson
 JsonAdaptedPerson --> "*" JsonAdaptedTag
 JsonAdaptedPerson --> "*" JsonAdaptedPreorder
 JsonAdaptedPreorder --> "*" JsonAdaptedItem
-JsonAdaptedPerson ..> JsonAdaptedLegacyPreorder
-JsonAdaptedLegacyPreorder ..> JsonAdaptedPreorder
 
 @enduml

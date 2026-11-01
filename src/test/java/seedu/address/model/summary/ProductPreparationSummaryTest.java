@@ -29,25 +29,25 @@ public class ProductPreparationSummaryTest {
             .withRemark("Less sugar").build();
     private static final Item COOKIES = new ItemBuilder().withName("Almond Cookies").withQuantity("99").build();
     private static final Item PREPARED_TARTS = new ItemBuilder(TARTS).withStatus(PREPARED).withQuantity("3").build();
-    private static final Item UNKNOWN_TARTS = new ItemBuilder(TARTS).withoutQuantity().build();
+    private static final Item BEN_TARTS = new ItemBuilder(TARTS).withQuantity("5").build();
     private static final Person ALICE = new PersonBuilder().withName("Alice")
             .withPreorder(COOKIES, TARTS, TARTS, PREPARED_TARTS).build();
-    private static final Person BEN = new PersonBuilder().withName("Ben").withPreorder(UNKNOWN_TARTS).build();
+    private static final Person BEN = new PersonBuilder().withName("Ben").withPreorder(BEN_TARTS).build();
     private static final ItemCriterion ALL_TARTS =
             new ItemCriterion(Optional.of("PINEAPPLE TARTS"), EnumSet.allOf(ItemStatus.class));
 
     @Test
     public void from_mixedProducts_countsOnlySelectedProduct() {
         ProductPreparationSummary summary = ProductPreparationSummary.from(List.of(ALICE, BEN), ALL_TARTS);
-        assertCounts(summary, 2, 4, 7, 1);
+        assertCounts(summary, 2, 4, 12);
     }
 
     @Test
     public void from_statusRestricted_countsOnlyMatchingItems() {
         ItemCriterion pending = new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of(PENDING));
-        assertCounts(ProductPreparationSummary.from(List.of(ALICE, BEN), pending), 2, 3, 4, 1);
+        assertCounts(ProductPreparationSummary.from(List.of(ALICE, BEN), pending), 2, 3, 9);
         ItemCriterion prepared = new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of(PREPARED));
-        assertCounts(ProductPreparationSummary.from(List.of(ALICE, BEN), prepared), 1, 1, 3, 0);
+        assertCounts(ProductPreparationSummary.from(List.of(ALICE, BEN), prepared), 1, 1, 3);
     }
 
     @Test
@@ -57,14 +57,14 @@ public class ProductPreparationSummaryTest {
         assertEquals(List.of(2, 3, 4, 1), matches.stream().map(MatchingItem::getItemNumber).toList());
         assertEquals(List.of(ALICE, ALICE, ALICE, BEN), matches.stream().map(MatchingItem::getCustomer).toList());
         assertEquals("Less sugar", matches.getFirst().getItem().getRemark().orElseThrow().value);
-        assertEquals(List.of(TARTS, TARTS, PREPARED_TARTS, UNKNOWN_TARTS),
+        assertEquals(List.of(TARTS, TARTS, PREPARED_TARTS, BEN_TARTS),
                 matches.stream().map(MatchingItem::getItem).toList());
     }
 
     @Test
     public void from_displayedSubset_excludesHiddenCustomers() {
-        assertCounts(ProductPreparationSummary.from(List.of(BEN), ALL_TARTS), 1, 1, 0, 1);
-        assertCounts(ProductPreparationSummary.from(List.of(ALICE, ALICE), ALL_TARTS), 1, 3, 7, 0);
+        assertCounts(ProductPreparationSummary.from(List.of(BEN), ALL_TARTS), 1, 1, 5);
+        assertCounts(ProductPreparationSummary.from(List.of(ALICE, ALICE), ALL_TARTS), 1, 3, 7);
     }
 
     @Test
@@ -73,10 +73,10 @@ public class ProductPreparationSummaryTest {
         Person emptyPreorder = new PersonBuilder().withName("Empty preorder").withPreorder().build();
         Person otherProduct = new PersonBuilder().withName("Other product").withPreorder(COOKIES).build();
         assertCounts(ProductPreparationSummary.from(List.of(noPreorder, emptyPreorder, otherProduct), ALL_TARTS),
-                0, 0, 0, 0);
-        assertCounts(ProductPreparationSummary.from(List.of(), ALL_TARTS), 0, 0, 0, 0);
+                0, 0, 0);
+        assertCounts(ProductPreparationSummary.from(List.of(), ALL_TARTS), 0, 0, 0);
         ItemCriterion noStatuses = new ItemCriterion(Optional.of("Pineapple Tarts"), Set.of());
-        assertCounts(ProductPreparationSummary.from(List.of(ALICE), noStatuses), 0, 0, 0, 0);
+        assertCounts(ProductPreparationSummary.from(List.of(ALICE), noStatuses), 0, 0, 0);
     }
 
     @Test
@@ -85,7 +85,7 @@ public class ProductPreparationSummaryTest {
         ProductPreparationSummary summary = ProductPreparationSummary.from(source, ALL_TARTS);
         source.clear();
         source.add(BEN);
-        assertCounts(summary, 1, 3, 7, 0);
+        assertCounts(summary, 1, 3, 7);
         assertThrows(UnsupportedOperationException.class, () -> summary.getMatchingItems().clear());
     }
 
@@ -94,7 +94,7 @@ public class ProductPreparationSummaryTest {
         Item item = new ItemBuilder().withName("Pineapple Tarts").build();
         Person person = new PersonBuilder().withPreorder(item).build();
         ProductPreparationSummary summary = ProductPreparationSummary.from(List.of(person), ALL_TARTS);
-        assertCounts(summary, 1, 1, 2, 0);
+        assertCounts(summary, 1, 1, 2);
         assertEquals(Optional.empty(), summary.getMatchingItems().getFirst().getItem().getRemark());
     }
 
@@ -136,10 +136,9 @@ public class ProductPreparationSummaryTest {
     }
 
     private void assertCounts(ProductPreparationSummary summary, long customers, int items,
-            long knownQuantity, long missingQuantities) {
+            long totalQuantity) {
         assertEquals(customers, summary.getCustomerCount());
         assertEquals(items, summary.getMatchingItemCount());
-        assertEquals(knownQuantity, summary.getKnownQuantity());
-        assertEquals(missingQuantities, summary.getMissingQuantityCount());
+        assertEquals(totalQuantity, summary.getTotalQuantity());
     }
 }

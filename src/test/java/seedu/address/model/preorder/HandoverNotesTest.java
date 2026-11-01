@@ -27,13 +27,19 @@ public class HandoverNotesTest {
         // blank handover notes
         assertFalse(HandoverNotes.isValidHandoverNotes("")); // empty string
         assertFalse(HandoverNotes.isValidHandoverNotes("   ")); // spaces only
+        assertFalse(HandoverNotes.isValidHandoverNotes("\u2003")); // em space only
+        assertFalse(HandoverNotes.isValidHandoverNotes("\u200B")); // zero-width space only, which shows nothing
 
         // untrimmed handover notes
         assertFalse(HandoverNotes.isValidHandoverNotes(" Call on arrival")); // leading space
         assertFalse(HandoverNotes.isValidHandoverNotes("Call on arrival ")); // trailing space
+        assertFalse(HandoverNotes.isValidHandoverNotes("Call on arrival\u00A0")); // trailing no-break space
 
         // more than one line
         assertFalse(HandoverNotes.isValidHandoverNotes("Call on arrival\nLeave at door"));
+
+        // forward slashes are not allowed
+        assertFalse(HandoverNotes.isValidHandoverNotes("Leave w/o ringing"));
 
         // length boundary
         assertTrue(HandoverNotes.isValidHandoverNotes("a".repeat(HandoverNotes.MAX_LENGTH)));

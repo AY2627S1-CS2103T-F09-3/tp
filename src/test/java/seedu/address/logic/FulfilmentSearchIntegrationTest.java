@@ -36,7 +36,7 @@ public class FulfilmentSearchIntegrationTest {
     private JsonAddressBookStorage storage;
     private Person alice;
     private Person collection;
-    private Person missingPostal;
+    private Person otherPostal;
     private Person emptyDelivery;
     private Person unset;
 
@@ -53,23 +53,24 @@ public class FulfilmentSearchIntegrationTest {
         collection = new PersonBuilder().withName("Bernice Yu").withPostalCode("539999")
                 .withPreorder(new PreorderBuilder().withDate("2026-12-20").withMethod(FulfilmentMethod.COLLECTION)
                         .withHandoverNotes("Call at the gate").build()).build();
-        missingPostal = new PersonBuilder().withName("Charlie Tan")
+        otherPostal = new PersonBuilder().withName("Charlie Tan").withPostalCode("999999")
                 .withPreorder(new PreorderBuilder().withDate("2026-12-20").withMethod(FulfilmentMethod.DELIVERY)
                         .withHandoverNotes("Call on arrival").withItems(new ItemBuilder()
                                 .withStatus(ItemStatus.PREPARED).build()).build()).build();
         emptyDelivery = new PersonBuilder().withName("David Li").withPostalCode("530123")
                 .withPreorder(new PreorderBuilder().withDate("2026-12-21")
                         .withMethod(FulfilmentMethod.DELIVERY).build()).build();
-        unset = new PersonBuilder().withName("Unset Details").withPreorder(new ItemBuilder().build()).build();
-        List.of(alice, collection, missingPostal, emptyDelivery, unset,
-                new PersonBuilder().withName("No Preorder").build()).forEach(model::addPerson);
+        unset = new PersonBuilder().withName("Unset Details").withPostalCode("999999")
+                .withPreorder(new ItemBuilder().build()).build();
+        List.of(alice, collection, otherPostal, emptyDelivery, unset,
+                new PersonBuilder().withName("No Preorder").withPostalCode("999999").build()).forEach(model::addPerson);
     }
 
     @Test
     public void search_matchesSharedFieldsIncludingEmptyPreorders() throws Exception {
-        find("find m/delivery", List.of(alice, missingPostal, emptyDelivery));
+        find("find m/delivery", List.of(alice, otherPostal, emptyDelivery));
         find("find m/COLLECTION", List.of(collection));
-        find("find f/2026-12-20", List.of(alice, collection, missingPostal));
+        find("find f/2026-12-20", List.of(alice, collection, otherPostal));
         find("find h/GATE", List.of(collection));
         find("find f/2026-12-20 m/delivery h/ARRIVAL n/Alice t/regular", List.of(alice));
     }
@@ -78,23 +79,25 @@ public class FulfilmentSearchIntegrationTest {
     public void handoverNotesSearch_ignoresOtherFieldsAndCombinesUsingAnd() throws Exception {
         Person differentNotes = new PersonBuilder().withName("Arrival Customer").withAddress("12 Arrival Lane")
                 .withPreorder(new PreorderBuilder().withMethod(FulfilmentMethod.DELIVERY)
-                        .withHandoverNotes("Use the side gate").withItems(new ItemBuilder()
+                        .withHandoverNotes("Use the side gate item one").withItems(new ItemBuilder()
                                 .withRemark("Call on arrival").build()).build()).build();
         model.addPerson(differentNotes);
 
-        find("find h/ARRIVAL", List.of(alice, missingPostal));
+        find("find h/ARRIVAL", List.of(alice, otherPostal));
         find("find h/arrival n/Alice m/delivery f/2026-12-20 t/regular", List.of(alice));
         find("find h/arrival m/collection", List.of());
         find("find h/GATE", List.of(collection, differentNotes));
+        find("find h/side gate item one", List.of(differentNotes));
+        find("find h/arrival item one", List.of());
     }
 
     @Test
     public void successiveFindAndTrack_replacePreviousCriteria() throws Exception {
         find("find m/collection", List.of(collection));
-        find("find h/arrival", List.of(alice, missingPostal));
+        find("find h/arrival", List.of(alice, otherPostal));
         find("find n/Alice", List.of(alice));
         logic.execute("track");
-        assertEquals(List.of(alice, missingPostal, unset), logic.getFilteredPersonList());
+        assertEquals(List.of(alice, otherPostal, unset), logic.getFilteredPersonList());
         find("find m/collection", List.of(collection));
         logic.execute("list");
         assertEquals(6, logic.getFilteredPersonList().size());
@@ -102,15 +105,15 @@ public class FulfilmentSearchIntegrationTest {
 
     @Test
     public void invalidSearch_preservesCriteriaResultsAndCustomerData() throws Exception {
-        find("find m/delivery", List.of(alice, missingPostal, emptyDelivery));
+        find("find m/delivery", List.of(alice, otherPostal, emptyDelivery));
         SearchCriteria criteria = logic.getActiveSearchCriteria();
         List<Person> customers = List.copyOf(model.getAddressBook().getPersonList());
         for (String input : List.of("find f/2026-02-30", "find m/pickup", "find h/", "find f/",
-                "find m/delivery m/collection", "find n/Alice h/", "find i/arrival", "find h/arrival i/1",
+                "find m/delivery m/collection", "find n/Alice h/", "find i/arrival",
                 "find Alice Charlie", "find Alice m/delivery")) {
             assertThrows(ParseException.class, () -> logic.execute(input));
             assertEquals(criteria, logic.getActiveSearchCriteria());
-            assertEquals(List.of(alice, missingPostal, emptyDelivery), logic.getFilteredPersonList());
+            assertEquals(List.of(alice, otherPostal, emptyDelivery), logic.getFilteredPersonList());
             assertEquals(customers, model.getAddressBook().getPersonList());
         }
     }
@@ -153,11 +156,11 @@ public class FulfilmentSearchIntegrationTest {
 
     @Test
     public void groupedFulfilmentSearch_editsPreserveAllFieldsAndStorage() throws Exception {
-        find("find m/delivery f/2026-12-20", List.of(alice, missingPostal));
+        find("find m/delivery f/2026-12-20", List.of(alice, otherPostal));
         SearchCriteria criteria = logic.getActiveSearchCriteria();
         logic.execute("group postal");
         assertEquals(criteria, logic.getActiveSearchCriteria());
-        assertEquals(List.of(alice, missingPostal), logic.getFilteredPersonList());
+        assertEquals(List.of(alice, otherPostal), logic.getFilteredPersonList());
         logic.execute("edit 1 p/89999999");
         logic.execute("tag 1 t/vip");
         logic.execute("untag 1 t/VIP");
@@ -170,7 +173,7 @@ public class FulfilmentSearchIntegrationTest {
         assertEquals(2, summary.getStopCount());
         assertEquals(2, summary.getPostalGroupCount());
         logic.execute("deleteorder 1");
-        assertEquals(List.of(missingPostal), logic.getFilteredPersonList());
+        assertEquals(List.of(otherPostal), logic.getFilteredPersonList());
         assertEquals(1, new DeliveryPreparationSummary(logic.getFilteredPersonList()).getStopCount());
     }
 

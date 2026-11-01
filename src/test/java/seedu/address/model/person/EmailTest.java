@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -45,6 +46,7 @@ public class EmailTest {
         assertFalse(Email.isValidEmail("-peterjack@example.com")); // local part starts with a hyphen
         assertFalse(Email.isValidEmail("peterjack-@example.com")); // local part ends with a hyphen
         assertFalse(Email.isValidEmail("peter..jack@example.com")); // local part has two consecutive periods
+        assertFalse(Email.isValidEmail("baker++orders@example.com")); // two adjacent special characters
         assertFalse(Email.isValidEmail("peterjack@example@com")); // '@' symbol in domain name
         assertFalse(Email.isValidEmail("peterjack@.example.com")); // domain name starts with a period
         assertFalse(Email.isValidEmail("peterjack@example.com.")); // domain name ends with a period
@@ -67,6 +69,34 @@ public class EmailTest {
     }
 
     @Test
+    public void isValidEmail_lengthBoundaries_returnsExpectedResult() {
+        assertTrue(Email.isValidEmail(createEmailWithLength(253)));
+        assertTrue(Email.isValidEmail(createEmailWithLength(254)));
+        assertFalse(Email.isValidEmail(createEmailWithLength(255)));
+    }
+
+    @Test
+    public void constructor_lengthBoundaries_enforcesLimit() {
+        for (int length : new int[]{253, 254}) {
+            String email = createEmailWithLength(length);
+            assertEquals(length, email.length());
+            assertEquals(email, new Email(email).value);
+        }
+        String overLimitEmail = createEmailWithLength(255);
+        assertThrows(IllegalArgumentException.class, Email.MESSAGE_LENGTH_CONSTRAINTS, () -> new Email(overLimitEmail));
+    }
+
+    @Test
+    public void constructor_lengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{253, 254}) {
+            String invalidEmail = "a".repeat(length);
+            assertThrows(IllegalArgumentException.class, Email.MESSAGE_CONSTRAINTS, () -> new Email(invalidEmail));
+        }
+        assertThrows(IllegalArgumentException.class, "Emails must be at most 254 characters long.", ()
+            -> new Email("a".repeat(255)));
+    }
+
+    @Test
     public void equals() {
         Email email = new Email("valid@email");
 
@@ -84,5 +114,10 @@ public class EmailTest {
 
         // different values -> returns false
         assertFalse(email.equals(new Email("other.valid@email")));
+    }
+
+    private static String createEmailWithLength(int length) {
+        String prefix = "a".repeat(64) + "@" + "b".repeat(63) + "." + "c".repeat(63) + ".";
+        return prefix + "d".repeat(length - prefix.length());
     }
 }

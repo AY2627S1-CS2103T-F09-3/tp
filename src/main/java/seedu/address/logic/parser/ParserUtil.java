@@ -1,12 +1,17 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.Messages.MESSAGE_UNSUPPORTED_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
@@ -32,17 +37,81 @@ public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
+    private static final Pattern PREFIX_LIKE_TOKEN = Pattern.compile("\\s([A-Za-z]+/)");
+
+    /**
+     * Returns the first letter-based prefix after whitespace in {@code value} that is not supported by the command.
+     * Use this only to refine errors for an already-invalid constrained field, as free text can contain literal
+     * prefix-like text.
+     *
+     * @param value An invalid field value to inspect.
+     * @param supportedPrefixes Prefixes supported by the command.
+     */
+    public static Optional<Prefix> findUnsupportedPrefix(String value, Prefix... supportedPrefixes) {
+        requireNonNull(value);
+        requireNonNull(supportedPrefixes);
+        Matcher matcher = PREFIX_LIKE_TOKEN.matcher(value);
+        while (matcher.find()) {
+            Prefix prefix = new Prefix(matcher.group(1));
+            if (Arrays.stream(supportedPrefixes).noneMatch(prefix::equals)) {
+                return Optional.of(prefix);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Creates an error that names an unsupported prefix or keeps the original field constraint message.
+     * Call this only after constrained-field validation fails. The original exception remains the direct cause.
+     *
+     * @param value The invalid field value to inspect.
+     * @param cause The field validation failure.
+     * @param commandWord The command name used in an unsupported-prefix message.
+     * @param supportedPrefixes Prefixes supported by the command.
+     */
+    public static ParseException createFieldParseException(String value, ParseException cause, String commandWord,
+            Prefix... supportedPrefixes) {
+        requireNonNull(cause);
+        return createFieldParseException(value, cause, commandWord, cause.getMessage(), supportedPrefixes);
+    }
+
+    /**
+     * Creates an error that names an unsupported prefix or uses a supplied fallback message.
+     * The original exception remains the direct cause. Use this overload for fields with a specialized message,
+     * such as an item index parsed through the generic index validator.
+     *
+     * @param value The invalid field value to inspect.
+     * @param cause The field validation failure.
+     * @param commandWord The command name used in an unsupported-prefix message.
+     * @param fallbackMessage The message used when no unsupported prefix is found.
+     * @param supportedPrefixes Prefixes supported by the command.
+     */
+    public static ParseException createFieldParseException(String value, ParseException cause, String commandWord,
+            String fallbackMessage, Prefix... supportedPrefixes) {
+        requireNonNull(cause);
+        requireNonNull(commandWord);
+        String message = findUnsupportedPrefix(value, supportedPrefixes)
+                .map(prefix -> String.format(MESSAGE_UNSUPPORTED_PREFIX, prefix, commandWord))
+                .orElse(fallbackMessage);
+        return new ParseException(message, cause);
+    }
+
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
      * trimmed.
-     * @throws ParseException if the specified index is invalid (not a non-zero unsigned integer).
+     * @throws ParseException if the specified index is not a positive unsigned integer.
      */
     public static Index parseIndex(String oneBasedIndex) throws ParseException {
         String trimmedIndex = oneBasedIndex.trim();
-        if (!StringUtil.isNonZeroUnsignedInteger(trimmedIndex)) {
+        if (!StringUtil.isPositiveUnsignedInteger(trimmedIndex)) {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
-        return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+        try {
+            return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+        } catch (NumberFormatException exception) {
+            // The input has already been validated as positive decimal digits, so only integer overflow remains.
+            return Index.fromZeroBased(Integer.MAX_VALUE);
+        }
     }
 
     /**
@@ -55,7 +124,7 @@ public class ParserUtil {
     public static Name parseName(String name) throws ParseException {
         requireNonNull(name);
         if (!Name.isValidName(name)) {
-            throw new ParseException(Name.MESSAGE_CONSTRAINTS);
+            throw new ParseException(Name.getValidationErrorMessage(name));
         }
         return new Name(name);
     }
@@ -85,7 +154,7 @@ public class ParserUtil {
         requireNonNull(address);
         String trimmedAddress = address.trim();
         if (!Address.isValidAddress(trimmedAddress)) {
-            throw new ParseException(Address.MESSAGE_CONSTRAINTS);
+            throw new ParseException(Address.getValidationErrorMessage(trimmedAddress));
         }
         return new Address(trimmedAddress);
     }
@@ -141,7 +210,7 @@ public class ParserUtil {
         requireNonNull(email);
         String trimmedEmail = email.trim();
         if (!Email.isValidEmail(trimmedEmail)) {
-            throw new ParseException(Email.MESSAGE_CONSTRAINTS);
+            throw new ParseException(Email.getValidationErrorMessage(trimmedEmail));
         }
         return new Email(trimmedEmail);
     }
@@ -156,7 +225,7 @@ public class ParserUtil {
         requireNonNull(tag);
         String trimmedTag = tag.trim();
         if (!Tag.isValidTagName(trimmedTag)) {
-            throw new ParseException(Tag.MESSAGE_CONSTRAINTS);
+            throw new ParseException(Tag.getValidationErrorMessage(trimmedTag));
         }
         return new Tag(trimmedTag);
     }
@@ -178,7 +247,7 @@ public class ParserUtil {
      *
      * @param argMultimap Tokenized arguments containing the index in the preamble.
      * @param errorMessage Complete error message shown when the index is missing or invalid.
-     * @throws ParseException If the preamble is not a positive integer within the supported integer range.
+     * @throws ParseException If the preamble is not a positive integer.
      */
     public static Index parsePreambleIndex(ArgumentMultimap argMultimap, String errorMessage)
             throws ParseException {
@@ -193,35 +262,41 @@ public class ParserUtil {
 
     /**
      * Parses the single {@code t/TAG} value in {@code argMultimap} into a {@code Tag}.
+     * Checks for missing and duplicate prefixes before validating the tag. Refines tag-value failures using the
+     * command's unsupported-prefix diagnostic.
      *
      * @param argMultimap Tokenized arguments containing the tag prefix and value.
      * @param errorMessage Complete error message shown when the tag prefix is missing.
+     * @param commandWord The command name used in an unsupported-prefix message.
      * @throws ParseException If the tag prefix is missing or repeated, or the tag is invalid.
      */
-    public static Tag parseSingleTag(ArgumentMultimap argMultimap, String errorMessage) throws ParseException {
+    public static Tag parseSingleTag(ArgumentMultimap argMultimap, String errorMessage, String commandWord)
+            throws ParseException {
         requireNonNull(argMultimap);
         requireNonNull(errorMessage);
-        if (argMultimap.getValue(PREFIX_TAG).isEmpty()) {
-            throw new ParseException(errorMessage);
-        }
+        requireNonNull(commandWord);
+        String value = argMultimap.getValue(PREFIX_TAG).orElseThrow(() -> new ParseException(errorMessage));
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_TAG);
-        return parseTag(argMultimap.getValue(PREFIX_TAG).get());
+        try {
+            return parseTag(value);
+        } catch (ParseException pe) {
+            throw createFieldParseException(value, pe, commandWord, PREFIX_TAG);
+        }
     }
 
     /**
      * Parses a {@code String name} into an {@code ItemName}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespace is removed, and repeated spaces are replaced with one.
      *
      * @throws ParseException if the given {@code name} is invalid.
      */
     public static ItemName parseItemName(String name) throws ParseException {
         requireNonNull(name);
-        String trimmedName = name.trim();
-        if (!ItemName.isValidItemName(trimmedName)) {
+        if (!ItemName.isValidItemName(name)) {
             throw new ParseException(ItemName.MESSAGE_CONSTRAINTS);
         }
-        return new ItemName(trimmedName);
+        return new ItemName(name);
     }
 
     /**
@@ -241,13 +316,13 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String remark} into a {@code Remark}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespaces, including Unicode spaces, will be trimmed.
      *
      * @throws ParseException if the given {@code remark} is invalid.
      */
     public static Remark parseRemark(String remark) throws ParseException {
         requireNonNull(remark);
-        String trimmedRemark = remark.trim();
+        String trimmedRemark = StringUtil.stripSpaces(remark);
         if (!Remark.isValidRemark(trimmedRemark)) {
             throw new ParseException(Remark.MESSAGE_CONSTRAINTS);
         }
@@ -272,13 +347,13 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String handoverNotes} into a {@code HandoverNotes}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespaces, including Unicode spaces, will be trimmed.
      *
      * @throws ParseException if the given {@code handoverNotes} is invalid.
      */
     public static HandoverNotes parseHandoverNotes(String handoverNotes) throws ParseException {
         requireNonNull(handoverNotes);
-        String trimmedHandoverNotes = handoverNotes.trim();
+        String trimmedHandoverNotes = StringUtil.stripSpaces(handoverNotes);
         if (!HandoverNotes.isValidHandoverNotes(trimmedHandoverNotes)) {
             throw new ParseException(HandoverNotes.MESSAGE_CONSTRAINTS);
         }

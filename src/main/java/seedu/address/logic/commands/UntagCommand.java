@@ -24,11 +24,11 @@ public class UntagCommand extends Command {
     public static final String COMMAND_WORD = "untag";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Removes a tag from the person identified by the index number used in the displayed person list.\n"
+            + ": Removes a tag from the customer identified by the index number used in the displayed customer list.\n"
             + "Parameters: INDEX (must be a positive integer) " + PREFIX_TAG + "TAG\n"
             + "Example: " + COMMAND_WORD + " 1 " + PREFIX_TAG + "friends";
 
-    public static final String MESSAGE_UNTAG_PERSON_SUCCESS = "Removed tag(s) %1$s from %2$s";
+    public static final String MESSAGE_UNTAG_PERSON_SUCCESS = "Removed tag %1$s from %2$s";
     public static final String MESSAGE_TAG_NOT_FOUND = "%1$s does not have tag %2$s";
 
     private final Index index;

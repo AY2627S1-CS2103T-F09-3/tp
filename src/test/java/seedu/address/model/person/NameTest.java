@@ -78,6 +78,54 @@ public class NameTest {
     }
 
     @Test
+    public void isValidName_lengthBoundaries_returnsExpectedResult() {
+        assertTrue(Name.isValidName("A".repeat(99)));
+        assertTrue(Name.isValidName("A".repeat(100)));
+        assertFalse(Name.isValidName("A".repeat(101)));
+    }
+
+    @Test
+    public void constructor_lengthBoundaries_enforcesLimit() {
+        for (int length : new int[]{99, 100}) {
+            String name = "A".repeat(length);
+            assertEquals(name, new Name(name).fullName);
+        }
+        assertThrows(IllegalArgumentException.class, Name.MESSAGE_LENGTH_CONSTRAINTS, () -> new Name("A".repeat(101)));
+    }
+
+    @Test
+    public void isValidName_extraSpaces_checksNormalizedLength() {
+        assertTrue(Name.isValidName("  " + "A".repeat(97) + "   B  "));
+        assertTrue(Name.isValidName("  " + "A".repeat(98) + "   B  "));
+        assertFalse(Name.isValidName("  " + "A".repeat(99) + "   B  "));
+    }
+
+    @Test
+    public void constructor_extraSpacesAtLengthBoundaries_checksNormalizedLength() {
+        for (int length : new int[]{99, 100}) {
+            String name = "  " + "A".repeat(length - 2) + "   B  ";
+            String normalizedName = "A".repeat(length - 2) + " B";
+            assertTrue(name.length() > 100);
+            assertEquals(normalizedName, new Name(name).fullName);
+        }
+        String overLimitName = "  " + "A".repeat(99) + "   B  ";
+        assertThrows(IllegalArgumentException.class, Name.MESSAGE_LENGTH_CONSTRAINTS, () -> new Name(overLimitName));
+    }
+
+    @Test
+    public void constructor_lengthAndFormatViolations_prioritizesLengthMessage() {
+        for (int length : new int[]{99, 100}) {
+            String invalidName = "  " + "A".repeat(length - 2) + "   !  ";
+            assertTrue(invalidName.length() > 100);
+            assertThrows(IllegalArgumentException.class, Name.MESSAGE_CONSTRAINTS, () -> new Name(invalidName));
+        }
+        String overLimitName = "  " + "A".repeat(99) + "   !  ";
+        assertThrows(IllegalArgumentException.class,
+                "Names must be at most 100 characters long after spaces are normalized.", ()
+                    -> new Name(overLimitName));
+    }
+
+    @Test
     public void equals() {
         Name name = new Name("Valid Name");
 

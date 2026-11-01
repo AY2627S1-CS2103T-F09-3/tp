@@ -16,7 +16,6 @@
     -lb-divider: #4a403a;
     -lb-tag: #463c35;
     -lb-tag-ink: #eadccf;
-    -lb-warn: #f2c46b;
     -lb-match: #4b4024;
     -lb-match-border: #f4dc8a;
     -lb-selected: #8a5a34;
@@ -212,19 +211,8 @@
     -fx-graphic-text-gap: 4;
 }
 
-.card-postal-code-missing {
-    -fx-text-fill: -lb-warn;
-}
-
 .card-no-preorder {
     -fx-text-fill: -lb-muted;
-}
-
-.warning-icon {
-    -fx-fill: transparent;
-    -fx-stroke: -lb-warn;
-    -fx-stroke-width: 1.3;
-    -fx-stroke-line-cap: round;
 }
 
 /* Preorder panel, which uses one solid shade inside every card */
@@ -284,11 +272,6 @@
 #preorder .preorder-item-name {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-}
-
-#preorder .preorder-quantity-missing {
-    -fx-text-fill: -lb-warn;
-    -fx-graphic-text-gap: 4;
 }
 
 /* Each status keeps its color from the user guide */

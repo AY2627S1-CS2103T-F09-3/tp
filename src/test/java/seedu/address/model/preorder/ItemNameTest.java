@@ -27,24 +27,42 @@ public class ItemNameTest {
         // blank name
         assertFalse(ItemName.isValidItemName("")); // empty string
         assertFalse(ItemName.isValidItemName("   ")); // spaces only
-
-        // untrimmed name
-        assertFalse(ItemName.isValidItemName(" Pineapple Tarts")); // leading space
-        assertFalse(ItemName.isValidItemName("Pineapple Tarts ")); // trailing space
+        assertFalse(ItemName.isValidItemName("\u2003")); // em space only
+        assertFalse(ItemName.isValidItemName("\u00A0\u3000")); // no-break and ideographic spaces only
+        assertFalse(ItemName.isValidItemName("\u200B")); // zero-width space only, which shows nothing
 
         // more than one line
         assertFalse(ItemName.isValidItemName("Pineapple Tarts\nAlmond Cookies"));
         assertFalse(ItemName.isValidItemName("Pineapple Tarts\r\nAlmond Cookies"));
+        assertFalse(ItemName.isValidItemName("Pineapple Tarts\u2028Almond Cookies")); // Unicode line separator
 
-        // length boundary
+        // forward slashes are not allowed
+        assertFalse(ItemName.isValidItemName("Pineapple/Tarts"));
+        assertFalse(ItemName.isValidItemName("/Pineapple Tarts"));
+        assertFalse(ItemName.isValidItemName("Pineapple Tarts/"));
+
+        // length boundary, counted after repeated spaces become one
         assertTrue(ItemName.isValidItemName("a".repeat(ItemName.MAX_LENGTH)));
         assertFalse(ItemName.isValidItemName("a".repeat(ItemName.MAX_LENGTH + 1)));
+        assertTrue(ItemName.isValidItemName("a".repeat(ItemName.MAX_LENGTH - 2) + "   b"));
+
+        // surrounding spaces, which are removed
+        assertTrue(ItemName.isValidItemName(" Pineapple Tarts")); // leading space
+        assertTrue(ItemName.isValidItemName("Pineapple Tarts ")); // trailing space
+        assertTrue(ItemName.isValidItemName("Pineapple Tarts\u2003")); // trailing em space
 
         // valid name
         assertTrue(ItemName.isValidItemName("x")); // one character
         assertTrue(ItemName.isValidItemName("2 chocolate cakes, no nuts")); // punctuation
         assertTrue(ItemName.isValidItemName("12 cupcakes (6 red velvet & 6 vanilla) by 3pm!")); // symbols
         assertTrue(ItemName.isValidItemName("Pineapple  Tarts")); // repeated inner spaces
+    }
+
+    @Test
+    public void constructor_repeatedOrSurroundingSpaces_normalized() {
+        assertEquals("Butter Cake", new ItemName("Butter   Cake").value);
+        assertEquals("Butter Cake", new ItemName(" Butter\t\u2003Cake\u00A0").value); // tab and Unicode spaces
+        assertEquals(new ItemName("Butter Cake"), new ItemName("Butter   Cake"));
     }
 
     @Test

@@ -14,20 +14,18 @@ import seedu.address.commons.util.ToStringBuilder;
 public class Item {
 
     private final ItemName name;
-    private final Quantity quantity; // null only for items converted from v1.3, which had no quantity
+    private final Quantity quantity;
     private final ItemStatus status;
     private final Remark remark; // null when the customer made no special request
 
     /**
      * Every field must be present and not null.
      * Pass {@code Optional.empty()} as {@code remark} for an item without a special request.
-     * New items must have a quantity; {@code Optional.empty()} as {@code quantity} is only for
-     * items converted from a v1.3 preorder, which did not record one.
      */
-    public Item(ItemName name, Optional<Quantity> quantity, ItemStatus status, Optional<Remark> remark) {
+    public Item(ItemName name, Quantity quantity, ItemStatus status, Optional<Remark> remark) {
         requireAllNonNull(name, quantity, status, remark);
         this.name = name;
-        this.quantity = quantity.orElse(null);
+        this.quantity = quantity;
         this.status = status;
         this.remark = remark.orElse(null);
     }
@@ -36,11 +34,8 @@ public class Item {
         return name;
     }
 
-    /**
-     * Returns the item's quantity, or an empty {@code Optional} if it was converted from v1.3 without one.
-     */
-    public Optional<Quantity> getQuantity() {
-        return Optional.ofNullable(quantity);
+    public Quantity getQuantity() {
+        return quantity;
     }
 
     public ItemStatus getStatus() {
@@ -66,7 +61,7 @@ public class Item {
         }
 
         return name.equals(otherItem.name)
-                && Objects.equals(quantity, otherItem.quantity)
+                && quantity.equals(otherItem.quantity)
                 && status == otherItem.status
                 && Objects.equals(remark, otherItem.remark);
     }
@@ -80,7 +75,7 @@ public class Item {
     public String toString() {
         return new ToStringBuilder(this)
                 .add("name", name)
-                .add("quantity", getQuantity())
+                .add("quantity", quantity)
                 .add("status", status)
                 .add("remark", getRemark())
                 .toString();

@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
@@ -44,6 +45,8 @@ public class PersonCardTest {
 
     // Narrow enough that a long remark has to wrap
     private static final double CARD_WIDTH = 300;
+    // Wide enough that the longest tag chip fits on the name line, as on the narrowest card in the window
+    private static final double WIDE_CARD_WIDTH = 500;
 
     @BeforeAll
     public static void startJavaFx() {
@@ -74,13 +77,14 @@ public class PersonCardTest {
     }
 
     @Test
-    public void constructor_personWithoutPostalCode_showsWarning() throws Exception {
-        PersonCard card = createCard(new PersonBuilder(ALICE).withPostalCode(null).build());
+    public void constructor_zeroPostalCode_showsAllDigits() throws Exception {
+        PersonCard card = createCard(new PersonBuilder(ALICE).withPostalCode("000000").build());
         Label postalCode = (Label) lookup(card, "#postalCode");
 
-        assertEquals(PersonCard.MISSING_POSTAL_CODE_TEXT, postalCode.getText());
-        assertTrue(postalCode.getStyleClass().contains(PersonCard.MISSING_POSTAL_CODE_STYLE_CLASS));
-        assertTrue(postalCode.getGraphic() instanceof SVGPath);
+        assertEquals("Postal 000000", postalCode.getText());
+        assertTrue(postalCode.isVisible());
+        assertTrue(postalCode.isManaged());
+        assertEquals(null, postalCode.getGraphic());
     }
 
     @Test
@@ -129,13 +133,13 @@ public class PersonCardTest {
     }
 
     @Test
-    public void constructor_itemWithoutQuantity_showsQuantityNeeded() throws Exception {
-        Item cakes = new ItemBuilder().withName("2 chocolate cakes").withoutQuantity().build();
+    public void constructor_item_showsQuantityWithoutIcon() throws Exception {
+        Item cakes = new ItemBuilder().withName("2 chocolate cakes").withQuantity("3").build();
         GridPane row = getRows(createCard(new PersonBuilder(ALICE).withPreorder(cakes).build())).get(0);
-        Label quantity = (Label) row.lookup("." + PersonCard.MISSING_QUANTITY_STYLE_CLASS);
+        Label quantity = (Label) row.lookup("." + PersonCard.QUANTITY_STYLE_CLASS);
 
-        assertEquals(PreorderDisplay.MISSING_QUANTITY_TEXT, quantity.getText());
-        assertTrue(quantity.getGraphic() instanceof SVGPath);
+        assertEquals("Qty 3", quantity.getText());
+        assertNull(quantity.getGraphic());
     }
 
     @Test
@@ -182,6 +186,13 @@ public class PersonCardTest {
     }
 
     @Test
+    public void prefHeight_maximumLengthTag_sameAsContent() throws Exception {
+        assertCardNotTallerThanContent(new PersonBuilder(ALICE)
+                .withTags("W".repeat(30), "vip")
+                .build(), WIDE_CARD_WIDTH);
+    }
+
+    @Test
     public void prefHeight_wrappingRemarkAndNotes_sameAsContent() throws Exception {
         Item tarts = new ItemBuilder().withRemark("Less sugar, and pack the tarts in two separate boxes for gifting")
                 .build();
@@ -197,16 +208,21 @@ public class PersonCardTest {
                 .withTags("wholesale", "corporateclient", "vip")
                 .withEmail("alexandra.catherine.tanrodriguez@exampledomain.com")
                 .withAddress("Block 123 Example Avenue 6, The Very Long Residential Building Name, Tower North")
-                .withPostalCode(null).build();
+                .withPostalCode("999999").build();
 
         assertCardNotTallerThanContent(person);
     }
 
-    /**
-     * Checks that the card asks for no more height than its content needs at the width the content gets.
-     * A card that asks for more leaves a blank gap at the bottom of its list cell, as it did on JavaFX 25.
-     */
     private static void assertCardNotTallerThanContent(Person person) throws Exception {
+        assertCardNotTallerThanContent(person, CARD_WIDTH);
+    }
+
+    /**
+     * Checks that a card of the given width asks for no more height than its content needs at the width the
+     * content gets. A card that asks for more leaves a blank gap at the bottom of its list cell, as it did on
+     * JavaFX 25.
+     */
+    private static void assertCardNotTallerThanContent(Person person, double cardWidth) throws Exception {
         PersonCard card = createCard(person);
         double[] heights = onFxThread(() -> {
             GridPane root = (GridPane) card.getRoot();
@@ -215,9 +231,9 @@ public class PersonCardTest {
             Region index = (Region) root.getChildren().get(0);
             Region content = (Region) root.getChildren().get(1);
             double indexWidth = Math.max(index.minWidth(-1), index.prefWidth(-1));
-            double contentWidth = CARD_WIDTH - root.getInsets().getLeft() - root.getInsets().getRight()
+            double contentWidth = cardWidth - root.getInsets().getLeft() - root.getInsets().getRight()
                     - root.getHgap() - indexWidth;
-            return new double[] {root.prefHeight(CARD_WIDTH),
+            return new double[] {root.prefHeight(cardWidth),
                 content.prefHeight(contentWidth) + root.getInsets().getTop() + root.getInsets().getBottom()};
         });
 

@@ -67,16 +67,24 @@ public class ItemCriterionTest {
     @Test
     public void matches_productName_requiresCompleteName() {
         assertTrue(productCriterion("  PINEAPPLE TARTS  ", PENDING).matches(PENDING_TARTS));
-        for (String product : List.of("Pineapple", "Tarts Pineapple", "Pineapple  Tarts", "Pineapple-Tarts")) {
+        for (String product : List.of("Pineapple", "Tarts Pineapple", "PineappleTarts", "Pineapple-Tarts")) {
             assertFalse(productCriterion(product, PENDING).matches(PENDING_TARTS));
         }
     }
 
     @Test
-    public void matches_productOnly_acceptsEveryStatusAndMissingQuantity() {
+    public void matches_repeatedSpacesInProductName_treatedAsOneSpace() {
+        // Item names are saved with one space between words, so a search must collapse spaces too
+        ItemCriterion criterion = productCriterion("Pineapple   Tarts", PENDING);
+        assertEquals(Optional.of("Pineapple Tarts"), criterion.getProductName());
+        assertTrue(criterion.matches(PENDING_TARTS));
+    }
+
+    @Test
+    public void matches_productOnly_acceptsEveryStatus() {
         ItemCriterion criterion = productCriterion("Pineapple Tarts", ItemStatus.values());
         for (ItemStatus status : ItemStatus.values()) {
-            assertTrue(criterion.matches(new ItemBuilder(PENDING_TARTS).withStatus(status).withoutQuantity().build()));
+            assertTrue(criterion.matches(new ItemBuilder(PENDING_TARTS).withStatus(status).build()));
         }
     }
 

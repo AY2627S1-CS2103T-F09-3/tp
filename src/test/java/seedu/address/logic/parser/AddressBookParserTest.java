@@ -102,6 +102,14 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_editWithUnsupportedPrefix_throwsParseException() {
+        for (String field : new String[]{"n/Amy Bee", "p/91234567", "e/amy@example.com", "c/012345"}) {
+            assertThrows(ParseException.class, "Unsupported prefix 'x/' for edit.", ()
+                -> parser.parseCommand("edit 1 " + field + " x/foo"));
+        }
+    }
+
+    @Test
     public void parseCommand_exit() throws Exception {
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " 3") instanceof ExitCommand);
@@ -163,10 +171,14 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_invalidTrackStatus_throwsParseException() {
-        String[] invalidCommands = {"track s/", "track s/DONE", "track s/PENDING t/vip"};
+        String[] invalidCommands = {"track s/", "track s/DONE"};
         for (String command : invalidCommands) {
             assertThrows(ParseException.class, ItemStatus.MESSAGE_CONSTRAINTS, () -> parser.parseCommand(command));
         }
+        assertThrows(ParseException.class, "Unsupported prefix 't/' for track.", ()
+            -> parser.parseCommand("track s/PENDING t/vip"));
+        assertThrows(ParseException.class, "Unsupported prefix 'd/' for track.", ()
+            -> parser.parseCommand("track s/pending d/Cake"));
     }
 
     @Test
@@ -179,6 +191,12 @@ public class AddressBookParserTest {
     public void parseCommand_untag() throws Exception {
         assertEquals(new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends")),
                 parser.parseCommand(UntagCommand.COMMAND_WORD + " 1 t/friends"));
+    }
+
+    @Test
+    public void parseCommand_untagWithUnsupportedPrefix_throwsParseException() {
+        assertThrows(ParseException.class, "Unsupported prefix 'x/' for untag.", ()
+            -> parser.parseCommand("untag 1 t/VIP x/foo"));
     }
 
     @Test

@@ -35,7 +35,12 @@ public class TrackCommandParser implements Parser<TrackCommand> {
             return new TrackCommand(Optional.empty());
         }
 
-        ItemStatus status = ParserUtil.parseItemStatus(argMultimap.getValue(PREFIX_STATUS).get());
-        return new TrackCommand(Optional.of(status));
+        String value = argMultimap.getValue(PREFIX_STATUS).get();
+        try {
+            ItemStatus status = ParserUtil.parseItemStatus(value);
+            return new TrackCommand(Optional.of(status));
+        } catch (ParseException pe) {
+            throw ParserUtil.createFieldParseException(value, pe, TrackCommand.COMMAND_WORD, PREFIX_STATUS);
+        }
     }
 }

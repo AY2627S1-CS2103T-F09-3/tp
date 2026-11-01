@@ -1,7 +1,6 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DETAILS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_QUANTITY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
@@ -28,8 +27,8 @@ import seedu.address.model.preorder.Preorder;
 public class AddItemCommand extends Command {
     public static final String COMMAND_WORD = "additem";
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Adds one item to the preorder of the person in the displayed list. "
-            + "A preorder is created if the person does not have one.\n"
+            + ": Adds one item to the preorder of the customer in the displayed list. "
+            + "A preorder is created if the customer does not have one.\n"
             + "Parameters: INDEX (must be a positive integer) "
             + PREFIX_DETAILS + "NAME " + PREFIX_QUANTITY + "QUANTITY "
             + PREFIX_STATUS + "STATUS [" + PREFIX_REMARK + "REMARK]\n"
@@ -37,21 +36,18 @@ public class AddItemCommand extends Command {
             + PREFIX_QUANTITY + "2 " + PREFIX_STATUS + "PENDING " + PREFIX_REMARK + "Less sugar";
     public static final String MESSAGE_ADD_ITEM_SUCCESS =
             "Added item %1$d for %2$s: %3$s (quantity: %4$s, %5$s)";
-    public static final String MESSAGE_QUANTITY_REQUIRED = "New items must have a quantity.";
 
     private final Index index;
     private final Item item;
 
     /**
-     * Creates a command to append an immutable item with a known quantity.
+     * Creates a command to append an immutable item.
      *
      * @throws NullPointerException if either argument is null.
-     * @throws IllegalArgumentException if the item has no quantity.
      */
     public AddItemCommand(Index index, Item item) {
         requireNonNull(index);
         requireNonNull(item);
-        checkArgument(item.getQuantity().isPresent(), MESSAGE_QUANTITY_REQUIRED);
         this.index = index;
         this.item = item;
     }
@@ -66,7 +62,7 @@ public class AddItemCommand extends Command {
 
         return new CommandResult(String.format(MESSAGE_ADD_ITEM_SUCCESS,
                 personWithAddedItem.getPreorder().orElseThrow().getItems().size(), identifiedPerson.getName(),
-                item.getName(), item.getQuantity().orElseThrow(), item.getStatus()));
+                item.getName(), item.getQuantity(), item.getStatus()));
     }
 
     /**

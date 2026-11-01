@@ -19,7 +19,6 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.PostalCode;
 import seedu.address.model.preorder.Item;
 import seedu.address.model.preorder.ItemStatus;
 import seedu.address.model.preorder.Preorder;
@@ -32,21 +31,17 @@ import seedu.address.model.search.SearchCriteria;
 public class PersonCard extends UiPart<Region> {
 
     public static final String TAG_STYLE_CLASS = "card-tag";
-    public static final String MISSING_POSTAL_CODE_STYLE_CLASS = "card-postal-code-missing";
-    public static final String MISSING_POSTAL_CODE_TEXT = "Postal code needed";
     public static final String POSTAL_CODE_PREFIX = "Postal ";
     public static final String ITEM_ROW_STYLE_CLASS = "preorder-item-row";
     public static final String ITEM_NUMBER_STYLE_CLASS = "preorder-item-number";
     public static final String ITEM_NAME_STYLE_CLASS = "preorder-item-name";
     public static final String QUANTITY_STYLE_CLASS = "preorder-quantity";
-    public static final String MISSING_QUANTITY_STYLE_CLASS = "preorder-quantity-missing";
     public static final String STATUS_CHIP_STYLE_CLASS = "status-chip";
     public static final String REMARK_STYLE_CLASS = "preorder-remark";
     public static final String NO_ITEMS_STYLE_CLASS = "preorder-empty";
 
     public static final String MATCH_STYLE_CLASS = "matching-item";
     private static final String FXML = "PersonListCard.fxml";
-    private static final String WARNING_ICON_STYLE_CLASS = "warning-icon";
     private static final String COMPLETED_ICON_STYLE_CLASS = "completed-icon";
 
     // Wide enough for "COMPLETED" and its tick, so the chips line up from row to row
@@ -55,6 +50,12 @@ public class PersonCard extends UiPart<Region> {
     private static final double ITEM_ROW_GAP = 10;
     // About 10 px in the name's font
     private static final String TAG_GAP_TEXT = "  ";
+    /*
+     * The name line is 401 px wide on the narrowest card, in an 800 px window. A fixed limit is known before the
+     * card is laid out, so the card's height is right from the start, and it leaves room for the gap after a
+     * chip, so the next tag is not indented.
+     */
+    private static final double TAG_MAX_WIDTH = 360;
     private static final String NAME_STYLE_CLASS = "card-name";
 
     /**
@@ -123,7 +124,7 @@ public class PersonCard extends UiPart<Region> {
         phone.setText(person.getPhone().value);
         email.setText(person.getEmail().value);
         address.setText(person.getAddress().value);
-        showPostalCode(person.getPostalCode());
+        postalCode.setText(POSTAL_CODE_PREFIX + person.getPostalCode().value);
         person.getPreorder().ifPresentOrElse(currentPreorder -> {
             removeFromLayout(noPreorder);
             showPreorder(currentPreorder);
@@ -142,21 +143,22 @@ public class PersonCard extends UiPart<Region> {
 
     /**
      * Returns a tag chip. A label inside a TextFlow is never split, so a long tag moves to the next line whole.
+     * A tag wider than {@link #TAG_MAX_WIDTH} wraps inside its chip, so it never runs past the card's edge.
      */
     private static Label createTag(String tagName) {
-        Label tag = new Label(tagName);
+        Label tag = new Label(tagName) {
+            // TextFlow works out a chip's height from its preferred width, so the limit goes on that width
+            @Override
+            protected double computePrefWidth(double height) {
+                return Math.min(super.computePrefWidth(height), TAG_MAX_WIDTH);
+            }
+        };
         tag.getStyleClass().add(TAG_STYLE_CLASS);
+        tag.setWrapText(true);
+        // TextFlow lowers a chip to line up with the name's baseline, then gives it only its own height from
+        // there, which would cut the second line of a wrapped tag short. The line itself has room for it.
+        tag.setMinHeight(Region.USE_PREF_SIZE);
         return tag;
-    }
-
-    private void showPostalCode(PostalCode code) {
-        if (code != null) {
-            postalCode.setText(POSTAL_CODE_PREFIX + code.value);
-            return;
-        }
-        postalCode.setText(MISSING_POSTAL_CODE_TEXT);
-        postalCode.setGraphic(createIcon(PreorderDisplay.WARNING_ICON, WARNING_ICON_STYLE_CLASS));
-        postalCode.getStyleClass().add(MISSING_POSTAL_CODE_STYLE_CLASS);
     }
 
     /**
@@ -198,7 +200,8 @@ public class PersonCard extends UiPart<Region> {
 
         Label number = createLabel(PreorderDisplay.formatItemNumber(itemNumber), ITEM_NUMBER_STYLE_CLASS);
         Label name = createWrappingLabel(item.getName().toString(), ITEM_NAME_STYLE_CLASS);
-        row.addRow(0, number, name, createQuantity(item), createStatusChip(item.getStatus()));
+        Label quantity = createLabel(PreorderDisplay.formatQuantity(item), QUANTITY_STYLE_CLASS);
+        row.addRow(0, number, name, quantity, createStatusChip(item.getStatus()));
         if (!itemCriteria.isEmpty() && itemCriteria.stream().allMatch(criterion -> criterion.matches(item))) {
             row.getStyleClass().add(MATCH_STYLE_CLASS);
         }
@@ -209,15 +212,6 @@ public class PersonCard extends UiPart<Region> {
             row.add(remarkLabel, 1, 1, row.getColumnCount() - 1, 1);
         });
         return row;
-    }
-
-    private static Label createQuantity(Item item) {
-        if (item.getQuantity().isPresent()) {
-            return createLabel(PreorderDisplay.formatQuantity(item), QUANTITY_STYLE_CLASS);
-        }
-        Label quantity = createLabel(PreorderDisplay.formatQuantity(item), MISSING_QUANTITY_STYLE_CLASS);
-        quantity.setGraphic(createIcon(PreorderDisplay.WARNING_ICON, WARNING_ICON_STYLE_CLASS));
-        return quantity;
     }
 
     private static Label createStatusChip(ItemStatus status) {

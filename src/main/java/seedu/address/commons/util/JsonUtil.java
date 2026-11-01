@@ -3,7 +3,7 @@ package seedu.address.commons.util;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -46,26 +46,27 @@ public class JsonUtil {
      *
      * @param filePath cannot be null.
      * @param classOfObjectToDeserialize JSON file has to correspond to the structure in the class given here.
-     * @throws DataLoadingException if loading of the JSON file failed.
+     * @throws DataLoadingException if reading or parsing fails, or the file contains JSON {@code null}.
      */
     public static <T> Optional<T> readJsonFile(
             Path filePath, Class<T> classOfObjectToDeserialize) throws DataLoadingException {
         requireNonNull(filePath);
 
-        if (!Files.exists(filePath)) {
-            return Optional.empty();
-        }
-        logger.info("JSON file " + filePath + " found.");
-
         T jsonFile;
 
         try {
             jsonFile = deserializeObjectFromJsonFile(filePath, classOfObjectToDeserialize);
+            if (jsonFile == null) {
+                throw new IOException("JSON file must not contain null.");
+            }
+        } catch (NoSuchFileException e) {
+            return Optional.empty();
         } catch (IOException e) {
             logger.warning("Error reading from jsonFile file " + filePath + ": " + e);
             throw new DataLoadingException(e);
         }
 
+        logger.info("JSON file " + filePath + " loaded.");
         return Optional.of(jsonFile);
     }
 

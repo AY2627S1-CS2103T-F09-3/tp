@@ -137,9 +137,9 @@ public class SearchCriteriaFormatterTest {
     }
 
     @Test
-    public void format_productName_preservesSignificantSpacingAndPunctuation() {
+    public void format_productName_collapsesRepeatedSpacesAndPreservesPunctuation() {
         assertSummary(List.of(new ItemCriterion(Optional.of(" Tarts  (Large)/Box "), Set.of(PENDING))),
-                "Item: Tarts  (Large)/Box · Pending");
+                "Item: Tarts (Large)/Box · Pending");
     }
 
     @Test

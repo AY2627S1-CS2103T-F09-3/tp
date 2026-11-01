@@ -1,5 +1,6 @@
 package seedu.address.commons.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -43,6 +44,21 @@ public class StringUtilTest {
         // EP: valid numbers, should return true
         assertTrue(StringUtil.isNonZeroUnsignedInteger("1")); // Boundary value
         assertTrue(StringUtil.isNonZeroUnsignedInteger("10"));
+    }
+
+    @Test
+    public void isPositiveUnsignedInteger() {
+        assertThrows(NullPointerException.class, () -> StringUtil.isPositiveUnsignedInteger(null));
+        assertFalse(StringUtil.isPositiveUnsignedInteger(""));
+        assertFalse(StringUtil.isPositiveUnsignedInteger("0"));
+        assertFalse(StringUtil.isPositiveUnsignedInteger("000"));
+        assertFalse(StringUtil.isPositiveUnsignedInteger("-1"));
+        assertFalse(StringUtil.isPositiveUnsignedInteger("+1"));
+        assertFalse(StringUtil.isPositiveUnsignedInteger("1.5"));
+        assertTrue(StringUtil.isPositiveUnsignedInteger("1"));
+        assertTrue(StringUtil.isPositiveUnsignedInteger("0001"));
+        assertTrue(StringUtil.isPositiveUnsignedInteger("2147483648"));
+        assertTrue(StringUtil.isPositiveUnsignedInteger("9".repeat(1000)));
     }
 
 
@@ -143,6 +159,50 @@ public class StringUtilTest {
         assertTrue(StringUtil.containsSubstringIgnoreCase("Anita Tan", "AN"));
         assertTrue(StringUtil.containsSubstringIgnoreCase("Alice (friend)", "(FRIEND)"));
         assertFalse(StringUtil.containsSubstringIgnoreCase("Alice Bob", "car"));
+    }
+
+    //---------------- Tests for normalizeSpaces --------------------------------------
+
+    @Test
+    public void normalizeSpaces_nullGiven_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> StringUtil.normalizeSpaces(null));
+    }
+
+    @Test
+    public void normalizeSpaces_validInputs_correctResult() {
+        assertEquals("Butter Cake", StringUtil.normalizeSpaces("Butter Cake")); // already normalized
+        assertEquals("Butter Cake", StringUtil.normalizeSpaces("  Butter   Cake \r\n")); // repeated and surrounding
+        assertEquals("Butter Cake", StringUtil.normalizeSpaces("Butter\t\u2003\u00A0Cake")); // tab and Unicode spaces
+        assertEquals("", StringUtil.normalizeSpaces("\u2003\u3000")); // Unicode spaces only
+        assertEquals("Butter\nCake", StringUtil.normalizeSpaces("Butter\nCake")); // line breaks are kept
+    }
+
+    @Test
+    public void normalizeSpaces_unicodeLineBreakAtEnd_stripped() {
+        assertEquals("Butter Cake", StringUtil.normalizeSpaces("Butter Cake\u0085"));
+    }
+
+    //---------------- Tests for stripSpaces --------------------------------------
+
+    @Test
+    public void stripSpaces_nullGiven_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> StringUtil.stripSpaces(null));
+    }
+
+    @Test
+    public void stripSpaces_validInputs_correctResult() {
+        assertEquals("Call on arrival", StringUtil.stripSpaces("Call on arrival")); // nothing to strip
+        assertEquals("Call on arrival", StringUtil.stripSpaces(" \t Call on arrival \r\n")); // ASCII whitespace
+        // No-break spaces, which String.strip() keeps
+        assertEquals("Call on arrival", StringUtil.stripSpaces("\u00A0Call on arrival\u202F\u2007"));
+        assertEquals("Call on arrival", StringUtil.stripSpaces("\u001FCall on arrival")); // only strip() removes it
+        assertEquals("Call on arrival", StringUtil.stripSpaces("Call on arrival\u0085")); // only Unicode counts it
+        assertEquals("", StringUtil.stripSpaces("\u00A0\u2003")); // Unicode spaces only
+    }
+
+    @Test
+    public void stripSpaces_spacesInside_kept() {
+        assertEquals("Call  on\u00A0arrival", StringUtil.stripSpaces("\u2003Call  on\u00A0arrival\u2003"));
     }
 
     //---------------- Tests for getDetails --------------------------------------
