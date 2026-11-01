@@ -83,17 +83,19 @@ information.
 
 ### How searches and updates affect the list
 
-Search criteria determine which customers are displayed. Keeping the criteria preserves the search; the results still refresh when customer or preorder data changes.
+Search criteria determine which customers are displayed. Results refresh as customer or preorder data changes.
 
 | Commands | Effect on the current search |
 |----------|------------------------------|
-| `find`, `track` | Each successful command replaces the previous criteria and searches all stored customers. |
-| `add`, `edit`, `delete`, `tag`, `untag`, `preorder`, `deleteorder` | Preserve the active criteria and refresh the matching results. |
-| `sort date`, `group postal` | Preserve the active criteria and reorder the displayed results. A later `find` or `track` keeps this order. |
-| `clear` | Clears the criteria, sorting and grouping, then leaves the list empty. |
-| `list` | Clears the criteria, sorting and grouping, and shows all customers in their saved order. |
+| `find`, `track` | Each successful command replaces the previous search and searches all stored customers. |
+| `add`, `edit`, `delete`, `tag`, `untag`, `additem`, `edititem`, `deleteitem`, `preorder`, `deleteorder` | Keep the active search and refresh the results. |
+| `sort date`, `group postal` | Keep the active search and reorder the results. A later `find` or `track` keeps this order. |
+| `clear` (after confirmation) | Clear the search, sorting and grouping, and leave the list empty. |
+| `list` | Clear the search, sorting and grouping, and show all customers in their saved order. |
+| `help` | Leaves the search and displayed results unchanged. |
 
-During a session, use `list` to explicitly return to an unfiltered view. A `find` that happens to match every customer still has active criteria. Empty results do not clear the criteria either. Updates and deletions can change the displayed indexes, so check them before your next command.
+Updates can change the displayed indexes, so check them before your next command.
+Search criteria are not saved: restarting the app begins with all saved customers displayed.
 
 Examples, using the customer's current displayed `INDEX`:
 
@@ -102,32 +104,15 @@ Examples, using the customer's current displayed `INDEX`:
 | `track`, then `deleteorder INDEX` | The customer disappears from tracking because they no longer have a preorder. Their customer record remains saved. |
 | `find n/Alice`, then `deleteorder INDEX` | Alice remains visible because her name still matches the search. |
 
-Search criteria are not saved. Restarting the app begins with all saved customers displayed.
+Above the customer list, **Showing: All customers** means no search is active. After `find` or `track`,
+**Filters · Match all** and badges show the active criteria. For example:
 
-The area immediately above the customer list shows your active search:
+* `find n/Alice t/regular` shows **Name: alice** and **Tag: regular**; customers must match both.
+* `find d/Pineapple Tarts s/pending` shows **Item: Pineapple Tarts · Pending**. Without `s/`, the badge says **Any status**.
+* `track` shows **Item status: Pending or Prepared**; `track s/PENDING` shows **Item status: Pending**.
 
-* With no search criteria, it shows **Showing: All customers**.
-* After `find` or `track`, it shows **Filters · Match all**, with a separate read-only badge for each criterion.
-  For example, `find n/Alice t/regular` shows **Name: alice** and **Tag: regular**.
-* Postal searches show the supplied digits, including leading zeros: `find c/01` shows **Postal: 01** and
-  `find c/012345` shows **Postal: 012345**. Postal badges appear after Address and before Tag badges.
-* Product and status conditions stay together: `find d/Pineapple Tarts s/pending` shows
-  **Item: Pineapple Tarts · Pending** in one badge. `find d/Pineapple Tarts` shows
-  **Item: Pineapple Tarts · Any status**, including completed items.
-* A status-only search such as `find s/prepared` shows **Item status: Prepared**.
-* `track` shows **Item status: Pending or Prepared** in one badge. `track s/PENDING` shows **Item status: Pending**.
-* Date, method and handover-note searches have separate badges. For example,
-  `find f/2026-10-22 m/delivery h/arrival` shows **Date: 22 Oct 2026**, **Method: Delivery** and
-  **Handover notes: arrival**.
-
-Badges use this order: Name, Phone, Email, Address, Postal, Tag, Item (or Item status), Date, Method and Handover notes.
-
-The badges describe the search even when it matches every customer or no customers. Customer text searches show the
-case-normalized query used for matching, while product searches preserve the capitalization you typed. All badges
-and their full values remain available: badges wrap onto
-additional rows, and long values wrap within a badge as you resize the window. They do not need to be clicked or
-hovered over. Search updates leave keyboard focus in the command box, so you can enter your next command immediately.
-Use `list` to clear the badges and return to **Showing: All customers**.
+The search stays active and its badges remain visible even when all customers or no customers match.
+Use `list` to clear the search and return to **Showing: All customers**.
 
 ### Viewing help: `help`
 
