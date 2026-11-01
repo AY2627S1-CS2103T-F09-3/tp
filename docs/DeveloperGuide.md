@@ -699,6 +699,79 @@ the same as for `delete` (see the [Logic component](#logic-component)), so the d
   * Pros: Every preorder has at least one item.
   * Cons: The baker has to enter the order in a fixed sequence.
 
+### Grouping customers by postal code: `group postal`
+
+`group postal` orders the currently displayed customers by postal code and shows a heading for each two-digit
+postal prefix. It keeps the active search criteria and the saved customer order.
+
+**Parsing.** `LogicManager#execute` passes the input to `AddressBookParser#parseCommand`, which routes the lowercase
+command word `group` to `GroupPostalParser#parse`. The parser accepts only `postal`, ignoring case and surrounding
+spaces, and returns a `GroupPostalCommand`. Missing or extra arguments, including `c/` parameters, produce the
+invalid-command-format message followed by `GroupPostalCommand.MESSAGE_USAGE`.
+
+**Execution.** `GroupPostalCommand#execute` calls
+`Model#updatePersonListComparator(GroupPostalCommand.POSTAL_COMPARATOR)` and returns
+`Customers grouped by postal code.` The comparator is defined in
+[`GroupPostalCommand.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/logic/commands/GroupPostalCommand.java):
+
+```java
+public static final Comparator<Person> POSTAL_COMPARATOR = Comparator
+        .comparing(GroupPostalCommand::getPostalGroupKey)
+        .thenComparing(person -> person.getPostalCode().value)
+        .thenComparing(person -> person.getName().fullName, String.CASE_INSENSITIVE_ORDER);
+```
+
+`getPostalGroupKey` returns the first two digits using `substring(0, 2)`. Within each prefix, customers are ordered
+by the complete six-digit code, then by name ignoring case. `PostalCode` stores six digits as a string, preserving
+leading zeros. Every `Person` must have a valid, non-null postal code, so there is no missing-code group (see
+[Customer search criteria](#customer-search-criteria) for the separate rules for stored codes and search prefixes).
+
+`ModelManager` keeps the data in `AddressBook`, selects customers through a `FilteredList<Person>`, and wraps that
+in a `SortedList<Person>`. `ModelManager#updatePersonListComparator` changes only the sorted view's comparator;
+`Model#getFilteredPersonList()` exposes this view to the UI and index-based commands. The grouping command never
+replaces the active criteria or reorders the backing list. After execution, `LogicManager#executeAndSave` saves
+`model.getAddressBook()`, so the full saved list retains its order even though the displayed list is grouped.
+
+**Display.** `MainWindow` supplies the displayed view to `PersonListPanel`. Its `PersonListViewCell#updateItem`
+adds a `POSTAL PREFIX XX` label above the `PersonCard` when the customer is first in the displayed list or their
+prefix differs from the preceding displayed customer's prefix. Headings are enabled only when the list is a
+`SortedList` using the exact `GroupPostalCommand.POSTAL_COMPARATOR` instance. Each heading is part of a customer
+cell, not a separate list entry, so the card's one-based index remains `getIndex() + 1`.
+
+The panel refreshes cells when the list or its comparator changes. The comparator listener also adds or removes
+headings when the customers were already in the required order and no list permutation occurs. Customer edits
+refresh the sorted view and headings, so changing a postal code can move a customer and change their index.
+
+`find` and `track` replace the criteria but keep postal ordering; only matching customers are grouped. Empty results
+still return the normal success message, with no customer cards or headings. `sort date` replaces the postal
+comparator and removes the customer-list headings. `list` clears the criteria and comparator; a confirmed `clear`
+also resets both. Restarting creates a model without a comparator, displaying all saved customers in saved order.
+See [Sorting by fulfilment date](#sorting-by-fulfilment-date-sort-date) for the shared ordering/reset mechanism.
+
+The command neither selects outstanding deliveries nor calculates routes or group totals. The side panel's
+[Delivery preparation summary](#delivery-preparation-summary) derives its own stops and prefix headings independently.
+
+#### Design considerations
+
+**Aspect: grouping a view rather than the saved list**
+
+The current choice uses the same sorted view as `sort date`, keeping searching and ordering separate. It preserves
+the saved order for `list` and restart; reordering `AddressBook` instead would persist an unintended order change.
+The trade-off is that displayed indexes can change after edits. Index-based commands must continue to use the
+displayed view (see the [date-sort design discussion](#sorting-by-fulfilment-date-sort-date)).
+
+**Aspect: prefix headings and grouping state**
+
+The fixed two-digit prefix gives one heading to codes with the same first two digits, while the full-code/name
+comparator makes the order within that heading deterministic. String values preserve leading zeros; numeric
+conversion would discard them.
+This is a grouping convention, not validation that an address exists or a delivery-route calculation.
+
+Using the shared comparator instance to enable headings avoids a separate grouping flag that could disagree with
+the ordering. The trade-off is coupling between `GroupPostalCommand` and `PersonListPanel`: a replacement or wrapped
+comparator must preserve this detection or deliberately replace it. An explicit ordering-mode property would make
+that state independent of comparator identity, but would need to stay synchronized with sorting and reset commands.
+
 ### Sorting by fulfilment date: `sort date`
 
 `sort date` orders the displayed customers by the date of their preorder, earliest first.
@@ -1565,6 +1638,114 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
       Expected: An error dialog appears before the main window and reports `Person 1: invalid preorder method.`
       for the first customer. Dismissing it exits LeBake and leaves the file unchanged. Restore the file from
       your copy before relaunching.
+
+### Grouping customers by postal code
+
+Use a copy of `LeBake.jar` in a new, disposable folder. Open a terminal in that folder and run
+`java -jar LeBake.jar`. The setup below clears only this disposable copy's sample data; do not use a real customer
+data folder. Enter each command separately, in order:
+
+```text
+clear
+confirm
+add n/Zara Lim p/91234567 e/zara@example.com a/Test Road c/012345
+add n/ben Tan p/91234568 e/ben@example.com a/Test Road c/012345
+add n/Aaron Goh p/91234569 e/aaron@example.com a/Test Road c/019876
+add n/alice Ong p/91234570 e/alice@example.com a/Test Road c/531234
+list
+```
+
+Expected: `clear` asks for confirmation, `confirm` empties the list, and the four `add` commands succeed. The saved
+order is Zara, ben, Aaron, alice. All four have no tags or preorder. The fixture deliberately puts shared codes and
+shared prefixes in a different order from their names.
+
+Before each numbered group below, run `list` and check this fixture. Within a group, perform the steps in order.
+Groups that edit data include restoration steps; if a group was interrupted, repeat the setup before continuing.
+All heading checks refer to the customer list, not the separate delivery summary in the side panel.
+
+1. Grouping identical codes and different codes with the same prefix
+
+   1. Run `group postal`.<br>
+      Expected: `Customers grouped by postal code.` The list is:
+
+      | Displayed index | Customer | Postal code | Heading above the card |
+      | --- | --- | --- | --- |
+      | 1 | ben Tan | `012345` | `POSTAL PREFIX 01` |
+      | 2 | Zara Lim | `012345` | None |
+      | 3 | Aaron Goh | `019876` | None |
+      | 4 | alice Ong | `531234` | `POSTAL PREFIX 53` |
+
+      The equal-code names ignore capitalization. Aaron follows Zara because the full code is compared before the
+      name. The first three customers share one heading, and headings do not consume customer indexes.
+   1. Run `group postal` again.<br>
+      Expected: The same message, order and headings, with four customers and no duplicates.
+
+1. Keeping filters and handling empty results
+
+   1. Run `find c/01`, then `group postal`.<br>
+      Expected: Only ben, Zara and Aaron, numbered 1–3, under one `POSTAL PREFIX 01` heading. The postal filter remains
+      active; alice is not introduced by grouping.
+   1. Run `find c/53`.<br>
+      Expected: Postal ordering remains active. Only alice is shown, at index 1 under `POSTAL PREFIX 53`; the `01`
+      heading disappears.
+   1. Run `find n/Nobody`, then `group postal`.<br>
+      Expected: No customers or list headings. Grouping still reports `Customers grouped by postal code.`
+   1. Run `list`.<br>
+      Expected: All four customers return in saved order, without customer-list headings.
+
+1. Switching between grouping, date sorting and normal display
+
+   1. Run `group postal`, then `sort date`.<br>
+      Expected: `Sorted 4 customer(s) by fulfilment date. Customers without a date are listed last.` Since all four
+      have no preorder, they are ordered by name: Aaron, alice, ben, Zara, numbered 1–4. No customer-list postal
+      headings remain.
+   1. Run `group postal`.<br>
+      Expected: The first group's ben, Zara, Aaron, alice order and `01`/`53` headings return.
+   1. Run `list`.<br>
+      Expected: Zara, ben, Aaron, alice, numbered 1–4, without customer-list headings.
+
+1. Using displayed indexes and refreshing headings after an edit
+
+   1. Run `group postal`, then `tag 1 t/groupcheck`.<br>
+      Expected: The tag is added to ben, the first displayed customer, rather than Zara, the first saved customer.
+   1. Run `edit 1 c/540001`.<br>
+      Expected: Zara, Aaron, alice, ben, numbered 1–4. `POSTAL PREFIX 01` is above Zara, `53` above alice and `54` above
+      ben. Ben retains the tag and other contact details. Zara and Aaron have no duplicate prefix heading.
+   1. Restore the fixture with `edit 4 c/012345`, then `untag 1 t/groupcheck`.<br>
+      Expected: Ben moves back to index 1 under `01`, and the tag is removed. The order and headings match the first
+      group; there is no `54` heading.
+   1. Run `list`.<br>
+      Expected: The original saved order returns.
+
+1. Accepting the postal argument and rejecting extra input
+
+   1. Run `group POSTAL`, then enter `  group PoStAl  ` with spaces before and after it.<br>
+      Expected: Both succeed with the first group's order and headings.
+   1. Try `group`, `group name`, `group postal extra` and `group postal c/012345`, separately.<br>
+      Expected: Each reports `Invalid command format!` followed by the group usage instructions. Customers, displayed
+      order, headings and current search criteria do not change.
+
+1. Leading zeros, boundary values and invalid stored-code input
+
+   1. Run `edit 1 c/999999`, then `edit 2 c/000000`, starting from the saved-order fixture.<br>
+      Expected: Zara now has `999999` and ben has `000000`; the other fields are unchanged.
+   1. Run `group postal`.<br>
+      Expected: ben (`000000`), Aaron (`019876`), alice (`531234`), Zara (`999999`), numbered 1–4. Each has a heading:
+      `POSTAL PREFIX 00`, `01`, `53`, `99`, respectively. Both boundary values are ordinary accepted codes, and leading
+      zeros are retained.
+   1. Try `edit 1 c/12345` and `edit 1 c/12A456`.<br>
+      Expected: `Postal codes must contain exactly six digits.` The records, order and headings are unchanged.
+      Invalid codes are rejected during editing, not placed in a missing-code group.
+   1. Restore the fixture with `list`, `edit 1 c/012345` and `edit 2 c/012345`.<br>
+      Expected: The original codes and saved order are restored.
+
+1. Keeping saved order across a restart
+
+   1. Run `group postal`, then close the window and relaunch with `java -jar LeBake.jar` from the same test folder.<br>
+      Expected: All four saved customers load as Zara, ben, Aaron, alice, numbered 1–4. Their codes remain
+      `012345`, `012345`, `019876`, `531234`. Grouping and customer-list headings are not restored.
+   1. Run `group postal`.<br>
+      Expected: The first group's order and headings return. Grouping has not changed the order saved on disk.
 
 ### Sorting customers by fulfilment date
 
