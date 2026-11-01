@@ -614,6 +614,43 @@ Tracking changes the active search without editing customer or preorder data. La
 against the same criteria automatically, so a customer disappears when their final matching item changes to a
 nonmatching status or is removed. `list` clears the criteria and restores the saved customer order.
 
+#### Design considerations
+
+The alternatives below describe tradeoffs in the current implementation. The choice to store status on each item
+is covered under [Preorders and items](#preorders-and-items).
+
+**Aspect: which statuses bare `track` includes**
+
+* **Alternative 1 (current choice):** include `PENDING` and `PREPARED` items.
+  * Pros: Shows orders that still need preparation or handover in one command, while excluding completed work.
+  * Cons: Does not distinguish work still to be prepared from work ready for handover. The baker must supply
+    `s/PENDING` or `s/PREPARED` to focus on one stage.
+* **Alternative 2:** include all three statuses.
+  * Pros: Gives an overview of every customer with preorder items, including completed work.
+  * Cons: Completed orders remain in the default results, making outstanding work harder to identify.
+
+**Aspect: how tracking applies its filter**
+
+* **Alternative 1 (current choice):** use the shared `ItemCriterion` and `SearchCriteria` infrastructure.
+  * Pros: `track` and `find` share item-matching rules. The existing observable search state updates the customer
+    list, criteria badges and item highlighting, and re-evaluates customers after edits.
+  * Cons: Changes to the shared item-matching rules can affect both commands, so both need checking when those
+    rules change.
+* **Alternative 2:** keep a separate tracking predicate and result list.
+  * Pros: Tracking rules can change independently of `find`.
+  * Cons: Repeats filtering logic and needs separate handling to keep results and search displays consistent
+    after customer or item changes.
+
+**Aspect: what the feedback counts**
+
+* **Alternative 1 (current choice):** report both customers and matching item entries.
+  * Pros: Distinguishes the number of customers to serve from the number of matching entries in their preorders.
+    Repeated products count separately, matching the entries shown on the cards.
+  * Cons: The item count does not indicate the number of units to bake; quantities must be read separately.
+* **Alternative 2:** report only the customer count.
+  * Pros: Shorter feedback that corresponds directly to the number of displayed cards.
+  * Cons: Hides how many items match when customers have mixed-product or mixed-status preorders.
+
 ### Preorder item addition and editing
 
 `AddItemCommandParser` parses a customer index and the required name, quantity and status, with an optional remark.
