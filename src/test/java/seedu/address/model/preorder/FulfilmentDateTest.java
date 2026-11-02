@@ -52,6 +52,14 @@ public class FulfilmentDateTest {
     }
 
     @Test
+    public void isSupportedYear() {
+        assertTrue(FulfilmentDate.isSupportedYear("2000-01-01")); // first supported day
+        assertTrue(FulfilmentDate.isSupportedYear("2026-12-20"));
+        assertFalse(FulfilmentDate.isSupportedYear("1999-12-31")); // last unsupported day
+        assertFalse(FulfilmentDate.isSupportedYear("0026-12-20")); // mistyped year
+    }
+
+    @Test
     public void toString_returnsIsoDate() {
         assertEquals("2026-01-05", new FulfilmentDate("2026-01-05").toString());
         assertEquals("2026-12-20", new FulfilmentDate("2026-12-20").toString());

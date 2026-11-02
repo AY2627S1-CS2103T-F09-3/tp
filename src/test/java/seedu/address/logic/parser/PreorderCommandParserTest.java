@@ -72,6 +72,7 @@ public class PreorderCommandParserTest {
     public void parse_invalidValue_failure() {
         assertParseFailure(parser, "1 f/2026-02-30", FulfilmentDate.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "1 f/20-12-2026", FulfilmentDate.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 f/0026-12-20", FulfilmentDate.MESSAGE_CONSTRAINTS); // before 2000
         assertParseFailure(parser, "1 m/pickup", FulfilmentMethod.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "1 h/" + "a".repeat(HandoverNotes.MAX_LENGTH + 1),
                 HandoverNotes.MESSAGE_CONSTRAINTS);

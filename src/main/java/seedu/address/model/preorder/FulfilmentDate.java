@@ -14,8 +14,10 @@ import java.util.Locale;
  */
 public class FulfilmentDate {
 
+    public static final int MIN_YEAR = 2000;
+
     public static final String MESSAGE_CONSTRAINTS = "Invalid date! Dates must be real calendar dates "
-            + "in YYYY-MM-DD format, e.g. 2026-12-20.";
+            + "in YYYY-MM-DD format from the year " + MIN_YEAR + " onwards, e.g. 2026-12-20.";
 
     // Exactly four digits for the year and two each for the month and day, so "2026-1-5" is rejected
     public static final String VALIDATION_REGEX = "\\d{4}-\\d{2}-\\d{2}";
@@ -50,6 +52,16 @@ public class FulfilmentDate {
         } catch (DateTimeParseException e) {
             return false;
         }
+    }
+
+    /**
+     * Returns true if the year of {@code test} is MIN_YEAR or later.
+     * {@code test} must already be valid according to
+     * {@link #isValidDate(String)}.
+     */
+    public static boolean isSupportedYear(String test) {
+        assert isValidDate(test);
+        return LocalDate.parse(test).getYear() >= MIN_YEAR;
     }
 
     /**
