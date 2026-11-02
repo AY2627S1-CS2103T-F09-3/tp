@@ -1076,44 +1076,41 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 2.
 
-**Use case: U4. Record a customer's pre-order items**\
+**Use case: U4. Add a customer's pre-order item**\
 **System: LeBake**\
 **Actor: User**\
 **MSS**
 
 1. User finds a customer (<u>U2. Find a customer</u>).
-2. User selects a customer and adds a valid item with its name, quantity, fulfilment status and optional remark.
-3. LeBake adds the item to the customer's current pre-order and displays the updated pre-order.
+2. User requests to add an item to the customer's pre-order.
+3. User provides the item's name, quantity, fulfilment status and optional remark.
+4. LeBake adds the item to the customer's current pre-order, creating one if necessary, and displays the updated
+   pre-order.
 
     Use case ends.
 
 **Extensions**
 
-* 1a. The intended customer is not found.
+* 1a. The customer cannot be found.
 
-  Use case ends.
+    * 1a1. LeBake shows an error message.
 
-* 2a. The customer selection or item information is invalid.
+      Use case resumes at step 1.
 
-    * 2a1. LeBake shows an error message.
+* 3a. The item information is invalid.
 
-      Use case resumes at step 2.
+    * 3a1. LeBake shows an error message.
 
-* 2b. The customer already has a pre-order.
+      Use case resumes at step 3.
 
-    * 2b1. LeBake appends the item to the existing pre-order and displays it.
-
-      Use case ends.
-
-**Use case: U5. Update a pre-order item's fulfilment status**\
+**Use case: U5. Track pre-order items by fulfilment status**\
 **System: LeBake**\
 **Actor: User**\
 **MSS**
 
-1. User requests to view customers with items in a chosen fulfilment status.
-2. LeBake shows customers with matching pre-order items.
-3. User selects a customer and requests to change one item's fulfilment status.
-4. LeBake updates that item and refreshes the displayed results.
+1. User requests to view pre-order items in a chosen fulfilment status.
+2. LeBake finds customers with matching pre-order items.
+3. LeBake displays the matching customers and their relevant pre-order items.
 
     Use case ends.
 
@@ -1125,13 +1122,69 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case ends.
 
-* 3a. The customer or item selection is invalid.
+* 1b. The user does not provide a status.
+
+    * 1b1. LeBake finds items with an active status.
+
+      Use case resumes at step 2.
+
+**Use case: U6. Update a pre-order item's fulfilment status**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
+
+1. User identifies a customer and one of the customer's pre-order items.
+2. User requests to change the item's fulfilment status.
+3. User provides a valid fulfilment status.
+4. LeBake updates the item and displays the updated pre-order.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The customer cannot be found, or the item cannot be found in the customer's pre-order.
+
+    * 1a1. LeBake shows an error message.
+
+      Use case resumes at step 1.
+
+* 3a. The fulfilment status is invalid.
 
     * 3a1. LeBake shows an error message.
 
       Use case resumes at step 3.
 
-*{More to be added}*
+**Use case: U7. Set a pre-order's shared fulfilment details**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
+
+1. User finds a customer (<u>U2. Find a customer</u>).
+2. User requests to set one or more shared fulfilment details: date, method or handover notes.
+3. LeBake updates the customer's pre-order without changing its items.
+4. LeBake displays the updated fulfilment details.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The customer cannot be found.
+
+    * 1a1. LeBake shows an error message.
+
+      Use case resumes at step 1.
+
+* 2a. A fulfilment detail is invalid, or no detail is provided.
+
+    * 2a1. LeBake shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. The customer has no pre-order and provides at least one nonempty detail.
+
+    * 2b1. LeBake creates an empty pre-order with the supplied details.
+
+      Use case resumes at step 3.
 
 ### Non-Functional Requirements
 
@@ -1143,8 +1196,6 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 6.  Invalid commands should produce a message identifying the error and explaining the correct syntax or accepted values. 
 7.  If changes cannot be saved, LeBake should clearly inform the user that those changes have not been saved. 
 8.  Commands operating on the same customer fields should use consistent parameter names and field formats, unless a difference is explicitly documented.
-
-*{More to be added}*
 
 ### Glossary
 
