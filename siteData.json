@@ -57,6 +57,7 @@
         "preorder-item-addition-and-editing": "Preorder item addition and editing",
         "preorder-item-deletion": "Preorder item deletion",
         "setting-fulfilment-details-preorder": "Setting fulfilment details: preorder",
+        "grouping-customers-by-postal-code-group-postal": "Grouping customers by postal code: group postal",
         "sorting-by-fulfilment-date-sort-date": "Sorting by fulfilment date: sort date",
         "tagging-customers-tag-and-untag": "Tagging customers: tag and untag",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
@@ -83,6 +84,7 @@
         "deleting-a-preorder": "Deleting a preorder",
         "setting-delivery-or-collection-details": "Setting delivery or collection details",
         "loading-preorder-data": "Loading preorder data",
+        "grouping-customers-by-postal-code": "Grouping customers by postal code",
         "sorting-customers-by-fulfilment-date": "Sorting customers by fulfilment date",
         "saving-data": "Saving data"
       },
