@@ -403,7 +403,7 @@ Use lowercase prefixes. Each prefix may appear once, in any order, and must have
 | `find n/Ali2` | Name query constraint message; use English letters, spaces, apostrophes or hyphens. |
 | `find p/91-23` or `find p/912345678` | Phone query constraint message; use one to eight digits. |
 | `find e/example!.com` | Email query constraint message; use letters, digits or `+_.-@`, without spaces. |
-| An unsupported field after a valid criterion, e.g. `find n/Ali x/foo` | `Unsupported prefix 'x/' for find.` |
+| `find n/Ali x/foo` | `Unsupported prefix 'x/' for find.` |
 | `find f/2026-02-30` or `find f/2026-2-03` | The date constraint message is shown; supply a real date in `YYYY-MM-DD` format. |
 | `find m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
 | `find h/` or `find m/` | Invalid command format; every supplied prefix needs a value. |
