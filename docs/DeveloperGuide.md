@@ -712,14 +712,7 @@ invalid-command-format message followed by `GroupPostalCommand.MESSAGE_USAGE`.
 **Execution.** `GroupPostalCommand#execute` calls
 `Model#updatePersonListComparator(GroupPostalCommand.POSTAL_COMPARATOR)` and returns
 `Customers grouped by postal code.` The comparator is defined in
-[`GroupPostalCommand.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/logic/commands/GroupPostalCommand.java):
-
-```java
-public static final Comparator<Person> POSTAL_COMPARATOR = Comparator
-        .comparing(GroupPostalCommand::getPostalGroupKey)
-        .thenComparing(person -> person.getPostalCode().value)
-        .thenComparing(person -> person.getName().fullName, String.CASE_INSENSITIVE_ORDER);
-```
+[`GroupPostalCommand.java`](https://github.com/AY2627S1-CS2103T-F09-3/tp/blob/master/src/main/java/seedu/address/logic/commands/GroupPostalCommand.java).
 
 `getPostalGroupKey` returns the first two digits using `substring(0, 2)`. Within each prefix, customers are ordered
 by the complete six-digit code, then by name ignoring case. `PostalCode` stores six digits as a string, preserving
