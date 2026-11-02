@@ -130,10 +130,23 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS c/POSTAL_CODE`
 
 Postal codes must contain exactly six digits. They are stored as text, so leading zeroes are preserved.
 
-* All five fields (`n/`, `p/`, `e/`, `a/`, and `c/`) must be provided.
+* All five fields (`n/`, `p/`, `e/`, `a/`, and `c/`) must be provided with nonempty values. Each prefix may appear
+  only once; repeating a prefix causes the command to be rejected.
 * Names, emails and addresses allow at most 100, 254 and 300 characters respectively, after surrounding spaces are removed.
+* Phone numbers must contain exactly eight digits, starting with `6`, `8` or `9`. Do not include spaces within the
+  number, hyphens or a country code such as `+65`.
+* Emails use `local-part@domain`, with no spaces. Before `@`, use English letters or digits with single `+`, `_`,
+  `.` or `-` characters between them; these symbols cannot be first, last or adjacent to another symbol.
+  The domain has one or more parts separated by dots. Each part uses English letters or digits with single
+  hyphens between them; the final part must include at least two consecutive letters or digits.
+  A dot is optional: `a@bc` is valid. For example, `baker++orders@example.com` and `baker@example.c` are invalid.
 * Names must contain at least one English letter (`A-Z` or `a-z`) and may contain only English letters, spaces, straight apostrophes (`'`) and hyphens (`-`). Accented letters, non-English characters, digits and other symbols are rejected. For example, `Mary-Jane O'Brien`, `Li` and `A` are valid names; `José Tan` and `---` are invalid.
-* Leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization is preserved. For example, `n/  Mary-Jane   O'Brien  ` is stored as `Mary-Jane O'Brien`.
+* For names, leading and trailing spaces are removed, and consecutive spaces become a single space. Capitalization
+  is preserved. For example, this command fragment stores the name as `Mary-Jane O'Brien`:
+
+  ```text
+  n/  Mary-Jane   O'Brien  p/98765432
+  ```
 * Name, phone, email and postal code values are validated first. An invalid value containing an extra unsupported prefix identifies that prefix. For example, adding `x/foo` after `p/98765432` shows `Unsupported prefix 'x/' for add.` Other invalid values keep their field constraint messages.
 * Addresses allow conventional `c/o` and ordinary slash notation such as `#04/08`. A letter-based token followed by
   `/` at the start or after whitespace, such as `s/pending`, is rejected so it cannot be confused with another field.
@@ -174,8 +187,9 @@ Edits the name, phone number, email address, address, or postal code of an exist
 Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`
 
 * Edits the customer at the specified `INDEX`. The index refers to the index number shown in the displayed customer list. The index **must be a positive integer** 1, 2, 3, ...
-* At least one of `n/`, `p/`, `e/`, `a/`, or `c/` must be provided.
-* Fields you provide replace their existing values. Fields you omit remain unchanged.
+* At least one of `n/`, `p/`, `e/`, `a/`, or `c/` must be provided. Each prefix may appear only once.
+* Fields you provide replace their existing values and must be valid and nonempty. Empty values cannot clear a
+  field: `edit 1 p/` is invalid. Fields you omit remain unchanged.
 * The same field validation, length limits and spacing rules as [`add`](#adding-a-customer-add) apply to `edit`.
 * You can retain a customer's own name or change its capitalization or spacing while editing. A name matching another customer's name is rejected, including customers hidden by a `find` command. Other contact details do not affect this duplicate check.
 * Existing tags and preorders are always preserved.
