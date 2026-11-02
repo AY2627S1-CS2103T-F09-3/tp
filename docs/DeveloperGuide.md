@@ -1041,9 +1041,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 * **Handover notes**: A short note about handing over a pre-order, such as "Call on arrival" or "Collect from side gate", shared by all items in the pre-order
 * **Item**: One product in a pre-order, with its name, quantity, fulfilment status and an optional remark
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Postal area**: A group of nearby addresses that share the same leading digits of their postal code, used to group deliveries
+* **Postal area**: A group of nearby addresses whose postal codes share the same first two digits, which `group postal` uses to group deliveries
 * **Pre-order**: An order placed in advance for a later collection or delivery, made up of the items the customer ordered, with each customer having at most one current pre-order
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Remark**: An optional special request for one item in a pre-order, such as "Less sugar"
 * **Seasonal campaign**: A period of high order demand tied to an occasion, such as Chinese New Year or Christmas
 
 --------------------------------------------------------------------------------------------------------------------
