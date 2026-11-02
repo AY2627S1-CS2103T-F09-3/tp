@@ -21,6 +21,7 @@ public class UntagCommandParser implements Parser<UntagCommand> {
      *
      * @throws ParseException If the user input does not conform to the expected format.
      */
+    @Override
     public UntagCommand parse(String args) throws ParseException {
         requireNonNull(args);
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_TAG);
