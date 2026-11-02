@@ -734,7 +734,8 @@ Feedback after confirmation: `All customers have been cleared!`
 
 ### Exiting the program: `exit`
 
-Exits the program.
+Typing `exit` in the command box attempts to save customer data before closing. If saving fails, LeBake remains
+open; follow [Saving the data](#saving-the-data) to resolve the problem.
 
 Format: `exit`
 
