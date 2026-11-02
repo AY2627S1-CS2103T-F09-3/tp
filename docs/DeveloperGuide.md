@@ -1538,11 +1538,12 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
 
 1. Loading a data file with an invalid item
 
-   1. Prerequisites: In `data/lebake.json`, change one item's `"quantity"` to `"0"`. Keep a copy of the file.
+   1. Prerequisites: Keep a copy of `data/lebake.json`. Then change the `"quantity"` of the first customer's first
+      item (Alex Yeoh's `Pineapple Tarts` in the sample data) to `"0"`.
 
    1. Test case: Launch LeBake.<br>
-      Expected: An error dialog appears before the main window. Its reason identifies the person and item, such as
-      `Person 1: item 1: invalid quantity.` Person and item numbers follow the order in the file, starting at 1.
+      Expected: An error dialog appears before the main window and reports `Person 1: item 1: invalid quantity.`
+      Person and item numbers follow the order in the file, starting at 1.
 
    1. Test case: Press `Enter` to dismiss the dialog.<br>
       Expected: LeBake exits, and the invalid file is unchanged. Restore the valid file from your copy and relaunch;
@@ -1554,8 +1555,8 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
 
 1. Loading hand-edited fulfilment details
 
-   1. Prerequisites: In `data/lebake.json`, find a customer whose preorder has a `"method"`. Change it to
-      `"delivery"` and change their `"handoverNotes"` to `""`. Keep a copy of the file.
+   1. Prerequisites: In `data/lebake.json`, change the first customer's (Alex Yeoh's) `"method"` to `"delivery"`
+      and their `"handoverNotes"` to `""`. Keep a copy of the file.
 
    1. Test case: Launch LeBake.<br>
       Expected: The data file loads. The customer's preorder panel shows `Delivery` as the method and no
