@@ -6,7 +6,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
@@ -29,6 +31,8 @@ public class TagCommand extends Command {
 
     public static final String MESSAGE_TAG_PERSON_SUCCESS = "Added tag %1$s to %2$s";
     public static final String MESSAGE_DUPLICATE_TAG = "%1$s already has tag %2$s. No changes made.";
+
+    private static final Logger logger = LogsCenter.getLogger(TagCommand.class);
 
     private final Index index;
     private final Tag tag;
@@ -61,6 +65,7 @@ public class TagCommand extends Command {
         Person taggedPerson = createTaggedPerson(personToTag, tag);
 
         model.setPerson(personToTag, taggedPerson);
+        logger.info("Added tag " + tag + " to " + personToTag.getName());
         return new CommandResult(String.format(MESSAGE_TAG_PERSON_SUCCESS, tag, personToTag.getName()));
     }
 
