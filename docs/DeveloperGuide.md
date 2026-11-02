@@ -247,12 +247,9 @@ The `Model` component,
 The `seedu.address.model.search` package provides reusable search predicates. `FindCommandParser` constructs a
 `SearchCriteria` from prefixed customer and item fields, and `FindCommand` applies it through the existing model filtering API.
 
-`ModelManager` keeps the active `SearchCriteria` in a `ReadOnlyObjectWrapper`. The filtered list's predicate is bound
-to this value, so replacing the criteria updates both the search state and the results. All filtering calls supply
-structured `SearchCriteria`, rather than an arbitrary predicate. `getActiveSearchCriteria()` returns the current
-immutable value, while `activeSearchCriteriaProperty()` exposes read-only observation through both `Model` and
-`Logic`. Observers can detect a different search even when its results are identical. This state is kept in memory
-and is not saved with customer data.
+`ModelManager` keeps the active immutable `SearchCriteria` in memory and uses it to filter the customer list. The
+criteria are observable so the UI can refresh search badges even when the same customers still match. Search criteria
+are not saved with customer data.
 
 Each successful `find` or `track` replaces the active criteria. `list` applies `SEARCH_CRITERIA_SHOW_ALL_PERSONS`,
 an empty search, to reset the state and show every customer. Rejected commands leave the active criteria unchanged.
@@ -260,96 +257,37 @@ an empty search, to reset the state and show every customer. Rejected commands l
 satisfies both its optional product name and accepted statuses. Customers without a preorder or with an empty
 preorder never match item criteria.
 
-Customer changes preserve the active criteria. `addPerson` inserts into the observable backing list, while
-`setPerson` replaces an immutable customer; `FilteredList` re-evaluates the affected entry automatically. A new
-customer is displayed only if they match, and an edited customer disappears when they stop matching. Tag and
-preorder updates follow the same replacement path. Commands resolve their target from the displayed list before
-making changes, and later commands use the resulting displayed indexes. Rejected updates preserve both criteria
-and results.
+Customer changes preserve the active criteria and re-evaluate the affected customer. A new customer is displayed
+only if they match, and an edited customer disappears when they stop matching. Commands resolve their target from
+the displayed list, so subsequent commands must use the updated displayed indexes. Rejected updates preserve both
+criteria and results.
 
-`SearchCriteria` implements `Predicate<Person>` and combines zero or more `PersonCriterion` objects using **AND**.
-A customer must match every criterion. An empty search matches every customer. The constructor defensively copies its
-criteria into an immutable set, so changing the source collection cannot change an existing search. Criterion order and
-duplicate conditions do not affect matching or equality; rejecting repeated CLI prefixes is the parser's responsibility.
+`SearchCriteria` combines zero or more `PersonCriterion` objects using **AND**, so a customer must match every
+criterion. An empty search matches every customer.
 
 The following diagram shows the criteria structure and its current implementations:
 
 <puml src="diagrams/SearchCriteriaClassDiagram.puml" width="550" alt="SearchCriteria combining zero or more PersonCriterion objects and the six criterion implementations" />
 
-For example, the following predicate matches customers whose name contains `Alice Tan` and who have the tag `regular`:
+`TextContainsCriterion` handles substring searches for names, phone numbers, email addresses, addresses and handover
+notes. Matching ignores case and surrounding whitespace while retaining internal spacing and punctuation. `TagCriterion`
+uses complete, case-insensitive tag matching. The parser applies search-specific validation to contact fragments; these
+rules differ from the validators used when saving complete contact details.
 
-```java
-SearchCriteria criteria = new SearchCriteria(List.of(
-        new TextContainsCriterion(TextContainsCriterion.Field.NAME, "Alice Tan"),
-        new TagCriterion(new Tag("regular"))));
-```
+Date and method criteria inspect fields shared by the `Preorder`, independently of its items. Handover-note searches
+also inspect the preorder and never inspect item remarks. Missing preorders or missing requested fields do not match,
+but an empty preorder can match when it has the requested shared detail.
 
-`TextContainsCriterion` supports name, phone, email, address and handover-note fields. It strips surrounding query whitespace and
-matches the entire query as a case-insensitive substring using locale-independent case normalization. Internal spacing
-and punctuation remain significant. Queries must be nonblank. `FindCommandParser` validates contact fragments before
-creating their criteria: names allow English letters, spaces, apostrophes and hyphens; phones allow one to eight ASCII
-digits with no first-digit restriction; emails allow ASCII letters, digits and `+_.-@`, without requiring a complete
-address. These rules accept `Ali`, `9123`, `example.com`, punctuation-only name fragments such as `-`, and email
-fragments such as `tan@`. They do not use the validators for creating complete contact fields or normalize internal
-name spacing. A failed contact-query validation is refined with the unsupported-prefix helper; otherwise its
-search-specific constraint message is retained. Address and handover-note queries use the generic substring matcher
-without contact-query validation. `TagCriterion` accepts a validated `Tag` and
-uses its complete, case-insensitive equality rule.
+`PostalCodeCriterion` matches a one-to-six-digit prefix against the stored postal code. Leading zeros remain
+significant, and a six-digit query matches the complete code. Stored postal codes remain mandatory and `add` and
+`edit` require all six digits. Postal criteria combine with other conditions, so `find n/Alice c/53` requires both a
+matching name and a postal code beginning with `53`.
 
-`FulfilmentDateCriterion` and `FulfilmentMethodCriterion` inspect the optional shared fields on `Preorder`, independently
-of its items. `TextContainsCriterion.Field.HANDOVER_NOTES` reads `Preorder.getHandoverNotes()` and uses the existing
-case-insensitive substring matcher. Missing preorders or missing requested fields do not match; empty preorders with
-matching fields do. Searches for handover notes do not inspect item remarks.
-
-The `f/` and `m/` values are parsed through `ParserUtil.parseFulfilmentDate` and `parseFulfilmentMethod`. Dates must be
-real calendar dates in `YYYY-MM-DD` format; methods are stripped and normalized with `Locale.ROOT` to `DELIVERY` or
-`COLLECTION`. Invalid values are refined with the unsupported-prefix helper, falling back to the corresponding model
-constraint message when no extra unsupported prefix is present. The shared `PREFIX_HANDOVER_NOTES`
-constant defines `h/` for handover notes. These queries follow existing text search rules: surrounding whitespace is
-stripped, while internal spacing and punctuation remain significant. Product and handover-note queries reject `/`,
-matching their field validation. Address queries retain slash text such as `c/o`. Blank values, repeated prefixes and
-nonempty preambles retain the existing parser checks.
-
-All `find` searches require a supported prefix, including `n/` for names. Unprefixed searches and bare preambles are
-rejected; `find Alice m/delivery` must use `find n/Alice m/delivery` instead.
-
-`PostalCodeCriterion` accepts a search prefix stored as a string. `FindCommandParser` strips surrounding whitespace
-from the `c/` value and validates it using `PostalCodeCriterion.isValidPrefix`, which accepts one to six ASCII digits
-(`[0-9]{1,6}`). Blank values produce the existing invalid-command-format error; other invalid values produce
-`PostalCodeCriterion.MESSAGE_CONSTRAINTS` unless the failed value contains an extra unsupported prefix. For example,
-`find c/123 x/foo` reports `Unsupported prefix 'x/' for find.` The criterion also validates its constructor argument and matches using
-`postalCode.value.startsWith(postalCodePrefix)`. Leading zeros remain significant, and a six-digit query is an exact match.
-This criterion joins the same `SearchCriteria` collection as
-other conditions, so `find n/Alice c/53` requires both conditions and each new `find` replaces the previous criteria.
-
-Customer-record validation remains separate: `add` and `edit` continue to use `ParserUtil.parsePostalCode` and
-`PostalCode`, which require exactly six digits. A valid search prefix is never used as a customer's stored postal code.
-
-Postal codes are mandatory in the model and saved data too. `Person` requires a non-null `PostalCode`, and
-`JsonAdaptedPerson` rejects null or missing postal codes with the standard missing-field error and malformed values
-with `PostalCode.MESSAGE_CONSTRAINTS`.
-
-To add a search condition with different matching rules, implement `PersonCriterion` and include it in a
-`SearchCriteria` collection. The implementation must be immutable and provide value-based `equals` and `hashCode`.
-CLI prefixes belong in the parser, not in the criteria. Add the prefix to `FindCommandParser`'s supported-prefix list
-and construct its criterion there. The parser accepts each supported prefix once, requires a prefix before the first
-value, rejects blank values and nonempty preambles, and validates tags using `ParserUtil.parseTag` and postal search
-prefixes using `PostalCodeCriterion.isValidPrefix`.
-It recognizes prefixes at whitespace boundaries without collapsing internal query spacing, including `c/o` inside an
-address. `FindCommand` passes `SearchCriteria` directly to
-`Model.updateFilteredPersonList`, which replaces the active criteria on the list backed by the full address book.
-There is no need to filter the previous search's results or execute another search command as an intermediate step.
-When adding a criterion type, also add its label and display position to `SearchCriteriaFormatter`, with formatter
-tests. Existing display bindings and wrapping then apply automatically. Keep conditions on the same item together
-in one criterion and one badge.
+To add a new search condition, implement an immutable `PersonCriterion` and combine it in `SearchCriteria`. Keep CLI
+prefix parsing in `FindCommandParser`.
 
 `FindCommandParser` combines `d/` (`PREFIX_DETAILS`) and `s/` into **one** `ItemCriterion`. Separate predicates for
 "has this product" and "has this status" would incorrectly allow different items to satisfy the conditions.
-Product names match completely after stripping surrounding whitespace, collapsing repeated spaces as `ItemName`
-does, and normalizing case with `Locale.ROOT`; punctuation remains significant. The criterion also retains the
-cleaned-up input name for display; matching, equality and hash codes use the normalized name. Status input is
-validated with `ParserUtil.parseItemStatus`; failures use the same contextual unsupported-prefix diagnostics as
-other constrained queries.
 
 The parser supplies `EnumSet.allOf(ItemStatus.class)` when `s/` is omitted. This is deliberate: an empty status set
 in `ItemCriterion` matches **nothing**, rather than meaning "any status". An absent product name accepts any product.
@@ -361,9 +299,7 @@ that preserves item order and duplicate entries. `TrackCommand` counts filtered 
 sizes of their matching-item lists using a `long` total. It counts item entries, not quantities. Explicit status
 feedback retains the requested status even when both counts are zero.
 
-The criterion rejects null arguments, null status elements and blank product queries, and defensively copies the
-status set. Its normalized conditions define value equality and hash codes for observable search state.
-Date/method and postal conditions remain separate customer criteria because they describe the preorder or customer
+Date, method and postal conditions remain separate customer criteria because they describe the preorder or customer
 rather than an individual item.
 
 #### Preparation summary and matching-item highlighting

@@ -88,7 +88,7 @@ Search criteria determine which customers are displayed. Keeping the criteria pr
 | Commands | Effect on the current search |
 |----------|------------------------------|
 | `find`, `track` | Each successful command replaces the previous criteria and searches all stored customers. |
-| `add`, `edit`, `delete`, `tag`, `untag`, `preorder`, `deleteorder` | Preserve the active criteria and refresh the matching results. |
+| `add`, `edit`, `delete`, `tag`, `untag`, `additem`, `edititem`, `deleteitem`, `preorder`, `deleteorder` | Preserve the active criteria and refresh the matching results. |
 | `sort date`, `group postal` | Preserve the active criteria and reorder the displayed results. A later `find` or `track` keeps this order. |
 | `clear` | Clears the criteria, sorting and grouping, then leaves the list empty. |
 | `list` | Clears the criteria, sorting and grouping, and shows all customers in their saved order. |
@@ -381,50 +381,28 @@ Supply at least one prefixed criterion. Each prefix may appear at most once, in 
 | `m/` | Shared preorder method | `delivery` or `collection`, ignoring case |
 | `h/` | Shared preorder handover notes | Case-insensitive substring |
 
-* Different criteria combine using **AND**. For example, `find n/Alice t/regular` requires both a matching name and the complete tag `regular`.
-* Names support partial matching: `find n/Han` can match `Hans Gruber`.
-* Multiword text is one substring: `find n/Alice Tan` can match `Alice Tanaka`, but does not match `Alice Lim` or `Tan Alice`.
-* Surrounding whitespace is ignored. Internal spacing and punctuation remain significant.
-* Phone and email fragments are accepted: `p/8123` and `e/example.com` need not be complete contact details.
-* Name queries allow English letters, spaces, apostrophes and hyphens. Fragments such as `n/Ali`, `n/O'` and `n/-Jane` are valid; digits and other symbols are rejected.
-* Phone queries accept one to eight digits and may start with any digit, since a fragment can match inside a phone number. Spaces, hyphens and country-code symbols are rejected.
-* Email queries allow letters, digits and `+_.-@`, without spaces. Fragments such as `e/example.com`, `e/tan@` and `e/.com` are valid; a complete email address is not required.
-* Name, email, address, product and handover-note searches accept queries beyond the character limits used when saving those fields. A valid search can return no matches.
-* Postal searches accept one to six digits. `find c/53` matches codes beginning with `53`, such as `530123` and `531234`; `find c/530` narrows this to codes beginning with `530`. A six-digit query such as `find c/012345` matches only that complete code.
-* When adding a customer or editing their postal code, supply all six digits. Shorter prefixes are accepted only for searching; leading zeros are preserved in both cases.
-* Tags must be single alphanumeric words of at most 30 characters. `t/reg` does not match a tag named `regular`.
-* Fulfilment conditions check the preorder's shared information. They can find empty preorders; customers without a preorder or without the requested field do not match. Handover notes are separate from an individual item's request notes.
-* Product names match completely: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Surrounding whitespace is ignored, and repeated spaces count as one, as they do in item names. Punctuation remains significant.
-* Omitting `s/` includes **all statuses**, including `COMPLETED`. A blank `s/` is invalid. A status-only search such as `find s/prepared` accepts any product with that status.
-* Product and status must match the **same item**. A customer with pending Pineapple Tarts and prepared Almond Cookies does not match `find d/Pineapple Tarts s/prepared`.
-* Customers without a preorder or with an empty preorder cannot match item criteria. Customer-only searches can still find them.
-* All items on matching customer cards remain visible with their existing item numbers, including items that did not match. Searches do not change stored items.
-* Every new `find` searches all stored customers and replaces the previous search, including a previous `track` filter. Consecutive searches do not accumulate criteria.
-* Results use the current displayed indices. Use `list` to show all customers again.
-* Use lowercase prefixes. A supported prefix starts at the beginning of the arguments or after whitespace and ends the previous value. The existing `c/o` exception keeps conventional care-of text inside an address.
-* Address queries preserve slash text, including `c/o`. Saved addresses allow ordinary slash notation such as `#04/08`
-  and conventional `c/o`, but reject a letter-based token followed by `/` at the start or after whitespace. Product
-  names and handover notes cannot contain slashes.
-* Name, phone, email, postal code, tag, date, method and status queries are validated first. If an invalid query contains an extra unsupported prefix, such as `find c/123 x/foo`, the error identifies `x/`. Other invalid queries show the corresponding constraint message. Unsupported arguments before the first recognised criterion still show command-format guidance.
+* Criteria combine using **AND**. Text fields such as names, phone numbers, email addresses and addresses support partial matching; for example, `find n/Han` can match `Hans Gruber`.
+* Surrounding whitespace is ignored. Internal spacing and punctuation remain significant. Product names match completely, ignoring case: `find d/PINEAPPLE TARTS` matches `Pineapple Tarts`, but `find d/Pineapple` does not. Repeated spaces in a product name count as one.
+* Postal queries accept one to six digits and match the start of a postal code. For example, `find c/01` matches codes beginning with `01`, including `012345`; use all six digits to match one complete code.
+* Tags match a complete tag name, ignoring case. For example, `find t/reg` does not match a tag named `regular`.
+* Fulfilment date, method and handover-note criteria inspect information shared by the preorder, not an individual item. They can match an empty preorder, but not a customer without a preorder or without the requested detail. Handover notes are separate from item remarks.
+* Product and status criteria must match the **same item**. A customer with pending Pineapple Tarts and prepared Almond Cookies does not match `find d/Pineapple Tarts s/prepared`.
+* Omitting `s/` includes all statuses, including `COMPLETED`. Customers without a preorder or with an empty preorder cannot match item criteria. A status-only query such as `find s/prepared` accepts any product with that status.
+* All items remain visible on matching customer cards, with their original item numbers; searches do not change stored items.
+* Name queries allow English letters, spaces, apostrophes and hyphens; phone queries accept one to eight digits; email queries allow letters, digits and `+_.-@` without spaces. Tags are single alphanumeric words of at most 30 characters.
 
 Examples:
 
-* `find n/Alice Tan` finds names containing the phrase `Alice Tan`.
-* `find p/8123` finds phone numbers containing `8123`.
-* `find e/example.com` finds emails containing `example.com`.
-* `find c/53` finds customers whose postal code starts with `53`.
-* `find c/01` finds customers whose postal code starts with `01`, including `012345`.
-* `find c/123456` finds customers whose postal code is exactly `123456`.
-* `find n/Alice c/53` requires both a name containing `Alice` and a postal code starting with `53`.
+* `find n/Alice c/53` finds customers whose names contain Alice and whose postal codes begin with `53`.
+* `find p/8123 e/example.com` finds customers whose phone numbers contain `8123` and whose emails contain `example.com`.
 * `find a/Hougang t/regular` finds regular customers whose addresses contain `Hougang`.
-* `find n/Alice p/8123 t/regular` requires all three criteria to match.
-* `find f/2026-12-20 m/delivery` finds delivery preorders scheduled for that date, including ones without items.
-* `find n/Alice m/collection h/side gate` requires a matching name, collection method, and handover notes containing `side gate`.
-* `find c/53 f/2026-12-20 m/delivery h/arrival` combines a postal prefix with the shared date, method, and handover notes.
-* `find d/Pineapple Tarts` finds customers with that product in any status.
-* `find n/Alice d/Pineapple Tarts s/pending` finds customers whose names contain Alice and who have a pending Pineapple Tarts item.
+* `find f/2026-12-20 m/delivery` finds delivery preorders scheduled for that date, including empty preorders.
+* `find n/Alice m/collection h/side gate` finds customers whose names contain Alice, have collection preorders, and have handover notes containing `side gate`.
+* `find s/prepared` finds customers with at least one prepared item, regardless of product.
+* `find d/Pineapple Tarts s/pending` finds customers with a pending Pineapple Tarts item.
+* `find n/Alice d/Pineapple Tarts s/pending` combines a customer-name search with a matching item search.
 
-Customer and preorder changes preserve the search and refresh the results. A customer disappears when their last matching item is removed or stops matching. Displayed customer indexes can change, so check them before the next command.
+Use lowercase prefixes. Each prefix may appear once, in any order, and must have a value. For the effects of searches on the current list and displayed indexes, see [How searches and updates affect the list](#how-searches-and-updates-affect-the-list).
 
 **Invalid inputs**
 
@@ -437,8 +415,7 @@ Customer and preorder changes preserve the search and refresh the results. A cus
 | `find n/Ali2` | Name query constraint message; use English letters, spaces, apostrophes or hyphens. |
 | `find p/91-23` or `find p/912345678` | Phone query constraint message; use one to eight digits. |
 | `find e/example!.com` | Email query constraint message; use letters, digits or `+_.-@`, without spaces. |
-| `find n/Ali x/foo`, `find p/9123 x/foo` or `find e/example.com x/foo` | `Unsupported prefix 'x/' for find.` |
-| `find c/123 x/foo`, `find t/VIP x/foo`, `find f/2026-12-20 x/foo`, `find m/delivery x/foo` or `find s/pending x/foo` | `Unsupported prefix 'x/' for find.` |
+| An unsupported field after a valid criterion, e.g. `find n/Ali x/foo` | `Unsupported prefix 'x/' for find.` |
 | `find f/2026-02-30` or `find f/2026-2-03` | The date constraint message is shown; supply a real date in `YYYY-MM-DD` format. |
 | `find m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
 | `find h/` or `find m/` | Invalid command format; every supplied prefix needs a value. |
@@ -559,18 +536,16 @@ Validation failures leave the data unchanged.
 
 Format: `track [s/STATUS]`
 
-* `track` shows customers with at least one active item (`PENDING` or `PREPARED`) in their preorder.
-* `track s/COMPLETED` shows customers with at least one `COMPLETED` item. You can also filter by `PENDING` or `PREPARED`; status input is case-insensitive.
-* Each successful `track` searches all customers and replaces the previous `find` or `track` criteria. Rejected commands preserve the current criteria and results.
-* Customers without preorders, or whose preorder has no items yet, are excluded. Use `list` to show all customers again.
+* `track` shows customers with at least one item in the selected status. Bare `track` selects active items (`PENDING` or `PREPARED`); `track s/STATUS` selects that status, including `COMPLETED`. Status input is case-insensitive.
+* Customers without a matching item are excluded. Use `find` when you need to combine item status with product or customer criteria.
 
-`track` accepts only the optional `s/` field. Use `find` for product or customer combinations. `track s/prepared` and `find s/prepared` select the same customers. Bare `track` includes only active statuses, whereas `find d/Pineapple Tarts` includes all statuses.
+`track` accepts only the optional `s/` field; `find s/prepared` selects the same status as `track s/prepared`, while `find d/Pineapple Tarts` includes all statuses.
 
 An unsupported prefix after the status, such as `track s/pending d/Cake`, displays
 `Unsupported prefix 'd/' for track.` Remove the extra parameter or use `find s/pending d/Cake` to combine both criteria.
 An ordinary invalid status, such as `track s/done`, still displays the status constraint message.
 
-Feedback distinguishes customers from matching item entries. For example, one customer with two pending items and another with one pending item produces `2 customer(s) with 3 matching item(s) for PENDING listed!`. Each customer counts once; repeated product entries count separately. Quantities are not added to this count. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
+Feedback reports both the number of matching customers and matching item entries. For example, two customers with three pending item entries produce `2 customer(s) with 3 matching item(s) for PENDING listed!`. Repeated entries count separately; quantities are not added. With no matches, `track s/pending` reports `0 customer(s) with 0 matching item(s) for PENDING listed!`.
 
 Each customer card shows the customer's number on the left, then their name and tags, their phone number and email on one line, and their address with its postal code, for example `Postal 389030`. A customer without a preorder shows `No preorder`. Long names, tags and addresses wrap onto more lines, so they are always shown in full.
 
