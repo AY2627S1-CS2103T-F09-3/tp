@@ -83,17 +83,22 @@ information.
 
 ### How searches and updates affect the list
 
-Search criteria determine which customers are displayed. Keeping the criteria preserves the search; the results still refresh when customer or preorder data changes.
+Search criteria determine which customers are displayed. Results refresh as customer or preorder data changes.
 
 | Commands | Effect on the current search |
 |----------|------------------------------|
-| `find`, `track` | Each successful command replaces the previous criteria and searches all stored customers. |
-| `add`, `edit`, `delete`, `tag`, `untag`, `additem`, `edititem`, `deleteitem`, `preorder`, `deleteorder` | Preserve the active criteria and refresh the matching results. |
-| `sort date`, `group postal` | Preserve the active criteria and reorder the displayed results. A later `find` or `track` keeps this order. |
-| `clear` | Clears the criteria, sorting and grouping, then leaves the list empty. |
-| `list` | Clears the criteria, sorting and grouping, and shows all customers in their saved order. |
+| `find`, `track` | Each successful command replaces the previous search and searches all stored customers. |
+| `add`, `edit`, `delete`, `tag`, `untag`, `additem`, `edititem`, `deleteitem`, `preorder`, `deleteorder` | Keep the active search and refresh the results. |
+| `sort date`, `group postal` | Keep the active search and reorder the results. A later `find` or `track` keeps this order. |
+| `clear` (after confirmation) | Clear the search, sorting and grouping, and leave the list empty. |
+| `list` | Clear the search, sorting and grouping, and show all customers in their saved order. |
+| `help` | Leaves the search and displayed results unchanged. |
 
-During a session, use `list` to explicitly return to an unfiltered view. A `find` that happens to match every customer still has active criteria. Empty results do not clear the criteria either. Updates and deletions can change the displayed indexes, so check them before your next command.
+During a session, use `list` to explicitly return to an unfiltered view. A `find` that happens to match every customer
+still has active criteria, and empty results do not clear the criteria. Updates can change the displayed indexes, so
+check them before your next command.
+
+Search criteria are not saved: restarting the app begins with all saved customers displayed.
 
 Examples, using the customer's current displayed `INDEX`:
 
@@ -102,32 +107,15 @@ Examples, using the customer's current displayed `INDEX`:
 | `track`, then `deleteorder INDEX` | The customer disappears from tracking because they no longer have a preorder. Their customer record remains saved. |
 | `find n/Alice`, then `deleteorder INDEX` | Alice remains visible because her name still matches the search. |
 
-Search criteria are not saved. Restarting the app begins with all saved customers displayed.
+Above the customer list, **Showing: All customers** means no search is active. After `find` or `track`,
+**Filters · Match all** and badges show the active criteria. For example:
 
-The area immediately above the customer list shows your active search:
+* `find n/Alice t/regular` shows **Name: alice** and **Tag: regular**; customers must match both.
+* `find d/Pineapple Tarts s/pending` shows **Item: Pineapple Tarts · Pending**. Without `s/`, the badge says **Any status**.
+* `track` shows **Item status: Pending or Prepared**; `track s/PENDING` shows **Item status: Pending**.
 
-* With no search criteria, it shows **Showing: All customers**.
-* After `find` or `track`, it shows **Filters · Match all**, with a separate read-only badge for each criterion.
-  For example, `find n/Alice t/regular` shows **Name: alice** and **Tag: regular**.
-* Postal searches show the supplied digits, including leading zeros: `find c/01` shows **Postal: 01** and
-  `find c/012345` shows **Postal: 012345**. Postal badges appear after Address and before Tag badges.
-* Product and status conditions stay together: `find d/Pineapple Tarts s/pending` shows
-  **Item: Pineapple Tarts · Pending** in one badge. `find d/Pineapple Tarts` shows
-  **Item: Pineapple Tarts · Any status**, including completed items.
-* A status-only search such as `find s/prepared` shows **Item status: Prepared**.
-* `track` shows **Item status: Pending or Prepared** in one badge. `track s/PENDING` shows **Item status: Pending**.
-* Date, method and handover-note searches have separate badges. For example,
-  `find f/2026-10-22 m/delivery h/arrival` shows **Date: 22 Oct 2026**, **Method: Delivery** and
-  **Handover notes: arrival**.
-
-Badges use this order: Name, Phone, Email, Address, Postal, Tag, Item (or Item status), Date, Method and Handover notes.
-
-The badges describe the search even when it matches every customer or no customers. Customer text searches show the
-case-normalized query used for matching, while product searches preserve the capitalization you typed. All badges
-and their full values remain available: badges wrap onto
-additional rows, and long values wrap within a badge as you resize the window. They do not need to be clicked or
-hovered over. Search updates leave keyboard focus in the command box, so you can enter your next command immediately.
-Use `list` to clear the badges and return to **Showing: All customers**.
+The search stays active and its badges remain visible even when all customers or no customers match.
+Use `list` to clear the search and return to **Showing: All customers**.
 
 ### Viewing help: `help`
 
@@ -675,13 +663,22 @@ Deletes the specified customer from LeBake.
 
 Format: `delete INDEX`
 
+<box type="warning" seamless>
+
+Deleting a customer immediately removes their contact details, all tags and their entire preorder, including all
+items. There is no confirmation prompt or in-app undo. To remove only the preorder, use
+[`deleteorder`](#deleting-a-preorder-deleteorder).
+</box>
+
 * Deletes the customer at the specified `INDEX`.
 * The index refers to the index number shown in the displayed customer list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * Deleting preserves the active search criteria. The remaining results refresh, and their displayed indexes may change.
 
 Success feedback begins with `Deleted customer:`, followed by the deleted customer's details.
-An index beyond the displayed list produces `The customer index provided is invalid.`
+`delete` without an argument, `delete 0` and `delete abc` produce `Invalid command format!`, followed by the usage
+instructions for `delete`.
+A positive integer beyond the displayed list size produces `The customer index provided is invalid.`
 
 Examples:
 
@@ -754,6 +751,11 @@ A preorder's `date`, `method` and `handoverNotes` follow the same rules as the
 `DELIVERY` or `COLLECTION` in any capitalisation, and one line of at most 100 characters. Spaces around these values
 are ignored, and `null` or `""` means the detail is not set. Any other value prevents the file from loading.
 
+Each item in a preorder's `items` list needs a `name`, `quantity` and `status`, and may have a `remark` (or `null`).
+They follow the same rules as [`additem`](#adding-a-preorder-item-additem), with two differences: the status must be
+in capitals (`PENDING`, `PREPARED` or `COMPLETED`), and spaces around the quantity, status or remark are not removed.
+A missing or invalid item field prevents the file from loading.
+
 <box type="warning" seamless>
 
 **Caution:**
@@ -809,21 +811,21 @@ start LeBake as described in [Quick start](#quick-start).
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS c/POSTAL_CODE` <br> e.g., `add n/James Ho p/92224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 c/123456`
-**Add item** | `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`<br> e.g., `additem 1 d/Cake q/2 s/pending`
-**Edit item** | `edititem INDEX i/ITEM_INDEX [d/NAME] [q/QUANTITY] [s/STATUS] [r/REMARK]`<br> e.g., `edititem 1 i/2 q/3`
-**Clear**  | `clear`
-**Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Delete item** | `deleteitem INDEX i/ITEM_INDEX`<br> e.g., `deleteitem 1 i/2`
-**Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE_PREFIX] [t/TAG] [d/PRODUCT] [s/STATUS] [f/YYYY-MM-DD] [m/METHOD] [h/HANDOVER_NOTES]` (at least one prefixed criterion)<br> e.g., `find c/53 f/2026-12-20 m/delivery`
-**Group postal** | `group postal`
-**Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
+**Help**   | `help`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS c/POSTAL_CODE` <br> e.g., `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 c/123456`
 **List**   | `list`
-**Preorder** | `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`<br> e.g., `preorder 1 f/2026-12-20 m/delivery h/Call on arrival`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Tag**    | `tag INDEX t/TAG`<br> e.g., `tag 1 t/regular`
 **Untag**  | `untag INDEX t/TAG`<br> e.g., `untag 1 t/friends`
+**Group postal** | `group postal`
 **Sort by date** | `sort date`
-**Help**   | `help`
+**Find**   | `find [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [c/POSTAL_CODE_PREFIX] [t/TAG] [d/PRODUCT] [s/STATUS] [f/YYYY-MM-DD] [m/METHOD] [h/HANDOVER_NOTES]` (at least one prefixed criterion)<br> e.g., `find c/53 f/2026-12-20 m/delivery`
+**Add item** | `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`<br> e.g., `additem 1 d/Cake q/2 s/pending`
+**Edit item** | `edititem INDEX i/ITEM_INDEX [d/NAME] [q/QUANTITY] [s/STATUS] [r/REMARK]`<br> e.g., `edititem 1 i/2 q/3`
+**Track**  | `track [s/STATUS]`<br> e.g., `track s/PREPARED`
+**Delete item** | `deleteitem INDEX i/ITEM_INDEX`<br> e.g., `deleteitem 1 i/2`
+**Preorder** | `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`<br> e.g., `preorder 1 f/2026-12-20 m/delivery h/Call on arrival`
+**Delete order** | `deleteorder INDEX`<br> e.g., `deleteorder 1`
+**Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Clear**  | `clear`, then `confirm` to delete all customers
 **Exit**   | `exit`
