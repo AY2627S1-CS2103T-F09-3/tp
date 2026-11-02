@@ -736,10 +736,15 @@ the same as for `delete` (see the [Logic component](#logic-component)), so the d
 * **Alternative 1 (current choice):** accept the date and add a note.
   * Pros: A baker may record an order that has already been handed over, or fix an old record. Blocking these
     would be overzealous validation.
-  * Cons: A mistyped year is saved; the baker has to notice the note.
+  * Cons: A mistyped year from 2000 onwards, such as 2016 for 2026, is saved; the baker has to notice the note.
 * **Alternative 2:** reject past dates.
   * Pros: Catches some typing mistakes.
   * Cons: Blocks legitimate records, and depends on the computer's clock being right.
+
+To catch the worst typos, such as `0026` for `2026`, a typed date must also be from the year 2000 onwards
+(`FulfilmentDate.MIN_YEAR`). No real preorder is that old, and the check needs no clock. `ParserUtil` applies it
+only to dates typed in `preorder` and `find`; `FulfilmentDate.isValidDate` does not, so data files with older
+saved dates still load.
 
 **Aspect: what `preorder` does for a customer without a preorder**
 
@@ -1919,7 +1924,9 @@ preorder. Run the steps in order. For every rejected command, check that no card
 1. Run `preorder 1 f/2025-12-20`.<br>
    Expected: The update succeeds, and a second line says `Note: 20 Dec 2025 is in the past.`
 1. Try `preorder 1 f/2026-02-30` and `preorder 1 f/20-12-2026`.<br>
-   Expected: `Invalid date! Dates must be real calendar dates in YYYY-MM-DD format, e.g. 2026-12-20.`
+   Expected: `Invalid date! Dates must be real calendar dates in YYYY-MM-DD format from the year 2000 onwards, e.g. 2026-12-20.`
+1. Run `preorder 1 f/0026-12-20`.<br>
+   Expected: the same error message. Nothing changes.
 1. Run `preorder 1 m/drone`.<br>
    Expected: `Invalid method! Method must be DELIVERY or COLLECTION.`
 1. Run `preorder 1 m/delivery x/2`.<br>
