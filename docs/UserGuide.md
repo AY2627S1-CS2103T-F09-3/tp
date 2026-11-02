@@ -751,9 +751,10 @@ have changed customer or preorder data in memory. Seeing those changes on screen
    attempt completes without an error. If saving fails again, keep LeBake open, resolve the problem and repeat
    the `list` step. LeBake does not retry failed saves in the background or undo changes already applied.
 
-Closing the window or choosing **File → Exit** does not retry saving customer data; window preferences are saved
-separately. Restarting loads the data file and cannot recover changes held only in memory. If you cannot resolve
-the save problem, record any changes you cannot afford to lose before deciding to close LeBake.
+Entering `exit` in the command box attempts to save customer data before closing; if the save fails, LeBake remains
+open. Closing the window or choosing **File → Exit** does not retry saving customer data. Window preferences are
+saved separately during shutdown. Restarting loads the data file and cannot recover changes held only in memory.
+If you cannot resolve the save problem, record any changes you cannot afford to lose before deciding to close LeBake.
 
 A failed write can leave the data file incomplete. Do not edit or restore it while LeBake is running: a later save
 can overwrite those external changes. See [Editing the data file](#editing-the-data-file) for the closed-app procedure.
