@@ -490,8 +490,9 @@ one `Preorder`, and each `Preorder` holds the customer's `Item`s in the order th
 * `Item` has an `ItemName` of up to 200 characters, a `Quantity`, an `ItemStatus`, and an optional `Remark`.
   `ItemName` turns each run of spaces, including Unicode spaces, into one space, so `Butter   Cake` and
   `Butter Cake` are the same product in `find` and the preparation summary.
-  New item names and remarks reject forward slashes. A `Quantity` is a whole number from 1 to 999, and a `Remark`
-  is a special request of up to 100 characters.
+  `ItemName` and `Remark` reject forward slashes, so a slash is refused in a command and also stops a data file
+  from loading. A `Quantity` is a whole number from 1 to 999, and a `Remark` is a special request of up to 100
+  characters.
 * Every item has a quantity. The `Item` constructor rejects a `null` quantity, and the data file loader rejects an
   item without one (see [Saving preorders](#saving-preorders)).
 * `ItemStatus` belongs to each item, so a customer can have one item `PREPARED` while another is still
@@ -572,6 +573,84 @@ blank value as `null`, and uppercases the method. A hand-edited file is therefor
 * **Alternative 2:** a single `"preorder"` object.
   * Pros: Matches the model exactly.
   * Cons: Supporting several preorders later would require a change to the saved-data format.
+
+### Tracking preorders
+
+`track [s/STATUS]` displays customers with at least one matching preorder item. Bare `track` selects active items
+(`PENDING` or `PREPARED`); supplying `s/` selects only that status. Status belongs to each item, so a customer with
+mixed-status items can appear in more than one status search. Customers without a preorder, or with an empty
+preorder, never match.
+
+**Parsing.** `TrackCommandParser` tokenizes the optional `s/` prefix, rejects a nonempty preamble, then rejects
+duplicate status prefixes. With no status prefix, it constructs `TrackCommand(Optional.empty())`. Otherwise,
+`ParserUtil#parseItemStatus` trims surrounding whitespace and accepts `PENDING`, `PREPARED` or `COMPLETED`
+case-insensitively. An empty or invalid status is rejected before execution. An unsupported prefix after the status,
+such as `track s/pending d/Cake`, uses the contextual diagnostic described under
+[Prefix boundaries and error messages](#prefix-boundaries-and-error-messages). A rejected command leaves the
+active criteria and displayed results unchanged.
+
+**Execution.** The sequence diagram below shows `TrackCommand#execute` for `track s/pending`. It starts after
+parsing and shows the command's interactions with the model and the shared item criterion.
+
+<puml src="diagrams/TrackSequenceDiagram.puml" alt="Interactions inside TrackCommand for the track s/pending command" />
+
+1. `createItemCriterion` creates an `ItemCriterion` with no product condition and either the supplied status or
+   the default set `{PENDING, PREPARED}`.
+1. The command wraps this criterion in a `SearchCriteria` and calls `Model#updateFilteredPersonList`. This replaces
+   the previous `find` or `track` criteria and filters all stored customers, while keeping the current sort order.
+   The model's observable filtering mechanism is described under [Customer search criteria](#customer-search-criteria).
+1. `Model#getFilteredPersonList` returns the matching customers. Each customer appears once, even if several of
+   their items match. Filtering selects customers; their other preorder items remain visible, with matching items
+   highlighted (see [Preparation summary and matching-item highlighting](#preparation-summary-and-matching-item-highlighting)).
+1. For each matching customer, the command calls `ItemCriterion#getMatchingItems` and sums the list sizes into a
+   `long` total. This counts item entries, including repeated products, rather than adding their quantities.
+1. `formatFeedback` creates the message for a new `CommandResult`. Bare `track` reports
+   `N customer(s) with M matching item(s) listed!`; an explicit status reports
+   `N customer(s) with M matching item(s) for STATUS listed!`, including when both counts are zero.
+
+For example, if one customer has two pending Cake entries with quantities 10 and 20, and another has one pending
+Cookies entry, `track s/pending` reports `2 customer(s) with 3 matching item(s) for PENDING listed!`.
+
+Tracking changes the active search without editing customer or preorder data. Later item changes are re-evaluated
+against the same criteria automatically, so a customer disappears when their final matching item changes to a
+nonmatching status or is removed. `list` clears the criteria and restores the saved customer order.
+
+#### Design considerations
+
+The alternatives below describe tradeoffs in the current implementation. The choice to store status on each item
+is covered under [Preorders and items](#preorders-and-items).
+
+**Aspect: which statuses bare `track` includes**
+
+* **Alternative 1 (current choice):** include `PENDING` and `PREPARED` items.
+  * Pros: Shows orders that still need preparation or handover in one command, while excluding completed work.
+  * Cons: Does not distinguish work still to be prepared from work ready for handover. The baker must supply
+    `s/PENDING` or `s/PREPARED` to focus on one stage.
+* **Alternative 2:** include all three statuses.
+  * Pros: Gives an overview of every customer with preorder items, including completed work.
+  * Cons: Completed orders remain in the default results, making outstanding work harder to identify.
+
+**Aspect: how tracking applies its filter**
+
+* **Alternative 1 (current choice):** use the shared `ItemCriterion` and `SearchCriteria` infrastructure.
+  * Pros: `track` and `find` share item-matching rules. The existing observable search state updates the customer
+    list, criteria badges and item highlighting, and re-evaluates customers after edits.
+  * Cons: Changes to the shared item-matching rules can affect both commands, so both need checking when those
+    rules change.
+* **Alternative 2:** keep a separate tracking predicate and result list.
+  * Pros: Tracking rules can change independently of `find`.
+  * Cons: Repeats filtering logic and needs separate handling to keep results and search displays consistent
+    after customer or item changes.
+
+**Aspect: what the feedback counts**
+
+* **Alternative 1 (current choice):** report both customers and matching item entries.
+  * Pros: Distinguishes the number of customers to serve from the number of matching entries in their preorders.
+    Repeated products count separately, matching the entries shown on the cards.
+  * Cons: The item count does not indicate the number of units to bake; quantities must be read separately.
+* **Alternative 2:** report only the customer count.
+  * Pros: Shorter feedback that corresponds directly to the number of displayed cards.
+  * Cons: Hides how many items match when customers have mixed-product or mixed-status preorders.
 
 ### Preorder item addition and editing
 
@@ -1258,6 +1337,14 @@ preorders, saved data, active search criteria and displayed results remain uncha
 
 ### Deleting a customer
 
+Use a disposable copy of `LeBake.jar` in a separate, writable test folder. From that folder, run
+`java -jar LeBake.jar` with no `data/lebake.json` to load the six sample customers. Run `list`, close LeBake, and
+back up `data/lebake.json` outside the `data` folder. Before each group below, restore that backup while LeBake is
+closed and relaunch from the same folder. Restore it again after testing if you want the original sample data.
+
+For every rejected deletion below, compare customer details, tags, preorders, saved data, active search criteria
+and the displayed customer list with their state immediately before the command; all must remain unchanged.
+
 1. Deleting a customer while all customers are being shown
 
    1. Prerequisites: List all customers using the `list` command, with multiple customers in the list.
@@ -1270,8 +1357,37 @@ preorders, saved data, active search criteria and displayed results remain uncha
       Expected: No customer is deleted. The status message shows `Invalid command format!`, followed by the
       usage instructions for `delete`.
 
+   1. Test cases: `delete abc` and `delete` (run separately).<br>
+      Expected: Each shows `Invalid command format!`, followed by the usage instructions for `delete`.
+      No customer data is changed.
+
    1. Test case: `delete 100` (where 100 is larger than the displayed list size)<br>
       Expected: No customer is deleted. The status message shows `The customer index provided is invalid.`
+
+1. Deleting a customer with a preorder from a filtered list, then checking persistence
+
+   1. Run `list` after restoring the sample-data backup.<br>
+      Expected: Six customers are shown, with Alex Yeoh at index 1 and Bernice Yu at index 2. Bernice has the
+      `colleagues` and `friends` tags and a preorder containing one `Butter Cake` item with status `COMPLETED`.
+
+   1. Run `find n/Bernice`.<br>
+      Expected: `1 customer(s) listed!` Only Bernice is shown, now at displayed index 1.
+
+   1. Run `delete 2`.<br>
+      Expected: `The customer index provided is invalid.` Bernice remains visible and all data is unchanged,
+      even though index 2 existed in the full list.
+
+   1. Run `delete 1`.<br>
+      Expected: Deletion happens without a confirmation prompt. Feedback begins with `Deleted customer: Bernice Yu;`,
+      followed by her details. The search remains active and its displayed list is empty.
+
+   1. Run `list`.<br>
+      Expected: Five customers remain: Alex Yeoh, Charlotte Oliveiro, David Li, Irfan Ibrahim and Roy Balakrishnan.
+      Their details, tags and preorders are unchanged. Bernice and her Butter Cake preorder are absent.
+
+   1. Run `exit`, relaunch with `java -jar LeBake.jar` from the same test folder, and run `list`.<br>
+      Expected: The same five customers and their data are retained. Inspect `data/lebake.json` without editing it:
+      Bernice's customer record and its preorder are absent, and the other customers' data is unchanged.
 
 ### Clearing customers and exiting
 
@@ -1472,6 +1588,18 @@ Run each group below independently, starting with the sample data unless stated 
    1. Test case: Run `find n/NoMatchingCustomer`, confirm that the displayed list is empty, then run `untag 1 t/friends`.<br>
       Expected: The status message shows `The customer index provided is invalid.` The list remains empty and no data is changed.
 
+1. Removing the tag used by the active filter
+
+   1. Prerequisites: Run `find t/friends`. Confirm that Bernice Yu is among the displayed customers and has the
+      `friends` tag.
+
+   1. Test case: Note Bernice's index as `INDEX`, then run `untag INDEX t/friends`.<br>
+      Expected: The status message confirms that Bernice's tag was removed. Bernice disappears from the displayed
+      results because she no longer matches the active `find t/friends` filter, but remains in the saved customer data.
+
+   1. Test case: Run `list`, then `find n/Bernice`.<br>
+      Expected: Bernice is still present and no longer has the `friends` tag.
+
 1. Preserving a preorder and saving tag removal
 
    1. Prerequisites: Use a saved customer with a preorder. Run `list`, note their displayed index as `INDEX`, and record their contact details, preorder details, and fulfilment status. Run `tag INDEX t/untagtest`, replacing `INDEX` with that number.
@@ -1551,6 +1679,69 @@ remain unchanged.
 1. Run `preorder 1 f/ m/ h/`.<br>
    Expected: Date, method and handover notes are cleared. The item, its remark, contact details and tag remain, and
    `Prefix Test` remains displayed under the active name search.
+
+### Tracking preorders
+
+Start each group below with a fresh, disposable copy of the sample data and run `list`. Run the steps within each
+group in order. Initially, Alex Yeoh has one pending and one prepared item, Bernice Yu has one completed item,
+Charlotte Oliveiro has one prepared item, David Li has an empty preorder, and Irfan Ibrahim and Roy Balakrishnan
+have no preorder. Tracking commands should preserve all customer and preorder data.
+
+1. Default tracking, status selection and replacing searches
+
+   1. Run `track`.<br>
+      Expected: Alex Yeoh and Charlotte Oliveiro appear, in that order, with
+      `2 customer(s) with 3 matching item(s) listed!`. David, Irfan and Roy are excluded, as is Bernice, whose only
+      item is completed. Both of Alex's items and Charlotte's item are highlighted.
+   1. Run `track s/pEnDiNg`.<br>
+      Expected: Only Alex appears, with `1 customer(s) with 1 matching item(s) for PENDING listed!`.
+      His prepared Almond Cookies remains visible, but only his pending Pineapple Tarts is highlighted.
+   1. Run `track s/PREPARED`.<br>
+      Expected: Alex and Charlotte appear, with `2 customer(s) with 2 matching item(s) for PREPARED listed!`.
+      Only their prepared items are highlighted.
+   1. Run `track s/COMPLETED`.<br>
+      Expected: Only Bernice appears, with `1 customer(s) with 1 matching item(s) for COMPLETED listed!`.
+      She appears even though the previous tracking results excluded her.
+   1. Run `find n/Bernice`, then `track`.<br>
+      Expected: The name search is replaced. Alex and Charlotte appear again, with
+      `2 customer(s) with 3 matching item(s) listed!` and only the `Item status: Pending or Prepared` badge.
+   1. Run `list`.<br>
+      Expected: All six customers appear in their original order. The tracking highlights and status badge are
+      removed, and `Showing: All customers` appears above the list.
+
+1. Rejecting invalid input without changing the search
+
+   1. Run `track s/PENDING`, then try `track s/` and `track s/done`.<br>
+      Expected: Both show `Invalid status! Status must be PENDING, PREPARED, or COMPLETED.`
+   1. Run `track s/PENDING s/PREPARED`.<br>
+      Expected: `Multiple values specified for the following single-valued field(s): s/`.
+   1. Try `track PENDING` and `track 1 s/PENDING`.<br>
+      Expected: Both show `Invalid command format!`, followed by the usage instructions for `track`.
+   1. Run `track s/pending d/Cake`.<br>
+      Expected: `Unsupported prefix 'd/' for track.`
+
+   After each rejected command, verify that only Alex remains displayed, his pending item remains highlighted,
+   and the `Item status: Pending` badge is unchanged. His items, quantities, statuses and customer details are
+   unchanged.
+
+1. Counting repeated item entries and showing empty results
+
+   1. Run `additem 1 d/Pineapple Tarts q/10 s/pending`, then `additem 1 d/Pineapple Tarts q/20 s/pending`.<br>
+      Expected: Alex now has four separate item entries; the two new pending entries are items 3 and 4.
+   1. Run `track s/PENDING`.<br>
+      Expected: Only Alex appears, with `1 customer(s) with 3 matching item(s) for PENDING listed!`.
+      The three pending Pineapple Tarts entries are highlighted and count separately; their quantities are not summed
+      in the feedback. The prepared Almond Cookies remains visible and is not highlighted.
+   1. Run `edititem 1 i/1 s/completed`, then `edititem 1 i/3 s/completed`.<br>
+      Expected: Alex remains displayed because item 4 is still pending. The changed items lose their tracking
+      highlights. The feedback describes each edit; run `track s/PENDING` again to obtain updated tracking counts.
+   1. Run `edititem 1 i/4 s/completed`, then `track s/PENDING`.<br>
+      Expected: Alex disappears after the edit. Tracking reports
+      `0 customer(s) with 0 matching item(s) for PENDING listed!`. The list is empty and the pending-status badge
+      remains visible.
+   1. Run `list`.<br>
+      Expected: All six customers reappear. Alex still has four items, with items 1, 3 and 4 completed and item 2
+      prepared. His quantities and other details are preserved; tracking did not delete any data.
 
 ### Adding and editing preorder items
 
@@ -1675,11 +1866,12 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
 
 1. Loading a data file with an invalid item
 
-   1. Prerequisites: In `data/lebake.json`, change one item's `"quantity"` to `"0"`. Keep a copy of the file.
+   1. Prerequisites: Keep a copy of `data/lebake.json`. Then change the `"quantity"` of the first customer's first
+      item (Alex Yeoh's `Pineapple Tarts` in the sample data) to `"0"`.
 
    1. Test case: Launch LeBake.<br>
-      Expected: An error dialog appears before the main window. Its reason identifies the person and item, such as
-      `Person 1: item 1: invalid quantity.` Person and item numbers follow the order in the file, starting at 1.
+      Expected: An error dialog appears before the main window and reports `Person 1: item 1: invalid quantity.`
+      Person and item numbers follow the order in the file, starting at 1.
 
    1. Test case: Press `Enter` to dismiss the dialog.<br>
       Expected: LeBake exits, and the invalid file is unchanged. Restore the valid file from your copy and relaunch;
@@ -1691,8 +1883,8 @@ These steps edit the data file, so use a copy of LeBake in an empty folder. Laun
 
 1. Loading hand-edited fulfilment details
 
-   1. Prerequisites: In `data/lebake.json`, find a customer whose preorder has a `"method"`. Change it to
-      `"delivery"` and change their `"handoverNotes"` to `""`. Keep a copy of the file.
+   1. Prerequisites: In `data/lebake.json`, change the first customer's (Alex Yeoh's) `"method"` to `"delivery"`
+      and their `"handoverNotes"` to `""`. Keep a copy of the file.
 
    1. Test case: Launch LeBake.<br>
       Expected: The data file loads. The customer's preorder panel shows `Delivery` as the method and no

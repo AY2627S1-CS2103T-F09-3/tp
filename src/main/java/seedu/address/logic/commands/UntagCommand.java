@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import seedu.address.commons.core.index.Index;
@@ -94,6 +95,11 @@ public class UntagCommand extends Command {
 
         return index.equals(otherUntagCommand.index)
                 && tag.equals(otherUntagCommand.tag);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(index.getZeroBased(), tag);
     }
 
     @Override

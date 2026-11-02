@@ -11,7 +11,9 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -149,6 +151,18 @@ public class UntagCommandTest {
 
         // different tag -> returns false
         assertFalse(command.equals(new UntagCommand(INDEX_FIRST_PERSON, new Tag("VIP"))));
+    }
+
+    @Test
+    public void hashCode_equalCommands_sameHashCodeAndSetMembership() {
+        UntagCommand command = new UntagCommand(INDEX_FIRST_PERSON, new Tag("friends"));
+        UntagCommand equalCommand = new UntagCommand(Index.fromOneBased(1), new Tag("friends"));
+        Set<UntagCommand> commands = new HashSet<>();
+        commands.add(command);
+
+        assertEquals(command, equalCommand);
+        assertEquals(command.hashCode(), equalCommand.hashCode());
+        assertTrue(commands.contains(equalCommand));
     }
 
     @Test
