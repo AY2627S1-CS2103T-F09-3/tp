@@ -1178,8 +1178,8 @@ testers are expected to do more *exploratory* testing.
 Unless stated otherwise, start each test subsection with fresh sample data using the
 [sample-data setup](#setting-up-and-resetting-sample-data). Run the steps within each subsection in order,
 keeping any changes needed by later steps. Reset between groups only when explicitly instructed. For tests that
-edit the data file directly, close LeBake before every edit and follow that test's specific backup and restoration
-instructions.
+edit the data file directly, close LeBake before every edit unless the test explicitly requires it to stay running.
+Follow that test's specific backup and restoration instructions.
 
 ### Setting up and resetting sample data
 
@@ -1206,6 +1206,9 @@ are relative to this folder. Always launch LeBake from a terminal opened in the 
       Expected: The original six sample customers reappear in their saved order, with Alex Yeoh first.
 
 ### Launch and shutdown
+
+Run these groups in order. The initial-launch group starts in an empty test folder instead of applying the
+sample-data reset first. Keep the same folder and saved preferences for the remaining groups.
 
 1. Initial launch
 
@@ -1259,7 +1262,7 @@ Run `list` before starting.
 1. Run `help`.<br>
    Expected: `Showing help in the side panel.` The side panel shows **Help**, with the format of every command and the
    User Guide URL.
-1. Click **Copy URL**, then paste into a text editor.<br>
+1. Scroll to the bottom of **Help**, click **Copy URL**, then paste into a text editor.<br>
    Expected: The User Guide URL is pasted.
 1. Run `add` with nothing after it.<br>
    Expected: An invalid command format error. Help stays in the side panel.
@@ -1277,7 +1280,7 @@ Run `list` before starting.
    Expected: Alex Yeoh is listed. `Filters · Match all` appears with separate `Name: alex`, `Phone: 874`,
    `Email: example.com`, `Address: geylang` and `Tag: friends` badges, in that order. Narrowing the window wraps
    badges onto additional rows.
-1. Run `find a/` followed by a long address fragment, including spaces.<br>
+1. Run `find a/Block 123 near the main entrance beside the sheltered walkway opposite the community centre with collection at the side gate after calling the customer on arrival`.<br>
    Expected: The entire fragment is visible in a wrapping `Address` badge, even if no customers match. No hover or
    expansion action is needed. Widening the window reflows the badge.
 1. Run `track`, then `track s/PENDING`.<br>
@@ -1440,8 +1443,8 @@ Run the steps within each group in order. The save-failure group below has its o
    1. Run `exit`, then relaunch with `java -jar LeBake.jar` from the same test folder.<br>
       Expected: LeBake closes and reopens with an empty list; cleared customers and preorders do not return.
 
-   Repeat this group using `sort date` instead of `group postal`. Zoe must still appear before Amy after clearing,
-   confirming date sorting was reset too.
+   Reset to fresh sample data, then repeat this group using `sort date` instead of `group postal`. Zoe must still
+   appear before Amy after clearing, confirming date sorting was reset too.
 
 1. Entering exit while clear confirmation is pending
 
@@ -1461,7 +1464,7 @@ Run the steps within each group in order. The save-failure group below has its o
 
 1. Typed exit on a save failure, compared with menu and window closing
 
-   1. Start LeBake with fresh sample data in the disposable test folder.
+   1. Start LeBake with fresh sample data in the disposable test folder, then run `list` to ensure the data file exists.
    1. While LeBake is still running, move `data/lebake.json` to a backup location outside the `data` folder.
    1. Open a terminal in the disposable test folder. Run the following commands to create a directory named
       `data/lebake.json` and a marker file named `marker.txt` inside it:
@@ -1586,7 +1589,8 @@ Use these command templates for name, email and address cases:
       Expected: No tag is added. The status message shows `Invalid command format!`, followed by the usage instructions for `tag`.
 
    1. Other incorrect tag commands to try: `tag`, `tag 1`, `tag t/vip`, `tag x t/vip`<br>
-      Expected: Similar to previous.
+      Expected: Each shows `Invalid command format!`, followed by the usage instructions for `tag`. No tags or
+      other customer data are changed.
 
    1. Test case: `tag 0 t/!`<br>
       Expected: No tag is added. The index format error and usage instructions are shown, rather than the tag constraint message, because the index format is checked first.
@@ -1672,13 +1676,15 @@ and the displayed list remain unchanged.
 
 1. Preserving a preorder and saving tag removal
 
-   1. Prerequisites: Use a saved customer with a preorder. Run `list`, note their displayed index as `INDEX`, and record their contact details, preorder details, and fulfilment status. Run `tag INDEX t/untagtest`, replacing `INDEX` with that number.
+   1. Prerequisites: Run `list`. Alex Yeoh is at index 1 with the tag `friends`, a pending Pineapple Tarts item and
+      a prepared Almond Cookies item. Record his contact and fulfilment details, then run `tag 1 t/untagtest`.
 
-   1. Test case: `untag INDEX t/untagtest`<br>
-      Expected: Only `untagtest` is removed. Other tags, contact details, preorder details, and fulfilment status are unchanged.
+   1. Test case: `untag 1 t/untagtest`<br>
+      Expected: Only `untagtest` is removed. Alex retains `friends`, his contact and fulfilment details, and both
+      preorder items with their original quantities and statuses.
 
-   1. Test case: Close and relaunch the application, then locate the same customer.<br>
-      Expected: The removed tag remains absent. The customer's other tags, contact details, and preorder are preserved.
+   1. Test case: Run `exit`, relaunch from the same test folder, then run `find n/Alex`.<br>
+      Expected: Alex is displayed at index 1. The removed tag remains absent, and his other data is preserved.
 
 ### Unsupported prefix diagnostics
 
@@ -1998,18 +2004,19 @@ preorder. Run the steps in order. For every rejected command, check that no card
 1. Try `preorder 0 f/2026-12-24`, `preorder f/2026-12-24` and `preorder x m/delivery`.<br>
    Expected: `Invalid command format!`, followed by the usage instructions for `preorder`.
 1. Run `preorder 100 m/delivery` (where 100 is larger than the list size).<br>
-   Expected: `The person index provided is invalid.`
+   Expected: `The customer index provided is invalid.`
 1. Run `find n/Bernice`, then `preorder 1 m/delivery`.<br>
    Expected: Bernice Yu's method changes to `DELIVERY`. Only Bernice remains displayed; the search is kept.
 
 ### Loading preorder data
 
-These steps edit the data file; close LeBake before each edit.
+These steps edit the data file; close LeBake before each edit. Keep an unmodified sample-data backup outside
+the `data` folder. Restore it before each invalid-quantity variation and before starting the next group.
 
 1. Loading a data file with an invalid item
 
-   1. Prerequisites: Keep a copy of `data/lebake.json`. Then change the `"quantity"` of the first customer's first
-      item (Alex Yeoh's `Pineapple Tarts` in the sample data) to `"0"`.
+   1. Prerequisites: Change the `"quantity"` of the first customer's first item (Alex Yeoh's `Pineapple Tarts` in
+      the sample data) to `"0"`.
 
    1. Test case: Launch LeBake.<br>
       Expected: An error dialog appears before the main window and reports `Person 1: item 1: invalid quantity.`
@@ -2019,14 +2026,15 @@ These steps edit the data file; close LeBake before each edit.
       Expected: LeBake exits, and the invalid file is unchanged. Restore the valid file from your copy and relaunch;
       the saved customers and preorders load normally.
 
-   1. Test case: Repeat with the item's `"quantity"` set to `null`, and then with the `"quantity"` line removed.<br>
+   1. Test case: Repeat from the valid backup with the item's `"quantity"` set to `null`, and then repeat from
+      the valid backup with the `"quantity"` line removed.<br>
       Expected: The dialog reports `Person 1: item 1: missing quantity.` Dismissing it exits LeBake and leaves
       the file unchanged. The log retains the detailed error `Item's Quantity field is missing!`.
 
 1. Loading hand-edited fulfilment details
 
-   1. Prerequisites: In `data/lebake.json`, change the first customer's (Alex Yeoh's) `"method"` to `"delivery"`
-      and their `"handoverNotes"` to `""`. Keep a copy of the file.
+   1. Prerequisites: Restore the unmodified sample-data backup. In `data/lebake.json`, change the first customer's
+      (Alex Yeoh's) `"method"` to `"delivery"` and their `"handoverNotes"` to `""`. Keep a copy of this valid file.
 
    1. Test case: Launch LeBake.<br>
       Expected: The data file loads. The customer's preorder panel shows `Delivery` as the method and no
@@ -2034,7 +2042,7 @@ These steps edit the data file; close LeBake before each edit.
 
    1. Test case: Close LeBake, change the same `"method"` to `"pickup"`, then launch LeBake.<br>
       Expected: An error dialog appears before the main window and reports `Person 1: invalid preorder method.`
-      for the first customer. Dismissing it exits LeBake and leaves the file unchanged. Restore the file from
+      Dismissing it exits LeBake and leaves the file unchanged. Restore the file from
       your copy before relaunching.
 
 ### Grouping customers by postal code
@@ -2175,8 +2183,10 @@ Run `list` before starting.
 
 ### Saving data
 
-Close LeBake before changing its data file. For the missing-file test, move the test folder's `data/lebake.json`
-aside before launching; follow the remaining tests' specific backup and restoration instructions.
+Run these groups in order without resetting to fresh sample data between them. Keep the valid backup created
+in the **Valid manual edit** group for the remaining groups. Close LeBake before changing its data file. For the
+missing-file test, move the test folder's `data/lebake.json` aside before launching; follow the remaining tests'
+specific backup and restoration instructions.
 
 1. Missing data file
 
@@ -2186,10 +2196,10 @@ aside before launching; follow the remaining tests' specific backup and restorat
 
 1. Valid manual edit
 
-   1. Prerequisites: In the saved file, change one customer's email to `updated@example.com`. Keep a backup of this
-      valid file.
+   1. Prerequisites: In the saved file, change Alex Yeoh's email to `updated@example.com`. Keep a backup of this
+      valid file outside the `data` folder.
    1. Test case: Launch LeBake.<br>
-      Expected: The saved customers load, and the edited email is shown. Close the app before the next test.
+      Expected: The saved customers load, and Alex's edited email is shown. Close the app before the next test.
 
 1. Malformed JSON
 
