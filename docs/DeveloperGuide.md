@@ -1091,11 +1091,15 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **Extensions**
 
-* 1a. The customer cannot be found.
+* 1a. The intended customer is not found.
 
-    * 1a1. LeBake shows an error message.
+  Use case ends.
 
-      Use case resumes at step 1.
+* 2a. The customer selection is invalid.
+
+    * 2a1. LeBake shows an error message.
+
+      Use case resumes at step 2.
 
 * 3a. The item information is invalid.
 
@@ -1116,17 +1120,23 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **Extensions**
 
-* 1a. No pre-order items match the chosen status.
+* 1a. The user does not provide a status.
 
-    * 1a1. LeBake shows an empty list.
-
-      Use case ends.
-
-* 1b. The user does not provide a status.
-
-    * 1b1. LeBake finds items with an active status.
+    * 1a1. LeBake finds items with an active status.
 
       Use case resumes at step 2.
+
+* 1b. The status is invalid.
+
+    * 1b1. LeBake shows an error message.
+
+      Use case resumes at step 1.
+
+* 2a. No pre-order items match the chosen status.
+
+    * 2a1. LeBake shows an empty list.
+
+      Use case ends.
 
 **Use case: U6. Update a pre-order item's fulfilment status**\
 **System: LeBake**\
@@ -1160,7 +1170,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 **MSS**
 
 1. User finds a customer (<u>U2. Find a customer</u>).
-2. User requests to set one or more shared fulfilment details: date, method or handover notes.
+2. User requests to set or clear one or more shared fulfilment details: date, method or handover notes.
 3. LeBake updates the customer's pre-order without changing its items.
 4. LeBake displays the updated fulfilment details.
 
@@ -1168,23 +1178,39 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **Extensions**
 
-* 1a. The customer cannot be found.
+* 1a. The intended customer is not found.
 
-    * 1a1. LeBake shows an error message.
+  Use case ends.
 
-      Use case resumes at step 1.
-
-* 2a. A fulfilment detail is invalid, or no detail is provided.
+* 2a. The customer selection is invalid.
 
     * 2a1. LeBake shows an error message.
 
       Use case resumes at step 2.
 
-* 2b. The customer has no pre-order and provides at least one nonempty detail.
+* 2b. A fulfilment detail is invalid, or no detail is provided.
 
-    * 2b1. LeBake creates an empty pre-order with the supplied details.
+    * 2b1. LeBake shows an error message.
+
+      Use case resumes at step 2.
+
+* 2c. The customer has no pre-order, and the user supplies at least one nonempty detail.
+
+    * 2c1. LeBake creates an empty pre-order with the supplied details.
 
       Use case resumes at step 3.
+
+* 2d. The customer has no pre-order, and every detail the user supplies is empty.
+
+    * 2d1. LeBake shows that there is nothing to clear and makes no changes.
+
+      Use case ends.
+
+* 3a. The supplied date is before today.
+
+    * 3a1. LeBake saves the date and shows a note that it is in the past.
+
+      Use case resumes at step 4.
 
 ### Non-Functional Requirements
 
