@@ -1188,7 +1188,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Non-Functional Requirements
 
-1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
+1.  Should work on any _mainstream OS_ and must run on Java `25` without requiring any other Java version to be installed.
 2.  Should support storing up to 1,000 customer details.
 3.  Should display the result or an error message within 3 seconds of submitting a command.
 4.  User with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
