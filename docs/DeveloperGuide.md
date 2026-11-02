@@ -1298,23 +1298,23 @@ After each command above, verify that you can immediately type the next command 
 
 ### Preserving searches after customer changes
 
-Use a test copy of LeBake without customers whose names contain `SearchTest` or `OtherTest`.
+Run `list` and confirm that all six sample customers are displayed in their original order. The name fragment
+`Li` matches Charlotte Oliveiro and David Li. After each addition or edit below, the name filter must remain active.
 
-1. Add two customers:
-   * `add n/SearchTest Alice p/81111111 e/searchalice@example.com a/Test Street c/123456`
-   * `add n/SearchTest Ben p/82222222 e/searchben@example.com a/Test Street c/123456`
-1. Run `find n/SearchTest`.<br>
-   Expected: Only those two customers are shown.
-1. Run `add n/SearchTest Cara p/83333333 e/searchcara@example.com a/Test Street c/123456`.<br>
-   Expected: The new customer joins the results; only the three matching customers are shown.
-1. Run `add n/OtherTest Dana p/84444444 e/otherdana@example.com a/Other Street c/123456`.<br>
-   Expected: The customer is saved, and the three search results remain displayed.
-1. Run `edit 1 n/OtherTest Alice`.<br>
-   Expected: The edited customer disappears. `SearchTest Ben` and `SearchTest Cara` remain at indexes 1 and 2.
+1. Run `find n/Li`.<br>
+   Expected: Only Charlotte Oliveiro (1) and David Li (2) are shown.
+1. Run `add n/Liam Tan p/81111111 e/liam@example.com a/Test Street c/123456`.<br>
+   Expected: Liam joins the results. Only Charlotte (1), David (2) and Liam (3) are shown.
+1. Run `add n/Beth Ong p/82222222 e/beth@example.com a/Other Street c/123456`.<br>
+   Expected: Beth is saved but does not match `Li`. The same three customers remain displayed at the same indexes.
+1. Run `edit 1 n/Charlotte Tan`.<br>
+   Expected: Charlotte disappears from the results. David Li and Liam Tan remain at indexes 1 and 2.
 1. Run `edit 1 p/89999999`.<br>
-   Expected: Ben's phone number changes; only Ben and Cara remain displayed.
+   Expected: David's phone number changes; only David and Liam remain displayed at indexes 1 and 2.
 1. Run `list`.<br>
-   Expected: All customers are shown, including `OtherTest Alice` and `OtherTest Dana`.
+   Expected: All eight customers are shown in saved order: Alex Yeoh, Bernice Yu, Charlotte Tan, David Li,
+   Irfan Ibrahim, Roy Balakrishnan, Liam Tan and Beth Ong. Charlotte's new name and David's new phone number are
+   retained. Existing tags and preorders are unchanged.
 
 ### Duplicate customer feedback
 
@@ -1490,25 +1490,78 @@ Run the steps within each group in order. The save-failure group below has its o
 
 ### Customer field length boundaries
 
-Use a test copy with a saved customer. Prepare otherwise valid values at these lengths, measuring names after
-normalization. Run `list` before each case and use the current displayed index; avoid duplicate names in `add` cases.
+Run each numbered group independently, resetting to fresh sample data before it. Run `list`; Alex Yeoh is at
+index 1 and has the tag `friends`. Replace `VALUE` in the commands below with the constructed text, without quotes
+or the word `VALUE` itself.
 
-| Field | Lengths (N−1 / N / N+1) | Commands |
-|-------|------------------------|----------|
-| Name | 99 / 100 / 101 | `add`, `edit` with `n/` |
-| Email | 253 / 254 / 255 | `add`, `edit` with `e/` |
-| Address | 299 / 300 / 301 | `add`, `edit` with `a/` |
-| Tag | 29 / 30 / 31 | `tag`, `find`, `untag` with `t/` |
+| Field | Lengths (N−1 / N / N+1) | How to construct `VALUE` |
+|-------|------------------------|-------------------------|
+| Name | 99 / 100 / 101 | Repeat `A` 99 / 100 / 101 times. |
+| Email | 253 / 254 / 255 | Join 64 copies of `a`, `@`, 63 copies of `b`, `.`, 63 copies of `c`, `.`, then 60 / 61 / 62 copies of `d`, with no spaces. |
+| Address | 299 / 300 / 301 | Repeat `A` 299 / 300 / 301 times. |
+| Tag | 29 / 30 / 31 | Repeat `T` 29 / 30 / 31 times. |
 
-1. N−1 and N: Expect acceptance. Restart after saving maximum values and verify they are retained. For tags,
-   add, find and remove each value, using the index shown in the search results for removal.
-1. N+1: Expect a field-specific error stating its maximum character limit, with data, search state and saved
-   JSON unchanged. Repeat with an active search.
-1. Normalization and counting: Use extra spaces in a name whose normalized length is 100; expect acceptance.
-   Addresses containing 150 copies of 🍰 are accepted (300 UTF-16 units); appending `A` is rejected.
-1. Error precedence: Edit an email to 254 copies of `a`, then 255. Expect the format message, then the length message.
-1. Search exceptions: `find n/` with 101 copies of `A` is accepted with no matches; `find t/` with 31 copies of `T`
-   is rejected.
+Use these command templates for name, email and address cases:
+
+| Field | Adding a customer | Editing Alex |
+|-------|-------------------|--------------|
+| Name | `add n/VALUE p/81111111 e/length@example.com a/Test Street c/123456` | `edit 1 n/VALUE` |
+| Email | `add n/Length Test p/81111111 e/VALUE a/Test Street c/123456` | `edit 1 e/VALUE` |
+| Address | `add n/Length Test p/81111111 e/length@example.com a/VALUE c/123456` | `edit 1 a/VALUE` |
+
+1. Accepting and saving N−1 and N customer fields
+
+   For each name, email and address value at N−1 and N, treat the corresponding `add` and `edit` templates as
+   separate cases. Complete these steps for each case:
+
+   1. Reset to fresh sample data and run `list` so added customers and edited names do not carry over.
+   1. Run the command template with the constructed value.<br>
+      Expected: Each `add` succeeds and creates customer 7. Each `edit` succeeds and changes only Alex's supplied
+      field; the other five customers are unchanged.
+   1. Run `exit`, relaunch from the same test folder, then run `list`.<br>
+      Expected: The supplied value is retained in the added customer or Alex's edited field, including at N.
+
+1. Accepting, saving and removing N−1 and N tags
+
+   Complete these steps with the 29-character tag, then repeat them with the 30-character tag:
+
+   1. Reset to fresh sample data, run `list`, then run `tag 1 t/VALUE`.<br>
+      Expected: The tag is added to Alex alongside `friends`.
+   1. Run `exit`, relaunch from the same test folder, then run `find t/VALUE`.<br>
+      Expected: The tag remains saved, and only Alex is displayed at index 1.
+   1. Run `untag 1 t/VALUE`, then `list`.<br>
+      Expected: The long tag is removed, and all six customers are shown. Alex retains `friends` and his preorder.
+
+1. Rejecting N+1 values
+
+   1. Use each N+1 name, email and address value with both corresponding command templates. For the N+1 tag,
+      try `tag 1 t/VALUE`, `find t/VALUE` and `untag 1 t/VALUE`. Run each command separately.<br>
+      Expected: Every command is rejected with the relevant maximum: name 100, email 254, address 300 or tag 30
+      characters. All six sample customers, their data and the saved JSON remain unchanged.
+   1. Run `find n/Alex`, then repeat the rejected commands, still using displayed index 1.<br>
+      Expected: The same length errors appear. Alex remains the only displayed customer, and the active name
+      filter, customer data and saved JSON are unchanged after each rejection.
+
+1. Name normalization
+
+   1. Construct a name from 49 copies of `A`, three spaces and 50 copies of `B`, with two extra spaces at each end.
+      Use it in `edit 1 n/VALUE`.<br>
+      Expected: The edit succeeds. The saved name has one internal space and no surrounding spaces, for a total
+      normalized length of 100.
+
+1. Error precedence
+
+   1. Run `edit 1 e/VALUE` with 254 copies of `a`, then with 255 copies.<br>
+      Expected: The first command shows the email-format constraints; the second shows the maximum length of 254.
+      Alex's original email and saved data are unchanged after both rejections.
+
+1. Search exceptions
+
+   1. Run `find n/VALUE` with 101 copies of `A`.<br>
+      Expected: The search is accepted with no matches; the stored-name length limit does not apply to name queries.
+   1. Run `find t/VALUE` with 31 copies of `T`.<br>
+      Expected: The tag-length error appears. The previous name filter remains active with an empty displayed list,
+      and all six sample customers remain saved.
 
 ### Tagging a customer
 
@@ -1765,32 +1818,40 @@ have no preorder. Tracking commands should preserve all customer and preorder da
 
 ### Adding and editing preorder items
 
-Use a disposable data copy. Run `list` and choose a customer without a preorder, noting their displayed index as `INDEX`.
-Record their contact details and tags before starting. Replace `INDEX` in the examples with the displayed number.
+Run `list`. Irfan Ibrahim is at index 5 with the tag `classmates` and no preorder. Record his contact details
+before starting. For every rejected command below, verify that customer and preorder data, saved data and the
+displayed list remain unchanged.
 
-1. Run `edititem INDEX i/1 q/3`.<br>
+1. Run `edititem 5 i/1 q/3`.<br>
    Expected: `This customer has no preorder.` Nothing changes.
-1. Run `additem INDEX d/Cake q/2 s/pending r/Less sugar`.<br>
-   Expected: A preorder is created with item 1. The success message includes item number, customer, name, quantity and status.
-   The card displays the remark. Contact details and tags are unchanged.
+1. Run `additem 5 d/Cake q/2 s/pending r/Less sugar`.<br>
+   Expected: `Added item 1 for Irfan Ibrahim: Cake (quantity: 2, PENDING)`. A preorder is created with item 1 and
+   the remark `Less sugar`. Irfan's contact details and `classmates` tag are unchanged.
 1. Repeat the same command.<br>
-   Expected: A separate identical item 2 is appended; item 1 is unchanged.
-1. Run `edititem INDEX i/2 q/3`, followed by `edititem INDEX i/2 r/`.<br>
+   Expected: `Added item 2 for Irfan Ibrahim: Cake (quantity: 2, PENDING)`. A separate identical item 2 is appended;
+   item 1 is unchanged.
+1. Run `edititem 5 i/2 q/3`, followed by `edititem 5 i/2 r/`.<br>
    Expected: Only item 2 changes. Its quantity becomes 3 and its remark is removed. Its name and status are preserved.
-1. Try `additem INDEX d/Cake q/0 s/invalid`, then `edititem INDEX i/2 q/0 s/invalid`.<br>
+1. Try `additem 5 d/Cake q/0 s/invalid`, then `edititem 5 i/2 q/0 s/invalid`.<br>
    Expected: Both report the quantity constraint first, with no data changes.
-1. Try `additem INDEX d/Cake d/Tarts`, then `edititem INDEX d/Cake d/Tarts`.<br>
+1. Try `additem 5 d/Cake d/Tarts`, then `edititem 5 d/Cake d/Tarts`.<br>
    Expected: Both report duplicate `d/` before the missing required fields, with no data changes.
-1. Try `additem INDEX d/Cake q/2 s/pending r/`, `edititem INDEX i/2`, and `edititem INDEX i/999 q/1`.<br>
+1. Try `additem 5 d/Cake q/2 s/pending r/`, `edititem 5 i/2`, and `edititem 5 i/999 q/1`.<br>
    Expected: Respectively, a remark constraint error, no-changes error, and invalid-item-index error. No data changes.
-1. Run `track s/pending`. Using the current displayed indices, mark both Cake items completed with `edititem`.<br>
-   Expected: The customer remains until their final pending item is completed, then leaves that filtered view.
-   Run `list` to confirm that both items and the customer remain stored.
-1. Close and reopen the application.<br>
-   Expected: Both items retain their quantities and statuses; the second item's remark remains absent.
-1. Run `list`, then `edititem INDEX i/1 s/pending`.<br>
-   Expected: Only the status of item 1 changes. The success message ends with `(quantity: 2, PENDING)`, and the card
-   still shows `Qty 2`.
+1. Run `track s/pending`.<br>
+   Expected: Only Alex Yeoh (1) and Irfan Ibrahim (2) are displayed. Both of Irfan's Cake items are highlighted.
+1. Run `edititem 2 i/1 s/completed`.<br>
+   Expected: Irfan remains at displayed index 2 because his second Cake item is still pending.
+1. Run `edititem 2 i/2 s/completed`.<br>
+   Expected: Irfan disappears from the tracked view, leaving only Alex. Both Cake items remain saved as completed.
+1. Run `list`.<br>
+   Expected: All six customers return in saved order. Irfan is at index 5 with Cake quantities 2 and 3. Item 1
+   retains `Less sugar`, item 2 has no remark, and his contact details and tag are unchanged.
+1. Run `exit`, relaunch from the same test folder, then run `list`.<br>
+   Expected: Irfan is still at index 5 with both completed items, their quantities and the same remarks.
+1. Run `edititem 5 i/1 s/pending`.<br>
+   Expected: `Edited item 1 for Irfan Ibrahim: Cake (quantity: 2, PENDING)`. Only item 1's status changes; its
+   quantity remains 2 and item 2 remains completed with quantity 3.
 
 ### Deleting a preorder item
 
@@ -1827,19 +1888,26 @@ is customer 5 without a preorder.
 
 ### Updating items under an active `find` filter
 
-Use a disposable copy of the sample data.
+Run `list`. Alex Yeoh is at index 1 with Pineapple Tarts as item 1 and Almond Cookies as item 2.
 
 1. Run `find n/Alex d/Pineapple Tarts`.<br>
-   Expected: Alex Yeoh is displayed with Pineapple Tarts as a matching item.
+   Expected: Only Alex is displayed at index 1, with Pineapple Tarts as a matching item.
 1. Run `additem 1 d/Cake q/1 s/pending`.<br>
    Expected: Alex remains displayed because the existing Pineapple Tarts item still matches the active filter.
    Cake is appended as item 3.
 1. Run `deleteitem 1 i/1`.<br>
-   Expected: Alex disappears from the results because no remaining item matches Pineapple Tarts. Run
-   `find n/Alex` to confirm that Alex remains saved with Cake and Almond Cookies.
-1. Run `find n/Alex d/Cake`, then `edititem 1 i/2 d/Tart`.<br>
-   Expected: Alex disappears from the results because the edited item no longer matches Cake. Run `find n/Alex` to
-   confirm the item is now named Tart and Alex remains saved.
+   Expected: Alex disappears from the results because no remaining item matches Pineapple Tarts. The active
+   name and item criteria remain unchanged.
+1. Run `find n/Alex`.<br>
+   Expected: Alex is still saved and is displayed at index 1. Almond Cookies is now item 1 and Cake is item 2.
+1. Run `find n/Alex d/Cake`.<br>
+   Expected: Alex remains the only displayed customer, with Cake highlighted at its full item-list index 2.
+1. Run `edititem 1 i/2 d/Tart`.<br>
+   Expected: Alex disappears because the edited item no longer matches Cake. The active name and item criteria
+   remain unchanged.
+1. Run `find n/Alex`.<br>
+   Expected: Alex is displayed again with Almond Cookies as item 1 and Tart as item 2. Tart retains Cake's
+   quantity 1 and pending status; Alex's contact details, tags and fulfilment details are unchanged.
 
 ### Deleting a preorder
 
@@ -1971,9 +2039,9 @@ These steps edit the data file; close LeBake before each edit.
 
 ### Grouping customers by postal code
 
-Use a copy of `LeBake.jar` in a new, disposable folder. Open a terminal in that folder and run
-`java -jar LeBake.jar`. The setup below clears only this disposable copy's sample data; do not use a real customer
-data folder. Enter each command separately, in order:
+This subsection uses four custom customers to test shared postal codes, shared prefixes and name ordering.
+In the disposable test folder, replace the sample customers with this test dataset by entering each command
+separately, in order:
 
 ```text
 clear
@@ -1989,9 +2057,11 @@ Expected: `clear` asks for confirmation, `confirm` empties the list, and the fou
 order is Zara, ben, Aaron, alice. All four have no tags or preorder. The fixture deliberately puts shared codes and
 shared prefixes in a different order from their names.
 
-Before each numbered group below, run `list` and check this fixture. Within a group, perform the steps in order.
-Groups that edit data include restoration steps; if a group was interrupted, repeat the setup before continuing.
-All heading checks refer to the customer list, not the separate delivery summary in the side panel.
+Each numbered group below can be run independently with this dataset. Before each group, run `list` and confirm
+the saved order, postal codes and absence of tags and preorders described above. Keep this dataset between groups;
+do not reset to the built-in sample customers. Groups that edit data include restoration steps. If the dataset
+does not match, or a group was interrupted, repeat the full setup above before continuing. All heading checks
+refer to the customer list, not the separate delivery summary in the side panel.
 
 1. Grouping identical codes and different codes with the same prefix
 
