@@ -490,8 +490,9 @@ one `Preorder`, and each `Preorder` holds the customer's `Item`s in the order th
 * `Item` has an `ItemName` of up to 200 characters, a `Quantity`, an `ItemStatus`, and an optional `Remark`.
   `ItemName` turns each run of spaces, including Unicode spaces, into one space, so `Butter   Cake` and
   `Butter Cake` are the same product in `find` and the preparation summary.
-  New item names and remarks reject forward slashes. A `Quantity` is a whole number from 1 to 999, and a `Remark`
-  is a special request of up to 100 characters.
+  `ItemName` and `Remark` reject forward slashes, so a slash is refused in a command and also stops a data file
+  from loading. A `Quantity` is a whole number from 1 to 999, and a `Remark` is a special request of up to 100
+  characters.
 * Every item has a quantity. The `Item` constructor rejects a `null` quantity, and the data file loader rejects an
   item without one (see [Saving preorders](#saving-preorders)).
 * `ItemStatus` belongs to each item, so a customer can have one item `PREPARED` while another is still
