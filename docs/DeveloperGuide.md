@@ -1246,6 +1246,8 @@ Use a fresh copy of the sample data (delete `data/lebake.json` and relaunch), th
    and `Total quantity: 5` instead of the delivery summary. The Pineapple Tarts rows of both customers are in a yellow box.
 1. Run `find d/Pineapple Tarts s/PENDING`.<br>
    Expected: The heading shows `PENDING`, and the summary counts only pending Pineapple Tarts among the current results.
+   Only items matching both the product and status are highlighted; other items remain visible and unhighlighted, with
+   their original item numbers.
 1. Run `find n/Alex d/Pineapple Tarts`.<br>
    Expected: Only customers matching both criteria contribute to the summary; it does not include other customers who
    ordered Pineapple Tarts.
