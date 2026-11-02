@@ -1203,11 +1203,40 @@ Given below are instructions to test the app manually.
 testers are expected to do more *exploratory* testing.
 </box>
 
+### Setting up and resetting sample data
+
+Use a separate, writable test folder so that manual tests do not affect real customer data. All paths below
+are relative to this folder. Always launch LeBake from a terminal opened in the same folder.
+
+1. Initial setup
+
+   1. Download `LeBake.jar` and copy it into the empty test folder.
+
+   1. Run `java -jar LeBake.jar` from that folder.<br>
+      Expected: The GUI opens with six sample customers because `data/lebake.json` does not exist.
+
+   1. Run `list`, then close LeBake.<br>
+      Expected: All six customers are displayed, and `data/lebake.json` contains the saved sample data.
+
+1. Resetting before a test section or independent group
+
+   1. Close LeBake before changing any data files.
+
+   1. Remove only the test folder's `data/lebake.json` to load the built-in sample data again.
+
+   1. Run `java -jar LeBake.jar` from the same test folder, then run `list`.<br>
+      Expected: The original six sample customers reappear in their saved order, with Alex Yeoh first.
+
+Whenever a test below requires fresh sample data, follow these reset steps. Run the steps within each group
+in order, keeping any changes needed by later steps in that group. For tests that edit the data file directly,
+close LeBake before every edit and follow that test's specific backup and restoration instructions.
+
 ### Launch and shutdown
 
 1. Initial launch
 
-   1. Download the JAR file and copy it into an empty folder.
+   1. Download the JAR file and copy it into an empty, writable test folder as described in the [sample-data
+      setup](#setting-up-and-resetting-sample-data).
 
    1. Open a terminal in that folder and run `java -jar LeBake.jar`.<br>
       Expected: The GUI opens with a set of sample customers. The window size may not be optimal.
@@ -1236,7 +1265,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Using the side panel
 
-Use a fresh copy of the sample data (delete `data/lebake.json` and relaunch), then run `list`.
+Start with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data), then run `list`.
 
 1. Look at the side panel on the right.<br>
    Expected: It shows **Delivery preparation** with `2 outstanding customer stop(s) | 2 postal group(s)`, and stops for
@@ -1258,6 +1287,8 @@ Use a fresh copy of the sample data (delete `data/lebake.json` and relaunch), th
    Expected: Help shows in the side panel again.
 
 ### Displaying active search criteria
+
+Start with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data).
 
 1. Run `list`.<br>
    Expected: `Showing: All customers` appears above the list, with no badges.
@@ -1306,7 +1337,8 @@ Use a test copy of LeBake without customers whose names contain `SearchTest` or 
 
 ### Duplicate customer feedback
 
-Use a disposable copy of the sample data. For every rejected command below, verify that customer details, tags,
+Start with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data). For every rejected
+command below, verify that customer details, tags,
 preorders, saved data, active search criteria and displayed results remain unchanged.
 
 1. Run `list`.<br>
@@ -1337,10 +1369,9 @@ preorders, saved data, active search criteria and displayed results remain uncha
 
 ### Deleting a customer
 
-Use a disposable copy of `LeBake.jar` in a separate, writable test folder. From that folder, run
-`java -jar LeBake.jar` with no `data/lebake.json` to load the six sample customers. Run `list`, close LeBake, and
-back up `data/lebake.json` outside the `data` folder. Before each group below, restore that backup while LeBake is
-closed and relaunch from the same folder. Restore it again after testing if you want the original sample data.
+Follow the [sample-data setup](#setting-up-and-resetting-sample-data) and reset to fresh sample data before each group
+below.
+Reset again after testing if you want the original sample data.
 
 For every rejected deletion below, compare customer details, tags, preorders, saved data, active search criteria
 and the displayed customer list with their state immediately before the command; all must remain unchanged.
@@ -1366,7 +1397,8 @@ and the displayed customer list with their state immediately before the command;
 
 1. Deleting a customer with a preorder from a filtered list, then checking persistence
 
-   1. Run `list` after restoring the sample-data backup.<br>
+   1. Reset to fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data),
+      then run `list`.<br>
       Expected: Six customers are shown, with Alex Yeoh at index 1 and Bernice Yu at index 2. Bernice has the
       `colleagues` and `friends` tags and a preorder containing one `Butter Cake` item with status `COMPLETED`.
 
@@ -1391,7 +1423,7 @@ and the displayed customer list with their state immediately before the command;
 
 ### Clearing customers and exiting
 
-Use a disposable copy of the sample data for this group.
+Start this group with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data).
 
 1. Run `clear`.<br>
    Expected: `This will permanently delete all customers and their preorder data. Type 'confirm' to proceed; any other input cancels and is discarded.`
@@ -1429,7 +1461,8 @@ normalization. Run `list` before each case and use the current displayed index; 
 
 1. Tagging a customer while all customers are being shown
 
-   1. Prerequisites: Start with the sample data. List all customers using the `list` command. The first customer is `Alex Yeoh`, who has the tag `friends`.
+   1. Prerequisites: Start with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data).
+      List all customers using the `list` command. The first customer is `Alex Yeoh`, who has the tag `friends`.
 
    1. Test case: `tag 1 t/regular`<br>
       Expected: `regular` is added to the first customer's tags. The status message shows `Added tag [regular] to Alex Yeoh`.
@@ -1464,7 +1497,10 @@ normalization. Run `list` before each case and use the current displayed index; 
 
 ### Untagging a customer
 
-Run each group below independently, starting with the sample data unless stated otherwise. Within a group, run the test cases in order. For every rejected command, verify that all customers' tags, contact details, preorders, and the displayed list remain unchanged.
+Run each group below independently, resetting to fresh sample data using the [sample-data
+setup](#setting-up-and-resetting-sample-data) unless stated otherwise. Within a group, run the test cases in order. For
+every rejected command, verify that all customers' tags, contact details, preorders, and the displayed list remain
+unchanged.
 
 1. Removing tags while all customers are being shown
 
@@ -1541,7 +1577,7 @@ Run each group below independently, starting with the sample data unless stated 
 
 ### Unsupported prefix diagnostics
 
-Use a disposable copy of the sample data and run `list`.
+Start with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data), then run `list`.
 For every rejected command below, confirm that customer data, saved data, active search criteria and displayed results
 remain unchanged.
 
@@ -1611,7 +1647,8 @@ remain unchanged.
 
 ### Tracking preorders
 
-Start each group below with a fresh, disposable copy of the sample data and run `list`. Run the steps within each
+Start each group below with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data), then
+run `list`. Run the steps within each
 group in order. Initially, Alex Yeoh has one pending and one prepared item, Bernice Yu has one completed item,
 Charlotte Oliveiro has one prepared item, David Li has an empty preorder, and Irfan Ibrahim and Roy Balakrishnan
 have no preorder. Tracking commands should preserve all customer and preorder data.
@@ -1703,7 +1740,8 @@ Record their contact details and tags before starting. Replace `INDEX` in the ex
 
 ### Deleting a preorder item
 
-Use a disposable copy of the sample data and run `list`. Initially, Alex Yeoh is customer 1 with two items,
+Start with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data), then run `list`.
+Initially, Alex Yeoh is customer 1 with two items,
 Charlotte Oliveiro is customer 3 with one item, David Li is customer 4 with an empty preorder, and Irfan Ibrahim
 is customer 5 without a preorder.
 
@@ -1730,12 +1768,14 @@ is customer 5 without a preorder.
    that she remains a customer. The success message identifies her deleted item, quantity and status.
 1. Close and reopen the app.<br>
    Expected: Alex's and Charlotte's preorders remain empty. Their other customer details are preserved.
-1. Using a fresh sample-data copy, run `list`, then `deleteitem 1 i/1`.<br>
+1. Reset to fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data), run `list`, then
+   `deleteitem 1 i/1`.<br>
    Expected: Only Pineapple Tarts is removed. Almond Cookies remains and is renumbered from 2 to 1.
 
 ### Deleting a preorder
 
-Start with the sample data. List all customers using the `list` command. The first customer is `Alex Yeoh`, whose preorder has two items.
+Start with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data). List all customers
+using the `list` command. The first customer is `Alex Yeoh`, whose preorder has two items.
 
 1. Run `deleteorder 1`.<br>
    Expected: The status message shows `Deleted preorder for Alex Yeoh`. The preorder panel, with both of its items, disappears from the card. The name, phone number, email, address and tags are unchanged.
@@ -1750,7 +1790,8 @@ Start with the sample data. List all customers using the `list` command. The fir
 
 ### Setting delivery or collection details
 
-Use a fresh copy of the sample data (delete `data/addressbook.json` and relaunch), then run `list`. `Alex Yeoh` (1) has
+Start with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data), then run `list`.
+`Alex Yeoh` (1) has
 a delivery on 20 Dec 2026 with the notes `Call on arrival`; `Irfan Ibrahim` (5) and `Roy Balakrishnan` (6) have no
 preorder. Run the steps in order. For every rejected command, check that no card changes.
 
@@ -1790,8 +1831,9 @@ preorder. Run the steps in order. For every rejected command, check that no card
 
 ### Loading preorder data
 
-These steps edit the data file, so use a copy of LeBake in an empty folder. Launch it once and run `list` to create
-`data/lebake.json`, then close LeBake before each edit.
+Follow the [sample-data setup](#setting-up-and-resetting-sample-data) to create `data/lebake.json` in a separate test
+folder.
+These steps edit the data file; close LeBake before each edit.
 
 1. Loading a data file with an invalid item
 
@@ -1934,7 +1976,7 @@ All heading checks refer to the customer list, not the separate delivery summary
 
 ### Sorting customers by fulfilment date
 
-Use a fresh copy of the sample data (delete `data/lebake.json` and relaunch), then run `list`.
+Start with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data), then run `list`.
 
 1. Run `sort date`.<br>
    Expected: `Sorted 6 customer(s) by fulfilment date. Customers without a date are listed last.`
@@ -1960,8 +2002,9 @@ Use a fresh copy of the sample data (delete `data/lebake.json` and relaunch), th
 
 ### Saving data
 
-Use a copy of the packaged `LeBake.jar` in a separate test folder. From that folder, launch it with
-`java -jar LeBake.jar`. Close LeBake before changing its data file, and keep a valid backup for restoration.
+Follow the [sample-data setup](#setting-up-and-resetting-sample-data) to prepare a separate test folder.
+Close LeBake before changing its data file. For the missing-file test, move the test folder's `data/lebake.json`
+aside before launching; follow the remaining tests' specific backup and restoration instructions.
 
 1. Missing data file
 
