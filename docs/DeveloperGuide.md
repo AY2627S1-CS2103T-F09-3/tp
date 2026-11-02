@@ -1076,14 +1076,14 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 2.
 
-**Use case: U4. Record a customer's pre-order**\
+**Use case: U4. Record a customer's pre-order items**\
 **System: LeBake**\
 **Actor: User**\
 **MSS**
 
 1. User finds a customer (<u>U2. Find a customer</u>).
-2. User selects a customer and requests to record a pre-order with order details and a fulfilment status.
-3. LeBake records and displays the pre-order.
+2. User selects a customer and adds a valid item with its name, quantity, fulfilment status and optional remark.
+3. LeBake adds the item to the customer's current pre-order and displays the updated pre-order.
 
     Use case ends.
 
@@ -1093,7 +1093,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
   Use case ends.
 
-* 2a. The customer selection or order information is invalid.
+* 2a. The customer selection or item information is invalid.
 
     * 2a1. LeBake shows an error message.
 
@@ -1101,31 +1101,31 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 2b. The customer already has a pre-order.
 
-    * 2b1. LeBake updates and displays the existing pre-order.
+    * 2b1. LeBake appends the item to the existing pre-order and displays it.
 
       Use case ends.
 
-**Use case: U5. Update a pre-order's fulfilment status**\
+**Use case: U5. Update a pre-order item's fulfilment status**\
 **System: LeBake**\
 **Actor: User**\
 **MSS**
 
-1. User requests to view pre-orders with a chosen fulfilment status.
-2. LeBake shows customers with pre-orders in that status.
-3. User selects a customer and requests to change the pre-order to a valid fulfilment status.
-4. LeBake updates and displays the pre-order's fulfilment status.
+1. User requests to view customers with items in a chosen fulfilment status.
+2. LeBake shows customers with matching pre-order items.
+3. User selects a customer and requests to change one item's fulfilment status.
+4. LeBake updates that item and refreshes the displayed results.
 
     Use case ends.
 
 **Extensions**
 
-* 1a. No pre-orders match the chosen status.
+* 1a. No pre-order items match the chosen status.
 
     * 1a1. LeBake shows an empty list.
 
       Use case ends.
 
-* 3a. The customer selection is invalid.
+* 3a. The customer or item selection is invalid.
 
     * 3a1. LeBake shows an error message.
 
