@@ -494,7 +494,7 @@ Format: `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`
 * Names and remarks reject slash-containing text, including prefix-like strings such as `Cake w/ candles` and `Pack w/o nuts`. Supported prefixes still start separate fields.
 * Surrounding spaces in values are trimmed. A value of only spaces, including Unicode spaces such as an em space, is blank. Prefixes may appear in any order, but each can appear only once.
 * The item is appended to the preorder. Repeated product names, including identical items, remain separate entries.
-* Existing items, contact details and tags are preserved. The current filter remains active. Since you select the customer from the displayed results, adding an item does not remove them from those results.
+* Existing items, contact details and tags are preserved. The current filter remains active. Adding an item does not remove the customer from the displayed results.
 
 Example: `additem 1 d/Cake q/2 s/pending r/Less sugar`
 

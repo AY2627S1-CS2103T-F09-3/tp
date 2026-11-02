@@ -1554,7 +1554,7 @@ Use a disposable copy of the sample data.
 1. Run `deleteitem 1 i/1`.<br>
    Expected: Alex disappears from the results because no remaining item matches Pineapple Tarts. Run
    `find n/Alex` to confirm that Alex remains saved with Cake and Almond Cookies.
-1. Run `find n/Alex d/Cake`, then `edititem 1 i/3 d/Tart`.<br>
+1. Run `find n/Alex d/Cake`, then `edititem 1 i/2 d/Tart`.<br>
    Expected: Alex disappears from the results because the edited item no longer matches Cake. Run `find n/Alex` to
    confirm the item is now named Tart and Alex remains saved.
 
