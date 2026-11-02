@@ -638,6 +638,42 @@ name, quantity and status.
 The replacement person preserves the customer's postal code. `Preorder.withItems` preserves the fulfilment date,
 method and handover notes, including when the final item is removed. Missing optional fields remain absent.
 
+### Deleting a preorder
+
+`deleteorder INDEX` removes a customer's entire preorder, including its items, fulfilment date, method and handover
+notes. The customer remains stored with the same contact details, postal code and tags.
+
+**Parsing.** `AddressBookParser` dispatches the command to `DeleteOrderCommandParser`, which passes the arguments
+to `ParserUtil#parseIndex` and constructs a `DeleteOrderCommand`. Missing, non-positive or malformed indices, including
+extra arguments, produce `Invalid command format!` followed by the command's usage instructions.
+
+**Execution.** `DeleteOrderCommand#execute`:
+
+1. Resolves the customer from `model.getFilteredPersonList()`, using their currently displayed index. An index beyond
+   this list produces `The customer index provided is invalid.`
+1. Checks that the customer has a preorder. If not, it throws a `CommandException` with
+   `CUSTOMER has no preorder to delete.` before changing the model. A preorder with no items can still be deleted.
+1. Calls `createPersonWithoutPreorder` to construct a replacement `Person` with the same name, phone, email, address,
+   postal code and tags, and `Optional.empty()` for its preorder. `Model#setPerson` replaces the original customer.
+1. Returns `Deleted preorder for CUSTOMER`. `LogicManager` then saves the updated address book through storage.
+
+The command keeps the active search. Replacing the customer re-evaluates the displayed results, so they disappear
+from `track` or a search requiring preorder details, but remain in a matching name search. Use `list` to display all
+customers again. The preorder is saved as an empty `"preorders"` list (see [Saving preorders](#saving-preorders)).
+
+#### Design considerations
+
+**Aspect: representing a deleted preorder**
+
+* **Alternative 1 (current choice):** remove the preorder entirely using `Optional.empty()`.
+  * Pros: Distinguishes cancellation from an empty preorder awaiting items, and removes the cancelled order's
+    fulfilment details.
+  * Cons: Those details must be entered again if the customer places a new preorder.
+* **Alternative 2:** clear the items but retain an empty preorder and its fulfilment details.
+  * Pros: The details can be reused when new items are added.
+  * Cons: A cancelled order's date, method and notes could be reused unintentionally. Removing the final item with
+    `deleteitem` already supports keeping these details (see [Preorder item deletion](#preorder-item-deletion)).
+
 ### Setting fulfilment details: `preorder`
 
 `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]` sets when and how a customer's preorder is handed over.
@@ -1804,19 +1840,55 @@ Use a disposable copy of the sample data.
 
 ### Deleting a preorder
 
-Start with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data). List all customers
-using the `list` command. The first customer is `Alex Yeoh`, whose preorder has two items.
+Start each group with fresh sample data using the [sample-data setup](#setting-up-and-resetting-sample-data), then
+run `list`. Run the steps within each group in order. Initially, Alex Yeoh (1) has Pineapple Tarts and Almond Cookies,
+Charlotte Oliveiro (3) has Pineapple Tarts, David Li (4) has an empty preorder with fulfilment details, and
+Irfan Ibrahim (5) has no preorder.
 
-1. Run `deleteorder 1`.<br>
-   Expected: The status message shows `Deleted preorder for Alex Yeoh`. The preorder panel, with both of its items, disappears from the card. The name, phone number, email, address and tags are unchanged.
-1. Run `deleteorder 1` again.<br>
-   Expected: The status message shows `Alex Yeoh has no preorder to delete.` Nothing changes.
-1. Try `deleteorder 0`, `deleteorder` and `deleteorder 1 2`.<br>
-   Expected: Nothing changes. The status message shows an invalid command format error, followed by the correct format of the `deleteorder` command.
-1. Run `deleteorder 100` (where 100 is larger than the list size).<br>
-   Expected: Nothing changes. The status message shows `The customer index provided is invalid.`
-1. Run `track`, then `deleteorder` with the displayed index of `Charlotte Oliveiro`.<br>
-   Expected: The status message shows `Deleted preorder for Charlotte Oliveiro`. `Charlotte Oliveiro` disappears from the tracked view. Run `list` to confirm that `Charlotte Oliveiro` is still a customer, with no preorder panel.
+For every successful deletion, verify that the customer's name, phone, email, address, postal code and tags are
+unchanged. For every rejected command, verify that customer and preorder data, saved data, displayed results and
+active search criteria are unchanged.
+
+1. Deleting whole and empty preorders, then checking persistence
+
+   1. Run `deleteorder 1`.<br>
+      Expected: `Deleted preorder for Alex Yeoh`. Alex remains displayed. His entire preorder panel disappears,
+      including both items, the 20 Dec 2026 delivery date and the notes `Call on arrival`.
+   1. Run `deleteorder 1` again.<br>
+      Expected: `Alex Yeoh has no preorder to delete.` Nothing changes.
+   1. Run `deleteorder 4`.<br>
+      Expected: `Deleted preorder for David Li`. David remains displayed. His empty preorder panel, including the
+      23 Dec 2026 delivery date and the notes `Leave at the guardhouse`, disappears.
+   1. Run `deleteorder 5`.<br>
+      Expected: `Irfan Ibrahim has no preorder to delete.` Nothing changes.
+   1. Run `exit`, relaunch with `java -jar LeBake.jar` from the same test folder, then run `list`.<br>
+      Expected: All six customers remain. Alex and David still have no preorder. Their contact details, postal codes
+      and tags are preserved, and the other customers and their preorders are unchanged.
+
+1. Rejecting invalid input and indices
+
+   1. Try invalid inputs described in [Implementation: Deleting a preorder](#deleting-a-preorder), such as
+      `deleteorder 0`.<br>
+      Expected: Each shows `Invalid command format!` followed by the usage instructions for `deleteorder`.
+   1. Run `deleteorder 100`.<br>
+      Expected: `The customer index provided is invalid.` because only six customers are displayed.
+   1. Run `find n/Charlotte`, then `deleteorder 2`.<br>
+      Expected: `The customer index provided is invalid.` because Charlotte is the only displayed customer.
+      The name search remains active, and Charlotte's preorder is unchanged.
+
+1. Deleting from filtered lists
+
+   1. Run `track`.<br>
+      Expected: Only Alex Yeoh (1) and Charlotte Oliveiro (2) are displayed.
+   1. Run `deleteorder 2`.<br>
+      Expected: `Deleted preorder for Charlotte Oliveiro`. Charlotte disappears, leaving Alex displayed.
+      The active tracking criteria remain unchanged.
+   1. Run `find n/Bernice`, then `deleteorder 1`.<br>
+      Expected: `Deleted preorder for Bernice Yu`. Bernice remains displayed with no preorder panel because the name
+      search still matches. The active name criterion remains unchanged.
+   1. Run `list`.<br>
+      Expected: All six customers appear. Charlotte and Bernice have no preorder; Alex's two items and David's empty
+      preorder with its fulfilment details are unchanged.
 
 ### Setting delivery or collection details
 
