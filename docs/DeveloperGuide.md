@@ -289,15 +289,8 @@ prefix parsing in `FindCommandParser`.
 `FindCommandParser` combines `d/` (`PREFIX_DETAILS`) and `s/` into **one** `ItemCriterion`. Separate predicates for
 "has this product" and "has this status" would incorrectly allow different items to satisfy the conditions.
 
-The parser supplies `EnumSet.allOf(ItemStatus.class)` when `s/` is omitted. This is deliberate: an empty status set
-in `ItemCriterion` matches **nothing**, rather than meaning "any status". An absent product name accepts any product.
-Bare `track` supplies only `PENDING` and `PREPARED`; explicit `track s/STATUS` and `find s/STATUS` produce equivalent
-item criteria. Each new command still replaces the previous search, rather than accumulating conditions.
-
-`ItemCriterion.matches(Item)` is the shared item-level check. `getMatchingItems(Person)` returns an unmodifiable list
-that preserves item order and duplicate entries. `TrackCommand` counts filtered customers once each, then sums the
-sizes of their matching-item lists using a `long` total. It counts item entries, not quantities. Explicit status
-feedback retains the requested status even when both counts are zero.
+For `find`, omitting `s/` means all item statuses. `track` uses a different default; see
+[Tracking preorders](#tracking-preorders) for its status selection and feedback behavior.
 
 Date, method and postal conditions remain separate customer criteria because they describe the preorder or customer
 rather than an individual item.
