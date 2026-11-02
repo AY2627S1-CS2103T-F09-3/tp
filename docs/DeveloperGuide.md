@@ -817,6 +817,9 @@ leaves the model unchanged.
 
 ### User stories
 
+The user stories below include both implemented features and possible future enhancements. Refer to the
+[User Guide](UserGuide.html) for the features currently available in LeBake.
+
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
 | Priority | As a …                                              | I want to …                                                                       | So that I can …                                                   |
@@ -1032,7 +1035,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 ### Glossary
 
 * **Active order**: A pre-order with at least one item whose fulfilment status is `PENDING` or `PREPARED`
-* **Archived customer**: A customer hidden from the active customer list but kept, so that it can be restored for a future seasonal campaign
+* **Archived customer**: A customer hidden from the active customer list but kept, so that it can be restored for a future seasonal campaign. Archiving is a planned feature and is not implemented yet
 * **Customer**: A person whose contact and delivery details are stored in LeBake, represented by the `Person` class in the code
 * **Duplicate customer**: A customer with the same name as an existing customer, ignoring case and extra spaces (phone number, email and address are not compared)
 * **Fulfilment date**: The date a pre-order is to be delivered or collected, shared by all items in the pre-order
@@ -1041,7 +1044,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 * **Handover notes**: A short note about handing over a pre-order, such as "Call on arrival" or "Collect from side gate", shared by all items in the pre-order
 * **Item**: One product in a pre-order, with its name, quantity, fulfilment status and an optional remark
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Postal area**: A group of nearby addresses whose postal codes share the same first two digits, which `group postal` uses to group deliveries
+* **Postal area**: A postal group identified by the first two digits of a customer's postal code, used by `group postal` and the delivery preparation summary
 * **Pre-order**: An order placed in advance for a later collection or delivery, made up of the items the customer ordered, with each customer having at most one current pre-order
 * **Remark**: An optional special request for one item in a pre-order, such as "Less sugar"
 * **Seasonal campaign**: A period of high order demand tied to an occasion, such as Chinese New Year or Christmas
