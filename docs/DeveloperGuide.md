@@ -1542,6 +1542,22 @@ is customer 5 without a preorder.
 1. Using a fresh sample-data copy, run `list`, then `deleteitem 1 i/1`.<br>
    Expected: Only Pineapple Tarts is removed. Almond Cookies remains and is renumbered from 2 to 1.
 
+### Updating items under an active `find` filter
+
+Use a disposable copy of the sample data.
+
+1. Run `find n/Alex d/Pineapple Tarts`.<br>
+   Expected: Alex Yeoh is displayed with Pineapple Tarts as a matching item.
+1. Run `additem 1 d/Cake q/1 s/pending`.<br>
+   Expected: Alex remains displayed because the existing Pineapple Tarts item still matches the active filter.
+   Cake is appended as item 3.
+1. Run `deleteitem 1 i/1`.<br>
+   Expected: Alex disappears from the results because no remaining item matches Pineapple Tarts. Run
+   `find n/Alex` to confirm that Alex remains saved with Cake and Almond Cookies.
+1. Run `find n/Alex d/Cake`, then `edititem 1 i/3 d/Tart`.<br>
+   Expected: Alex disappears from the results because the edited item no longer matches Cake. Run `find n/Alex` to
+   confirm the item is now named Tart and Alex remains saved.
+
 ### Deleting a preorder
 
 Start with the sample data. List all customers using the `list` command. The first customer is `Alex Yeoh`, whose preorder has two items.
