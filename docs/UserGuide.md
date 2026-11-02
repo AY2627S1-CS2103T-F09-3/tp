@@ -754,6 +754,11 @@ A preorder's `date`, `method` and `handoverNotes` follow the same rules as the
 `DELIVERY` or `COLLECTION` in any capitalisation, and one line of at most 100 characters. Spaces around these values
 are ignored, and `null` or `""` means the detail is not set. Any other value prevents the file from loading.
 
+Each item in a preorder's `items` list needs a `name`, `quantity` and `status`, and may have a `remark` (or `null`).
+They follow the same rules as [`additem`](#adding-a-preorder-item-additem), with two differences: the status must be
+in capitals (`PENDING`, `PREPARED` or `COMPLETED`), and spaces around the quantity, status or remark are not removed.
+A missing or invalid item field prevents the file from loading.
+
 <box type="warning" seamless>
 
 **Caution:**
