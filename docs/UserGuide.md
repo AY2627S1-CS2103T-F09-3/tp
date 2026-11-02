@@ -491,7 +491,7 @@ Format: `additem INDEX d/NAME q/QUANTITY s/STATUS [r/REMARK]`
 * Names and remarks reject slash-containing text, including prefix-like strings such as `Cake w/ candles` and `Pack w/o nuts`. Supported prefixes still start separate fields.
 * Surrounding spaces in values are trimmed. A value of only spaces, including Unicode spaces such as an em space, is blank. Prefixes may appear in any order, but each can appear only once.
 * The item is appended to the preorder. Repeated product names, including identical items, remain separate entries.
-* Existing items, contact details and tags are preserved. The current filter remains active.
+* Existing items, contact details and tags are preserved. The current filter remains active. Adding an item does not remove the customer from the displayed results.
 
 Example: `additem 1 d/Cake q/2 s/pending r/Less sugar`
 
@@ -503,9 +503,9 @@ Omitting a required prefix displays `Invalid command format!` followed by usage 
 Supplying an empty value displays that field's validation error. In particular, `r/` without text is invalid when adding.
 An index beyond the displayed customer list produces `The customer index provided is invalid.`
 
-Quantity and status are validated first. If an invalid value contains an extra unsupported prefix, the error names it:
-`additem 1 d/Cake q/2 x/foo s/pending` and `additem 1 d/Cake q/2 s/pending x/foo` both show
-`Unsupported prefix 'x/' for additem.` Without an extra unsupported prefix, the usual quantity or status constraint is shown.
+Invalid values show the relevant field constraint. Extra unsupported fields are reported with an
+`Unsupported prefix` message, for example `additem 1 d/Cake q/2 x/foo s/pending` shows
+`Unsupported prefix 'x/' for additem.`
 
 ### Editing a preorder item: `edititem`
 
@@ -519,8 +519,9 @@ Format: `edititem INDEX i/ITEM_INDEX [d/NAME] [q/QUANTITY] [s/STATUS] [r/REMARK]
 * Omitted fields retain their values, so omitting `q/` keeps the item's quantity. An empty `r/` **clears** the remark;
   omitting `r/` preserves it.
 * Supplying an existing value is accepted and reports success, even if the item does not change.
-* Other items, contact details and tags are preserved. The current filter remains active. Changing an item's status can
-  remove its customer from a tracked view, so check the displayed customer indices before the next command.
+* Other items, contact details and tags are preserved. The current filter remains active and the displayed results
+  refresh. If the edit makes the customer stop matching a `find` or `track` filter, they disappear from the results;
+  check the displayed customer indices before the next command.
 
 Examples:
 
@@ -542,15 +543,9 @@ For Alice's second item, Cake, the success message could be:
 | `edititem 1 i/1 c/012345` | `Unsupported prefix 'c/' for edititem.` |
 | `edititem 1 i/1 q/2 x/3` or `edititem 1 i/1 s/pending x/3` | `Unsupported prefix 'x/' for edititem.` |
 
-The unsupported-prefix message identifies the first unsupported letter-based prefix after whitespace in an invalid
-`i/`, `q/` or `s/` value. Names (`d/`) and remarks (`r/`) reject forward slashes, including prefix-like text such as
-`Cake w/ candles` and `Pack w/o nuts`.
-
-For both commands, repeated prefixes produce `Multiple values specified for the following single-valued field(s): `
-followed by the repeated prefixes. Input validation reports the first error: customer-index syntax, duplicate prefixes,
-required fields/item-index syntax, then name, quantity, status and remark values. Customer and item existence are checked
-only after parsing succeeds. An edit with no supplied changes is rejected before those existence checks.
-Validation failures leave the data unchanged.
+Names (`d/`) and remarks (`r/`) reject forward slashes, including prefix-like text such as `Cake w/ candles` and
+`Pack w/o nuts`. Invalid commands leave customer data unchanged; if several inputs are invalid, LeBake reports the
+first error it detects.
 
 ### Viewing preorders: `track`
 
@@ -593,7 +588,9 @@ Format: `deleteitem INDEX i/ITEM_INDEX`
 * Deleting the final item retains an **empty preorder**. The customer's name, phone number, email, address, postal code and tags are unchanged. The preorder's fulfilment date, method and handover notes are also preserved.
 * Both indices are required. The `i/` prefix must appear exactly once; `o/` is not accepted for item selection.
 * Deletion cannot be undone through the app.
-* The current filter is preserved. A customer may disappear from a tracked view if no remaining item matches it. Check the displayed customer and item numbers before your next command. Use `list` to show all customers again.
+* The current filter is preserved, and displayed results refresh. A customer may disappear from a `find` or `track`
+  view if no remaining item matches its criteria. Check the displayed customer and item numbers before your next
+  command. Use `list` to show all customers again.
 
 For example, deleting Alex Yeoh's second sample item shows:
 
@@ -613,10 +610,8 @@ The message uses the item's number before deletion.
 | Unsupported prefix after the item index, e.g. `deleteitem 1 i/1 x/2` | `Unsupported prefix 'x/' for deleteitem.` |
 | Repeated `i/` prefix | `Multiple values specified for the following single-valued field(s): i/` |
 
-The unsupported-prefix message also applies to prefixes used by other commands, such as `q/`.
-Only `i/` is supported by `deleteitem`. Ordinary invalid item indices retain their index constraint message.
-
-Validation failures leave the data unchanged. If several inputs are invalid, customer-index syntax is checked first, then duplicate prefixes, then item-index syntax. Customer, preorder and item existence are checked after parsing succeeds.
+Only `i/` selects an item for `deleteitem`. Invalid commands leave customer data unchanged; if several inputs are
+invalid, LeBake reports the first error it detects.
 
 Examples:
 
