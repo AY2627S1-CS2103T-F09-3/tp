@@ -1273,6 +1273,16 @@ Start with fresh sample data using the [sample-data setup](#setting-up-and-reset
 1. Run `find d/Pineapple Tarts`.<br>
    Expected: The side panel shows `Preparation: Pineapple Tarts | All statuses`, `2 customer(s) | 2 matching item(s)`
    and `Total quantity: 5` instead of the delivery summary. The Pineapple Tarts rows of both customers are in a yellow box.
+1. Run `find d/Pineapple Tarts s/PENDING`.<br>
+   Expected: The heading shows `PENDING`, and the summary counts only pending Pineapple Tarts among the current results.
+   Only items matching both the product and status are highlighted; other items remain visible and unhighlighted, with
+   their original item numbers.
+1. Run `find n/Alex d/Pineapple Tarts`.<br>
+   Expected: Only customers matching both criteria contribute to the summary; it does not include other customers who
+   ordered Pineapple Tarts.
+1. Run `find d/No Such Product`.<br>
+   Expected: The summary remains visible with `0 customer(s) | 0 matching item(s)`, `Total quantity: 0`, and
+   `No special requests for matching items.`
 1. Run `help`.<br>
    Expected: `Showing help in the side panel.` The side panel shows **Help**, with the format of every command and the
    User Guide URL.
