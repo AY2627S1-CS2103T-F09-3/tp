@@ -652,7 +652,7 @@ Format: `deleteorder INDEX`
 
 * `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
 * The whole preorder is removed, including all its items. The customer's name, phone number, email, address and tags are not changed.
-* If the customer has no preorder, nothing is changed and the app shows `NAME has no preorder to delete.`, for example `Alex Yeoh has no preorder to delete.`
+* If the customer has no preorder, nothing is changed and the app shows `NAME has no preorder to delete.`, for example `Irfan Ibrahim has no preorder to delete.`
 * If `INDEX` is larger than the displayed list, the app shows `The customer index provided is invalid.`
 * A deleted preorder cannot be restored.
 * Deleting a preorder keeps the current filter. After `track`, the customer no longer has a preorder, so they disappear from that view. Check the displayed indices again before your next command. Use `list` to show all customers.
