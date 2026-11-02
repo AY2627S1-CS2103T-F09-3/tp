@@ -1049,6 +1049,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case ends.
 
+* 1b. The search criteria are invalid.
+
+    * 1b1. LeBake shows an error message.
+
+      Use case resumes at step 1.
+
 * 2a. The search returns other customers, but not the one the user wants.
 
   Use case ends.
@@ -1114,7 +1120,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 1. User requests to view pre-order items in a chosen fulfilment status.
 2. LeBake finds customers with matching pre-order items.
-3. LeBake displays the matching customers and their relevant pre-order items.
+3. LeBake displays the matching customers and reports how many of their items match.
 
     Use case ends.
 
@@ -1122,7 +1128,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 1a. The user does not provide a status.
 
-    * 1a1. LeBake finds items with an active status.
+    * 1a1. LeBake uses `PENDING` and `PREPARED` as the chosen statuses.
 
       Use case resumes at step 2.
 
@@ -1143,8 +1149,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 **Actor: User**\
 **MSS**
 
-1. User identifies a customer and one of the customer's pre-order items.
-2. User requests to change the item's fulfilment status.
+1. User finds a customer (<u>U2. Find a customer</u>).
+2. User requests to change the fulfilment status of one of the customer's pre-order items.
 3. User provides a valid fulfilment status.
 4. LeBake updates the item and displays the updated pre-order.
 
@@ -1152,11 +1158,15 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **Extensions**
 
-* 1a. The customer cannot be found, or the item cannot be found in the customer's pre-order.
+* 1a. The intended customer is not found.
 
-    * 1a1. LeBake shows an error message.
+  Use case ends.
 
-      Use case resumes at step 1.
+* 2a. The customer selection or the item selection is invalid.
+
+    * 2a1. LeBake shows an error message.
+
+      Use case resumes at step 2.
 
 * 3a. The fulfilment status is invalid.
 
