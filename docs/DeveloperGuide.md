@@ -1396,10 +1396,6 @@ Use a disposable copy of `LeBake.jar` in a separate, writable test folder. Launc
 LeBake, and back up `data/lebake.json` outside the `data` folder. Before each group below, restore that backup
 while LeBake is closed and relaunch from the same folder. Restore the backup after testing if needed.
 
-For window-preference coverage, use the existing **Saving window preferences** case under
-[Launch and shutdown](#launch-and-shutdown). Preferences are saved separately from customer data. For save-error
-recovery instructions, see [Saving the data](UserGuide.md#saving-the-data).
-
 1. Cancelling clear and discarding ordinary input
 
    1. Run `find n/Bernice`, then `group postal`.<br>
@@ -1457,9 +1453,19 @@ recovery instructions, see [Saving the data](UserGuide.md#saving-the-data).
 
 1. Typed exit on a save failure, compared with menu and window closing
 
-   1. With LeBake open on the restored sample data, move the test folder's `data/lebake.json` file aside. Create a
-      directory named `data/lebake.json` containing a marker file. This deliberately blocks saving in the disposable
-      test copy only; do not use real data or restart while this directory occupies the save path.
+   1. Start LeBake with the restored sample data in the disposable test folder.
+   1. While LeBake is still running, move `data/lebake.json` to a backup location outside the `data` folder.
+   1. Open a terminal in the disposable test folder. Run the following commands to create a directory named
+      `data/lebake.json` and a marker file named `marker.txt` inside it:
+
+      ```bash
+      mkdir data/lebake.json
+      touch data/lebake.json/marker.txt
+      ```
+
+      This creates a directory where LeBake expects the customer-data file, deliberately causing the subsequent
+      save attempt to fail. Use only a disposable test copy; do not use real customer data or restart LeBake while
+      this directory occupies the save path.
    1. Run `edit 1 p/89999999`.<br>
       Expected: An error beginning with `Could not save data` appears. Alex's changed phone number is visible
       only in memory, and LeBake stays open.
