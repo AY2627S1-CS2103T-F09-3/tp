@@ -1259,6 +1259,14 @@ preorders, saved data, active search criteria and displayed results remain uncha
 
 ### Deleting a customer
 
+Use a disposable copy of `LeBake.jar` in a separate, writable test folder. From that folder, run
+`java -jar LeBake.jar` with no `data/lebake.json` to load the six sample customers. Run `list`, close LeBake, and
+back up `data/lebake.json` outside the `data` folder. Before each group below, restore that backup while LeBake is
+closed and relaunch from the same folder. Restore it again after testing if you want the original sample data.
+
+For every rejected deletion below, compare customer details, tags, preorders, saved data, active search criteria
+and the displayed customer list with their state immediately before the command; all must remain unchanged.
+
 1. Deleting a customer while all customers are being shown
 
    1. Prerequisites: List all customers using the `list` command, with multiple customers in the list.
@@ -1271,8 +1279,37 @@ preorders, saved data, active search criteria and displayed results remain uncha
       Expected: No customer is deleted. The status message shows `Invalid command format!`, followed by the
       usage instructions for `delete`.
 
+   1. Test cases: `delete abc` and `delete` (run separately).<br>
+      Expected: Each shows `Invalid command format!`, followed by the usage instructions for `delete`.
+      No customer data is changed.
+
    1. Test case: `delete 100` (where 100 is larger than the displayed list size)<br>
       Expected: No customer is deleted. The status message shows `The customer index provided is invalid.`
+
+1. Deleting a customer with a preorder from a filtered list, then checking persistence
+
+   1. Run `list` after restoring the sample-data backup.<br>
+      Expected: Six customers are shown, with Alex Yeoh at index 1 and Bernice Yu at index 2. Bernice has the
+      `colleagues` and `friends` tags and a preorder containing one `Butter Cake` item with status `COMPLETED`.
+
+   1. Run `find n/Bernice`.<br>
+      Expected: `1 customer(s) listed!` Only Bernice is shown, now at displayed index 1.
+
+   1. Run `delete 2`.<br>
+      Expected: `The customer index provided is invalid.` Bernice remains visible and all data is unchanged,
+      even though index 2 existed in the full list.
+
+   1. Run `delete 1`.<br>
+      Expected: Deletion happens without a confirmation prompt. Feedback begins with `Deleted customer: Bernice Yu;`,
+      followed by her details. The search remains active and its displayed list is empty.
+
+   1. Run `list`.<br>
+      Expected: Five customers remain: Alex Yeoh, Charlotte Oliveiro, David Li, Irfan Ibrahim and Roy Balakrishnan.
+      Their details, tags and preorders are unchanged. Bernice and her Butter Cake preorder are absent.
+
+   1. Run `exit`, relaunch with `java -jar LeBake.jar` from the same test folder, and run `list`.<br>
+      Expected: The same five customers and their data are retained. Inspect `data/lebake.json` without editing it:
+      Bernice's customer record and its preorder are absent, and the other customers' data is unchanged.
 
 ### Clearing customers and exiting
 
