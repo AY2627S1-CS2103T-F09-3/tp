@@ -700,13 +700,22 @@ Deletes the specified customer from LeBake.
 
 Format: `delete INDEX`
 
+<box type="warning" seamless>
+
+Deleting a customer immediately removes their contact details, all tags and their entire preorder, including all
+items. There is no confirmation prompt or in-app undo. To remove only the preorder, use
+[`deleteorder`](#deleting-a-preorder-deleteorder).
+</box>
+
 * Deletes the customer at the specified `INDEX`.
 * The index refers to the index number shown in the displayed customer list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * Deleting preserves the active search criteria. The remaining results refresh, and their displayed indexes may change.
 
 Success feedback begins with `Deleted customer:`, followed by the deleted customer's details.
-An index beyond the displayed list produces `The customer index provided is invalid.`
+`delete` without an argument, `delete 0` and `delete abc` produce `Invalid command format!`, followed by the usage
+instructions for `delete`.
+A positive integer beyond the displayed list size produces `The customer index provided is invalid.`
 
 Examples:
 
