@@ -1517,6 +1517,18 @@ Run each group below independently, starting with the sample data unless stated 
    1. Test case: Run `find n/NoMatchingCustomer`, confirm that the displayed list is empty, then run `untag 1 t/friends`.<br>
       Expected: The status message shows `The customer index provided is invalid.` The list remains empty and no data is changed.
 
+1. Removing the tag used by the active filter
+
+   1. Prerequisites: Run `find t/friends`. Confirm that Bernice Yu is among the displayed customers and has the
+      `friends` tag.
+
+   1. Test case: Note Bernice's index as `INDEX`, then run `untag INDEX t/friends`.<br>
+      Expected: The status message confirms that Bernice's tag was removed. Bernice disappears from the displayed
+      results because she no longer matches the active `find t/friends` filter, but remains in the saved customer data.
+
+   1. Test case: Run `list`, then `find n/Bernice`.<br>
+      Expected: Bernice is still present and no longer has the `friends` tag.
+
 1. Preserving a preorder and saving tag removal
 
    1. Prerequisites: Use a saved customer with a preorder. Run `list`, note their displayed index as `INDEX`, and record their contact details, preorder details, and fulfilment status. Run `tag INDEX t/untagtest`, replacing `INDEX` with that number.

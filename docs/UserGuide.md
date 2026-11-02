@@ -269,7 +269,7 @@ Format: `untag INDEX t/TAG`
 * Supply exactly one `t/TAG`, after the index. The tag must contain 1 to 30 English letters (`A-Z`, `a-z`) or digits (`0-9`). Internal spaces and special characters are not allowed. Leading and trailing spaces are ignored before checking its length.
 * Matching is case-insensitive. For example, `t/vip` removes an existing `VIP` tag.
 * Other tags, contact details, and any preorder remain unchanged. Removing the last tag leaves the customer with no tags.
-* The current list filter is preserved, and the change is saved automatically.
+* The current list filter is preserved, and the change is saved automatically. If you remove the tag used by the active `find t/TAG` filter, that customer no longer matches and disappears from the displayed results, but remains saved.
 * If the command is rejected due to invalid or missing tags, no customer's data is changed.
 
 Examples:
@@ -291,10 +291,7 @@ Common errors:
 | `untag 5 t/VIP` when fewer than five customers are displayed, or any valid index when the list is empty | `The customer index provided is invalid.` |
 | `untag 1 t/VIP` when the first customer is Alex Yeoh and has no `VIP` tag | `Alex Yeoh does not have tag [VIP]` |
 
-The unsupported-prefix message names the first unsupported letter-based prefix after whitespace in an invalid tag
-value. Ordinary invalid tags retain their tag constraint message. If several inputs are invalid, checks run in this
-order: index format, required `t/` prefix, duplicate `t/` prefixes, then tag value. Whether the index exists in the
-displayed list is checked after parsing succeeds. Rejected commands leave customer data and the current filter unchanged.
+If several parts of the input are invalid, LeBake reports the first error it detects. Rejected commands leave customer data and the current filter unchanged.
 
 ### Grouping customers by postal code: `group postal`
 
