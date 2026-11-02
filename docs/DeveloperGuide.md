@@ -1391,17 +1391,94 @@ and the displayed customer list with their state immediately before the command;
 
 ### Clearing customers and exiting
 
-Use a disposable copy of the sample data for this group.
+Use a disposable copy of `LeBake.jar` in a separate, writable test folder. Launch it from that folder with
+`java -jar LeBake.jar`, initially with no `data/lebake.json`, to load the six sample customers. Run `list`, close
+LeBake, and back up `data/lebake.json` outside the `data` folder. Before each group below, restore that backup
+while LeBake is closed and relaunch from the same folder. Restore the backup after testing if needed.
 
-1. Run `clear`.<br>
-   Expected: `This will permanently delete all customers and their preorder data. Type 'confirm' to proceed; any other input cancels and is discarded.`
-   The customer list and saved data remain unchanged.
-1. Run `confirm`.<br>
-   Expected: `All customers have been cleared!` The displayed customer list is empty.
-1. Run `list`.<br>
-   Expected: `Listed all customers.` The list remains empty.
-1. Run `exit`.<br>
-   Expected: LeBake closes.
+1. Cancelling clear and discarding ordinary input
+
+   1. Run `find n/Bernice`, then `group postal`.<br>
+      Expected: Only Bernice Yu is shown, with a `POSTAL PREFIX 55` heading and an active name filter.
+   1. Run `clear`.<br>
+      Expected: `This will permanently delete all customers and their preorder data. Type 'confirm' to proceed; any other input cancels and is discarded.`
+      Customer data, saved data, the filter and ordering remain unchanged.
+   1. Enter `list` at the confirmation prompt.<br>
+      Expected: `Clear cancelled. No data was deleted. Any typed input was discarded; enter it again if needed.`
+      Only Bernice remains visible with the same filter and heading; `list` was discarded, not executed.
+   1. Enter `list` again.<br>
+      Expected: `Listed all customers.` All six customers appear in saved order, with their data unchanged.
+   1. Run `clear`, then press Enter with the command box empty.<br>
+      Expected: The same cancellation message; all customer and saved data remain unchanged.
+   1. Enter `confirm` without starting another clear request.<br>
+      Expected: `Unknown command.` No data is changed.
+
+1. Confirming clear, removing hidden customers and resetting the view
+
+   1. Run `find n/Bernice`, then `group postal`.<br>
+      Expected: Bernice is the only displayed customer; the other five sample customers are hidden.
+   1. Run `clear`, then enter `CoNfIrM`.<br>
+      Expected: The confirmation prompt appears first, then `All customers have been cleared!`. The list is empty
+      and the search display shows **Showing: All customers**, with no filter badges.
+   1. Before running `list` or restarting, add these customers in order:
+      * `add n/Zoe Clearcheck p/81111111 e/zoe@example.com a/Test Street c/999999`
+      * `add n/Amy Clearcheck p/82222222 e/amy@example.com a/Test Street c/000001`
+
+      Expected: Only Zoe and Amy appear, in that order, without postal headings. Their visibility confirms the
+      name filter was cleared; their insertion order and missing headings confirm postal grouping was reset.
+   1. Run `clear`, `confirm`, then `list`.<br>
+      Expected: Clearing succeeds after confirmation. `list` shows `Listed all customers.` and an empty list,
+      including no previously hidden sample customers.
+   1. Run `exit`, then relaunch with `java -jar LeBake.jar` from the same test folder.<br>
+      Expected: LeBake closes and reopens with an empty list; cleared customers and preorders do not return.
+
+   Repeat this group using `sort date` instead of `group postal`. Zoe must still appear before Amy after clearing,
+   confirming date sorting was reset too.
+
+1. Entering exit while clear confirmation is pending
+
+   1. Run `clear`, then enter `exit` at the confirmation prompt.<br>
+      Expected: `Clear cancelled. No data was deleted. Any typed input was discarded; enter it again if needed.`
+      LeBake remains open with customer and saved data unchanged; this `exit` was discarded.
+   1. Enter `exit` again, then relaunch from the same test folder.<br>
+      Expected: LeBake closes normally. All six sample customers and their preorders are retained after relaunch.
+
+1. Normal typed exit
+
+   1. Run `edit 1 p/89999999`.<br>
+      Expected: Alex Yeoh's phone number changes and is saved successfully.
+   1. Enter `exit`, then relaunch from the same test folder.<br>
+      Expected: LeBake closes after its customer-data save attempt. All six customers return, with Alex's phone
+      number still `89999999`.
+
+1. Typed exit on a save failure, compared with menu and window closing
+
+   1. Start LeBake with the restored sample data in the disposable test folder.
+   1. While LeBake is still running, move `data/lebake.json` to a backup location outside the `data` folder.
+   1. Open a terminal in the disposable test folder. Run the following commands to create a directory named
+      `data/lebake.json` and a marker file named `marker.txt` inside it:
+
+      ```bash
+      mkdir data/lebake.json
+      touch data/lebake.json/marker.txt
+      ```
+
+      This creates a directory where LeBake expects the customer-data file, deliberately causing the subsequent
+      save attempt to fail. Use only a disposable test copy; do not use real customer data or restart LeBake while
+      this directory occupies the save path.
+   1. Run `edit 1 p/89999999`.<br>
+      Expected: An error beginning with `Could not save data` appears. Alex's changed phone number is visible
+      only in memory, and LeBake stays open.
+   1. Replace the failed command text with `exit` and press Enter.<br>
+      Expected: Another error beginning with `Could not save data` appears. LeBake remains open with Alex's
+      in-memory change intact. The directory and marker file remain unchanged.
+   1. Choose **File → Exit**.<br>
+      Expected: LeBake closes without retrying the customer-data save. The directory and marker are unchanged.
+      With LeBake closed, move the directory aside and restore the sample-data backup as `data/lebake.json`.
+      Relaunch from the same folder: Alex's phone is `87438807`; the unsaved change was lost.
+   1. Repeat this group from the restored baseline, using the window close button instead of **File → Exit**.<br>
+      Expected: The same closing behaviour and loss of the unsaved change. Restore the backup with LeBake closed
+      before relaunching.
 
 ### Customer field length boundaries
 
