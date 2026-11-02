@@ -148,6 +148,10 @@ How the `Logic` component works:
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
+If parsing fails, the parser throws a `ParseException` before returning a `Command`, so `LogicManager` does not execute
+the command. Field-specific parsing errors may be refined before they are thrown, as described in
+[Prefix boundaries and error messages](#prefix-boundaries-and-error-messages).
+
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
 <puml src="diagrams/ParserClasses.puml" width="600"/>
@@ -164,8 +168,9 @@ A `confirm` entered without a pending clear goes through normal parsing and prod
 
 #### Prefix boundaries and error messages
 
-`ArgumentTokenizer` recognizes only the prefixes supplied by a command parser, with whitespace before each prefix.
-A supported prefix ends the preceding value. Unsupported prefix-like text stays in the current value or preamble.
+`ArgumentTokenizer` recognizes only the prefixes supplied by a command parser, at whitespace boundaries. A supported
+prefix ends the preceding value. An unsupported prefix-like token stays in the current value or preamble. Here, a
+prefix-like token for diagnostic purposes is one or more ASCII letters followed by `/` after whitespace.
 The tokenizer preserves conventional `c/o` text inside an address instead of treating it as a postal-code prefix.
 Quotation marks and backslashes do not escape supported prefixes.
 
@@ -190,8 +195,10 @@ to find the first token matching `\s([A-Za-z]+/)` whose prefix is absent from th
 It preserves the prefix's case and formats `Messages.MESSAGE_UNSUPPORTED_PREFIX` with the offending prefix and
 command name, for example `Unsupported prefix 'd/' for track.` If no unsupported prefix is found, the original field
 constraint message is used. An overload accepts a custom fallback for item-index errors. Both overloads retain the
-original exception as the direct cause. A slash embedded without a preceding whitespace boundary does not trigger
-this diagnostic. Customer-index and duplicate-prefix checks retain their earlier precedence.
+original exception as the direct cause. The helper scans only a failed constrained field's value. Since its pattern
+requires preceding whitespace, a token at the start of that value, or one embedded without a whitespace boundary,
+does not trigger this diagnostic; the field's normal constraint message is used instead. Customer-index and
+duplicate-prefix checks retain their earlier precedence.
 
 `EditCommandParser` preserves its field-validation order: name, phone, email, address, then postal code. Customer
 names are constrained by `Name` and do not permit slashes. Address validation permits ordinary slash notation such
@@ -1633,6 +1640,9 @@ remain unchanged.
 
 1. Try `deleteitem 1 i/1 x/2`.<br>
    Expected: `Unsupported prefix 'x/' for deleteitem.` No data changes.
+1. Try `deleteitem 1 i/x/` and `deleteitem 1 i/1x/2`.<br>
+   Expected: `Item index must be a positive integer.` Neither value produces an unsupported-prefix diagnostic because
+   `x/` is at the start of the value or embedded without a whitespace boundary. No data changes.
 1. Try `edititem 1 i/1 c/012345`.<br>
    Expected: `Unsupported prefix 'c/' for edititem.` No data changes.
 1. Try `track s/pending d/Cake`.<br>
