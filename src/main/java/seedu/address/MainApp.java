@@ -179,6 +179,10 @@ public class MainApp extends Application {
             return validationException.getUserMessage();
         }
         if (cause instanceof JsonProcessingException jsonException) {
+            // A mapping error wraps the parse error, and its message repeats the whole file
+            while (jsonException.getCause() instanceof JsonProcessingException parseException) {
+                jsonException = parseException;
+            }
             String reason = "Invalid JSON: " + jsonException.getOriginalMessage();
             JsonLocation location = jsonException.getLocation();
             if (location != null) {

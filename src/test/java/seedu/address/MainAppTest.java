@@ -247,6 +247,17 @@ public class MainAppTest {
     }
 
     @Test
+    public void createDataLoadingErrorDialog_missingCommaInPerson_omitsFileContents() throws Exception {
+        String content = getErrorDialogContent("{\n  \"persons\" : [ {\n    \"name\" : \"Alex Yeoh\"\n"
+                + "    \"phone\" : \"87438807\"\n  } ]\n}");
+
+        assertTrue(content.contains("Reason:\nInvalid JSON: Unexpected character ('\"' (code 34)): "
+                + "was expecting comma to separate OBJECT entries\nLine 4, column 6.\n"));
+        assertFalse(content.contains("[Source:"));
+        assertFalse(content.contains("Alex Yeoh"));
+    }
+
+    @Test
     public void getDataLoadingErrorMessage_jsonErrorWithoutLocation_omitsLineAndColumn() {
         JsonParseException cause = new JsonParseException(null, "Unexpected token");
 
