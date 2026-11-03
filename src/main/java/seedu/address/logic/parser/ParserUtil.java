@@ -181,8 +181,7 @@ public class ParserUtil {
      */
     public static FulfilmentDate parseFulfilmentDate(String date) throws ParseException {
         String strippedDate = requireNonNull(date).strip();
-        if (!FulfilmentDate.isValidDate(strippedDate)
-                || !FulfilmentDate.isSupportedYear(strippedDate)) {
+        if (!FulfilmentDate.isValidDate(strippedDate)) {
             throw new ParseException(FulfilmentDate.MESSAGE_CONSTRAINTS);
         }
         return new FulfilmentDate(strippedDate);

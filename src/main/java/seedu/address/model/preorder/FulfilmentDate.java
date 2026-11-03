@@ -40,28 +40,18 @@ public class FulfilmentDate {
     }
 
     /**
-     * Returns true if a given string is a real calendar date in YYYY-MM-DD format.
+     * Returns true if a given string is a real calendar date in YYYY-MM-DD format from MIN_YEAR onwards.
      */
     public static boolean isValidDate(String test) {
         if (!test.matches(VALIDATION_REGEX)) {
             return false;
         }
         try {
-            LocalDate.parse(test); // rejects dates that do not exist, such as 2026-02-30
-            return true;
+            // rejects dates that do not exist, such as 2026-02-30
+            return LocalDate.parse(test).getYear() >= MIN_YEAR;
         } catch (DateTimeParseException e) {
             return false;
         }
-    }
-
-    /**
-     * Returns true if the year of {@code test} is MIN_YEAR or later.
-     * {@code test} must already be valid according to
-     * {@link #isValidDate(String)}.
-     */
-    public static boolean isSupportedYear(String test) {
-        assert isValidDate(test);
-        return LocalDate.parse(test).getYear() >= MIN_YEAR;
     }
 
     /**
