@@ -756,7 +756,7 @@ Saved JSON allows at most 100 characters for each normalized name, 254 for each 
 
 A preorder's `date`, `method` and `handoverNotes` follow the same rules as the
 [`preorder` command](#setting-delivery-or-collection-details-preorder): a real calendar date in `YYYY-MM-DD` format
-(the year 2000 limit applies only to dates typed in commands), `DELIVERY` or `COLLECTION` in any capitalisation, and one line of at most 100 characters. Spaces around these values
+from the year 2000 onwards, `DELIVERY` or `COLLECTION` in any capitalisation, and one line of at most 100 characters. Spaces around these values
 are ignored, and `null` or `""` means the detail is not set. Any other value prevents the file from loading.
 
 Each item in a preorder's `items` list needs a `name`, `quantity` and `status`, and may have a `remark` (or `null`).

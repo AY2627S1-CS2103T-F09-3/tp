@@ -758,10 +758,11 @@ the same as for `delete` (see the [Logic component](#logic-component)), so the d
   * Pros: Catches some typing mistakes.
   * Cons: Blocks legitimate records, and depends on the computer's clock being right.
 
-To catch the worst typos, such as `0026` for `2026`, a typed date must also be from the year 2000 onwards
-(`FulfilmentDate.MIN_YEAR`). No real preorder is that old, and the check needs no clock. `ParserUtil` applies it
-only to dates typed in `preorder` and `find`; `FulfilmentDate.isValidDate` does not, so data files with older
-saved dates still load.
+To catch the worst typos, such as `0026` for `2026`, a date must also be from the year 2000 onwards
+(`FulfilmentDate.MIN_YEAR`). No real preorder is that old, and the check needs no clock.
+`FulfilmentDate#isValidDate` applies it, so dates typed in `preorder` and `find` and dates loaded from the data
+file follow the same rule, and every saved date can be searched with `find f/`. A hand-edited file with an
+earlier date is rejected on load, like any other invalid value.
 
 **Aspect: what `preorder` does for a customer without a preorder**
 
@@ -2157,6 +2158,12 @@ the `data` folder. Restore it before each invalid-quantity variation and before 
    1. Test case: Close LeBake, change the same `"method"` to `"pickup"`, then launch LeBake.<br>
       Expected: An error dialog appears before the main window and reports `Person 1: invalid preorder method.`
       Dismissing it exits LeBake and leaves the file unchanged. Restore the file from
+      your copy before relaunching.
+
+   1. Test case: Close LeBake, restore the file from your copy, change the same customer's `"date"` to
+      `"1999-12-31"`, then launch LeBake.<br>
+      Expected: An error dialog appears before the main window and reports `Person 1: invalid preorder date.`
+      for the first customer. Dismissing it exits LeBake and leaves the file unchanged. Restore the file from
       your copy before relaunching.
 
 ### Grouping customers by postal code
