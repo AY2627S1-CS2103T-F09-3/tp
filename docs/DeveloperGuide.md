@@ -18,6 +18,23 @@
 * Libraries: [JavaFX](https://openjfx.io/) for the GUI, [Jackson](https://github.com/FasterXML/jackson) for the JSON
   data file, and [JUnit 5](https://github.com/junit-team/junit5) for the tests.
 
+### Use of AI tools
+
+The team used OpenAI Codex and Claude Code throughout development, including substantial assistance with implementation 
+and test code generation. Notable uses included:
+
+* **Preliminary feature planning:** exploring implementation approaches, breaking down requirements, and identifying
+  edge cases.
+* **Preliminary pull request reviews:** identifying potential defects, inconsistencies, and opportunities for improvement.
+* **GitHub issue creation:** drafting issue descriptions, reproduction steps, and acceptance criteria.
+* **Code and test generation:** generating and refining implementation code and automated tests, including validation
+  and boundary cases.
+* **Documentation updates:** drafting, revising, and checking explanations against the application's behaviour.
+
+Team members made the final requirements and design decisions, evaluated and adapted AI-generated suggestions, and
+integrated the resulting changes into LeBake. The team remained responsible for correctness and validated changes
+through testing and code review.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
