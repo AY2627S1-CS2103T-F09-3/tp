@@ -1069,6 +1069,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case ends.
 
+* 1b. The search criteria are invalid.
+
+    * 1b1. LeBake shows an error message.
+
+      Use case resumes at step 1.
+
 * 2a. The search returns other customers, but not the one the user wants.
 
   Use case ends.
@@ -1096,14 +1102,16 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 2.
 
-**Use case: U4. Record a customer's pre-order**\
+**Use case: U4. Add a customer's pre-order item**\
 **System: LeBake**\
 **Actor: User**\
 **MSS**
 
 1. User finds a customer (<u>U2. Find a customer</u>).
-2. User selects a customer and requests to record a pre-order with order details and a fulfilment status.
-3. LeBake records and displays the pre-order.
+2. User requests to add an item to the customer's pre-order.
+3. User provides the item's name, quantity, fulfilment status and optional remark.
+4. LeBake adds the item to the customer's current pre-order, creating one if necessary, and displays the updated
+   pre-order.
 
     Use case ends.
 
@@ -1113,47 +1121,130 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
   Use case ends.
 
-* 2a. The customer selection or order information is invalid.
+* 2a. The customer selection is invalid.
 
     * 2a1. LeBake shows an error message.
 
       Use case resumes at step 2.
 
-* 2b. The customer already has a pre-order.
-
-    * 2b1. LeBake updates and displays the existing pre-order.
-
-      Use case ends.
-
-**Use case: U5. Update a pre-order's fulfilment status**\
-**System: LeBake**\
-**Actor: User**\
-**MSS**
-
-1. User requests to view pre-orders with a chosen fulfilment status.
-2. LeBake shows customers with pre-orders in that status.
-3. User selects a customer and requests to change the pre-order to a valid fulfilment status.
-4. LeBake updates and displays the pre-order's fulfilment status.
-
-    Use case ends.
-
-**Extensions**
-
-* 1a. No pre-orders match the chosen status.
-
-    * 1a1. LeBake shows an empty list.
-
-      Use case ends.
-
-* 3a. The customer selection is invalid.
+* 3a. The item information is invalid.
 
     * 3a1. LeBake shows an error message.
 
       Use case resumes at step 3.
 
+**Use case: U5. Track pre-order items by fulfilment status**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
+
+1. User requests to view pre-order items in a chosen fulfilment status.
+2. LeBake finds customers with matching pre-order items.
+3. LeBake displays the matching customers and reports how many of their items match.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The user does not provide a status.
+
+    * 1a1. LeBake uses `PENDING` and `PREPARED` as the chosen statuses.
+
+      Use case resumes at step 2.
+
+* 1b. The status is invalid.
+
+    * 1b1. LeBake shows an error message.
+
+      Use case resumes at step 1.
+
+* 2a. No pre-order items match the chosen status.
+
+    * 2a1. LeBake shows an empty list.
+
+      Use case ends.
+
+**Use case: U6. Update a pre-order item's fulfilment status**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
+
+1. User finds a customer (<u>U2. Find a customer</u>).
+2. User requests to change the fulfilment status of one of the customer's pre-order items.
+3. User provides a valid fulfilment status.
+4. LeBake updates the item and displays the updated pre-order.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The intended customer is not found.
+
+  Use case ends.
+
+* 2a. The customer selection or the item selection is invalid.
+
+    * 2a1. LeBake shows an error message.
+
+      Use case resumes at step 2.
+
+* 3a. The fulfilment status is invalid.
+
+    * 3a1. LeBake shows an error message.
+
+      Use case resumes at step 3.
+
+**Use case: U7. Set a pre-order's shared fulfilment details**\
+**System: LeBake**\
+**Actor: User**\
+**MSS**
+
+1. User finds a customer (<u>U2. Find a customer</u>).
+2. User requests to set or clear one or more shared fulfilment details: date, method or handover notes.
+3. LeBake updates the customer's pre-order without changing its items.
+4. LeBake displays the updated fulfilment details.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The intended customer is not found.
+
+  Use case ends.
+
+* 2a. The customer selection is invalid.
+
+    * 2a1. LeBake shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. A fulfilment detail is invalid, or no detail is provided.
+
+    * 2b1. LeBake shows an error message.
+
+      Use case resumes at step 2.
+
+* 2c. The customer has no pre-order, and the user supplies at least one nonempty detail.
+
+    * 2c1. LeBake creates an empty pre-order with the supplied details.
+
+      Use case resumes at step 3.
+
+* 2d. The customer has no pre-order, and every detail the user supplies is empty.
+
+    * 2d1. LeBake shows that there is nothing to clear and makes no changes.
+
+      Use case ends.
+
+* 3a. The supplied date is before today.
+
+    * 3a1. LeBake saves the date and shows a note that it is in the past.
+
+      Use case resumes at step 4.
+
 ### Non-Functional Requirements
 
-1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
+1.  Should work on any _mainstream OS_ and must run on Java `25` without requiring any other Java version to be installed.
 2.  Should support storing up to 1,000 customer details.
 3.  Should display the result or an error message within 3 seconds of submitting a command.
 4.  User with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
