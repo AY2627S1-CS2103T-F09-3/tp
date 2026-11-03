@@ -376,7 +376,7 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_invalidFulfilmentValues_throwsFieldMessage() {
-        for (String date : List.of("2026-02-30", "2026-2-03", "2026/12/20", "2026-12-20 extra")) {
+        for (String date : List.of("2026-02-30", "2026-2-03", "2026/12/20", "2026-12-20 extra", "0026-12-20")) {
             assertParseFailure(parser, "f/" + date, FulfilmentDate.MESSAGE_CONSTRAINTS);
         }
         for (String method : List.of("pickup", "del", "delivery collection")) {

@@ -376,7 +376,7 @@ Supply at least one prefixed criterion. Each prefix may appear at most once, in 
 | `t/` | Tag | Complete tag name, ignoring case |
 | `d/` | Preorder item product name | Complete product name, ignoring case |
 | `s/` | Item status | `PENDING`, `PREPARED` or `COMPLETED`, ignoring case |
-| `f/` | Shared preorder fulfilment date | Exact real date in `YYYY-MM-DD` format |
+| `f/` | Shared preorder fulfilment date | Exact real date in `YYYY-MM-DD` format, from the year 2000 onwards |
 | `m/` | Shared preorder method | `delivery` or `collection`, ignoring case |
 | `h/` | Shared preorder handover notes | Case-insensitive substring |
 
@@ -415,7 +415,7 @@ Use lowercase prefixes. Each prefix may appear once, in any order, and must have
 | `find p/91-23` or `find p/912345678` | Phone query constraint message; use one to eight digits. |
 | `find e/example!.com` | Email query constraint message; use letters, digits or `+_.-@`, without spaces. |
 | `find n/Ali x/foo` | `Unsupported prefix 'x/' for find.` |
-| `find f/2026-02-30` or `find f/2026-2-03` | The date constraint message is shown; supply a real date in `YYYY-MM-DD` format. |
+| `find f/2026-02-30`, `find f/2026-2-03` or `find f/0026-12-20` | The date constraint message is shown; supply a real date in `YYYY-MM-DD` format from the year 2000 onwards. |
 | `find m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
 | `find h/` or `find m/` | Invalid command format; every supplied prefix needs a value. |
 | `find s/unknown` | The item-status constraint message is shown. |
@@ -605,7 +605,7 @@ Format: `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`
 
 | Prefix | Detail | Rules |
 |--------|--------|-------|
-| `f/` | Fulfilment date: the day of delivery or collection | A real calendar date in `YYYY-MM-DD` format, e.g. `2026-12-20` |
+| `f/` | Fulfilment date: the day of delivery or collection | A real calendar date in `YYYY-MM-DD` format from the year 2000 onwards, e.g. `2026-12-20` |
 | `m/` | Method | `delivery` or `collection`, in any capitalisation |
 | `h/` | Handover notes, e.g. `Call on arrival` or `Collect from side gate` | One line of at most 100 characters |
 
@@ -614,7 +614,7 @@ Format: `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`
 * Only the details you supply change. For example, `preorder 1 m/collection` changes the method and keeps the date and handover notes.
 * A prefix with no value **clears** that detail. For example, `preorder 1 h/` removes the handover notes and `preorder 1 f/ m/ h/` clears all three.
 * If the customer has no preorder yet, supplying at least one nonempty value creates one with no items, so you can record the arrangements before adding items with [`additem`](#adding-a-preorder-item-additem). Supplying only empty values makes no changes because there is nothing to clear.
-* A past date is accepted, so you can still record late orders. The success message then adds a note on a new line, for example `Note: 20 Dec 2025 is in the past.`
+* A past date from the year 2000 onwards is accepted, so you can still record late orders. The success message then adds a note on a new line, for example `Note: 20 Dec 2025 is in the past.`
 * The customer's items (with their quantities, statuses and remarks), contact details, postal code and tags are not changed. The current filter remains active.
 * Surrounding spaces in values are trimmed. A value of only spaces, such as `h/   `, is treated as empty and clears the handover notes. Handover notes made only of Unicode spaces, such as an em space, are rejected as blank. Handover notes must not contain forward slashes. A supported prefix (`f/`, `m/` or `h/`) after whitespace ends the previous value.
 
@@ -633,7 +633,7 @@ Common errors:
 | Input or situation | Feedback |
 | --- | --- |
 | `preorder 1` | `At least one of f/DATE, m/METHOD or h/HANDOVER_NOTES must be provided.` |
-| `preorder 1 f/2026-02-30` or `preorder 1 f/20-12-2026` | `Invalid date! Dates must be real calendar dates in YYYY-MM-DD format, e.g. 2026-12-20.` |
+| `preorder 1 f/2026-02-30`, `preorder 1 f/20-12-2026` or `preorder 1 f/0026-12-20` | `Invalid date! Dates must be real calendar dates in YYYY-MM-DD format from the year 2000 onwards, e.g. 2026-12-20.` |
 | `preorder 1 m/pickup` | `Invalid method! Method must be DELIVERY or COLLECTION.` |
 | `preorder 1 f/2026-12-20 x/foo` or `preorder 1 m/delivery x/foo` | `Unsupported prefix 'x/' for preorder.` |
 | Handover notes longer than 100 characters or containing `/` | `Invalid handover notes! Handover notes must not be blank, must not contain forward slashes, must be on a single line, and must be at most 100 characters long.` |
@@ -755,8 +755,8 @@ Names in the data file follow the same validation and duplicate rules as [`add`]
 Saved JSON allows at most 100 characters for each normalized name, 254 for each email, 300 for each address and 30 for each tag. Emails, addresses and tags are checked as stored, without removing surrounding spaces. In particular, trailing address spaces count towards the limit. A single oversized field prevents the file from loading.
 
 A preorder's `date`, `method` and `handoverNotes` follow the same rules as the
-[`preorder` command](#setting-delivery-or-collection-details-preorder): a real calendar date in `YYYY-MM-DD` format,
-`DELIVERY` or `COLLECTION` in any capitalisation, and one line of at most 100 characters. Spaces around these values
+[`preorder` command](#setting-delivery-or-collection-details-preorder): a real calendar date in `YYYY-MM-DD` format
+from the year 2000 onwards, `DELIVERY` or `COLLECTION` in any capitalisation, and one line of at most 100 characters. Spaces around these values
 are ignored, and `null` or `""` means the detail is not set. Any other value prevents the file from loading.
 
 Each item in a preorder's `items` list needs a `name`, `quantity` and `status`, and may have a `remark` (or `null`).

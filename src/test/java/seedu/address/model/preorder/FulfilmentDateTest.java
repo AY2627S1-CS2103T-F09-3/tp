@@ -19,6 +19,7 @@ public class FulfilmentDateTest {
     @Test
     public void constructor_invalidDate_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () -> new FulfilmentDate("2026-02-30"));
+        assertThrows(IllegalArgumentException.class, () -> new FulfilmentDate("1999-12-31"));
     }
 
     @Test
@@ -46,7 +47,12 @@ public class FulfilmentDateTest {
         assertFalse(FulfilmentDate.isValidDate("2026-02-30"));
         assertFalse(FulfilmentDate.isValidDate("2026-13-01"));
 
+        // years before MIN_YEAR
+        assertFalse(FulfilmentDate.isValidDate("1999-12-31")); // last unsupported day
+        assertFalse(FulfilmentDate.isValidDate("0026-12-20")); // mistyped year
+
         // valid dates
+        assertTrue(FulfilmentDate.isValidDate("2000-01-01")); // first supported day
         assertTrue(FulfilmentDate.isValidDate("2026-12-20"));
         assertTrue(FulfilmentDate.isValidDate("2028-02-29")); // leap day
     }

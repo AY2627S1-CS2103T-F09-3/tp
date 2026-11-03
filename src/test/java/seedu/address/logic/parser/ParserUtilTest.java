@@ -142,7 +142,9 @@ public class ParserUtilTest {
     @Test
     public void parseFulfilmentDate_validAndInvalidCalendarDates() throws Exception {
         assertEquals(new FulfilmentDate("2024-02-29"), ParserUtil.parseFulfilmentDate(" 2024-02-29 "));
-        for (String date : List.of("2026-02-29", "2026-02-30", "2026-1-05", "2026/12/20", "")) {
+        assertEquals(new FulfilmentDate("2000-01-01"), ParserUtil.parseFulfilmentDate("2000-01-01"));
+        for (String date : List.of("2026-02-29", "2026-02-30", "2026-1-05", "2026/12/20", "",
+                "0026-12-20", "1999-12-31")) {
             assertThrows(ParseException.class, FulfilmentDate.MESSAGE_CONSTRAINTS, ()
                 -> ParserUtil.parseFulfilmentDate(date));
         }

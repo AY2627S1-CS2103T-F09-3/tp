@@ -57,11 +57,15 @@ public class JsonAdaptedPreorderTest {
 
     @Test
     public void toModelType_invalidDate_throwsDataValidationException() {
-        JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), "2026-02-30", VALID_METHOD,
-                VALID_HANDOVER_NOTES);
-        DataValidationException exception = assertThrows(DataValidationException.class, preorder::toModelType);
-        assertEquals(FulfilmentDate.MESSAGE_CONSTRAINTS, exception.getMessage());
-        assertEquals("invalid preorder date.", exception.getUserMessage());
+        // a date that does not exist, and a date before the year 2000
+        for (String invalidDate : List.of("2026-02-30", "1999-12-31")) {
+            JsonAdaptedPreorder preorder = new JsonAdaptedPreorder(List.of(), invalidDate, VALID_METHOD,
+                    VALID_HANDOVER_NOTES);
+            DataValidationException exception = assertThrows(DataValidationException.class,
+                    preorder::toModelType);
+            assertEquals(FulfilmentDate.MESSAGE_CONSTRAINTS, exception.getMessage());
+            assertEquals("invalid preorder date.", exception.getUserMessage());
+        }
     }
 
     @Test
