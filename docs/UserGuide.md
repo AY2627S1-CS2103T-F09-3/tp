@@ -616,7 +616,7 @@ Format: `preorder INDEX [f/DATE] [m/METHOD] [h/HANDOVER_NOTES]`
 * If the customer has no preorder yet, supplying at least one nonempty value creates one with no items, so you can record the arrangements before adding items with [`additem`](#adding-a-preorder-item-additem). Supplying only empty values makes no changes because there is nothing to clear.
 * A past date from the year 2000 onwards is accepted, so you can still record late orders. The success message then adds a note on a new line, for example `Note: 20 Dec 2025 is in the past.`
 * The customer's items (with their quantities, statuses and remarks), contact details, postal code and tags are not changed. The current filter remains active.
-* Surrounding spaces in values are trimmed. Handover notes of only spaces, including Unicode spaces such as an em space, are rejected as blank. Handover notes must not contain forward slashes. A supported prefix (`f/`, `m/` or `h/`) after whitespace ends the previous value.
+* Surrounding spaces in values are trimmed. A value of only spaces, such as `h/   `, is treated as empty and clears the handover notes. Handover notes made only of Unicode spaces, such as an em space, are rejected as blank. Handover notes must not contain forward slashes. A supported prefix (`f/`, `m/` or `h/`) after whitespace ends the previous value.
 
 On success, the app shows the customer's details after the change, for example:
 `Updated preorder details for Alex Yeoh: Date: 21 Dec 2026 | Method: COLLECTION | Handover notes: Collect from side gate`.
@@ -652,7 +652,7 @@ Format: `deleteorder INDEX`
 
 * `INDEX` must be a positive integer referring to a customer in the **currently displayed list**, including results of `find` or `track`.
 * The whole preorder is removed, including all its items. The customer's name, phone number, email, address and tags are not changed.
-* If the customer has no preorder, nothing is changed and the app shows `NAME has no preorder to delete.`, for example `Alex Yeoh has no preorder to delete.`
+* If the customer has no preorder, nothing is changed and the app shows `NAME has no preorder to delete.`, for example `Irfan Ibrahim has no preorder to delete.`
 * If `INDEX` is larger than the displayed list, the app shows `The customer index provided is invalid.`
 * A deleted preorder cannot be restored.
 * Deleting a preorder keeps the current filter. After `track`, the customer no longer has a preorder, so they disappear from that view. Check the displayed indices again before your next command. Use `list` to show all customers.
